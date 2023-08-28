@@ -1,0 +1,126 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: "Release"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2.3.4
+
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+    - name: Restore Nuget Packages
+      run: dotnet restore EstateReportingAPI.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
+
+    - name: Build Code
+      run: dotnet build EstateReportingAPI.sln --configuration Release
+
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "EstateReportingAPI.Tests\EstateReportingAPI.Tests.csproj"
+        
+    - name: Publish Images to Docker Hub - Pre Release
+      if: ${{ github.event.release.prerelease == true }} 
+      run: |
+        docker build . --file EstateReportingAPI/Dockerfile --tag stuartferguson/estatereportingapi:dev
+        docker login --username=${{ secrets.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }}
+        docker push stuartferguson/estatereportingapi:dev
+
+    - name: Publish Images to Docker Hub - Formal Release
+      if: ${{ github.event.release.prerelease == false }} 
+      run: |
+        docker build . --file EstateReportingAPI/Dockerfile --tag stuartferguson/estatereportingapi:latest
+        docker login --username=${{ secrets.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }}
+        docker push stuartferguson/estatereportingapi:latest
+
+    - name: Publish API
+      if: ${{ github.event.release.prerelease == false }} 
+      run: dotnet publish "EstateReportingAPI\EstateReportingAPI.csproj" --configuration Release --output publishOutput -r win-x64 --self-contained
+
+    - name: Install Octopus CLI
+      if: ${{ github.event.release.prerelease == false }} 
+      run: |
+        sudo apt update && sudo apt install --no-install-recommends gnupg curl ca-certificates apt-transport-https && \
+        curl -sSfL https://apt.octopus.com/public.key | sudo apt-key add - && \
+        sudo sh -c "echo deb https://apt.octopus.com/ stable main > /etc/apt/sources.list.d/octopus.com.list" && \
+        sudo apt update && sudo apt install octopuscli
+
+    - name: Pack Files for Octopus
+      if: ${{ github.event.release.prerelease == false }} 
+      run: >-
+        octo pack
+        --outFolder /home/runner/work/EstateReportingAPI/EstateReportingAPI
+        --basePath /home/runner/work/EstateReportingAPI/EstateReportingAPI/publishOutput
+        --id EstateReportingAPI
+        --version ${{ steps.get_version.outputs.VERSION }}
+        --format zip
+        --verbose
+        --logLevel=verbose
+
+    - name: Push Package to Octopus
+      if: ${{ github.event.release.prerelease == false }} 
+      run: >-
+        octo push
+        --server ${{ secrets.OCTOPUS_URL }}
+        --apiKey ${{ secrets.OCTOPUS_APIKEY }}
+        --package /home/runner/work/EstateReportingAPI/EstateReportingAPI/EstateReportingAPI.${{ steps.get_version.outputs.VERSION }}.zip
+        --overwrite-mode IgnoreIfExists
+    
+    - name: Get Release
+      if: ${{ github.event.release.prerelease == false }} 
+      id: getrelease
+      uses: octokit/request-action@v2.0.17
+      with:
+          route: GET /repos/TransactionProcessing/EstateReportingAPI/releases/tags/${{ steps.get_version.outputs.VERSION }}
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Release Notes
+      if: ${{ github.event.release.prerelease == false }} 
+      id: buildreleasenotes
+      uses: gr2m/get-json-paths-action@v1.x
+      with:
+          json: ${{ steps.getrelease.outputs.data }}
+          releasenote: "body"
+    
+    - name: Create & Deploy Release in Octopus
+      if: ${{ github.event.release.prerelease == false }} 
+      run: >-
+        octo  create-release
+        --server ${{ secrets.OCTOPUS_URL }}
+        --apiKey ${{ secrets.OCTOPUS_APIKEY }}
+        --project "Estate Reporting API"
+        --version ${{ steps.get_version.outputs.VERSION }}
+        --channel Default
+        --deployTo Staging
+        --waitfordeployment
+        --deploymenttimeout 00:05:00
+        --releasenotes "${{ steps.buildreleasenotes.outputs.releasenote }}" 
+        
+    #- name: Build and Publish Nuget Packages
+    #  if: ${{ github.event.release.prerelease == false }} 
+    #  run: |
+    #    dotnet pack "EstateManagement.Client\EstateManagement.Client.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release            
+    #    dotnet nuget push Nugets/EstateManagement.Client.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+    #    dotnet pack "EstateManagement.Estate.DomainEvents\EstateManagement.Estate.DomainEvents.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release
+    #    dotnet nuget push Nugets/EstateManagement.Estate.DomainEvents.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+    #    dotnet pack "EstateManagement.Merchant.DomainEvents\EstateManagement.Merchant.DomainEvents.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release
+    #    dotnet nuget push Nugets/EstateManagement.Merchant.DomainEvents.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+    #    dotnet pack "EstateManagement.Contract.DomainEvents\EstateManagement.Contract.DomainEvents.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release
+    #    dotnet nuget push Nugets/EstateManagement.Contract.DomainEvents.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+    #    dotnet pack "EstateManagement.MerchantStatement.DomainEvents\EstateManagement.MerchantStatement.DomainEvents.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release
+    #    dotnet nuget push Nugets/EstateManagement.MerchantStatement.DomainEvents.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+    #    dotnet pack "EstateManagement.Database\EstateManagement.Database.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release
+    #    dotnet nuget push Nugets/EstateManagement.Database.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+        
