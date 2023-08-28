@@ -1,0 +1,86 @@
+name: Nightly Build
+
+on:
+  schedule:
+  - cron: "45 23 * * *"
+  repository_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    name: Check latest commit
+    outputs:
+      commitcount: ${{ steps.commitswithintime.outputs.number-of-commits-within-time }}
+    steps:
+      - uses: actions/checkout@v2
+        #with:
+          #fetch-depth: 0
+
+      - name: Check for commits within time 
+        #uses: AlexHolderDeveloper/CommitsWithinTime@v1.1.5
+        uses: TransactionProcessing/CommitsWithinTime@1.0.0
+        id: commitswithintime
+        with:
+          hours: 24
+          
+      - name: Get the output from CommitsWithinTime
+        run: |
+          echo "The 'has-new-commits-within-time' value is ${{ steps.commitswithintime.outputs.has-new-commits-within-time }}"
+          echo "The 'number-of-commits-within-time' value is ${{ steps.commitswithintime.outputs.number-of-commits-within-time }}"
+          echo "The 'total-commits' value is ${{ steps.commitswithintime.outputs.total-commits }}"    
+
+  build:
+    name: "Nightly Build"
+    env:
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+    runs-on: ubuntu-latest
+
+    needs: check
+    if: ${{ needs.check.outputs.commitcount > 0 }}
+
+    steps:
+    - uses: actions/checkout@v2.3.4
+
+    - name: Set Up Variables
+      run: echo "action_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> $GITHUB_ENV
+
+    - name: Restore Nuget Packages
+      run: dotnet restore EstateReportingAPI.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
+
+    - name: Build Code
+      run: dotnet build EstateReportingAPI.sln --configuration Release
+
+    - name: Run Unit Tests
+      run: |
+        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
+        dotnet test "EstateReportingAPI.Tests\EstateReportingAPI.Tests.csproj" /p:CollectCoverage=true /p:Exclude="[xunit*]*" /p:ExcludeByAttribute="Obsolete" /p:ExcludeByAttribute="GeneratedCodeAttribute" /p:ExcludeByAttribute="CompilerGeneratedAttribute" /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" /p:CoverletOutput="../lcov1.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"        
+
+    - name: Setup Node.js for use with actions
+      uses: actions/setup-node@v1.4.4
+    
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3  
+      with:
+        files: ./lcov1.info
+
+    - name: Build Docker Image
+      run: docker build . --file EstateReportingAPI/Dockerfile --tag estatereportingapi:latest
+
+    - name: Run Integration Tests
+      #run: dotnet test "EstateReportingAPI.IntegrationTests\EstateReportingAPI.IntegrationTests.csproj"
+
+    - uses: actions/upload-artifact@v2
+      if: ${{ failure() }}
+      with:
+        name: tracelogs
+        path: /home/txnproc/trace/   
+
+    - uses: dacbd/create-issue-action@main
+      if: ${{ failure() }}
+      name: Create an issue on build failure
+      with:
+        title: Investigate Nightly Build Failure
+        token: ${{secrets.GITHUB_TOKEN}}
+        labels: nightlybuild
+        body: Url is ${{env.action_url}}
