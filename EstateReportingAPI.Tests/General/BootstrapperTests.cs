@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using EstateReportingAPI;
     using Lamar;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
