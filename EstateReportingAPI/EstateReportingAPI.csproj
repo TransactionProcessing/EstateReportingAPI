@@ -38,4 +38,10 @@
 	<ItemGroup>
 	  <Folder Include="Controllers\" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="aspnetapp-root-cert.cer">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
 </Project>
