@@ -30,7 +30,7 @@ jobs:
     - name: Build Docker Image
       run: docker build . --file EstateReportingAPI/Dockerfile --tag estatereportingapi:latest
       
-    - name: Run Integration Tests
+    #- name: Run Integration Tests
       #run: dotnet test "EstateReportingAPI.IntegrationTests\EstateReportingAPI.IntegrationTests.csproj" --filter Category=PRTest
 
     - uses: actions/upload-artifact@v2
