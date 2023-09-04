@@ -120,7 +120,7 @@
                                                         options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
                                                         options.SerializerSettings.TypeNameHandling = TypeNameHandling.None;
                                                         options.SerializerSettings.Formatting = Formatting.Indented;
-                                                        options.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
+                                                        options.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Unspecified;
                                                         options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
                                                     });
 

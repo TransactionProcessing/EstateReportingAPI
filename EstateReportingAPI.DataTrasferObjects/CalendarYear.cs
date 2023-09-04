@@ -9,6 +9,13 @@ namespace EstateReportingAPI.DataTrasferObjects
         public Int32 Year{ get; set; }
     }
 
+    public class ComparisonDate{
+        public Int32 OrderValue{ get; set; }
+        public DateTime Date { get; set; }
+        public String Description { get; set; }
+
+    }
+
     public class CalendarDate
     {
         public DateTime Date { get; set; }
