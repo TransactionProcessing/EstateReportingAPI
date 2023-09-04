@@ -78,7 +78,48 @@
                 YearWeekNumber = d.YearWeekNumber,
             }));
 
-            return this.Ok(dates);
+            return this.Ok(response);
+        }
+
+        [HttpGet]
+        [Route("calendar/comparisondates")]
+        public async Task<IActionResult> GetCalendarComparisonDates([FromHeader] Guid estateId, CancellationToken cancellationToken)
+        {
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, DimensionsController.ConnectionStringIdentifier, cancellationToken);
+
+            DateTime startOfYear = new DateTime(DateTime.Now.Year, 1, 1);
+
+            List<Calendar> dates = context.Calendar.Where(c => c.Date >= startOfYear && c.Date < DateTime.Now.Date.AddDays(-1)).OrderByDescending(d => d.Date).ToList();
+
+            List<ComparisonDate> response = new List<ComparisonDate>();
+
+            response.Add(new ComparisonDate{
+                                               Date = DateTime.Now.Date.AddDays(-1),
+                                               Description = "Yesterday",
+                                               OrderValue = 0
+                                           });
+
+            response.Add(new ComparisonDate{
+                                               Date = DateTime.Now.Date.AddDays(-7),
+                                               Description = "Last Week",
+                                               OrderValue = 1
+                                           });
+            response.Add(new ComparisonDate{
+                                               Date = DateTime.Now.Date.AddMonths(-1),
+                                               Description = "Last Month",
+                                               OrderValue = 2
+                                           });
+            Int32 orderValue = 3;
+            dates.ForEach(d => {
+                              response.Add(new ComparisonDate{
+                                                                 Date = d.Date,
+                                                                 Description = d.Date.ToString("yyyy-MM-dd"),
+                                                                 OrderValue = orderValue
+                                                             });
+                              orderValue++;
+                          });
+
+            return this.Ok(response.OrderBy(d => d.OrderValue));
         }
     }
 
