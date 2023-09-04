@@ -36,6 +36,7 @@ namespace EstateReportingAPI
             ConfigurationReader.Initialise(Configuration);
 
             services.IncludeRegistry<MiddlewareRegistry>();
+            services.IncludeRegistry<RepositoryRegistry>();
 
             Container = new Container(services);
         }
