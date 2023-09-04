@@ -37,7 +37,7 @@
         #endregion
 
         [HttpGet]
-        [Route("getcalendaryears")]
+        [Route("calendar/years")]
         public async Task<IActionResult> GetCalendarYears([FromHeader] Guid estateId, CancellationToken cancellationToken){
             
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, DimensionsController.ConnectionStringIdentifier, cancellationToken);
@@ -53,31 +53,33 @@
             return this.Ok(response);
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> GetCalendarDates([FromHeader] Guid estateId, [FromQuery] Int32 year, CancellationToken cancellationToken)
-        //{
-        //    EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, DimensionsController.ConnectionStringIdentifier, cancellationToken);
+        [HttpGet]
+        [Route("calendar/{year}/dates")]
+        public async Task<IActionResult> GetCalendarDates([FromHeader] Guid estateId, [FromRoute] Int32 year, CancellationToken cancellationToken)
+        {
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, DimensionsController.ConnectionStringIdentifier, cancellationToken);
 
-        //    List<Calendar> dates= context.Calendar.Where(c => c.Date <= DateTime.Now.Date).ToList();
+            List<Calendar> dates = context.Calendar.Where(c => c.Date <= DateTime.Now.Date).ToList();
 
-        //    List<CalendarDate> response = new List<CalendarDate>();
+            List<CalendarDate> response = new List<CalendarDate>();
 
-        //    dates.ForEach(d => response.Add(new CalendarDate{
-        //                                                        Year = d.Year,
-        //                                                        Date = d.Date,
-        //                                                        DayOfWeek = d.DayOfWeek,
-        //                                                        DayOfWeekNumber = d.DayOfWeekNumber,
-        //                                                        DayOfWeekShort = d.DayOfWeekShort,
-        //                                                        MonthName = d.MonthNameLong,
-        //                                                        MonthNameShort = d.MonthNameShort,
-        //                                                        MonthNumber = d.MonthNumber,
-        //                                                        WeekNumber = d.WeekNumber ?? 0,
-        //                                                        WeekNumberString = d.WeekNumberString,
-        //                                                        YearWeekNumber = d.YearWeekNumber,
-        //                                                    }));
+            dates.ForEach(d => response.Add(new CalendarDate
+            {
+                Year = d.Year,
+                Date = d.Date,
+                DayOfWeek = d.DayOfWeek,
+                DayOfWeekNumber = d.DayOfWeekNumber,
+                DayOfWeekShort = d.DayOfWeekShort,
+                MonthName = d.MonthNameLong,
+                MonthNameShort = d.MonthNameShort,
+                MonthNumber = d.MonthNumber,
+                WeekNumber = d.WeekNumber ?? 0,
+                WeekNumberString = d.WeekNumberString,
+                YearWeekNumber = d.YearWeekNumber,
+            }));
 
-        //    return this.Ok();
-        //}
+            return this.Ok(dates);
+        }
     }
 
     
