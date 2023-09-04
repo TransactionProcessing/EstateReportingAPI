@@ -64,9 +64,11 @@ namespace EstateReportingAPI.Controllers
                                             select r.Amount).ToList();
 
             var response = new{
-                                  TodaysSales = todaysSales.Sum(Decimal.Parse),
-                                  ComparisonSales = comparisonSales.Sum(Decimal.Parse)
-                              };
+                                  TodaysSalesValue = todaysSales.Sum(Decimal.Parse),
+                                  TodaysSalesCount = todaysSales.Count,
+                                  ComparisonSales = comparisonSales.Sum(Decimal.Parse),
+                                  ComparisonSalesCount = comparisonSales.Count()
+            };
 
             return this.Ok(response);
         }
