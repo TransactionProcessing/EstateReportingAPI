@@ -1,7 +1,9 @@
 ﻿namespace EstateReportingAPI.Bootstrapper{
     using System.Diagnostics.CodeAnalysis;
+    using System.Net.Security;
     using System.Reflection;
     using Common;
+    using EstateManagement.Database.Contexts;
     using Lamar;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -9,8 +11,48 @@
     using Microsoft.OpenApi.Models;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
+    using Shared.EntityFramework;
+    using Shared.EntityFramework.ConnectionStringConfiguration;
     using Shared.General;
+    using Shared.Repositories;
     using Swashbuckle.AspNetCore.Filters;
+
+    public class RepositoryRegistry : ServiceRegistry{
+        public RepositoryRegistry(){
+
+            Boolean useConnectionStringConfig = bool.Parse(ConfigurationReader.GetValue("AppSettings", "UseConnectionStringConfig"));
+
+            if (useConnectionStringConfig)
+            {
+                String connectionStringConfigurationConnString = ConfigurationReader.GetConnectionString("ConnectionStringConfiguration");
+                this.AddSingleton<IConnectionStringConfigurationRepository, ConnectionStringConfigurationRepository>();
+                this.AddTransient(c => { return new ConnectionStringConfigurationContext(connectionStringConfigurationConnString); });
+
+                // TODO: Read this from a the database and set
+            }
+            else
+            {
+                this.AddSingleton<IConnectionStringConfigurationRepository, ConfigurationReaderConnectionStringRepository>();
+            }
+
+            this.AddSingleton<IDbContextFactory<EstateManagementGenericContext>, DbContextFactory<EstateManagementGenericContext>>();
+
+            this.AddSingleton<Func<String, EstateManagementGenericContext>>(cont => connectionString =>
+                                                                                    {
+                                                                                        String databaseEngine =
+                                                                                            ConfigurationReader.GetValue("AppSettings", "DatabaseEngine");
+
+                                                                                        return databaseEngine switch
+                                                                                        {
+                                                                                            "MySql" => new EstateManagementMySqlContext(connectionString),
+                                                                                            "SqlServer" => new EstateManagementSqlServerContext(connectionString),
+                                                                                            _ => throw new
+                                                                                                NotSupportedException($"Unsupported Database Engine {databaseEngine}")
+                                                                                        };
+                                                                                    });
+        }
+    }
+
 
     [ExcludeFromCodeCoverage]
     public class MiddlewareRegistry : ServiceRegistry{
