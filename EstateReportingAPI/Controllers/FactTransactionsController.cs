@@ -82,7 +82,7 @@ namespace EstateReportingAPI.Controllers
 
         [HttpGet]
         [Route("todayssales/countbyhour")]
-        public async Task<IActionResult> TodaysSalesByHour([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken)
+        public async Task<IActionResult> TodaysSalesCountByHour([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken)
         {
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, FactTransactionsController.ConnectionStringIdentifier, cancellationToken);
 
@@ -119,6 +119,48 @@ namespace EstateReportingAPI.Controllers
                                        ComparisonSalesCount = comparison.TotalSalesCount
                             }).ToList();
             
+            return this.Ok(response);
+        }
+
+        [HttpGet]
+        [Route("todayssales/valuebyhour")]
+        public async Task<IActionResult> TodaysSalesValueByHour([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken)
+        {
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, FactTransactionsController.ConnectionStringIdentifier, cancellationToken);
+
+            // First we need to get a value of todays sales
+            var todaysSalesByHour = (from t in context.Transactions
+                                     where t.IsAuthorised && t.TransactionType == "Sale"
+                                                    && t.TransactionDate == DateTime.Now.Date
+                                                    && t.TransactionTime <= DateTime.Now.TimeOfDay
+                                     group t.TransactionAmount by t.TransactionTime.Hours into g
+                                     select new
+                                     {
+                                         Hour = g.Key,
+                                         TotalSalesValue = g.Sum()
+                                     }).ToList();
+
+            var comparisonSalesByHour = (from t in context.Transactions
+                                         where t.IsAuthorised && t.TransactionType == "Sale"
+                                                              && t.TransactionDate == comparisonDate
+                                                              && t.TransactionTime <= DateTime.Now.TimeOfDay
+                                         group t.TransactionAmount by t.TransactionTime.Hours into g
+                                         select new
+                                         {
+                                             Hour = g.Key,
+                                             TotalSalesValue = g.Sum()
+                                         }).ToList();
+
+            var response = (from today in todaysSalesByHour
+                            join comparison in comparisonSalesByHour
+                                on today.Hour equals comparison.Hour
+                            select new
+                            {
+                                Hour = today.Hour,
+                                TodaysSalesValue = today.TotalSalesValue,
+                                ComparisonSalesValue = comparison.TotalSalesValue
+                            }).ToList();
+
             return this.Ok(response);
         }
     }
