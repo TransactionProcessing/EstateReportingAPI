@@ -81,7 +81,7 @@
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
-                Exception exception = new Exception("Error getting calendar years for estate {estateId}.", ex);
+                Exception exception = new Exception($"Error getting calendar years for estate {estateId}.", ex);
 
                 throw exception;
             }
@@ -89,10 +89,10 @@
             return response;
         }
 
-        public async Task<List<ComparisonDate>> GetComparisonDates(String accessToken, Guid estateId, Int32 year, CancellationToken cancellationToken){
+        public async Task<List<ComparisonDate>> GetComparisonDates(String accessToken, Guid estateId, CancellationToken cancellationToken){
             List<ComparisonDate> response = null;
 
-            String requestUri = this.BuildRequestUrl("/api/dimensions/calendar/calendar/comparisondates");
+            String requestUri = this.BuildRequestUrl("/api/dimensions/calendar/comparisondates");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -110,7 +110,7 @@
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
-                Exception exception = new Exception("Error getting comparison dates for estate {estateId}.", ex);
+                Exception exception = new Exception($"Error getting comparison dates for estate {estateId}.", ex);
 
                 throw exception;
             }
@@ -139,7 +139,7 @@
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
-                Exception exception = new Exception("Error getting todays sales for estate {estateId}.", ex);
+                Exception exception = new Exception($"Error getting todays sales for estate {estateId}.", ex);
 
                 throw exception;
             }
@@ -168,7 +168,7 @@
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
-                Exception exception = new Exception("Error getting todays sales count by hour for estate {estateId}.", ex);
+                Exception exception = new Exception($"Error getting todays sales count by hour for estate {estateId}.", ex);
 
                 throw exception;
             }
@@ -197,7 +197,7 @@
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
-                Exception exception = new Exception("Error getting todays sales value by hour for estate {estateId}.", ex);
+                Exception exception = new Exception($"Error getting todays sales value by hour for estate {estateId}.", ex);
 
                 throw exception;
             }
@@ -226,7 +226,7 @@
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
-                Exception exception = new Exception("Error getting todays settlement for estate {estateId}.", ex);
+                Exception exception = new Exception($"Error getting todays settlement for estate {estateId}.", ex);
 
                 throw exception;
             }

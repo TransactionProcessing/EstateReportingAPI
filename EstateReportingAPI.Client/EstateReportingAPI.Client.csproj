@@ -17,7 +17,7 @@
 
 	<Target Name="IncludeP2PAssets">
 		<ItemGroup>
-			<BuildOutputInPackage Include="$(OutputPath)EstateManagement.DataTransferObjects.dll" />
+			<BuildOutputInPackage Include="$(OutputPath)EstateReportingAPI.DataTransferObjects.dll" />
 		</ItemGroup>
 	</Target>
 
