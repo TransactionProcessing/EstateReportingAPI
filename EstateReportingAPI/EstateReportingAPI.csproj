@@ -37,7 +37,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\EstateReportingAPI.DataTrasferObjects\EstateReportingAPI.DataTrasferObjects.csproj" />
+	  <ProjectReference Include="..\EstateReportingAPI.DataTrasferObjects\EstateReportingAPI.DataTransferObjects.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

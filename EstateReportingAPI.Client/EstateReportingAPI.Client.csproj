@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFrameworks>net7.0;netstandard2.1</TargetFrameworks>
+	  <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeP2PAssets</TargetsForTfmSpecificBuildOutput>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClientProxyBase" Version="2023.8.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EstateReportingAPI.DataTrasferObjects\EstateReportingAPI.DataTransferObjects.csproj" PrivateAssets="All" />
+  </ItemGroup>
+
+	<Target Name="IncludeP2PAssets">
+		<ItemGroup>
+			<BuildOutputInPackage Include="$(OutputPath)EstateManagement.DataTransferObjects.dll" />
+		</ItemGroup>
+	</Target>
+
+</Project>
