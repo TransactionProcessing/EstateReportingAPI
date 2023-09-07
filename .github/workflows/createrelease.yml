@@ -108,19 +108,9 @@ jobs:
         --deploymenttimeout 00:05:00
         --releasenotes "${{ steps.buildreleasenotes.outputs.releasenote }}" 
         
-    #- name: Build and Publish Nuget Packages
-    #  if: ${{ github.event.release.prerelease == false }} 
-    #  run: |
-    #    dotnet pack "EstateManagement.Client\EstateManagement.Client.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release            
-    #    dotnet nuget push Nugets/EstateManagement.Client.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
-    #    dotnet pack "EstateManagement.Estate.DomainEvents\EstateManagement.Estate.DomainEvents.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release
-    #    dotnet nuget push Nugets/EstateManagement.Estate.DomainEvents.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
-    #    dotnet pack "EstateManagement.Merchant.DomainEvents\EstateManagement.Merchant.DomainEvents.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release
-    #    dotnet nuget push Nugets/EstateManagement.Merchant.DomainEvents.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
-    #    dotnet pack "EstateManagement.Contract.DomainEvents\EstateManagement.Contract.DomainEvents.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release
-    #    dotnet nuget push Nugets/EstateManagement.Contract.DomainEvents.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
-    #    dotnet pack "EstateManagement.MerchantStatement.DomainEvents\EstateManagement.MerchantStatement.DomainEvents.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release
-    #    dotnet nuget push Nugets/EstateManagement.MerchantStatement.DomainEvents.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
-    #    dotnet pack "EstateManagement.Database\EstateManagement.Database.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release
-    #    dotnet nuget push Nugets/EstateManagement.Database.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}
+    - name: Build and Publish Nuget Packages
+      if: ${{ github.event.release.prerelease == false }} 
+      run: |
+        dotnet pack "EstateReportingAPI.Client\EstateReportingAPI.Client.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release            
+        dotnet nuget push Nugets/EstateReportingAPI.Client.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}    
         

@@ -8,6 +8,7 @@ namespace EstateReportingAPI.Controllers
     using DataTrasferObjects;
     using EstateManagement.Database.Contexts;
     using System.Web;
+    using DataTransferObjects;
     using Microsoft.IdentityModel.Protocols;
     using Shared.EntityFramework;
 
@@ -45,7 +46,7 @@ namespace EstateReportingAPI.Controllers
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, FactTransactionsController.ConnectionStringIdentifier, cancellationToken);
 
             // First we need to get a value of todays sales
-            Decimal todaysSales = (from t in context.Transactions
+            Decimal todaysSalesValue = (from t in context.Transactions
                                    where t.IsAuthorised && t.TransactionType == "Sale"
                                                         && t.TransactionDate == DateTime.Now.Date
                                                         && t.TransactionTime <= DateTime.Now.TimeOfDay
@@ -57,7 +58,7 @@ namespace EstateReportingAPI.Controllers
                                                            && t.TransactionTime <= DateTime.Now.TimeOfDay
                                       select t.TransactionAmount).Count();
 
-            Decimal comparisonSales = (from t in context.Transactions
+            Decimal comparisonSalesValue = (from t in context.Transactions
                                        where t.IsAuthorised && t.TransactionType == "Sale"
                                                             && t.TransactionDate == comparisonDate
                                                             && t.TransactionTime <= DateTime.Now.TimeOfDay
@@ -69,13 +70,13 @@ namespace EstateReportingAPI.Controllers
                                                                && t.TransactionTime <= DateTime.Now.TimeOfDay
                                           select t.TransactionAmount).Count();
 
-            var response = new
-                           {
-                               TodaysSalesValue = todaysSales,
-                               TodaysSalesCount = todaysSalesCount,
-                               ComparisonSales = comparisonSales,
-                               ComparisonSalesCount = comparisonSalesCount
-                           };
+            var response = new TodaysSales{
+                                              ComparisonSalesCount = comparisonSalesCount,
+                                              ComparisonSalesValue = comparisonSalesValue,
+                                              TodaysSalesCount = todaysSalesCount,
+                                              TodaysSalesValue = todaysSalesValue
+
+                                          };
 
             return this.Ok(response);
         }
@@ -112,13 +113,15 @@ namespace EstateReportingAPI.Controllers
             var response = (from today in todaysSalesByHour
                             join comparison in comparisonSalesByHour
                                 on today.Hour equals comparison.Hour
-                            select new
+                            select new TodaysSalesCountByHour
                                    {
                                        Hour = today.Hour,
                                        TodaysSalesCount = today.TotalSalesCount,
                                        ComparisonSalesCount = comparison.TotalSalesCount
                             }).ToList();
             
+            
+
             return this.Ok(response);
         }
 
@@ -134,7 +137,7 @@ namespace EstateReportingAPI.Controllers
                                                     && t.TransactionDate == DateTime.Now.Date
                                                     && t.TransactionTime <= DateTime.Now.TimeOfDay
                                      group t.TransactionAmount by t.TransactionTime.Hours into g
-                                     select new
+                                     select new 
                                      {
                                          Hour = g.Key,
                                          TotalSalesValue = g.Sum()
@@ -154,7 +157,7 @@ namespace EstateReportingAPI.Controllers
             var response = (from today in todaysSalesByHour
                             join comparison in comparisonSalesByHour
                                 on today.Hour equals comparison.Hour
-                            select new
+                            select new TodaysSalesValueByHour
                             {
                                 Hour = today.Hour,
                                 TodaysSalesValue = today.TotalSalesValue,

@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace EstateReportingAPI.Controllers
 {
+    using DataTransferObjects;
     using Shared.EntityFramework;
 
     [ExcludeFromCodeCoverage]
@@ -42,17 +43,17 @@ namespace EstateReportingAPI.Controllers
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, FactSettlementsController.ConnectionStringIdentifier, cancellationToken);
 
             // First we need to get a value of todays sales
-            Decimal todaysSettlement = (from s in context.Settlements
-                                       join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                       where f.IsSettled && s.SettlementDate == DateTime.Now.Date
-                                       select f.CalculatedValue).Sum();
+            Decimal todaysSettlementValue = (from s in context.Settlements
+                                             join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
+                                             where f.IsSettled && s.SettlementDate == DateTime.Now.Date
+                                             select f.CalculatedValue).Sum();
 
             Int32 todaysSettlementCount = (from s in context.Settlements
                                            join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
                                            where f.IsSettled && s.SettlementDate == DateTime.Now.Date
                                            select f.CalculatedValue).Count();
 
-            Decimal comparisonSettlement = (from s in context.Settlements
+            Decimal comparisonSettlementValue = (from s in context.Settlements
                                             join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
                                             where f.IsSettled && s.SettlementDate == comparisonDate
                                             select f.CalculatedValue).Sum();
@@ -62,13 +63,12 @@ namespace EstateReportingAPI.Controllers
                                                where f.IsSettled && s.SettlementDate == comparisonDate
                                                select f.CalculatedValue).Count();
             
-            var response = new
-            {
-                TodaysSettlementValue = todaysSettlement,
-                TodaysSettlementCount = todaysSettlementCount,
-                ComparisonSettlement = comparisonSettlement,
-                ComparisonSettlementCount = comparisonSettlementCount
-            };
+            var response = new TodaysSettlement{
+                                                   ComparisonSettlementCount = comparisonSettlementCount,
+                                                   ComparisonSettlementValue = comparisonSettlementValue,
+                                                   TodaysSettlementCount = todaysSettlementCount,
+                                                   TodaysSettlementValue = todaysSettlementValue
+                                               };
 
             return this.Ok(response);
         }

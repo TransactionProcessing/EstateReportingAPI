@@ -22,13 +22,13 @@ jobs:
     - name: Publish Images to Docker Hub - Pre Release
       if: ${{ github.event.release.prerelease == true }} 
       run: |
-        docker build . --file EstateManagement/Dockerfilewindows --tag stuartferguson/estatereportingapi:dev
+        docker build . --file EstateReportingAPI/Dockerfilewindows --tag stuartferguson/estatereportingapi:dev
         docker login --username=${{ secrets.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }}
         docker push stuartferguson/estatereportingapi:dev
 
     - name: Publish Images to Docker Hub - Formal Release
       if: ${{ github.event.release.prerelease == false }} 
       run: |
-        docker build . --file EstateManagement/Dockerfilewindows --tag stuartferguson/estatereportingapi:latest
+        docker build . --file EstateReportingAPI/Dockerfilewindows --tag stuartferguson/estatereportingapi:latest
         docker login --username=${{ secrets.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }}
         docker push stuartferguson/estatereportingapi:latest
