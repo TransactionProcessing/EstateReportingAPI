@@ -11,6 +11,7 @@ namespace EstateReportingAPI.Controllers
     using DataTransferObjects;
     using Microsoft.IdentityModel.Protocols;
     using Shared.EntityFramework;
+    using EstateManagement.Database.Entities;
 
     [ExcludeFromCodeCoverage]
     [Route(FactTransactionsController.ControllerRoute)]
@@ -163,6 +164,34 @@ namespace EstateReportingAPI.Controllers
                                 TodaysSalesValue = today.TotalSalesValue,
                                 ComparisonSalesValue = comparison.TotalSalesValue
                             }).ToList();
+
+            return this.Ok(response);
+        }
+
+        [HttpGet]
+        [Route("merchantkpis")]
+        public async Task<IActionResult> GetMerchantsTransactionKpis([FromHeader] Guid estateId, CancellationToken cancellationToken){
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, FactTransactionsController.ConnectionStringIdentifier, cancellationToken);
+
+
+            var merchantsWithSaleInLastHour = (from m in context.Merchants
+                                               where m.LastSaleDate== DateTime.Now.Date
+                                                     && m.LastSaleDateTime>= DateTime.Now.AddHours(-1)
+                                               select m.MerchantReportingId).Count();
+
+            var merchantsWithNoSaleToday = (from m in context.Merchants
+                                            where m.LastSaleDate == DateTime.Now.Date.AddDays(-1)
+                                            select m.MerchantReportingId).Count();
+
+            var merchantsWithNoSaleInLast7Days = (from m in context.Merchants
+                                            where m.LastSaleDate <= DateTime.Now.Date.AddDays(-7)
+                                            select m.MerchantReportingId).Count();
+
+            var response = new MerchantKpi{
+                                              MerchantsWithSaleInLastHour = merchantsWithSaleInLastHour,
+                                              MerchantsWithNoSaleToday = merchantsWithNoSaleToday,
+                                              MerchantsWithNoSaleInLast7Days = merchantsWithNoSaleInLast7Days
+                                          };
 
             return this.Ok(response);
         }
