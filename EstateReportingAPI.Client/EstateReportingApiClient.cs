@@ -146,6 +146,38 @@
 
             return response;
         }
+        
+        public async Task<TodaysSales> GetTodaysFailedSales(String accessToken, Guid estateId, String responseCode, DateTime comparisonDate, CancellationToken cancellationToken)
+        {
+            TodaysSales response = null;
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todaysfailedsales?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&responseCode={responseCode}");
+
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Add("EstateId", estateId.ToString());
+
+                // Make the Http Call here
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
+
+                // Process the response
+                String content = await this.HandleResponse(httpResponse, cancellationToken);
+
+                // call was successful so now deserialise the body to the response object
+                response = JsonConvert.DeserializeObject<TodaysSales>(content);
+            }
+            catch (Exception ex)
+            {
+                // An exception has occurred, add some additional information to the message
+                Exception exception = new Exception($"Error getting todays failed sales for estate {estateId} and response code {responseCode}.", ex);
+
+                throw exception;
+            }
+
+            return response;
+        }
 
         public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(String accessToken, Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
             List<TodaysSalesCountByHour> response = null;
@@ -264,7 +296,7 @@
 
             return response;
         }
-
+        
         private String BuildRequestUrl(String route){
             String baseAddress = this.BaseAddressResolver("EstateReportingApi");
 
