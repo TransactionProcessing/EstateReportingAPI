@@ -195,5 +195,52 @@ namespace EstateReportingAPI.Controllers
 
             return this.Ok(response);
         }
+
+        [HttpGet]
+        [Route("todaysfailedsales")]
+        public async Task<IActionResult> TodaysFailedSales([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] String responseCode, CancellationToken cancellationToken)
+        {
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, FactTransactionsController.ConnectionStringIdentifier, cancellationToken);
+
+            // First we need to get a value of todays sales
+            Decimal todaysSalesValue = (from t in context.Transactions
+                                        where t.IsAuthorised == false && t.TransactionType == "Sale"
+                                                             && t.TransactionDate == DateTime.Now.Date
+                                                             && t.TransactionTime <= DateTime.Now.TimeOfDay
+                                                             && t.ResponseCode == responseCode
+                                        select t.TransactionAmount).Sum();
+
+            Int32 todaysSalesCount = (from t in context.Transactions
+                                      where t.IsAuthorised == false && t.TransactionType == "Sale"
+                                                                    && t.TransactionDate == DateTime.Now.Date
+                                                                    && t.TransactionTime <= DateTime.Now.TimeOfDay
+                                                                    && t.ResponseCode == responseCode
+                                      select t.TransactionAmount).Count();
+
+            Decimal comparisonSalesValue = (from t in context.Transactions
+                                            where t.IsAuthorised == false && t.TransactionType == "Sale"
+                                                                          && t.TransactionDate == comparisonDate
+                                                                          && t.TransactionTime <= DateTime.Now.TimeOfDay
+                                                                          && t.ResponseCode == responseCode
+                                            select t.TransactionAmount).Sum();
+
+            Int32 comparisonSalesCount = (from t in context.Transactions
+                                          where t.IsAuthorised == false && t.TransactionType == "Sale"
+                                                                        && t.TransactionDate == comparisonDate
+                                                                        && t.TransactionTime <= DateTime.Now.TimeOfDay
+                                                                        && t.ResponseCode == responseCode
+                                          select t.TransactionAmount).Count();
+
+            TodaysSales response = new TodaysSales
+                                   {
+                                       ComparisonSalesCount = comparisonSalesCount,
+                                       ComparisonSalesValue = comparisonSalesValue,
+                                       TodaysSalesCount = todaysSalesCount,
+                                       TodaysSalesValue = todaysSalesValue
+
+                                   };
+
+            return this.Ok(response);
+        }
     }
 }
