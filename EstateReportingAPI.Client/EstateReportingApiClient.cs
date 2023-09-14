@@ -362,7 +362,7 @@
         public async Task<MerchantKpi> GetMerchantKpi(String accessToken, Guid estateId, CancellationToken cancellationToken){
             MerchantKpi response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/merchantkpi");
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/merchantkpis");
 
             try
             {
