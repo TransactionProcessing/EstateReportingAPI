@@ -317,7 +317,7 @@ namespace EstateReportingAPI.Controllers
             {
                 // Operators
                 queryable = mainQuery
-                            .Join(context.MerchantOperators,
+                            .Join(context.EstateOperators,
                                   t => t.OperatorIdentifier,
                                   oper => oper.Name,
                                   (t, oper) => new {
