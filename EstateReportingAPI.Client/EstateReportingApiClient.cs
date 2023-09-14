@@ -179,6 +179,99 @@
             return response;
         }
 
+        public async Task<List<TopBottomOperatorData>> GetTopBottomOperatorData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken){
+            List<TopBottomOperatorData> response = null;
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/operators/topbottombyvalue?topOrBottom={(Int32)topBottom}&count={resultCount}");
+
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Add("EstateId", estateId.ToString());
+
+                // Make the Http Call here
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
+
+                // Process the response
+                String content = await this.HandleResponse(httpResponse, cancellationToken);
+
+                // call was successful so now deserialise the body to the response object
+                response = JsonConvert.DeserializeObject<List<TopBottomOperatorData>>(content);
+            }
+            catch (Exception ex)
+            {
+                // An exception has occurred, add some additional information to the message
+                Exception exception = new Exception($"Error getting top/bottom sales by operator for estate {estateId} TopOrBottom {topBottom} ans count {resultCount}.", ex);
+
+                throw exception;
+            }
+
+            return response;
+        }
+
+        public async Task<List<TopBottomMerchantData>> GetTopBottomMerchantData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken){
+            List<TopBottomMerchantData> response = null;
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/merchants/topbottombyvalue?topOrBottom={(Int32)topBottom}&count={resultCount}");
+
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Add("EstateId", estateId.ToString());
+
+                // Make the Http Call here
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
+
+                // Process the response
+                String content = await this.HandleResponse(httpResponse, cancellationToken);
+
+                // call was successful so now deserialise the body to the response object
+                response = JsonConvert.DeserializeObject<List<TopBottomMerchantData>>(content);
+            }
+            catch (Exception ex)
+            {
+                // An exception has occurred, add some additional information to the message
+                Exception exception = new Exception($"Error getting top/bottom sales by merchant for estate {estateId} TopOrBottom {topBottom} ans count {resultCount}.", ex);
+
+                throw exception;
+            }
+
+            return response;
+        }
+
+        public async Task<List<TopBottomProductData>> GetTopBottomProductData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken){
+            List<TopBottomProductData> response = null;
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/products/topbottombyvalue?topOrBottom={(Int32)topBottom}&count={resultCount}");
+
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Add("EstateId", estateId.ToString());
+
+                // Make the Http Call here
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
+
+                // Process the response
+                String content = await this.HandleResponse(httpResponse, cancellationToken);
+
+                // call was successful so now deserialise the body to the response object
+                response = JsonConvert.DeserializeObject<List<TopBottomProductData>>(content);
+            }
+            catch (Exception ex)
+            {
+                // An exception has occurred, add some additional information to the message
+                Exception exception = new Exception($"Error getting top/bottom sales by product for estate {estateId} TopOrBottom {topBottom} ans count {resultCount}.", ex);
+
+                throw exception;
+            }
+
+            return response;
+        }
+
         public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(String accessToken, Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
             List<TodaysSalesCountByHour> response = null;
 
