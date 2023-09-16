@@ -293,7 +293,7 @@ namespace EstateReportingAPI.Controllers
             IQueryable<Transaction> mainQuery = context.Transactions
                                                        .Where(joined => joined.IsAuthorised == true
                                                                         && joined.TransactionType == "Sale"
-                                                                        && joined.TransactionDate == new DateTime(2023, 09, 14));
+                                                                        && joined.TransactionDate == DateTime.Now.Date);
             IQueryable<TopBottomData> queryable = null;
             if (dimension == Dimension.Product)
             {
