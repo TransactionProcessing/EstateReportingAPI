@@ -7,6 +7,7 @@
     using Microsoft.AspNetCore.Mvc;
     using Shared.EntityFramework;
     using System.Diagnostics.CodeAnalysis;
+    using BusinessLogic;
 
     [ExcludeFromCodeCoverage]
     [Route(DimensionsController.ControllerRoute)]
@@ -14,14 +15,12 @@
     //[Authorize]
     public class DimensionsController : ControllerBase
     {
-        private readonly IDbContextFactory<EstateManagementGenericContext> ContextFactory;
+        private readonly IReportingManager ReportingManager;
 
-        public DimensionsController(IDbContextFactory<EstateManagementGenericContext> contextFactory){
-            this.ContextFactory = contextFactory;
+        public DimensionsController(IReportingManager reportingManager){
+            this.ReportingManager = reportingManager;
         }
-
-        private const String ConnectionStringIdentifier = "EstateReportingReadModel";
-
+        
         #region Others
 
         /// <summary>
@@ -39,10 +38,8 @@
         [HttpGet]
         [Route("calendar/years")]
         public async Task<IActionResult> GetCalendarYears([FromHeader] Guid estateId, CancellationToken cancellationToken){
-            
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, DimensionsController.ConnectionStringIdentifier, cancellationToken);
 
-            List<Int32> years = context.Calendar.Where(c => c.Date <= DateTime.Now.Date).GroupBy(c => c.Year).Select(y => y.Key).ToList();
+            List<Int32> years = await this.ReportingManager.GetCalendarYears(estateId, cancellationToken);
             
             List<CalendarYear> response = new List<CalendarYear>();
 
@@ -55,11 +52,8 @@
 
         [HttpGet]
         [Route("calendar/{year}/dates")]
-        public async Task<IActionResult> GetCalendarDates([FromHeader] Guid estateId, [FromRoute] Int32 year, CancellationToken cancellationToken)
-        {
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, DimensionsController.ConnectionStringIdentifier, cancellationToken);
-
-            List<Calendar> dates = context.Calendar.Where(c => c.Date <= DateTime.Now.Date).ToList();
+        public async Task<IActionResult> GetCalendarDates([FromHeader] Guid estateId, [FromRoute] Int32 year, CancellationToken cancellationToken){
+            List<Models.Calendar> dates = await this.ReportingManager.GetCalendarDates(estateId, cancellationToken);
 
             List<CalendarDate> response = new List<CalendarDate>();
 
@@ -85,11 +79,7 @@
         [Route("calendar/comparisondates")]
         public async Task<IActionResult> GetCalendarComparisonDates([FromHeader] Guid estateId, CancellationToken cancellationToken)
         {
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, DimensionsController.ConnectionStringIdentifier, cancellationToken);
-
-            DateTime startOfYear = new DateTime(DateTime.Now.Year, 1, 1);
-
-            List<Calendar> dates = context.Calendar.Where(c => c.Date >= startOfYear && c.Date < DateTime.Now.Date.AddDays(-1)).OrderByDescending(d => d.Date).ToList();
+            List<Models.Calendar> dates = await this.ReportingManager.GetCalendarComparisonDates(estateId, cancellationToken);
 
             List<ComparisonDate> response = new List<ComparisonDate>();
 

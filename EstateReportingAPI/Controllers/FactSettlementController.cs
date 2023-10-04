@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace EstateReportingAPI.Controllers
 {
+    using BusinessLogic;
     using DataTransferObjects;
     using Shared.EntityFramework;
 
@@ -27,48 +28,23 @@ namespace EstateReportingAPI.Controllers
 
         #endregion
 
-        private readonly IDbContextFactory<EstateManagementGenericContext> ContextFactory;
+        private readonly IReportingManager ReportingManager;
 
-        public FactSettlementsController(IDbContextFactory<EstateManagementGenericContext> contextFactory)
-        {
-            this.ContextFactory = contextFactory;
+        public FactSettlementsController(IReportingManager reportingManager){
+            this.ReportingManager = reportingManager;
         }
-
-        private const String ConnectionStringIdentifier = "EstateReportingReadModel";
-
+        
         [HttpGet]
         [Route("todayssettlement")]
-        public async Task<IActionResult> TodaysSettlement([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken)
-        {
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, FactSettlementsController.ConnectionStringIdentifier, cancellationToken);
-
-            // First we need to get a value of todays sales
-            Decimal todaysSettlementValue = (from s in context.Settlements
-                                             join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                             where f.IsSettled && s.SettlementDate == DateTime.Now.Date
-                                             select f.CalculatedValue).Sum();
-
-            Int32 todaysSettlementCount = (from s in context.Settlements
-                                           join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                           where f.IsSettled && s.SettlementDate == DateTime.Now.Date
-                                           select f.CalculatedValue).Count();
-
-            Decimal comparisonSettlementValue = (from s in context.Settlements
-                                            join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                            where f.IsSettled && s.SettlementDate == comparisonDate
-                                            select f.CalculatedValue).Sum();
-
-            Int32 comparisonSettlementCount = (from s in context.Settlements
-                                               join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                               where f.IsSettled && s.SettlementDate == comparisonDate
-                                               select f.CalculatedValue).Count();
+        public async Task<IActionResult> TodaysSettlement([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
+            Models.TodaysSettlement model = await this.ReportingManager.GetTodaysSettlement(estateId, comparisonDate, cancellationToken);
             
-            var response = new TodaysSettlement{
-                                                   ComparisonSettlementCount = comparisonSettlementCount,
-                                                   ComparisonSettlementValue = comparisonSettlementValue,
-                                                   TodaysSettlementCount = todaysSettlementCount,
-                                                   TodaysSettlementValue = todaysSettlementValue
-                                               };
+            TodaysSettlement response = new TodaysSettlement{
+                                                                ComparisonSettlementCount = model.ComparisonSettlementCount,
+                                                                ComparisonSettlementValue = model.ComparisonSettlementValue,
+                                                                TodaysSettlementCount = model.TodaysSettlementCount,
+                                                                TodaysSettlementValue = model.TodaysSettlementValue
+                                                            };
 
             return this.Ok(response);
         }
