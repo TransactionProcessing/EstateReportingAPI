@@ -4,6 +4,7 @@ using DataTransferObjects;
 using EstateManagement.Database.Contexts;
 using EstateManagement.Database.Entities;
 using Newtonsoft.Json;
+using Shared.IntegrationTesting;
 using Shouldly;
 using Xunit;
 

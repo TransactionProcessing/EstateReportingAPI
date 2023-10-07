@@ -56,6 +56,8 @@ public abstract class ControllerTestsBase{
         dockerHelper.SqlServerContainerName = "sharedsqlserver";
 
         DatabaseServerNetwork = dockerHelper.SetupTestNetwork("sharednetwork", true);
-        DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(DatabaseServerNetwork);
+        Retry.For(async () => {
+                      DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(DatabaseServerNetwork);
+                  });
     }
 }
