@@ -124,7 +124,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
             {
                 Decimal amount = 100 + i;
 
-                Transaction transaction = await helper.AddTransaction(comparisonDate, 1, "Safaricom", 1, "0000", amount);
+                Transaction transaction = await helper.AddTransaction(date, 1, "Safaricom", 1, "0000", amount);
                 comparisonDateTransactions.Add(transaction);
             }
         }
@@ -138,7 +138,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         foreach (TodaysSalesValueByHour salesValueByHour in todaysSalesValueByHour)
         {
             var todayHour = todaysTransactions.Where(t => t.TransactionDateTime.Hour == salesValueByHour.Hour);
-            var comparisonHour = todaysTransactions.Where(t => t.TransactionDateTime.Hour == salesValueByHour.Hour);
+            var comparisonHour = comparisonDateTransactions.Where(t => t.TransactionDateTime.Hour == salesValueByHour.Hour);
             salesValueByHour.ComparisonSalesValue.ShouldBe(comparisonHour.Sum(c => c.TransactionAmount));
             salesValueByHour.ComparisonSalesValue.ShouldBe(todayHour.Sum(c => c.TransactionAmount));
         }
