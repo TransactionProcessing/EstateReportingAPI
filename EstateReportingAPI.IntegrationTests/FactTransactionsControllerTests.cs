@@ -140,7 +140,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
             var todayHour = todaysTransactions.Where(t => t.TransactionDateTime.Hour == salesValueByHour.Hour);
             var comparisonHour = comparisonDateTransactions.Where(t => t.TransactionDateTime.Hour == salesValueByHour.Hour);
             salesValueByHour.ComparisonSalesValue.ShouldBe(comparisonHour.Sum(c => c.TransactionAmount));
-            salesValueByHour.ComparisonSalesValue.ShouldBe(todayHour.Sum(c => c.TransactionAmount));
+            salesValueByHour.TodaysSalesValue.ShouldBe(todayHour.Sum(c => c.TransactionAmount));
         }
     }
 
