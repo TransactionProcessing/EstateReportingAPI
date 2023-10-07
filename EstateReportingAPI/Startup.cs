@@ -9,6 +9,9 @@ using Shared.Logger;
 
 namespace EstateReportingAPI
 {
+    using BusinessLogic;
+    using Org.BouncyCastle.Asn1.Cmp;
+
     public class Startup
     {
         public static IConfigurationRoot Configuration { get; set; }
@@ -32,13 +35,28 @@ namespace EstateReportingAPI
 
         public void ConfigureContainer(ServiceRegistry services)
         {
-
             ConfigurationReader.Initialise(Configuration);
 
             services.IncludeRegistry<MiddlewareRegistry>();
             services.IncludeRegistry<RepositoryRegistry>();
 
             Container = new Container(services);
+        }
+
+        public void ConfigureServices(IServiceCollection services){
+            //    ConfigurationReader.Initialise(Configuration);
+            //    ServiceRegistry registry = new ServiceRegistry(services);
+            //    registry.IncludeRegistry<MiddlewareRegistry>();
+            //    registry.IncludeRegistry<RepositoryRegistry>();
+
+            //    Container = new Container(registry);
+            String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
+            if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0)
+            {
+                services.AddSingleton<IReportingManager, ReportingManager>();
+            }
+
+            
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)

@@ -10,6 +10,8 @@
 
         private readonly Shared.EntityFramework.IDbContextFactory<EstateManagementGenericContext> ContextFactory;
 
+        private Guid Id;
+
         #endregion
 
         #region Constructors
@@ -76,7 +78,7 @@
 
         public async Task<List<Int32>> GetCalendarYears(Guid estateId, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
-
+            
             List<Int32> years = context.Calendar.Where(c => c.Date <= DateTime.Now.Date).GroupBy(c => c.Year).Select(y => y.Key).ToList();
 
             return years;
