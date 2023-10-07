@@ -8,7 +8,7 @@ using Shouldly;
 using Xunit;
 
 public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
-    [Fact(Skip = "A")]
+    [Fact]
     public async Task FactTransactionsControllerController_TodaysSales_SalesReturned(){
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
         var todaysTransactions = new List<Transaction>();
@@ -62,9 +62,6 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
                 Transaction transaction = await helper.AddTransaction(date, 1, "Safaricom", 1, "0000", amount);
                 localList.Add(transaction);
             }
-
-            //Console.WriteLine($"Today: Added Hour {hour} Sales Value {localList.Sum(t => t.TransactionAmount)}");
-            //Console.WriteLine($"Today: Added Hour {hour} Sales Count {localList.Count}");
             todaysTransactions.AddRange(localList);
         }
 
@@ -75,12 +72,10 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
             for (int i = 0; i < 21; i++){
                 Decimal amount = 100 + i;
                     
-                Transaction transaction = await helper.AddTransaction(comparisonDate, 1, "Safaricom", 1, "0000", amount);
+                Transaction transaction = await helper.AddTransaction(date, 1, "Safaricom", 1, "0000", amount);
                 localList.Add(transaction);
             }
 
-            //Console.WriteLine($"Comparison: Added Hour {hour} Sales Value {localList.Sum(t => t.TransactionAmount)}");
-            //Console.WriteLine($"Comparison: Added Hour {hour} Sales Count {localList.Count}");
             comparisonDateTransactions.AddRange(localList);
         }
 
@@ -88,18 +83,18 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
 
         response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        Console.WriteLine(content);
+
         List<TodaysSalesCountByHour>? todaysSalesCountByHour = JsonConvert.DeserializeObject<List<TodaysSalesCountByHour>>(content);
         
         foreach (TodaysSalesCountByHour salesCountByHour in todaysSalesCountByHour){
             var todayHour = todaysTransactions.Where(t => t.TransactionDateTime.Hour == salesCountByHour.Hour);
-            var comparisonHour = todaysTransactions.Where(t => t.TransactionDateTime.Hour == salesCountByHour.Hour);
+            var comparisonHour = comparisonDateTransactions.Where(t => t.TransactionDateTime.Hour == salesCountByHour.Hour);
             salesCountByHour.ComparisonSalesCount.ShouldBe(comparisonHour.Count());
             salesCountByHour.TodaysSalesCount.ShouldBe(todayHour.Count());
         }
     }
 
-    [Fact(Skip = "A")]
+    [Fact]
     public async Task FactTransactionsControllerController_TodaysSalesValueByHour_SalesReturned()
     {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
@@ -148,7 +143,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         }
     }
 
-    [Fact(Skip = "A")]
+    [Fact]
     public async Task FactTransactionsControllerController_TodaysFailedSales_SalesReturned()
     {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
@@ -185,7 +180,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
     }
 
-    [Fact(Skip = "A")]
+    [Fact]
     public async Task FactTransactionsControllerController_GetMerchantsTransactionKpis_SalesReturned()
     {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
@@ -228,7 +223,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         merchantKpi.MerchantsWithNoSaleInLast7Days.ShouldBe(8);
     }
 
-    [Fact(Skip = "A")]
+    [Fact]
     public async Task FactTransactionsController_GetTopBottomProductsByValue_BottomProducts_ProductsReturned(){
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
@@ -289,7 +284,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         topBottomProductData[2].SalesValue.ShouldBe(product1Transactions.Sum(p => p.TransactionAmount));
     }
 
-    [Fact(Skip = "A")]
+    [Fact]
     public async Task FactTransactionsController_GetTopBottomProductsByValue_Top_ProductsReturned()
     {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
@@ -351,7 +346,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         topBottomProductData[2].SalesValue.ShouldBe(product2Transactions.Sum(p => p.TransactionAmount));
     }
 
-    [Fact(Skip = "A")]
+    [Fact]
     public async Task FactTransactionsController_GetTopBottomOperatorsByValue_BottomOperators_OperatorsReturned()
     {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
@@ -414,7 +409,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         topBottomOperatorData[2].SalesValue.ShouldBe(operator1Transactions.Sum(p => p.TransactionAmount));
     }
 
-    [Fact(Skip = "A")]
+    [Fact]
     public async Task FactTransactionsController_GetTopBottomOperatorsByValue_TopOperators_OperatorsReturned()
     {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
@@ -477,7 +472,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         topBottomOperatorData[2].SalesValue.ShouldBe(operator2Transactions.Sum(p => p.TransactionAmount));
     }
 
-    [Fact(Skip = "A")]
+    [Fact]
     public async Task FactTransactionsController_GetTopBottoMerchantsByValue_BottomMerchants_MerchantsReturned()
     {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
@@ -540,7 +535,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         topBottomMerchantData[2].SalesValue.ShouldBe(merchant1Transactions.Sum(p => p.TransactionAmount));
     }
 
-    [Fact(Skip = "A")]
+    [Fact]
     public async Task FactTransactionsController_GetTopBottoMerchantsByValue_TopMerchants_MerchantsReturned()
     {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
