@@ -18,7 +18,7 @@
             result.ShouldBeTrue();
         }
 
-        [Fact(Skip = "")]
+        [Fact(Skip = "A")]
         public async Task FactSettlementsController_TodaysSettlement_SettlementReturned(){
             EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 

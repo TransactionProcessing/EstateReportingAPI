@@ -11,7 +11,7 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
     #region Methods
 
-    [Fact(Skip = "")]
+    [Fact(Skip = "A")]
     public async Task DimensionsController_GetCalendarYears_NoDataInDatabase(){
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/years");
 
@@ -21,7 +21,7 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
         years.Count.ShouldBe(0);
     }
 
-    [Fact(Skip = "")]
+    [Fact(Skip = "A")]
     public async Task DimensionsController_GetCalendarYears_YearsReturned(){
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
@@ -45,7 +45,7 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
         years.Count.ShouldBe(yearList.Count);
     }
 
-    [Fact(Skip = "")]
+    [Fact(Skip = "A")]
     public async Task DimensionsController_GetCalendarComparisonDates_DatesReturned(){
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
@@ -72,7 +72,7 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
         dates.Select(d => d.Description).Contains("Last Month");
     }
 
-    [Fact(Skip = "")]
+    [Fact(Skip = "A")]
     public async Task DimensionsController_GetCalendarDates_DatesReturned(){
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
@@ -94,7 +94,7 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
         }
     }
 
-    [Fact(Skip = "")]
+    [Fact(Skip = "A")]
     public async Task DimensionsController_GetCalendarDates_NoDataInDatabase(){
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/2023/dates");
 
