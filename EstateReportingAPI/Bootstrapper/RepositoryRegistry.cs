@@ -26,8 +26,12 @@ public class RepositoryRegistry : ServiceRegistry{
         {
             this.AddSingleton<IConnectionStringConfigurationRepository, ConfigurationReaderConnectionStringRepository>();
         }
-        
-        this.AddSingleton<IReportingManager, ReportingManager>();
+
+        String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
+        if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) != 0){
+            this.AddSingleton<IReportingManager, ReportingManager>();
+        }
+
         this.AddSingleton<IDbContextFactory<EstateManagementGenericContext>, DbContextFactory<EstateManagementGenericContext>>();
 
         this.AddSingleton<Func<String, EstateManagementGenericContext>>(cont => connectionString =>
