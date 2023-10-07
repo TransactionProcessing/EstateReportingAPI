@@ -63,8 +63,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
                 localList.Add(transaction);
             }
 
-            Console.WriteLine($"Today: Added Hour {hour} Sales Value {localList.Sum(t => t.TransactionAmount)}");
-            Console.WriteLine($"Today: Added Hour {hour} Sales Count {localList.Count}");
+            //Console.WriteLine($"Today: Added Hour {hour} Sales Value {localList.Sum(t => t.TransactionAmount)}");
+            //Console.WriteLine($"Today: Added Hour {hour} Sales Count {localList.Count}");
             todaysTransactions.AddRange(localList);
         }
 
@@ -79,8 +79,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
                 localList.Add(transaction);
             }
 
-            Console.WriteLine($"Comparison: Added Hour {hour} Sales Value {localList.Sum(t => t.TransactionAmount)}");
-            Console.WriteLine($"Comparison: Added Hour {hour} Sales Count {localList.Count}");
+            //Console.WriteLine($"Comparison: Added Hour {hour} Sales Value {localList.Sum(t => t.TransactionAmount)}");
+            //Console.WriteLine($"Comparison: Added Hour {hour} Sales Count {localList.Count}");
             comparisonDateTransactions.AddRange(localList);
         }
 

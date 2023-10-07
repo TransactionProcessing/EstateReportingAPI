@@ -83,6 +83,7 @@ public class DatabaseHelper{
     public async Task<Transaction> AddTransaction(DateTime dateTime, Int32 merchantReportingId,String operatorIdentifier, Int32 contractProductReportingId,
                                                  String responseCode, Decimal transactionAmount){
 
+        Console.WriteLine($"TransactionDate {dateTime:yyyy-MM-dd HH:mm}");
         Transaction transaction = new Transaction{
                                                      MerchantReportingId = merchantReportingId,
                                                      TransactionDate = dateTime.Date,
