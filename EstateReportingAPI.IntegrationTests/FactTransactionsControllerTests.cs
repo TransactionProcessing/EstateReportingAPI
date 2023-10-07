@@ -64,6 +64,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
             }
 
             Console.WriteLine($"Today: Added Hour {hour} Sales Value {localList.Sum(t => t.TransactionAmount)}");
+            Console.WriteLine($"Today: Added Hour {hour} Sales Count {localList.Count}");
             todaysTransactions.AddRange(localList);
         }
 
@@ -79,6 +80,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
             }
 
             Console.WriteLine($"Comparison: Added Hour {hour} Sales Value {localList.Sum(t => t.TransactionAmount)}");
+            Console.WriteLine($"Comparison: Added Hour {hour} Sales Count {localList.Count}");
             comparisonDateTransactions.AddRange(localList);
         }
 
@@ -86,8 +88,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
 
         response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        Console.WriteLine(content);
         List<TodaysSalesCountByHour>? todaysSalesCountByHour = JsonConvert.DeserializeObject<List<TodaysSalesCountByHour>>(content);
-
+        
         foreach (TodaysSalesCountByHour salesCountByHour in todaysSalesCountByHour){
             var todayHour = todaysTransactions.Where(t => t.TransactionDateTime.Hour == salesCountByHour.Hour);
             var comparisonHour = todaysTransactions.Where(t => t.TransactionDateTime.Hour == salesCountByHour.Hour);
