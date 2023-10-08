@@ -51,29 +51,32 @@
 
             this.AddSwaggerExamplesFromAssemblyOf<SwaggerJsonConverter>();
 
-            this.AddAuthentication(options => {
-                                       options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                                       options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                                       options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                                   }).AddJwtBearer(options => {
-                                                       options.BackchannelHttpHandler = new HttpClientHandler{
-                                                                                                                 ServerCertificateCustomValidationCallback = (message,
-                                                                                                                                                              certificate,
-                                                                                                                                                              chain,
-                                                                                                                                                              sslPolicyErrors) => true
-                                                                                                             };
-                                                       options.Authority = ConfigurationReader.GetValue("SecurityConfiguration", "Authority");
-                                                       options.Audience = ConfigurationReader.GetValue("SecurityConfiguration", "ApiName");
+            String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
+            if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) != 0){
+                this.AddAuthentication(options => {
+                                           options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                                           options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                                           options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                                       }).AddJwtBearer(options => {
+                                                           options.BackchannelHttpHandler = new HttpClientHandler{
+                                                                                                                     ServerCertificateCustomValidationCallback = (message,
+                                                                                                                                                                  certificate,
+                                                                                                                                                                  chain,
+                                                                                                                                                                  sslPolicyErrors) => true
+                                                                                                                 };
+                                                           options.Authority = ConfigurationReader.GetValue("SecurityConfiguration", "Authority");
+                                                           options.Audience = ConfigurationReader.GetValue("SecurityConfiguration", "ApiName");
 
-                                                       options.TokenValidationParameters = new TokenValidationParameters{
-                                                                                                                            ValidateAudience = false,
-                                                                                                                            ValidAudience =
-                                                                                                                                ConfigurationReader.GetValue("SecurityConfiguration", "ApiName"),
-                                                                                                                            ValidIssuer =
-                                                                                                                                ConfigurationReader.GetValue("SecurityConfiguration", "Authority"),
-                                                                                                                        };
-                                                       options.IncludeErrorDetails = true;
-                                                   });
+                                                           options.TokenValidationParameters = new TokenValidationParameters{
+                                                                                                                                ValidateAudience = false,
+                                                                                                                                ValidAudience =
+                                                                                                                                    ConfigurationReader.GetValue("SecurityConfiguration", "ApiName"),
+                                                                                                                                ValidIssuer =
+                                                                                                                                    ConfigurationReader.GetValue("SecurityConfiguration", "Authority"),
+                                                                                                                            };
+                                                           options.IncludeErrorDetails = true;
+                                                       });
+            }
 
             this.AddControllers().AddNewtonsoftJson(options => {
                                                         options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;

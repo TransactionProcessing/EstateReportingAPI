@@ -1,23 +1,15 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics.CodeAnalysis;
 
 namespace EstateReportingAPI.Controllers{
-    using System.Collections.Specialized;
-    using System.Globalization;
-    using DataTrasferObjects;
-    using EstateManagement.Database.Contexts;
-    using System.Web;
     using DataTransferObjects;
-    using Microsoft.IdentityModel.Protocols;
-    using EstateManagement.Database.Entities;
-    using System.Linq;
     using BusinessLogic;
-    using Microsoft.EntityFrameworkCore;
+    using Microsoft.AspNetCore.Authorization;
 
     [ExcludeFromCodeCoverage]
     [Route(FactTransactionsController.ControllerRoute)]
     [ApiController]
+    [Authorize]
     public class FactTransactionsController : ControllerBase{
         #region Others
 

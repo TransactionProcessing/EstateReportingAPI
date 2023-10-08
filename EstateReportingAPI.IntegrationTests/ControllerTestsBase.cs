@@ -1,5 +1,6 @@
 ﻿namespace EstateReportingAPI.IntegrationTests;
 
+using System.Net.Http.Headers;
 using Common;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
@@ -29,6 +30,7 @@ public abstract class ControllerTestsBase{
     {
         HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
         requestMessage.Headers.Add("estateId", this.TestId.ToString());
+        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Test");
 
         HttpResponseMessage result = await this.Client.SendAsync(requestMessage, CancellationToken.None);
 

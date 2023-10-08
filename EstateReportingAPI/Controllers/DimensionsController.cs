@@ -1,18 +1,15 @@
 ﻿namespace EstateReportingAPI.Controllers
 {
     using DataTrasferObjects;
-    using EstateManagement.Database.Contexts;
-    using EstateManagement.Database.Entities;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
-    using Shared.EntityFramework;
     using System.Diagnostics.CodeAnalysis;
     using BusinessLogic;
 
     [ExcludeFromCodeCoverage]
     [Route(DimensionsController.ControllerRoute)]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class DimensionsController : ControllerBase
     {
         private readonly IReportingManager ReportingManager;
