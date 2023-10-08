@@ -56,7 +56,7 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/comparisondates");
 
-        response.IsSuccessStatusCode.ShouldBeTrue();
+        response.IsSuccessStatusCode.ShouldBeTrue(response.StatusCode.ToString());
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         List<ComparisonDate> dates = JsonConvert.DeserializeObject<List<ComparisonDate>>(content);
 
