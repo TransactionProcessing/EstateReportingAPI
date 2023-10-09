@@ -273,7 +273,7 @@
         }
 
         public async Task<List<Merchant>> GetMerchants(String accessToken, Guid estateId, CancellationToken cancellationToken){
-            List<CalendarYear> response = null;
+            List<Merchant> response = null;
 
             String requestUri = this.BuildRequestUrl("/api/dimensions/merchants");
 
