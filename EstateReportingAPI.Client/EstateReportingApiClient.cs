@@ -272,6 +272,37 @@
             return response;
         }
 
+        public async Task<List<Merchant>> GetMerchants(String accessToken, Guid estateId, CancellationToken cancellationToken){
+            List<CalendarYear> response = null;
+
+            String requestUri = this.BuildRequestUrl("/api/dimensions/merchants");
+
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Add("EstateId", estateId.ToString());
+
+                // Make the Http Call here
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
+
+                // Process the response
+                String content = await this.HandleResponse(httpResponse, cancellationToken);
+
+                // call was successful so now deserialise the body to the response object
+                response = JsonConvert.DeserializeObject<List<Merchant>>(content);
+            }
+            catch (Exception ex)
+            {
+                // An exception has occurred, add some additional information to the message
+                Exception exception = new Exception($"Error getting merchants for estate {estateId}.", ex);
+
+                throw exception;
+            }
+
+            return response;
+        }
+
         public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(String accessToken, Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
             List<TodaysSalesCountByHour> response = null;
 

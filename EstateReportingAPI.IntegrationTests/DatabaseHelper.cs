@@ -105,7 +105,7 @@ public class DatabaseHelper{
         return transaction;
     }
 
-    public async Task AddMerchant(Int32 estateReportingId, String merchantName, DateTime lastSaleDateTime){
+    public async Task AddMerchant(Int32 estateReportingId, String merchantName, DateTime lastSaleDateTime, List<(String addressLine1,String town,String postCode, String region)> addressList = null){
         Merchant merchant = new Merchant{
                                             EstateReportingId = estateReportingId,
                                             MerchantId = Guid.NewGuid(),
@@ -113,9 +113,30 @@ public class DatabaseHelper{
                                             LastSaleDate = lastSaleDateTime.Date,
                                             LastSaleDateTime = lastSaleDateTime
                                         };
-
+        
         await this.Context.Merchants.AddAsync(merchant);
         await this.Context.SaveChangesAsync(CancellationToken.None);
+
+        if (addressList != null){
+            var savedMerchant = await this.Context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchant.MerchantId);
+
+            if (savedMerchant == null){
+                throw new Exception($"Error saving merchant {merchant.Name}");
+            }
+            foreach ((String addressLine1, String town, String postCode, String region) address in addressList)
+            {
+                await this.Context.MerchantAddresses.AddAsync(new MerchantAddress
+                                                              {
+                                                                  AddressId = Guid.NewGuid(),
+                                                                  AddressLine1 = address.addressLine1,
+                                                                  Region = address.region,
+                                                                  Town = address.town,
+                                                                  PostalCode = address.postCode,
+                                                                  MerchantReportingId = savedMerchant.MerchantReportingId
+                                                              });
+            }
+        }
+
     }
 
     public async Task AddContractProduct(String productName){

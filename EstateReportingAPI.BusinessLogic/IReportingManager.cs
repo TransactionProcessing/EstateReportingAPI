@@ -21,5 +21,7 @@ public interface IReportingManager{
 
     Task<List<TopBottomData>> GetTopBottomData(Guid estateId, TopBottom direction, Int32 resultCount, Dimension dimension, CancellationToken cancellationToken);
 
+    Task<List<Merchant>> GetMerchants(Guid estateId, CancellationToken cancellationToken);
+
     #endregion
 }
