@@ -4,6 +4,7 @@
     using Microsoft.EntityFrameworkCore;
     using Models;
     using Calendar = Models.Calendar;
+    using Merchant = Models.Merchant;
 
     public class ReportingManager : IReportingManager{
         #region Fields
@@ -366,6 +367,59 @@
 
             // TODO: bad request??
             return await queryable.Take(resultCount).ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<Merchant>> GetMerchants(Guid estateId, CancellationToken cancellationToken){
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+
+            var merchants = context.Merchants
+                                                    .Select(m => new 
+                                                                 {
+                                                                     MerchantReportingId = m.MerchantReportingId,
+                                                                     EstateReportingId = m.EstateReportingId,
+                                                                     Name = m.Name,
+                                                                     LastSaleDateTime = m.LastSaleDateTime,
+                                                                     LastSale = m.LastSaleDate,
+                                                                     CreatedDateTime = m.CreatedDateTime,
+                                                                     LastStatement = m.LastStatementGenerated,
+                                                                     MerchantId = m.MerchantId,
+                                                                     Reference = m.Reference,
+                                                                     AddressInfo = context.MerchantAddresses
+                                                                                          .Where(ma => ma.MerchantReportingId == m.MerchantReportingId)
+                                                                                          .OrderByDescending(ma => ma.CreatedDateTime)
+                                                                                          .Select(ma => new 
+                                                                                                        {
+                                                                                                            PostCode = ma.PostalCode,
+                                                                                                            Region = ma.Region,
+                                                                                                            Town = ma.Town,
+                                                                                                            // Add more properties as needed
+                                                                                                        })
+                                                                                          .FirstOrDefault() // Get the first matching MerchantAddress or null
+                                                                 });
+
+            List<Merchant> merchantList = new List<Merchant>();
+            foreach (var result in merchants){
+                var model = new Merchant{
+                                                 MerchantId = result.MerchantId,
+                                                 Name = result.Name,
+                                                 Reference = result.Reference,
+                                                 MerchantReportingId = result.MerchantReportingId,
+                                                 CreatedDateTime = result.CreatedDateTime,
+                                                 EstateReportingId = result.EstateReportingId,
+                                                 LastSale = result.LastSale,
+                                                 LastSaleDateTime = result.LastSaleDateTime,
+                                                 LastStatement = result.LastStatement
+                                             };
+
+                if (result.AddressInfo != null){
+                    model.PostCode = result.AddressInfo.PostCode;
+                    model.Town = result.AddressInfo.Town;
+                    model.Region = result.AddressInfo.Region;
+                }
+                merchantList.Add(model);
+            }
+
+            return merchantList;
         }
 
         #endregion

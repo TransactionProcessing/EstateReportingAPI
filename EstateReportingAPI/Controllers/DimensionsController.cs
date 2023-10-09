@@ -10,14 +10,13 @@
     [Route(DimensionsController.ControllerRoute)]
     [ApiController]
     [Authorize]
-    public class DimensionsController : ControllerBase
-    {
+    public class DimensionsController : ControllerBase{
         private readonly IReportingManager ReportingManager;
 
         public DimensionsController(IReportingManager reportingManager){
             this.ReportingManager = reportingManager;
         }
-        
+
         #region Others
 
         /// <summary>
@@ -37,7 +36,7 @@
         public async Task<IActionResult> GetCalendarYears([FromHeader] Guid estateId, CancellationToken cancellationToken){
 
             List<Int32> years = await this.ReportingManager.GetCalendarYears(estateId, cancellationToken);
-            
+
             List<CalendarYear> response = new List<CalendarYear>();
 
             years.ForEach(y => response.Add(new CalendarYear{
@@ -54,28 +53,26 @@
 
             List<CalendarDate> response = new List<CalendarDate>();
 
-            dates.ForEach(d => response.Add(new CalendarDate
-            {
-                Year = d.Year,
-                Date = d.Date,
-                DayOfWeek = d.DayOfWeek,
-                DayOfWeekNumber = d.DayOfWeekNumber,
-                DayOfWeekShort = d.DayOfWeekShort,
-                MonthName = d.MonthNameLong,
-                MonthNameShort = d.MonthNameShort,
-                MonthNumber = d.MonthNumber,
-                WeekNumber = d.WeekNumber ?? 0,
-                WeekNumberString = d.WeekNumberString,
-                YearWeekNumber = d.YearWeekNumber,
-            }));
+            dates.ForEach(d => response.Add(new CalendarDate{
+                                                                Year = d.Year,
+                                                                Date = d.Date,
+                                                                DayOfWeek = d.DayOfWeek,
+                                                                DayOfWeekNumber = d.DayOfWeekNumber,
+                                                                DayOfWeekShort = d.DayOfWeekShort,
+                                                                MonthName = d.MonthNameLong,
+                                                                MonthNameShort = d.MonthNameShort,
+                                                                MonthNumber = d.MonthNumber,
+                                                                WeekNumber = d.WeekNumber ?? 0,
+                                                                WeekNumberString = d.WeekNumberString,
+                                                                YearWeekNumber = d.YearWeekNumber,
+                                                            }));
 
             return this.Ok(response);
         }
 
         [HttpGet]
         [Route("calendar/comparisondates")]
-        public async Task<IActionResult> GetCalendarComparisonDates([FromHeader] Guid estateId, CancellationToken cancellationToken)
-        {
+        public async Task<IActionResult> GetCalendarComparisonDates([FromHeader] Guid estateId, CancellationToken cancellationToken){
             List<Models.Calendar> dates = await this.ReportingManager.GetCalendarComparisonDates(estateId, cancellationToken);
 
             List<ComparisonDate> response = new List<ComparisonDate>();
@@ -108,7 +105,32 @@
 
             return this.Ok(response.OrderBy(d => d.OrderValue));
         }
+        
+        [HttpGet]
+        [Route("merchants")]
+        public async Task<IActionResult> GetMerchants([FromHeader] Guid estateId, CancellationToken cancellationToken){
+            List<Models.Merchant> merchants = await this.ReportingManager.GetMerchants(estateId, cancellationToken);
+
+            List<Merchant> response = new List<Merchant>();
+
+            merchants.ForEach(m => response.Add(new Merchant{
+                                                                MerchantReportingId = m.MerchantReportingId,
+                                                                MerchantId = m.MerchantId,
+                                                                EstateReportingId = m.EstateReportingId,
+                                                                Name = m.Name,
+                                                                LastSaleDateTime = m.LastSaleDateTime,
+                                                                CreatedDateTime = m.CreatedDateTime,
+                                                                LastSale = m.LastSale,
+                                                                LastStatement = m.LastStatement,
+                                                                PostCode = m.PostCode,
+                                                                Reference = m.Reference,
+                                                                Region = m.Region,
+                                                                Town = m.Town,
+                                                            }));
+
+            return this.Ok(response.OrderBy(m => m.Name));
+        }
     }
 
-    
+
 }

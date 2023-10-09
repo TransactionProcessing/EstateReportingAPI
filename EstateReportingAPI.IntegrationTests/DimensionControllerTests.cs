@@ -103,7 +103,108 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
         List<CalendarDate> dates = JsonConvert.DeserializeObject<List<CalendarDate>>(content);
         dates.Count.ShouldBe(0);
     }
-    
+
+    [Fact]
+    public async Task DimensionsController_GetMerchants_NoData_NomerchantsReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        DatabaseHelper helper = new DatabaseHelper(context);
+        
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
+        merchants.Count.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task DimensionsController_GetMerchants_NoAddresses_MerchantsReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        DatabaseHelper helper = new DatabaseHelper(context);
+
+        for (int i = 0; i < 10; i++){
+            await helper.AddMerchant(1, $"Test Merchant {i}", DateTime.Now);
+        }
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
+        merchants.Count.ShouldBe(10);
+        merchants.Any(m => String.IsNullOrEmpty(m.Region) == false || String.IsNullOrEmpty(m.Town) == false ||
+            String.IsNullOrEmpty(m.PostCode) == false).ShouldBeFalse();
+
+        for (int i = 0; i < 10; i++){
+            var expected = merchants.SingleOrDefault(m => m.Name == $"Test Merchant {i}");
+            expected.ShouldNotBeNull();
+        }
+    }
+
+    [Fact]
+    public async Task DimensionsController_GetMerchants_EachMerchantHasOneAddress_MerchantsReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        DatabaseHelper helper = new DatabaseHelper(context);
+
+        for (int i = 0; i < 10; i++){
+            var addressList = new List<(String addressLine1, String town, String postCode, String region)>();
+
+            addressList.Add(("Address Line 1", $"Test Town {i}", $"TE57 {i}NG", $"Region {i}"));
+            await helper.AddMerchant(1, $"Test Merchant {i}", DateTime.Now,addressList );
+        }
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
+        merchants.Count.ShouldBe(10);
+        merchants.Any(m => String.IsNullOrEmpty(m.Region) == false || String.IsNullOrEmpty(m.Town) == false ||
+                           String.IsNullOrEmpty(m.PostCode) == false).ShouldBeTrue();
+
+        for (int i = 0; i < 10; i++)
+        {
+            var expected = merchants.SingleOrDefault(m => m.Name == $"Test Merchant {i}");
+            expected.ShouldNotBeNull();
+        }
+    }
+
+    [Fact]
+    public async Task DimensionsController_GetMerchants_EachMerchantHasTwoAddress_MerchantsReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        DatabaseHelper helper = new DatabaseHelper(context);
+
+        for (int i = 0; i < 10; i++){
+            var addressList = new List<(String addressLine1, String town, String postCode, String region)>();
+            for (int j = 0; j < 2; j++){
+                addressList.Add(("Address Line 1", $"Test Town {i}{j}", $"TE5{j} {i}NG", $"Region {i}{j}"));
+            }
+            await helper.AddMerchant(1, $"Test Merchant {i}", DateTime.Now, addressList);
+        }
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
+        merchants.Count.ShouldBe(10);
+        merchants.Any(m => String.IsNullOrEmpty(m.Region) == false || String.IsNullOrEmpty(m.Town) == false ||
+                           String.IsNullOrEmpty(m.PostCode) == false).ShouldBeTrue();
+
+        for (int i = 0; i < 10; i++)
+        {
+            var expected = merchants.SingleOrDefault(m => m.Name == $"Test Merchant {i}");
+            expected.ShouldNotBeNull();
+        }
+    }
     #endregion
 
     public void Dispose(){

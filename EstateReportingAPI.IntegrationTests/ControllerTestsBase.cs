@@ -1,6 +1,7 @@
 ﻿namespace EstateReportingAPI.IntegrationTests;
 
 using System.Net.Http.Headers;
+using Client;
 using Common;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
@@ -11,7 +12,6 @@ using Shared.Logger;
 public abstract class ControllerTestsBase{
 
     protected readonly HttpClient Client;
-
     protected readonly CustomWebApplicationFactory<Startup> factory;
 
     protected readonly Guid TestId;
