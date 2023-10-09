@@ -23,5 +23,7 @@ public interface IReportingManager{
 
     Task<List<Merchant>> GetMerchants(Guid estateId, CancellationToken cancellationToken);
 
+    Task<List<Operator>> GetOperators(Guid estateId, CancellationToken cancellationToken);
+
     #endregion
 }

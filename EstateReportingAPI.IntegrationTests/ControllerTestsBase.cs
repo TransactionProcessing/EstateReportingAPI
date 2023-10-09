@@ -1,15 +1,18 @@
 ﻿namespace EstateReportingAPI.IntegrationTests;
 
 using System.Net.Http.Headers;
+using Azure;
 using Client;
 using Common;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
+using EstateManagement.Database.Contexts;
 using NLog;
 using Shared.IntegrationTesting;
 using Shared.Logger;
+using Shouldly;
 
-public abstract class ControllerTestsBase{
+public abstract class ControllerTestsBase : IDisposable{
 
     protected readonly HttpClient Client;
     protected readonly CustomWebApplicationFactory<Startup> factory;
@@ -33,7 +36,7 @@ public abstract class ControllerTestsBase{
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Test");
 
         HttpResponseMessage result = await this.Client.SendAsync(requestMessage, CancellationToken.None);
-
+        result.IsSuccessStatusCode.ShouldBeTrue(result.StatusCode.ToString());
         return result;
     }
     public static IContainerService DatabaseServerContainer;
@@ -61,5 +64,15 @@ public abstract class ControllerTestsBase{
         Retry.For(async () => {
                       DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(DatabaseServerNetwork);
                   });
+    }
+
+    public void Dispose()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        Console.WriteLine($"About to delete database EstateReportingReadModel{this.TestId.ToString()}");
+        Boolean result = context.Database.EnsureDeleted();
+        Console.WriteLine($"Delete result is {result}");
+        result.ShouldBeTrue();
     }
 }
