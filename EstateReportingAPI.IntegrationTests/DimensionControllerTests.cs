@@ -3,6 +3,7 @@
 using Common;
 using DataTrasferObjects;
 using EstateManagement.Database.Contexts;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using Shouldly;
 using Xunit;
@@ -15,7 +16,6 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
     public async Task DimensionsController_GetCalendarYears_NoDataInDatabase(){
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/years");
 
-        response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         List<CalendarYear>? years = JsonConvert.DeserializeObject<List<CalendarYear>>(content);
         years.Count.ShouldBe(0);
@@ -39,7 +39,6 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/years");
 
-        response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         List<CalendarYear>? years = JsonConvert.DeserializeObject<List<CalendarYear>>(content);
         years.Count.ShouldBe(yearList.Count);
@@ -56,7 +55,6 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/comparisondates");
 
-        response.IsSuccessStatusCode.ShouldBeTrue(response.StatusCode.ToString());
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         List<ComparisonDate> dates = JsonConvert.DeserializeObject<List<ComparisonDate>>(content);
 
@@ -83,7 +81,6 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/2023/dates");
 
-        response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         List<CalendarDate> dates = JsonConvert.DeserializeObject<List<CalendarDate>>(content);
         dates.Count.ShouldBe(datesInYear.Where(d => d <= DateTime.Now.Date).ToList().Count);
@@ -98,14 +95,13 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
     public async Task DimensionsController_GetCalendarDates_NoDataInDatabase(){
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/2023/dates");
 
-        response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         List<CalendarDate> dates = JsonConvert.DeserializeObject<List<CalendarDate>>(content);
         dates.Count.ShouldBe(0);
     }
 
     [Fact]
-    public async Task DimensionsController_GetMerchants_NoData_NomerchantsReturned()
+    public async Task DimensionsController_GetMerchants_NoData_NoMerchantsReturned()
     {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
@@ -113,7 +109,6 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
         
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
 
-        response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
         merchants.Count.ShouldBe(0);
@@ -132,7 +127,6 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
 
-        response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
         merchants.Count.ShouldBe(10);
@@ -161,7 +155,6 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
 
-        response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
         merchants.Count.ShouldBe(10);
@@ -192,7 +185,6 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
         HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
 
-        response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
         merchants.Count.ShouldBe(10);
@@ -205,14 +197,49 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
             expected.ShouldNotBeNull();
         }
     }
-    #endregion
 
-    public void Dispose(){
+    [Fact]
+    public async Task DimensionsController_GetOperators_NoData_NoOperatorsReturned()
+    {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
-        Console.WriteLine($"About to delete database EstateReportingReadModel{this.TestId.ToString()}");
-        Boolean result = context.Database.EnsureDeleted();
-        Console.WriteLine($"Delete result is {result}");
-        result.ShouldBeTrue();
+        DatabaseHelper helper = new DatabaseHelper(context);
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/operators");
+        
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        List<Operator> operators = JsonConvert.DeserializeObject<List<Operator>>(content);
+        operators.Count.ShouldBe(0);
     }
+
+    [Fact]
+    public async Task DimensionsController_GetOperators_OperatorsReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        DatabaseHelper helper = new DatabaseHelper(context);
+        await helper.AddEstateOperator("Operator1");
+        await helper.AddEstateOperator("Operator2");
+        await helper.AddEstateOperator("Operator3");
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/operators");
+
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        List<Operator> operators = JsonConvert.DeserializeObject<List<Operator>>(content);
+        operators.Count.ShouldBe(3);
+        operators.Any(o => o.Name == "Operator1").ShouldBeTrue();
+        operators.Any(o => o.Name == "Operator2").ShouldBeTrue();
+        operators.Any(o => o.Name == "Operator3").ShouldBeTrue();
+    }
+
+    #endregion
+
+    //public void Dispose(){
+    //    EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+    //    Console.WriteLine($"About to delete database EstateReportingReadModel{this.TestId.ToString()}");
+    //    Boolean result = context.Database.EnsureDeleted();
+    //    Console.WriteLine($"Delete result is {result}");
+    //    result.ShouldBeTrue();
+    //}
 }

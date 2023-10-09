@@ -422,6 +422,18 @@
             return merchantList;
         }
 
+        public async Task<List<Operator>> GetOperators(Guid estateId, CancellationToken cancellationToken){
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+
+            var operators = await context.EstateOperators.Select(o => new Operator{
+                                                                                      Name = o.Name,
+                                                                                      EstateReportingId = o.EstateReportingId,
+                                                                                      OperatorId = o.OperatorId
+                                                                                  }).ToListAsync(cancellationToken);
+
+            return operators;
+        }
+
         #endregion
 
         #region Others
