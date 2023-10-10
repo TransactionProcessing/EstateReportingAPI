@@ -130,6 +130,24 @@
 
             return this.Ok(response.OrderBy(m => m.Name));
         }
+
+        [HttpGet]
+        [Route("operators")]
+        public async Task<IActionResult> GetOperators([FromHeader] Guid estateId, CancellationToken cancellationToken)
+        {
+            List<Models.Operator> operators = await this.ReportingManager.GetOperators(estateId, cancellationToken);
+
+            List<Operator> response = new List<Operator>();
+
+            operators.ForEach(o => response.Add(new Operator
+                                                {
+                                                    EstateReportingId = o.EstateReportingId,
+                                                    Name = o.Name,
+                                                    OperatorId = o.OperatorId
+                                                }));
+
+            return this.Ok(response.OrderBy(m => m.Name));
+        }
     }
 
 
