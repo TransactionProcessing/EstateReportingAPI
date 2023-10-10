@@ -85,6 +85,33 @@
             return years;
         }
 
+        public async Task<LastSettlement> GetLastSettlement(Guid estateId, CancellationToken cancellationToken){
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+
+            DateTime settlementDate = await context.Settlements.Where(s => s.IsCompleted).OrderByDescending(s => s.SettlementDate).Select(s => s.SettlementDate).FirstOrDefaultAsync(cancellationToken);
+
+            IQueryable<LastSettlement> settlements = from settlement in context.Settlements
+                                                     join merchantSettlementFee in context.MerchantSettlementFees
+                                                         on settlement.SettlementReportingId equals merchantSettlementFee.SettlementReportingId
+                                                     join transaction in context.Transactions
+                                                         on merchantSettlementFee.TransactionReportingId equals transaction.TransactionReportingId
+                                                     where settlement.SettlementDate == settlementDate
+                                                     group new
+                                                           {
+                                                               settlement.SettlementDate,
+                                                               CalculatedValue = merchantSettlementFee.CalculatedValue,
+                                                               TransactionAmount = transaction.TransactionAmount
+                                                           } by settlement.SettlementDate into grouped
+                                                     select new LastSettlement
+                                                            {
+                                                                SettlementDate = grouped.Key,
+                                                                FeesValue = grouped.Sum(item => item.CalculatedValue),
+                                                                SalesValue = grouped.Sum(item => item.TransactionAmount),
+                                                                SalesCount= grouped.Count()
+                                                            };
+            return await settlements.SingleOrDefaultAsync(cancellationToken);
+        }
+
         public async Task<MerchantKpi> GetMerchantsTransactionKpis(Guid estateId, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 

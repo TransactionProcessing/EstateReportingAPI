@@ -6,6 +6,7 @@ namespace EstateReportingAPI.Controllers
     using BusinessLogic;
     using DataTransferObjects;
     using Microsoft.AspNetCore.Authorization;
+    using LastSettlement = Models.LastSettlement;
 
     [ExcludeFromCodeCoverage]
     [Route(FactSettlementsController.ControllerRoute)]
@@ -44,6 +45,23 @@ namespace EstateReportingAPI.Controllers
                                                                 TodaysSettlementCount = model.TodaysSettlementCount,
                                                                 TodaysSettlementValue = model.TodaysSettlementValue
                                                             };
+
+            return this.Ok(response);
+        }
+
+        [HttpGet]
+        [Route("lastsettlement")]
+        public async Task<IActionResult> LastSettlement([FromHeader] Guid estateId, CancellationToken cancellationToken)
+        {
+            LastSettlement model = await this.ReportingManager.GetLastSettlement(estateId, cancellationToken);
+
+            LastSettlement response = new LastSettlement()
+                                        {
+                                            SalesCount = model.SalesCount,
+                                            FeesValue = model.FeesValue,
+                                            SalesValue = model.SalesValue,
+                                            SettlementDate = model.SettlementDate,
+                                        };
 
             return this.Ok(response);
         }
