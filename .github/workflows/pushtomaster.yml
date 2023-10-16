@@ -49,9 +49,9 @@ jobs:
 
     - name: Publish Images to Docker Hub
       run: |
-        docker build . --file EstateReportingAPI/Dockerfile --tag stuartferguson/estatemanagement:master
+        docker build . --file EstateReportingAPI/Dockerfile --tag stuartferguson/estatereportingapi:master
         docker login --username=${{ secrets.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }}
-        docker push stuartferguson/estatemanagement:master
+        docker push stuartferguson/estatereportingapi:master
 
   buildwidows:
     name: "Publish Pre-Release Docker for Windows"
