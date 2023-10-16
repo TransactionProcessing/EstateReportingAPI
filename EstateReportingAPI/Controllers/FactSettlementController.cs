@@ -42,8 +42,13 @@ namespace EstateReportingAPI.Controllers
             TodaysSettlement response = new TodaysSettlement{
                                                                 ComparisonSettlementCount = model.ComparisonSettlementCount,
                                                                 ComparisonSettlementValue = model.ComparisonSettlementValue,
+                                                                ComparisonPendingSettlementCount = model.ComparisonPendingSettlementCount,
+                                                                ComparisonPendingSettlementValue = model.ComparisonPendingSettlementValue,
+                                                                
                                                                 TodaysSettlementCount = model.TodaysSettlementCount,
-                                                                TodaysSettlementValue = model.TodaysSettlementValue
+                                                                TodaysSettlementValue = model.TodaysSettlementValue,
+                                                                TodaysPendingSettlementCount = model.TodaysPendingSettlementCount,
+                                                                TodaysPendingSettlementValue = model.TodaysPendingSettlementValue
                                                             };
 
             return this.Ok(response);

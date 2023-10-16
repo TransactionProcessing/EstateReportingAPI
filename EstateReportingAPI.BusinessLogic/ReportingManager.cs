@@ -96,6 +96,7 @@
                                                      join transaction in context.Transactions
                                                          on merchantSettlementFee.TransactionReportingId equals transaction.TransactionReportingId
                                                      where settlement.SettlementDate == settlementDate
+                                                     && merchantSettlementFee.IsSettled
                                                      group new
                                                            {
                                                                settlement.SettlementDate,
@@ -295,33 +296,39 @@
         public async Task<TodaysSettlement> GetTodaysSettlement(Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            // First we need to get a value of todays sales
-            Decimal todaysSettlementValue = (from s in context.Settlements
-                                             join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                             where f.IsSettled && s.SettlementDate == DateTime.Now.Date
-                                             select f.CalculatedValue).Sum();
+            var todaySettlementData = (from s in context.Settlements
+                                       join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
+                                       where s.SettlementDate == DateTime.Now.Date
+                                       group f by f.IsSettled into grouped
+                                       select new
+                                              {
+                                                  IsSettled = grouped.Key,
+                                                  CalculatedValueSum = grouped.Sum(item => item.CalculatedValue),
+                                                  CalculatedValueCount = grouped.Count()
+                                              }).ToList();
 
-            Int32 todaysSettlementCount = (from s in context.Settlements
-                                           join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                           where f.IsSettled && s.SettlementDate == DateTime.Now.Date
-                                           select f.CalculatedValue).Count();
+            var comparisonSettlementData = (from s in context.Settlements
+                                       join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
+                                       where s.SettlementDate == comparisonDate
+                                            group f by f.IsSettled into grouped
+                                       select new
+                                              {
+                                                  IsSettled = grouped.Key,
+                                                  CalculatedValueSum = grouped.Sum(item => item.CalculatedValue),
+                                                  CalculatedValueCount = grouped.Count()
+                                              }).ToList();
 
-            Decimal comparisonSettlementValue = (from s in context.Settlements
-                                                 join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                                 where f.IsSettled && s.SettlementDate == comparisonDate
-                                                 select f.CalculatedValue).Sum();
-
-            Int32 comparisonSettlementCount = (from s in context.Settlements
-                                               join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                               where f.IsSettled && s.SettlementDate == comparisonDate
-                                               select f.CalculatedValue).Count();
 
             TodaysSettlement response = new TodaysSettlement{
-                                                                ComparisonSettlementCount = comparisonSettlementCount,
-                                                                ComparisonSettlementValue = comparisonSettlementValue,
-                                                                TodaysSettlementCount = todaysSettlementCount,
-                                                                TodaysSettlementValue = todaysSettlementValue
-                                                            };
+                                                                ComparisonSettlementCount = comparisonSettlementData.FirstOrDefault(x => x.IsSettled)?.CalculatedValueCount ?? 0,
+                                                                ComparisonSettlementValue = comparisonSettlementData.FirstOrDefault(x => x.IsSettled)?.CalculatedValueSum ?? 0,
+                                                                ComparisonPendingSettlementCount = comparisonSettlementData.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueCount ?? 0,
+                                                                ComparisonPendingSettlementValue = comparisonSettlementData.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueSum ?? 0,
+                                                                TodaysSettlementCount = todaySettlementData.FirstOrDefault(x => x.IsSettled)?.CalculatedValueCount ?? 0,
+                                                                TodaysSettlementValue = todaySettlementData.FirstOrDefault(x => x.IsSettled)?.CalculatedValueSum ?? 0,
+                                                                TodaysPendingSettlementCount = todaySettlementData.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueCount ?? 0,
+                                                                TodaysPendingSettlementValue = todaySettlementData.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueSum ?? 0
+            };
 
             return response;
         }

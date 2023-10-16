@@ -24,7 +24,8 @@
         Task<List<TopBottomMerchantData>> GetTopBottomMerchantData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken);
         Task<List<TopBottomProductData>> GetTopBottomProductData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken);
         Task<List<Merchant>> GetMerchants(String accessToken, Guid estateId, CancellationToken cancellationToken);
-
+        Task<List<Operator>> GetOperators(String accessToken, Guid estateId, CancellationToken cancellationToken);
+        Task<LastSettlement> GetLastSettlement(String accessToken, Guid estateId,CancellationToken cancellationToken);
         #endregion
     }
 }

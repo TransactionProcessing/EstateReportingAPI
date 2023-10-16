@@ -37,24 +37,26 @@ public class DatabaseHelper{
         DateTime startDate = new DateTime(year, 1, 1);
         DateTime endDate = new DateTime(year, 12, 31);
 
-        for (DateTime currentDate = startDate; currentDate <= endDate; currentDate = currentDate.AddDays(1))
-        {
+        for (DateTime currentDate = startDate; currentDate <= endDate; currentDate = currentDate.AddDays(1)){
             datesInYear.Add(currentDate);
         }
+
         return datesInYear;
     }
 
-    public async Task AddSettlementRecordWithFees(DateTime dateTime, Int32 estateReportingId, Int32 merchantReportingId,
-                                          List<(Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId)> feesList){
+    public async Task AddSettlementRecordWithFees(DateTime dateTime,
+                                                  Int32 estateReportingId,
+                                                  Int32 merchantReportingId,
+                                                  List<(Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId, Boolean isSettled)> feesList){
         Settlement settlementRecord = new Settlement{
-                                         ProcessingStarted = true,
-                                         IsCompleted = true,
-                                         EstateReportingId = estateReportingId,
-                                         MerchantReportingId = merchantReportingId,
-                                         ProcessingStartedDateTIme = dateTime,
-                                         SettlementDate = dateTime,
-                                         SettlementId = Guid.NewGuid(),
-                                     };
+                                                        ProcessingStarted = true,
+                                                        IsCompleted = true,
+                                                        EstateReportingId = estateReportingId,
+                                                        MerchantReportingId = merchantReportingId,
+                                                        ProcessingStartedDateTIme = dateTime,
+                                                        SettlementDate = dateTime,
+                                                        SettlementId = Guid.NewGuid(),
+                                                    };
         await this.Context.Settlements.AddAsync(settlementRecord, CancellationToken.None);
 
         await this.Context.SaveChangesAsync(CancellationToken.None);
@@ -62,11 +64,11 @@ public class DatabaseHelper{
         var settlement = await this.Context.Settlements.Where(s => s.SettlementId == settlementRecord.SettlementId).SingleAsync(CancellationToken.None);
 
         Int32 counter = 1;
-        foreach ((Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId) fee in feesList){
+        foreach ((Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId, Boolean isSettled) fee in feesList){
             MerchantSettlementFee merchantSettlementFee = new MerchantSettlementFee{
                                                                                        MerchantReportingId = merchantReportingId,
                                                                                        SettlementReportingId = settlement.SettlementReportingId,
-                                                                                       IsSettled = true,
+                                                                                       IsSettled = fee.isSettled,
                                                                                        FeeCalculatedDateTime = dateTime,
                                                                                        TransactionReportingId = counter,
                                                                                        TransactionFeeReportingId = fee.transactionFeeReportingId,
@@ -80,8 +82,12 @@ public class DatabaseHelper{
         await this.Context.SaveChangesAsync(CancellationToken.None);
     }
 
-    public async Task<Transaction> AddTransaction(DateTime dateTime, Int32 merchantReportingId,String operatorIdentifier, Int32 contractProductReportingId,
-                                                 String responseCode, Decimal transactionAmount){
+    public async Task<Transaction> AddTransaction(DateTime dateTime,
+                                                  Int32 merchantReportingId,
+                                                  String operatorIdentifier,
+                                                  Int32 contractProductReportingId,
+                                                  String responseCode,
+                                                  Decimal transactionAmount){
 
         Transaction transaction = new Transaction{
                                                      MerchantReportingId = merchantReportingId,
@@ -105,7 +111,7 @@ public class DatabaseHelper{
         return transaction;
     }
 
-    public async Task AddMerchant(Int32 estateReportingId, String merchantName, DateTime lastSaleDateTime, List<(String addressLine1,String town,String postCode, String region)> addressList = null){
+    public async Task AddMerchant(Int32 estateReportingId, String merchantName, DateTime lastSaleDateTime, List<(String addressLine1, String town, String postCode, String region)> addressList = null){
         Merchant merchant = new Merchant{
                                             EstateReportingId = estateReportingId,
                                             MerchantId = Guid.NewGuid(),
@@ -113,7 +119,7 @@ public class DatabaseHelper{
                                             LastSaleDate = lastSaleDateTime.Date,
                                             LastSaleDateTime = lastSaleDateTime
                                         };
-        
+
         await this.Context.Merchants.AddAsync(merchant);
         await this.Context.SaveChangesAsync(CancellationToken.None);
 
@@ -123,17 +129,16 @@ public class DatabaseHelper{
             if (savedMerchant == null){
                 throw new Exception($"Error saving merchant {merchant.Name}");
             }
-            foreach ((String addressLine1, String town, String postCode, String region) address in addressList)
-            {
-                await this.Context.MerchantAddresses.AddAsync(new MerchantAddress
-                                                              {
-                                                                  AddressId = Guid.NewGuid(),
-                                                                  AddressLine1 = address.addressLine1,
-                                                                  Region = address.region,
-                                                                  Town = address.town,
-                                                                  PostalCode = address.postCode,
-                                                                  MerchantReportingId = savedMerchant.MerchantReportingId
-                                                              });
+
+            foreach ((String addressLine1, String town, String postCode, String region) address in addressList){
+                await this.Context.MerchantAddresses.AddAsync(new MerchantAddress{
+                                                                                     AddressId = Guid.NewGuid(),
+                                                                                     AddressLine1 = address.addressLine1,
+                                                                                     Region = address.region,
+                                                                                     Town = address.town,
+                                                                                     PostalCode = address.postCode,
+                                                                                     MerchantReportingId = savedMerchant.MerchantReportingId
+                                                                                 });
             }
         }
 
@@ -166,4 +171,30 @@ public class DatabaseHelper{
         await this.Context.SaveChangesAsync(CancellationToken.None);
     }
 
+
+    public async Task<(Decimal settledTransactionsValue, Decimal pendingSettlementTransactionsValue, Decimal settlementFeesValue, Decimal pendingSettlementFeesValue)> AddSettlementRecord(DateTime settlementDate, Int32 estateReportingId, Int32 merchantReportingId, Int32 settledTransactionCount, Int32 pendingSettlementTransactionCount){
+        List<Transaction> settledTransactions = new();
+        List<Transaction> pendingSettlementTransactions = new();
+        List<(Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId, Boolean isSettled)> settlementFees = new();
+        List<(Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId, Boolean isSettled)> pendingSettlementFees = new();
+
+        for (int i = 1; i <= settledTransactionCount; i++){
+            Transaction transaction = await this.AddTransaction(settlementDate, 1, "Safaricom", 1, "0000", i);
+            settledTransactions.Add(transaction);
+            settlementFees.Add((0.5m, 0.5m * i, i, true));
+        }
+
+        await this.AddSettlementRecordWithFees(settlementDate, 1, 1, settlementFees);
+
+        for (int i = 1; i <= pendingSettlementTransactionCount; i++){
+            Transaction transaction = await this.AddTransaction(DateTime.Now, 1, "Safaricom", 1, "0000", i);
+            pendingSettlementTransactions.Add(transaction);
+            pendingSettlementFees.Add((0.5m, 0.5m * i, i, false));
+        }
+
+        await this.AddSettlementRecordWithFees(settlementDate, 1, 1, pendingSettlementFees);
+
+        return (settledTransactions.Sum(s => s.TransactionAmount), pendingSettlementTransactions.Sum(p => p.TransactionAmount),
+            settlementFees.Sum(s => s.calulatedValue), pendingSettlementFees.Sum(p => p.calulatedValue));
+    }
 }
