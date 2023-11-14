@@ -1,8 +1,10 @@
 ﻿namespace EstateReportingAPI.IntegrationTests;
 
+using System.Text;
 using EstateManagement.Database.Contexts;
 using EstateManagement.Database.Entities;
 using EstateManagement.Database.Migrations.MySql;
+using k8s.KubeConfigModels;
 using Microsoft.EntityFrameworkCore;
 
 public class DatabaseHelper{
@@ -10,6 +12,27 @@ public class DatabaseHelper{
 
     public DatabaseHelper(EstateManagementGenericContext context){
         this.Context = context;
+    }
+
+    public async Task AddResponseCode(Int32 code, String description){
+        await this.Context.Database.OpenConnectionAsync(CancellationToken.None);
+        try{
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("SET IDENTITY_INSERT dbo.ResponseCodes ON");
+            //await this.Context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.ResponseCodes ON", CancellationToken.None);
+            String sql = $"insert into dbo.ResponseCodes(ResponseCode, Description) SELECT {code}, '{description}'";
+            builder.AppendLine(sql);
+            builder.AppendLine("SET IDENTITY_INSERT dbo.ResponseCodes OFF");
+            //await this.Context.Database.ExecuteSqlRawAsync(sql, CancellationToken.None);
+            //await this.Context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.ResponseCodes OFF", CancellationToken.None);
+            await this.Context.Database.ExecuteSqlRawAsync(builder.ToString(), CancellationToken.None);
+        }
+        finally
+        {
+            await this.Context.Database.CloseConnectionAsync();
+        }
+
+        var x = await this.Context.ResponseCodes.ToListAsync(CancellationToken.None);
     }
 
     public async Task AddCalendarYear(Int32 year){

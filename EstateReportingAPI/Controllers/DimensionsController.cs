@@ -148,6 +148,22 @@
 
             return this.Ok(response.OrderBy(m => m.Name));
         }
+
+        [HttpGet]
+        [Route("responsecodes")]
+        public async Task<IActionResult> GetResponseCodes([FromHeader] Guid estateId, CancellationToken cancellationToken)
+        {
+            List<Models.ResponseCode> responseCodes = await this.ReportingManager.GetResponseCodes(estateId, cancellationToken);
+
+            List<ResponseCode> response = new List<ResponseCode>();
+
+            responseCodes.ForEach(o => response.Add(new ResponseCode{
+                                                                        Code = o.Code,
+                                                                        Description = o.Description
+                                                                    }));
+
+            return this.Ok(response.OrderBy(m => m.Code));
+        }
     }
 
 

@@ -138,6 +138,20 @@
             return response;
         }
 
+        public async Task<List<ResponseCode>> GetResponseCodes(Guid estateId, CancellationToken cancellationToken){
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            List<ResponseCode> response = new List<ResponseCode>();
+            
+            List<ResponseCodes> responseCodes = await context.ResponseCodes.ToListAsync(cancellationToken);
+
+            responseCodes.ForEach(r => response.Add(new ResponseCode{
+                                                                        Code = r.ResponseCode,
+                                                                        Description = r.Description
+                                                                    }));
+
+            return response;
+        }
+
         public async Task<TodaysSales> GetTodaysFailedSales(Guid estateId, DateTime comparisonDate, String responseCode, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 

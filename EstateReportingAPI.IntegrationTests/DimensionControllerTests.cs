@@ -3,10 +3,14 @@
 using Common;
 using DataTrasferObjects;
 using EstateManagement.Database.Contexts;
+using EstateReportingAPI.Models;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using Shouldly;
 using Xunit;
+using Merchant = DataTrasferObjects.Merchant;
+using Operator = DataTrasferObjects.Operator;
+using ResponseCode = DataTrasferObjects.ResponseCode;
 
 public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
@@ -230,6 +234,47 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
         operators.Any(o => o.Name == "Operator1").ShouldBeTrue();
         operators.Any(o => o.Name == "Operator2").ShouldBeTrue();
         operators.Any(o => o.Name == "Operator3").ShouldBeTrue();
+    }
+
+
+    [Fact]
+    public async Task DimensionsController_GetResponseCodes_ResponseCodesReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        DatabaseHelper helper = new DatabaseHelper(context);
+        await helper.AddResponseCode(0, "Success");
+        await helper.AddResponseCode(1000, "Unknown Device");
+        await helper.AddResponseCode(1001, "Unknown Estate");
+        await helper.AddResponseCode(1002, "Unknown Merchant");
+        await helper.AddResponseCode(1003, "No Devices Configured");
+
+        
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/responsecodes");
+
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        List<ResponseCode>? responseCodes = JsonConvert.DeserializeObject<List<ResponseCode>>(content);
+        responseCodes.Count.ShouldBe(5);
+        responseCodes.Any(o => o.Code == 0).ShouldBeTrue();
+        responseCodes.Any(o => o.Code == 1000).ShouldBeTrue();
+        responseCodes.Any(o => o.Code == 1001).ShouldBeTrue();
+        responseCodes.Any(o => o.Code == 1002).ShouldBeTrue();
+        responseCodes.Any(o => o.Code == 1003).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task DimensionsController_GetResponseCodes_NoData_NoResponseCodesReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        DatabaseHelper helper = new DatabaseHelper(context);
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/responsecodes");
+
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        List<ResponseCode>? responseCodes = JsonConvert.DeserializeObject<List<ResponseCode>>(content);
+        responseCodes.ShouldBeEmpty();
     }
 
     #endregion
