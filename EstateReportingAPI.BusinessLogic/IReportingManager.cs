@@ -20,5 +20,7 @@ public interface IReportingManager{
     Task<TodaysSettlement> GetTodaysSettlement(Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken);
     Task<List<TopBottomData>> GetTopBottomData(Guid estateId, TopBottom direction, Int32 resultCount, Dimension dimension, CancellationToken cancellationToken);
 
+    Task<TodaysSales> GetMerchantPerformance(Guid estateId, DateTime comparisonDate, List<Int32> merchantIds, List<Int32> operatorIds, CancellationToken cancellationToken);
+
     #endregion
 }
