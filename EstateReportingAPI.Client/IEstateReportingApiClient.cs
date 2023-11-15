@@ -29,6 +29,8 @@
 
         Task<List<ResponseCode>> GetResponseCodes(String accessToken, Guid estateId, CancellationToken cancellationToken);
         Task<TodaysSales> GetMerchantPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> merchantIds,CancellationToken cancellationToken);
+
+        Task<TodaysSales> GetProductPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> productIds, CancellationToken cancellationToken);
         #endregion
     }
 }

@@ -185,7 +185,7 @@ namespace EstateReportingAPI.Controllers{
                 }
             }
 
-            Models.TodaysSales model = await this.ReportingManager.GetMerchantPerformance(estateId, comparisonDate, merchantIdFilter, new List<Int32>(), cancellationToken);
+            Models.TodaysSales model = await this.ReportingManager.GetMerchantPerformance(estateId, comparisonDate, merchantIdFilter, cancellationToken);
 
             TodaysSales response = new TodaysSales
             {
@@ -196,6 +196,36 @@ namespace EstateReportingAPI.Controllers{
                 ComparisonAverageSalesValue = model.ComparisonAverageSalesValue,
                 TodaysAverageSalesValue = model.TodaysAverageSalesValue,
             };
+
+            return this.Ok(response);
+        }
+
+        [HttpGet]
+        [Route("products/performance")]
+        public async Task<IActionResult> GetProductPerformance([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] string? productIds, CancellationToken cancellationToken)
+        {
+
+            List<Int32> productIdFilter = new List<Int32>();
+            if (String.IsNullOrEmpty(productIds) == false)
+            {
+                List<String> productListStrings = productIds.Split(',').ToList();
+                foreach (String productListString in productListStrings)
+                {
+                    productIdFilter.Add(Int32.Parse(productListString));
+                }
+            }
+
+            Models.TodaysSales model = await this.ReportingManager.GetProductPerformance(estateId, comparisonDate, productIdFilter, cancellationToken);
+
+            TodaysSales response = new TodaysSales
+                                   {
+                                       ComparisonSalesCount = model.ComparisonSalesCount,
+                                       ComparisonSalesValue = model.ComparisonSalesValue,
+                                       TodaysSalesCount = model.TodaysSalesCount,
+                                       TodaysSalesValue = model.TodaysSalesValue,
+                                       ComparisonAverageSalesValue = model.ComparisonAverageSalesValue,
+                                       TodaysAverageSalesValue = model.TodaysAverageSalesValue,
+                                   };
 
             return this.Ok(response);
         }

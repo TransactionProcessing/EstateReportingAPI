@@ -419,7 +419,7 @@
             return await queryable.Take(resultCount).ToListAsync(cancellationToken);
         }
 
-        public async Task<TodaysSales> GetMerchantPerformance(Guid estateId, DateTime comparisonDate, List<Int32> merchantIds, List<Int32> operatorIds, CancellationToken cancellationToken){
+        public async Task<TodaysSales> GetMerchantPerformance(Guid estateId, DateTime comparisonDate, List<Int32> merchantIds, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             // First we need to get a value of todays sales
@@ -441,10 +441,41 @@
                 comparisonSalesQuery = comparisonSalesQuery.Where(t => merchantIds.Contains(t.MerchantReportingId));
             }
 
-            //if (operatorIds.Any())
-            //{
-            //    todaysSalesValueQuery = todaysSalesValueQuery.Where(t => operatorIds.Contains(t.OP
-            //}
+            TodaysSales response = new TodaysSales
+            {
+                ComparisonSalesCount = comparisonSalesQuery.Count(),
+                ComparisonSalesValue = comparisonSalesQuery.Sum(t => t.TransactionAmount),
+                ComparisonAverageSalesValue = comparisonSalesQuery.Sum(t => t.TransactionAmount) / comparisonSalesQuery.Count(),
+                TodaysSalesCount = todaysSalesQuery.Count(),
+                TodaysSalesValue = todaysSalesQuery.Sum(t => t.TransactionAmount),
+                TodaysAverageSalesValue = todaysSalesQuery.Sum(t => t.TransactionAmount) / todaysSalesQuery.Count()
+            };
+            return response;
+        }
+
+        public async Task<TodaysSales> GetProductPerformance(Guid estateId, DateTime comparisonDate, List<Int32> productIds, CancellationToken cancellationToken)
+        {
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+
+            // First we need to get a value of todays sales
+            var todaysSalesQuery = (from t in context.Transactions
+                                    where t.IsAuthorised && t.TransactionType == "Sale"
+                                                         && t.TransactionDate == DateTime.Now.Date
+                                                         && t.TransactionTime <= DateTime.Now.TimeOfDay
+                                    select t);
+
+            var comparisonSalesQuery = (from t in context.Transactions
+                                        where t.IsAuthorised && t.TransactionType == "Sale"
+                                                             && t.TransactionDate == comparisonDate
+                                                             && t.TransactionTime <= DateTime.Now.TimeOfDay
+                                        select t);
+
+
+            if (productIds.Any())
+            {
+                todaysSalesQuery = todaysSalesQuery.Where(t => productIds.Contains(t.ContractProductReportingId));
+                comparisonSalesQuery = comparisonSalesQuery.Where(t => productIds.Contains(t.ContractProductReportingId));
+            }
 
             TodaysSales response = new TodaysSales
             {
