@@ -1,5 +1,6 @@
 ﻿namespace EstateReportingAPI.IntegrationTests;
 
+using System.Security.Policy;
 using DataTransferObjects;
 using EstateManagement.Database.Contexts;
 using EstateManagement.Database.Entities;
@@ -589,13 +590,150 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         topBottomMerchantData[2].SalesValue.ShouldBe(merchant2Transactions.Sum(p => p.TransactionAmount));
     }
 
-    //public void Dispose()
-    //{
-    //    EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+    [Fact]
+    public async Task FactTransactionsControllerController_MerchantPerformance_AllMerchants_SalesReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        var todaysTransactions = new List<Transaction>();
+        var comparisonDateTransactions = new List<Transaction>();
+        DatabaseHelper helper = new DatabaseHelper(context);
+        // TODO: make counts dynamic
+        DateTime todaysDateTime = DateTime.Now;
+        DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
 
-    //    Console.WriteLine($"About to delete database EstateReportingReadModel{this.TestId.ToString()}");
-    //    Boolean result = context.Database.EnsureDeleted();
-    //    Console.WriteLine($"Delete result is {result}");
-    //    result.ShouldBeTrue();
-    //}
+        List<Int32> merchantIds = new List<Int32>{
+                                                     1,
+                                                     2,
+                                                     3
+                                                 };
+
+        foreach (Int32 merchantId in merchantIds)
+        {
+
+            for (int i = 0; i < 25; i++)
+            {
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), merchantId, "Safaricom", 1, "0000", amount);
+                todaysTransactions.Add(transaction);
+            }
+
+            for (int i = 0; i < 21; i++)
+            {
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(comparisonDate, merchantId, "Safaricom", 1, "0000", amount);
+                comparisonDateTransactions.Add(transaction);
+            }
+        }
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage($"api/facts/transactions/merchants/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}");
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        TodaysSales? todaysSales = JsonConvert.DeserializeObject<TodaysSales>(content);
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count);
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
+
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count);
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
+    }
+
+    [Fact]
+    public async Task FactTransactionsControllerController_MerchantPerformance_SingleMerchant_SalesReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        var todaysTransactions = new List<Transaction>();
+        var comparisonDateTransactions = new List<Transaction>();
+        DatabaseHelper helper = new DatabaseHelper(context);
+        // TODO: make counts dynamic
+        DateTime todaysDateTime = DateTime.Now;
+        DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
+
+        List<Int32> merchantIds = new List<Int32>{
+                                                     1,
+                                                     2,
+                                                     3
+                                                 };
+
+        foreach (Int32 merchantId in merchantIds){
+
+            for (int i = 0; i < 25; i++){
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), merchantId, "Safaricom", 1, "0000", amount);
+                todaysTransactions.Add(transaction);
+            }
+
+            for (int i = 0; i < 21; i++){
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(comparisonDate, merchantId, "Safaricom", 1, "0000", amount);
+                comparisonDateTransactions.Add(transaction);
+            }
+        }
+        List<Int32> merchantFilterList = new List<Int32>{
+                                                            2
+                                                        };
+        string serializedArray = string.Join(",", merchantFilterList);
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage($"api/facts/transactions/merchants/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&merchantIds={serializedArray}");
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        TodaysSales? todaysSales = JsonConvert.DeserializeObject<TodaysSales>(content);
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => merchantFilterList.Contains(c.MerchantReportingId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => merchantFilterList.Contains(c.MerchantReportingId)).Sum(c => c.TransactionAmount));
+
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => merchantFilterList.Contains(c.MerchantReportingId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => merchantFilterList.Contains(c.MerchantReportingId)).Sum(c => c.TransactionAmount));
+    }
+
+    [Fact]
+    public async Task FactTransactionsControllerController_MerchantPerformance_MultipleMerchants_SalesReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        var todaysTransactions = new List<Transaction>();
+        var comparisonDateTransactions = new List<Transaction>();
+        DatabaseHelper helper = new DatabaseHelper(context);
+        // TODO: make counts dynamic
+        DateTime todaysDateTime = DateTime.Now;
+        DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
+
+        List<Int32> merchantIds = new List<Int32>{
+                                                     1,
+                                                     2,
+                                                     3
+                                                 };
+
+        foreach (Int32 merchantId in merchantIds)
+        {
+
+            for (int i = 0; i < 25; i++)
+            {
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), merchantId, "Safaricom", 1, "0000", amount);
+                todaysTransactions.Add(transaction);
+            }
+
+            for (int i = 0; i < 21; i++)
+            {
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(comparisonDate, merchantId, "Safaricom", 1, "0000", amount);
+                comparisonDateTransactions.Add(transaction);
+            }
+        }
+        List<Int32> merchantFilterList = new List<Int32>{
+                                                            2,3
+                                                        };
+        string serializedArray = string.Join(",", merchantFilterList);
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage($"api/facts/transactions/merchants/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&merchantIds={serializedArray}");
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        TodaysSales? todaysSales = JsonConvert.DeserializeObject<TodaysSales>(content);
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => merchantFilterList.Contains(c.MerchantReportingId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => merchantFilterList.Contains(c.MerchantReportingId)).Sum(c => c.TransactionAmount));
+
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => merchantFilterList.Contains(c.MerchantReportingId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => merchantFilterList.Contains(c.MerchantReportingId)).Sum(c => c.TransactionAmount));
+    }
+
 }

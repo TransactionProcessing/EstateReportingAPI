@@ -147,6 +147,73 @@
             return response;
         }
 
+        public async Task<List<ResponseCode>> GetResponseCodes(String accessToken, Guid estateId, CancellationToken cancellationToken){
+            List<ResponseCode> response = null;
+
+            String requestUri = this.BuildRequestUrl("/api/dimensions/responsecodes");
+
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Add("EstateId", estateId.ToString());
+
+                // Make the Http Call here
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
+
+                // Process the response
+                String content = await this.HandleResponse(httpResponse, cancellationToken);
+
+                // call was successful so now deserialise the body to the response object
+                response = JsonConvert.DeserializeObject<List<ResponseCode>>(content);
+            }
+            catch (Exception ex)
+            {
+                // An exception has occurred, add some additional information to the message
+                Exception exception = new Exception($"Error getting response codes for estate {estateId}.", ex);
+
+                throw exception;
+            }
+
+            return response;
+        }
+
+        public async Task<TodaysSales> GetMerchantPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> merchantIds, CancellationToken cancellationToken){
+            
+            // Serialize the integer array into a comma-separated string
+            string serializedArray = string.Join(",", merchantIds);
+            
+            TodaysSales response = null;
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/merchants/performance?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantIds={serializedArray}");
+
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Add("EstateId", estateId.ToString());
+
+                // Make the Http Call here
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
+
+                // Process the response
+                String content = await this.HandleResponse(httpResponse, cancellationToken);
+
+                // call was successful so now deserialise the body to the response object
+                response = JsonConvert.DeserializeObject<TodaysSales>(content);
+            }
+            catch (Exception ex)
+            {
+                // An exception has occurred, add some additional information to the message
+                Exception exception = new Exception($"Error getting merchant kpis for estate {estateId}.", ex);
+
+                throw exception;
+            }
+
+            return response;
+
+        }
+
         public async Task<MerchantKpi> GetMerchantKpi(String accessToken, Guid estateId, CancellationToken cancellationToken){
             MerchantKpi response = null;
 

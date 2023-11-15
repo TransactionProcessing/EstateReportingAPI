@@ -26,6 +26,9 @@
         Task<List<Merchant>> GetMerchants(String accessToken, Guid estateId, CancellationToken cancellationToken);
         Task<List<Operator>> GetOperators(String accessToken, Guid estateId, CancellationToken cancellationToken);
         Task<LastSettlement> GetLastSettlement(String accessToken, Guid estateId,CancellationToken cancellationToken);
+
+        Task<List<ResponseCode>> GetResponseCodes(String accessToken, Guid estateId, CancellationToken cancellationToken);
+        Task<TodaysSales> GetMerchantPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> merchantIds,CancellationToken cancellationToken);
         #endregion
     }
 }
