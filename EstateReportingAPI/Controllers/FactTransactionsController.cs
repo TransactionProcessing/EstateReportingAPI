@@ -229,6 +229,33 @@ namespace EstateReportingAPI.Controllers{
 
             return this.Ok(response);
         }
+
+        [HttpGet]
+        [Route("operators/performance")]
+        public async Task<IActionResult> GetOperatorPerformance([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] string? operatorIds, CancellationToken cancellationToken)
+        {
+
+            List<String> operatorIdFilter = new List<String>();
+            if (String.IsNullOrEmpty(operatorIds) == false)
+            {
+                operatorIdFilter = operatorIds.Split(',').ToList();
+                
+            }
+
+            Models.TodaysSales model = await this.ReportingManager.GetOperatorPerformance(estateId, comparisonDate, operatorIdFilter, cancellationToken);
+
+            TodaysSales response = new TodaysSales
+                                   {
+                                       ComparisonSalesCount = model.ComparisonSalesCount,
+                                       ComparisonSalesValue = model.ComparisonSalesValue,
+                                       TodaysSalesCount = model.TodaysSalesCount,
+                                       TodaysSalesValue = model.TodaysSalesValue,
+                                       ComparisonAverageSalesValue = model.ComparisonAverageSalesValue,
+                                       TodaysAverageSalesValue = model.TodaysAverageSalesValue,
+                                   };
+
+            return this.Ok(response);
+        }
     }
 
 

@@ -886,5 +886,154 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productFilterList.Contains(c.ContractProductReportingId)).Sum(c => c.TransactionAmount));
     }
 
+    [Fact]
+    public async Task FactTransactionsControllerController_OperatorPerformance_AllOperators_SalesReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        var todaysTransactions = new List<Transaction>();
+        var comparisonDateTransactions = new List<Transaction>();
+        DatabaseHelper helper = new DatabaseHelper(context);
+        // TODO: make counts dynamic
+        DateTime todaysDateTime = DateTime.Now;
+        DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
+
+        List<String> operatorIds = new List<String>{
+                                                    "Operator1",
+                                                    "Operator2",
+                                                    "Operator3"
+                                                };
+
+        foreach (String operatorId in operatorIds)
+        {
+
+            for (int i = 0; i < 25; i++)
+            {
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, operatorId,1, "0000", amount);
+                todaysTransactions.Add(transaction);
+            }
+
+            for (int i = 0; i < 21; i++)
+            {
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(comparisonDate, 1, operatorId, 1, "0000", amount);
+                comparisonDateTransactions.Add(transaction);
+            }
+        }
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage($"api/facts/transactions/operators/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}");
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        TodaysSales? todaysSales = JsonConvert.DeserializeObject<TodaysSales>(content);
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count);
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
+
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count);
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
+    }
+
+    [Fact]
+    public async Task FactTransactionsControllerController_OperatorPerformance_SingleOperator_SalesReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        var todaysTransactions = new List<Transaction>();
+        var comparisonDateTransactions = new List<Transaction>();
+        DatabaseHelper helper = new DatabaseHelper(context);
+        // TODO: make counts dynamic
+        DateTime todaysDateTime = DateTime.Now;
+        DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
+
+        List<String> operatorIds = new List<String>{
+                                                       "Operator1",
+                                                       "Operator2",
+                                                       "Operator3"
+                                                   };
+
+        foreach (String operatorId in operatorIds)
+        {
+
+            for (int i = 0; i < 25; i++)
+            {
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, operatorId, 1, "0000", amount);
+                todaysTransactions.Add(transaction);
+            }
+
+            for (int i = 0; i < 21; i++)
+            {
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(comparisonDate, 1, operatorId, 1, "0000", amount);
+                comparisonDateTransactions.Add(transaction);
+            }
+        }
+        List<String> operatorFilterList = new List<String>{
+                                                            "Operator2"
+                                                        };
+        string serializedArray = string.Join(",", operatorFilterList);
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage($"api/facts/transactions/operators/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&operatorIds={serializedArray}");
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        TodaysSales? todaysSales = JsonConvert.DeserializeObject<TodaysSales>(content);
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorFilterList.Contains(c.OperatorIdentifier)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.OperatorIdentifier)).Sum(c => c.TransactionAmount));
+
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => operatorFilterList.Contains(c.OperatorIdentifier)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.OperatorIdentifier)).Sum(c => c.TransactionAmount));
+    }
+
+    [Fact]
+    public async Task FactTransactionsControllerController_OperatorPerformance_MultipleOperators_SalesReturned()
+    {
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        var todaysTransactions = new List<Transaction>();
+        var comparisonDateTransactions = new List<Transaction>();
+        DatabaseHelper helper = new DatabaseHelper(context);
+        // TODO: make counts dynamic
+        DateTime todaysDateTime = DateTime.Now;
+        DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
+
+        List<String> operatorIds = new List<String>{
+                                                       "Operator1",
+                                                       "Operator2",
+                                                       "Operator3"
+                                                   };
+
+        foreach (String operatorId in operatorIds)
+        {
+
+            for (int i = 0; i < 25; i++)
+            {
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, operatorId, 1, "0000", amount);
+                todaysTransactions.Add(transaction);
+            }
+
+            for (int i = 0; i < 21; i++)
+            {
+                Decimal amount = 100 + i;
+                Transaction transaction = await helper.AddTransaction(comparisonDate, 1, operatorId, 1, "0000", amount);
+                comparisonDateTransactions.Add(transaction);
+            }
+        }
+        List<String> operatorFilterList = new List<String>{
+                                                            "Operator2",
+                                                            "Operator3"
+                                                        };
+        string serializedArray = string.Join(",", operatorFilterList);
+
+        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage($"api/facts/transactions/operators/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&operatorIds={serializedArray}");
+
+        response.IsSuccessStatusCode.ShouldBeTrue();
+        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        TodaysSales? todaysSales = JsonConvert.DeserializeObject<TodaysSales>(content);
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorFilterList.Contains(c.OperatorIdentifier)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.OperatorIdentifier)).Sum(c => c.TransactionAmount));
+
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => operatorFilterList.Contains(c.OperatorIdentifier)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.OperatorIdentifier)).Sum(c => c.TransactionAmount));
+    }
 
 }
