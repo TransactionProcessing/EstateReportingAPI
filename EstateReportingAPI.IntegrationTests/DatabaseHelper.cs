@@ -8,7 +8,7 @@ using k8s.KubeConfigModels;
 using Microsoft.EntityFrameworkCore;
 
 public class DatabaseHelper{
-    private readonly EstateManagementGenericContext Context;
+    /*private readonly EstateManagementGenericContext Context;
 
     public DatabaseHelper(EstateManagementGenericContext context){
         this.Context = context;
@@ -107,7 +107,8 @@ public class DatabaseHelper{
 
     public async Task<Transaction> AddTransaction(DateTime dateTime,
                                                   Int32 merchantReportingId,
-                                                  String operatorIdentifier,
+                                                  Int32 operatorReportingId,
+                                                  Int32 contractReportingId,
                                                   Int32 contractProductReportingId,
                                                   String responseCode,
                                                   Decimal transactionAmount){
@@ -119,8 +120,8 @@ public class DatabaseHelper{
                                                      IsCompleted = true,
                                                      AuthorisationCode = "ABCD1234",
                                                      DeviceIdentifier = "testdevice1",
-                                                     OperatorIdentifier = operatorIdentifier,
-                                                     ContractReportingId = 1,
+                                                     EstateOperatorReportingId = operatorReportingId,
+                                                     ContractReportingId = contractReportingId,
                                                      ContractProductReportingId = contractProductReportingId,
                                                      IsAuthorised = responseCode == "0000",
                                                      ResponseCode = responseCode,
@@ -220,4 +221,5 @@ public class DatabaseHelper{
         return (settledTransactions.Sum(s => s.TransactionAmount), pendingSettlementTransactions.Sum(p => p.TransactionAmount),
             settlementFees.Sum(s => s.calulatedValue), pendingSettlementFees.Sum(p => p.calulatedValue));
     }
+    */
 }

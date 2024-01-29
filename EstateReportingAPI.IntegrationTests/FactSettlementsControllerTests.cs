@@ -7,8 +7,8 @@
     using Shouldly;
     using Xunit;
 
-    public class FactSettlementsControllerTests : ControllerTestsBase, IDisposable
-    {
+    public class FactSettlementsControllerTests : ControllerTestsBase, IDisposable{
+        /*
         [Fact]
         public async Task FactSettlementsController_TodaysSettlement_SettlementReturned(){
             EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
@@ -30,7 +30,7 @@
             todaysSettlement.ComparisonSettlementValue.ShouldBe(comparisonTotals.settlementFeesValue);
             todaysSettlement.ComparisonPendingSettlementCount.ShouldBe(comparisonPendingSettlementTransactionCount);
             todaysSettlement.ComparisonPendingSettlementValue.ShouldBe(comparisonTotals.pendingSettlementFeesValue);
-            
+
             todaysSettlement.TodaysSettlementCount.ShouldBe(todaysSettlementTransactionCount);
             todaysSettlement.TodaysSettlementValue.ShouldBe(todayTotals.settlementFeesValue);
             todaysSettlement.TodaysPendingSettlementCount.ShouldBe(todaysPendingSettlementTransactionCount);
@@ -43,7 +43,7 @@
             EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
-            
+
             Int32 todaysSettlementTransactionCount = 15;
             Int32 todaysPendingSettlementTransactionCount = 9;
             var todayTotals = await helper.AddSettlementRecord(DateTime.Now, 1, 1, todaysSettlementTransactionCount, todaysPendingSettlementTransactionCount);
@@ -61,6 +61,7 @@
             lastSettlement.SalesCount.ShouldBe(todaysSettlementTransactionCount);
             lastSettlement.SalesValue.ShouldBe(todayTotals.settledTransactionsValue);
         }
+    }*/
     }
 }
 

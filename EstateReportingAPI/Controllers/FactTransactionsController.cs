@@ -36,8 +36,8 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("todayssales")]
-        public async Task<IActionResult> TodaysSales([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
-            Models.TodaysSales model = await this.ReportingManager.GetTodaysSales(estateId, comparisonDate, cancellationToken);
+        public async Task<IActionResult> TodaysSales([FromHeader] Guid estateId, [FromQuery] Guid? merchantId, [FromQuery] Guid? operatorId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
+            Models.TodaysSales model = await this.ReportingManager.GetTodaysSales(estateId, merchantId, operatorId, comparisonDate, cancellationToken);
 
             TodaysSales response = new TodaysSales{
                                                       ComparisonSalesCount = model.ComparisonSalesCount,
@@ -53,8 +53,8 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("todayssales/countbyhour")]
-        public async Task<IActionResult> TodaysSalesCountByHour([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
-            List<Models.TodaysSalesCountByHour> models = await this.ReportingManager.GetTodaysSalesCountByHour(estateId, comparisonDate, cancellationToken);
+        public async Task<IActionResult> TodaysSalesCountByHour([FromHeader] Guid estateId, Guid? merchantId, [FromQuery] Guid? operatorId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
+            List<Models.TodaysSalesCountByHour> models = await this.ReportingManager.GetTodaysSalesCountByHour(estateId, merchantId, operatorId, comparisonDate, cancellationToken);
 
             List<TodaysSalesCountByHour> response = new List<TodaysSalesCountByHour>();
 
@@ -71,10 +71,10 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("todayssales/valuebyhour")]
-        public async Task<IActionResult> TodaysSalesValueByHour([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<IActionResult> TodaysSalesValueByHour([FromHeader] Guid estateId, Guid? merchantId, [FromQuery] Guid? operatorId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
 
 
-            List<Models.TodaysSalesValueByHour> models = await this.ReportingManager.GetTodaysSalesValueByHour(estateId, comparisonDate, cancellationToken);
+            List<Models.TodaysSalesValueByHour> models = await this.ReportingManager.GetTodaysSalesValueByHour(estateId, merchantId, operatorId, comparisonDate, cancellationToken);
 
             List<TodaysSalesValueByHour> response = new List<TodaysSalesValueByHour>();
 
@@ -106,7 +106,7 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("todaysfailedsales")]
-        public async Task<IActionResult> TodaysFailedSales([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] String responseCode, CancellationToken cancellationToken){
+        public async Task<IActionResult> TodaysFailedSales([FromHeader] Guid estateId, Guid? merchantId, [FromQuery] Guid? operatorId, [FromQuery] DateTime comparisonDate, [FromQuery] String responseCode, CancellationToken cancellationToken){
             Models.TodaysSales model = await this.ReportingManager.GetTodaysFailedSales(estateId, comparisonDate, responseCode, cancellationToken);
 
             TodaysSales response = new TodaysSales{

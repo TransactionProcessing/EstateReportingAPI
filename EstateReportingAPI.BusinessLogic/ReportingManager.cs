@@ -3,6 +3,8 @@
     using EstateManagement.Database.Entities;
     using Microsoft.EntityFrameworkCore;
     using Models;
+    using Shared.Exceptions;
+    using System.Threading;
     using Calendar = Models.Calendar;
     using Merchant = Models.Merchant;
 
@@ -196,33 +198,49 @@
             return response;
         }
 
-        public async Task<TodaysSales> GetTodaysSales(Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
+        private async Task<IQueryable<Transaction>> GetSalesForDate(EstateManagementGenericContext context,
+                                                                    DateTime queryDate,
+                                                                    Guid? merchantId,
+                                                                    Guid? operatorId){
+            var salesForDate = (from t in context.Transactions
+                                where t.IsAuthorised && t.TransactionType == "Sale"
+                                                     && t.TransactionDate == queryDate.Date
+                                                     && t.TransactionTime <= DateTime.Now.TimeOfDay
+                                select t).AsQueryable();
+
+            if (merchantId.HasValue){
+                EstateManagement.Database.Entities.Merchant? m = await context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchantId.Value);
+
+                if (m == null){
+                    throw new NotFoundException($"Merchant Id {merchantId} not found");
+                }
+
+                salesForDate = salesForDate.Where(t => t.MerchantReportingId == m.MerchantReportingId).AsQueryable();
+            }
+
+            if (operatorId.HasValue){
+                var o = await context.EstateOperators.SingleOrDefaultAsync(o => o.OperatorId == operatorId.Value);
+
+                if (o == null){
+                    throw new NotFoundException($"Operator Id {operatorId} not found");
+                }
+
+                salesForDate = salesForDate.Where(t => t.EstateOperatorReportingId == o.EstateOperatorReportingId).AsQueryable();
+            }
+
+            return salesForDate;
+        }
+
+        public async Task<TodaysSales> GetTodaysSales(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            // First we need to get a value of todays sales
-            Decimal todaysSalesValue = (from t in context.Transactions
-                                        where t.IsAuthorised && t.TransactionType == "Sale"
-                                                             && t.TransactionDate == DateTime.Now.Date
-                                                             && t.TransactionTime <= DateTime.Now.TimeOfDay
-                                        select t.TransactionAmount).Sum();
-
-            Int32 todaysSalesCount = (from t in context.Transactions
-                                      where t.IsAuthorised && t.TransactionType == "Sale"
-                                                           && t.TransactionDate == DateTime.Now.Date
-                                                           && t.TransactionTime <= DateTime.Now.TimeOfDay
-                                      select t.TransactionAmount).Count();
-
-            Decimal comparisonSalesValue = (from t in context.Transactions
-                                            where t.IsAuthorised && t.TransactionType == "Sale"
-                                                                 && t.TransactionDate == comparisonDate
-                                                                 && t.TransactionTime <= DateTime.Now.TimeOfDay
-                                            select t.TransactionAmount).Sum();
-
-            Int32 comparisonSalesCount = (from t in context.Transactions
-                                          where t.IsAuthorised && t.TransactionType == "Sale"
-                                                               && t.TransactionDate == comparisonDate
-                                                               && t.TransactionTime <= DateTime.Now.TimeOfDay
-                                          select t.TransactionAmount).Count();
+            IQueryable<Transaction> todaysSales = await GetSalesForDate(context, DateTime.Now, merchantId,operatorId);
+            IQueryable<Transaction> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId);
+            
+            var todaysSalesValue = await todaysSales.SumAsync(t => t.TransactionAmount, cancellationToken);
+            var todaysSalesCount = await todaysSales.CountAsync(cancellationToken);
+            var comparisonSalesValue = await comparisonSales.SumAsync(t => t.TransactionAmount, cancellationToken);
+            var comparisonSalesCount = await comparisonSales.CountAsync(cancellationToken);
 
             TodaysSales response = new TodaysSales{
                                                       ComparisonSalesCount = comparisonSalesCount,
@@ -233,14 +251,14 @@
             return response;
         }
 
-        public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
+            IQueryable<Transaction> todaysSales = await GetSalesForDate(context, DateTime.Now, merchantId, operatorId);
+            IQueryable<Transaction> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId);
+
             // First we need to get a value of todays sales
-            var todaysSalesByHour = (from t in context.Transactions
-                                     where t.IsAuthorised && t.TransactionType == "Sale"
-                                                          && t.TransactionDate == DateTime.Now.Date
-                                                          && t.TransactionTime <= DateTime.Now.TimeOfDay
+            var todaysSalesByHour = (from t in todaysSales
                                      group t.TransactionAmount by t.TransactionTime.Hours
                                      into g
                                      select new{
@@ -248,10 +266,7 @@
                                                    TotalSalesCount = g.Count()
                                                }).ToList();
 
-            var comparisonSalesByHour = (from t in context.Transactions
-                                         where t.IsAuthorised && t.TransactionType == "Sale"
-                                                              && t.TransactionDate == comparisonDate
-                                                              && t.TransactionTime <= DateTime.Now.TimeOfDay
+            var comparisonSalesByHour = (from t in comparisonSales
                                          group t.TransactionAmount by t.TransactionTime.Hours
                                          into g
                                          select new{
@@ -271,31 +286,28 @@
             return response;
         }
 
-        public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            // First we need to get a value of todays sales
-            var todaysSalesByHour = (from t in context.Transactions
-                                     where t.IsAuthorised && t.TransactionType == "Sale"
-                                                          && t.TransactionDate == DateTime.Now.Date
-                                                          && t.TransactionTime <= DateTime.Now.TimeOfDay
-                                     group t.TransactionAmount by t.TransactionTime.Hours
-                                     into g
-                                     select new{
-                                                   Hour = g.Key,
-                                                   TotalSalesValue = g.Sum()
-                                               }).ToList();
+            IQueryable<Transaction> todaysSales = await GetSalesForDate(context, DateTime.Now, merchantId, operatorId);
+            IQueryable<Transaction> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId);
 
-            var comparisonSalesByHour = (from t in context.Transactions
-                                         where t.IsAuthorised && t.TransactionType == "Sale"
-                                                              && t.TransactionDate == comparisonDate
-                                                              && t.TransactionTime <= DateTime.Now.TimeOfDay
+            // First we need to get a value of todays sales
+            var todaysSalesByHour = await (from t in todaysSales
+                                           group t.TransactionAmount by t.TransactionTime.Hours
+                                           into g
+                                           select new{
+                                                         Hour = g.Key,
+                                                         TotalSalesValue = g.Sum()
+                                                     }).ToListAsync(cancellationToken);
+
+            var comparisonSalesByHour = await (from t in comparisonSales
                                          group t.TransactionAmount by t.TransactionTime.Hours
                                          into g
                                          select new{
                                                        Hour = g.Key,
                                                        TotalSalesValue = g.Sum()
-                                                   }).ToList();
+                                                   }).ToListAsync(cancellationToken);
 
             List<TodaysSalesValueByHour> response = (from today in todaysSalesByHour
                                                      join comparison in comparisonSalesByHour
@@ -309,41 +321,77 @@
             return response;
         }
 
-        public async Task<TodaysSettlement> GetTodaysSettlement(Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
+        private async Task<IQueryable<MerchantSettlementFee>> GetSettlementDataForDate(EstateManagementGenericContext context, Guid? merchantId, Guid? operatorId, DateTime queryDate)
+        {
+            var settlementData = (from s in context.Settlements
+                                  join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
+                                  join t in context.Transactions on f.TransactionReportingId equals t.TransactionReportingId
+                                  where s.SettlementDate == queryDate
+                                  select new { Settlement = s, Fees = f, Transaction = t }).AsQueryable();
+            
+            if (merchantId.HasValue)
+            {
+                EstateManagement.Database.Entities.Merchant? m = await context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchantId.Value);
+
+                if (m == null)
+                {
+                    throw new NotFoundException($"Merchant Id {merchantId} not found");
+                }
+
+                settlementData = settlementData.Where(t => t.Settlement.MerchantReportingId== m.MerchantReportingId).AsQueryable();
+            }
+
+            if (operatorId.HasValue)
+            {
+                EstateOperator? o = await context.EstateOperators.SingleOrDefaultAsync(o => o.OperatorId == operatorId.Value);
+
+                if (o == null)
+                {
+                    throw new NotFoundException($"Operator Id {operatorId} not found");
+                }
+
+                settlementData = settlementData.Where(t => t.Transaction.EstateOperatorReportingId == o.EstateOperatorReportingId).AsQueryable();
+            }
+
+
+
+            return settlementData.AsQueryable().Select(s => s.Fees);
+        }
+
+        public async Task<TodaysSettlement> GetTodaysSettlement(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            var todaySettlementData = (from s in context.Settlements
-                                       join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                       where s.SettlementDate == DateTime.Now.Date
+            IQueryable<MerchantSettlementFee> todaySettlementData = await GetSettlementDataForDate(context, merchantId, operatorId, DateTime.Now.Date);
+            IQueryable<MerchantSettlementFee> comparisonSettlementData = await GetSettlementDataForDate(context, merchantId, operatorId, comparisonDate);
+
+            var todaySettlement = await (from f in todaySettlementData
                                        group f by f.IsSettled into grouped
                                        select new
                                               {
                                                   IsSettled = grouped.Key,
                                                   CalculatedValueSum = grouped.Sum(item => item.CalculatedValue),
                                                   CalculatedValueCount = grouped.Count()
-                                              }).ToList();
+                                              }).ToListAsync(cancellationToken);
 
-            var comparisonSettlementData = (from s in context.Settlements
-                                       join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
-                                       where s.SettlementDate == comparisonDate
-                                            group f by f.IsSettled into grouped
-                                       select new
-                                              {
-                                                  IsSettled = grouped.Key,
-                                                  CalculatedValueSum = grouped.Sum(item => item.CalculatedValue),
-                                                  CalculatedValueCount = grouped.Count()
-                                              }).ToList();
+            var comparisonSettlement = await (from f in comparisonSettlementData
+                                              group f by f.IsSettled into grouped
+                                              select new
+                                                     {
+                                                         IsSettled = grouped.Key,
+                                                         CalculatedValueSum = grouped.Sum(item => item.CalculatedValue),
+                                                         CalculatedValueCount = grouped.Count()
+                                                     }).ToListAsync(cancellationToken);
 
 
             TodaysSettlement response = new TodaysSettlement{
-                                                                ComparisonSettlementCount = comparisonSettlementData.FirstOrDefault(x => x.IsSettled)?.CalculatedValueCount ?? 0,
-                                                                ComparisonSettlementValue = comparisonSettlementData.FirstOrDefault(x => x.IsSettled)?.CalculatedValueSum ?? 0,
-                                                                ComparisonPendingSettlementCount = comparisonSettlementData.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueCount ?? 0,
-                                                                ComparisonPendingSettlementValue = comparisonSettlementData.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueSum ?? 0,
-                                                                TodaysSettlementCount = todaySettlementData.FirstOrDefault(x => x.IsSettled)?.CalculatedValueCount ?? 0,
-                                                                TodaysSettlementValue = todaySettlementData.FirstOrDefault(x => x.IsSettled)?.CalculatedValueSum ?? 0,
-                                                                TodaysPendingSettlementCount = todaySettlementData.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueCount ?? 0,
-                                                                TodaysPendingSettlementValue = todaySettlementData.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueSum ?? 0
+                                                                ComparisonSettlementCount = comparisonSettlement.FirstOrDefault(x => x.IsSettled)?.CalculatedValueCount ?? 0,
+                                                                ComparisonSettlementValue = comparisonSettlement.FirstOrDefault(x => x.IsSettled)?.CalculatedValueSum ?? 0,
+                                                                ComparisonPendingSettlementCount = comparisonSettlement.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueCount ?? 0,
+                                                                ComparisonPendingSettlementValue = comparisonSettlement.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueSum ?? 0,
+                                                                TodaysSettlementCount = todaySettlement.FirstOrDefault(x => x.IsSettled)?.CalculatedValueCount ?? 0,
+                                                                TodaysSettlementValue = todaySettlement.FirstOrDefault(x => x.IsSettled)?.CalculatedValueSum ?? 0,
+                                                                TodaysPendingSettlementCount = todaySettlement.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueCount ?? 0,
+                                                                TodaysPendingSettlementValue = todaySettlement.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueSum ?? 0
             };
 
             return response;
@@ -377,8 +425,8 @@
                 // Operators
                 queryable = mainQuery
                             .Join(context.EstateOperators,
-                                  t => t.OperatorIdentifier,
-                                  oper => oper.Name,
+                                  t => t.EstateOperatorReportingId,
+                                  oper => oper.EstateOperatorReportingId,
                                   (t, oper) => new{
                                                       Transaction = t,
                                                       Operator = oper
@@ -508,8 +556,8 @@
 
             if (operatorIds.Any())
             {
-                todaysSalesQuery = todaysSalesQuery.Where(t => operatorIds.Contains(t.OperatorIdentifier));
-                comparisonSalesQuery = comparisonSalesQuery.Where(t => operatorIds.Contains(t.OperatorIdentifier));
+                //todaysSalesQuery = todaysSalesQuery.Where(t => operatorIds.Contains(t.OperatorIdentifier));
+                //comparisonSalesQuery = comparisonSalesQuery.Where(t => operatorIds.Contains(t.OperatorIdentifier));
             }
 
             TodaysSales response = new TodaysSales
