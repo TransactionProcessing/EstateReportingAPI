@@ -368,10 +368,10 @@
             return response;
         }
 
-        public async Task<TodaysSales> GetTodaysFailedSales(String accessToken, Guid estateId, String responseCode, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<TodaysSales> GetTodaysFailedSales(String accessToken, Guid estateId, Guid merchantId, Guid operatorId, String responseCode, DateTime comparisonDate, CancellationToken cancellationToken){
             TodaysSales response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todaysfailedsales?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&responseCode={responseCode}");
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todaysfailedsales?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantId={merchantId}&operatorId={operatorId}&responseCode={responseCode}");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -397,10 +397,10 @@
             return response;
         }
 
-        public async Task<TodaysSales> GetTodaysSales(String accessToken, Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<TodaysSales> GetTodaysSales(String accessToken, Guid estateId,Guid merchantId, Guid operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             TodaysSales response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales?comparisonDate={comparisonDate.Date:yyyy-MM-dd}");
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantId={merchantId}&operatorId={operatorId}");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -426,10 +426,10 @@
             return response;
         }
 
-        public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(String accessToken, Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(String accessToken, Guid estateId, Guid merchantId, Guid operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             List<TodaysSalesCountByHour> response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales/countbyhour?comparisonDate={comparisonDate.Date:yyyy-MM-dd}");
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales/countbyhour?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantId={merchantId}&operatorId={operatorId}");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -455,10 +455,10 @@
             return response;
         }
 
-        public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(String accessToken, Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(String accessToken, Guid estateId, Guid merchantId, Guid operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             List<TodaysSalesValueByHour> response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales/valuebyhour?comparisonDate={comparisonDate.Date:yyyy-MM-dd}");
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales/valuebyhour?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantId={merchantId}&operatorId={operatorId}");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -484,10 +484,10 @@
             return response;
         }
 
-        public async Task<TodaysSettlement> GetTodaysSettlement(String accessToken, Guid estateId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<TodaysSettlement> GetTodaysSettlement(String accessToken, Guid estateId, Guid merchantId, Guid operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             TodaysSettlement response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/settlements/todayssettlement?comparisonDate={comparisonDate.Date:yyyy-MM-dd}");
+            String requestUri = this.BuildRequestUrl($"/api/facts/settlements/todayssettlement?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantId={merchantId}&operatorId={operatorId}");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
