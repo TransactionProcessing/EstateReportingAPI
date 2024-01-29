@@ -1,4 +1,8 @@
-﻿namespace EstateReportingAPI.Client{
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace EstateReportingAPI.Client{
     using System;
     using System.Collections.Generic;
     using System.Net.Http;
@@ -368,10 +372,17 @@
             return response;
         }
 
-        public async Task<TodaysSales> GetTodaysFailedSales(String accessToken, Guid estateId, Guid merchantId, Guid operatorId, String responseCode, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<TodaysSales> GetTodaysFailedSales(String accessToken, Guid estateId, Guid? merchantId, Guid? operatorId, String responseCode, DateTime comparisonDate, CancellationToken cancellationToken){
             TodaysSales response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todaysfailedsales?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantId={merchantId}&operatorId={operatorId}&responseCode={responseCode}");
+
+            QueryStringBuilder builder = new QueryStringBuilder();
+            builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
+            builder.AddParameter("merchantId", merchantId);
+            builder.AddParameter("operatorId", operatorId);
+            builder.AddParameter("responseCode", responseCode);
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todaysfailedsales?{builder.BuildQueryString()}");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -397,10 +408,15 @@
             return response;
         }
 
-        public async Task<TodaysSales> GetTodaysSales(String accessToken, Guid estateId,Guid merchantId, Guid operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<TodaysSales> GetTodaysSales(String accessToken, Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             TodaysSales response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantId={merchantId}&operatorId={operatorId}");
+            QueryStringBuilder builder = new QueryStringBuilder();
+            builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
+            builder.AddParameter("merchantId", merchantId);
+            builder.AddParameter("operatorId", operatorId);
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales?{builder.BuildQueryString()}");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -426,10 +442,16 @@
             return response;
         }
 
-        public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(String accessToken, Guid estateId, Guid merchantId, Guid operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(String accessToken, Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             List<TodaysSalesCountByHour> response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales/countbyhour?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantId={merchantId}&operatorId={operatorId}");
+
+            QueryStringBuilder builder = new QueryStringBuilder();
+            builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
+            builder.AddParameter("merchantId", merchantId);
+            builder.AddParameter("operatorId", operatorId);
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales/countbyhour?{builder.BuildQueryString()}");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -455,10 +477,16 @@
             return response;
         }
 
-        public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(String accessToken, Guid estateId, Guid merchantId, Guid operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(String accessToken, Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             List<TodaysSalesValueByHour> response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales/valuebyhour?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantId={merchantId}&operatorId={operatorId}");
+
+            QueryStringBuilder builder = new QueryStringBuilder();
+            builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
+            builder.AddParameter("merchantId", merchantId);
+            builder.AddParameter("operatorId", operatorId);
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales/valuebyhour?{builder.BuildQueryString()}");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -484,10 +512,16 @@
             return response;
         }
 
-        public async Task<TodaysSettlement> GetTodaysSettlement(String accessToken, Guid estateId, Guid merchantId, Guid operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<TodaysSettlement> GetTodaysSettlement(String accessToken, Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             TodaysSettlement response = null;
 
-            String requestUri = this.BuildRequestUrl($"/api/facts/settlements/todayssettlement?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantId={merchantId}&operatorId={operatorId}");
+
+            QueryStringBuilder builder = new QueryStringBuilder();
+            builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
+            builder.AddParameter("merchantId", merchantId);
+            builder.AddParameter("operatorId", operatorId);
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/settlements/todayssettlement?{builder.BuildQueryString()}");
 
             try{
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -609,5 +643,47 @@
         }
 
         #endregion
+    }
+}
+
+public class QueryStringBuilder
+{
+    private Dictionary<string, object> parameters;
+
+    public QueryStringBuilder()
+    {
+        parameters = new Dictionary<string, object>();
+    }
+
+    public QueryStringBuilder AddParameter(string key, object value)
+    {
+        // Check for null values, excluding value types like Guid
+        if (value != null && !(value is ValueType && Nullable.GetUnderlyingType(value.GetType()) == null))
+        {
+            parameters[key] = value;
+        }
+        return this;
+    }
+
+    public string BuildQueryString()
+    {
+        if (parameters.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var queryString = new StringBuilder();
+
+        foreach (var kvp in parameters)
+        {
+            if (queryString.Length > 0)
+            {
+                queryString.Append("&");
+            }
+
+            queryString.Append($"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value.ToString())}");
+        }
+
+        return queryString.ToString();
     }
 }
