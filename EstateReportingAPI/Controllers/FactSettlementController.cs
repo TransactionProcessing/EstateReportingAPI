@@ -36,8 +36,8 @@ namespace EstateReportingAPI.Controllers
         
         [HttpGet]
         [Route("todayssettlement")]
-        public async Task<IActionResult> TodaysSettlement([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
-            Models.TodaysSettlement model = await this.ReportingManager.GetTodaysSettlement(estateId, comparisonDate, cancellationToken);
+        public async Task<IActionResult> TodaysSettlement([FromHeader] Guid estateId, [FromQuery] Guid? merchantId, [FromQuery] Guid? operatorId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
+            Models.TodaysSettlement model = await this.ReportingManager.GetTodaysSettlement(estateId, merchantId, operatorId, comparisonDate, cancellationToken);
             
             TodaysSettlement response = new TodaysSettlement{
                                                                 ComparisonSettlementCount = model.ComparisonSettlementCount,

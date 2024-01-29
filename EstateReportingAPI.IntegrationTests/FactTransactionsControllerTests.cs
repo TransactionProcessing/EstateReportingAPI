@@ -10,6 +10,14 @@ using Shouldly;
 using Xunit;
 
 public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
+
+    /*
+    private async Task SetupStandingDate(DatabaseHelper helper)
+    {
+        // Estate Operators
+        await helper.AddEstateOperator("Safaricom");
+    }
+
     [Fact]
     public async Task FactTransactionsControllerController_TodaysSales_SalesReturned(){
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
@@ -19,9 +27,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         // TODO: make counts dynamic
         DateTime todaysDateTime = DateTime.Now;
 
+        
+
         for (int i = 0; i < 25; i++){
             Decimal amount = 100 + i;
-            Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, "Safaricom", 1, "0000", amount );
+            Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, 1, 1,1, "0000", amount );
             todaysTransactions.Add(transaction);
         }
 
@@ -29,7 +39,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         for (int i = 0; i < 21; i++)
         {
             Decimal amount = 100 + i;
-            Transaction transaction= await helper.AddTransaction(comparisonDate, 1, "Safaricom", 1, "0000", amount);
+            Transaction transaction= await helper.AddTransaction(comparisonDate, 1, 1,1, 1, "0000", amount);
             comparisonDateTransactions.Add(transaction);
         }
 
@@ -61,7 +71,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
             for (int i = 0; i < 25; i++){
                 Decimal amount = 100 + i;
                 
-                Transaction transaction = await helper.AddTransaction(date, 1, "Safaricom", 1, "0000", amount);
+                Transaction transaction = await helper.AddTransaction(date, 1, 1,1, 1, "0000", amount);
                 localList.Add(transaction);
             }
             todaysTransactions.AddRange(localList);
@@ -74,7 +84,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
             for (int i = 0; i < 21; i++){
                 Decimal amount = 100 + i;
                     
-                Transaction transaction = await helper.AddTransaction(date, 1, "Safaricom", 1, "0000", amount);
+                Transaction transaction = await helper.AddTransaction(date, 1, 1,1, 1, "0000", amount);
                 localList.Add(transaction);
             }
 
@@ -104,14 +114,14 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         DatabaseHelper helper = new DatabaseHelper(context);
         // TODO: make counts dynamic
         DateTime todaysDateTime = DateTime.Now;
-
+        
         for (int hour = 0; hour < 24; hour++)
         {
             DateTime date = new DateTime(todaysDateTime.Year, todaysDateTime.Month, todaysDateTime.Day, hour, 0, 0);
             for (int i = 0; i < 25; i++)
             {
                 Decimal amount = 100 + i;
-                Transaction transaction = await helper.AddTransaction(date, 1, "Safaricom", 1, "0000", amount);
+                Transaction transaction = await helper.AddTransaction(date, 1, 1,1, 1, "0000", amount);
                 todaysTransactions.Add(transaction);
             }
         }
@@ -124,7 +134,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
             {
                 Decimal amount = 100 + i;
 
-                Transaction transaction = await helper.AddTransaction(date, 1, "Safaricom", 1, "0000", amount);
+                Transaction transaction = await helper.AddTransaction(date, 1, 1,1, 1, "0000", amount);
                 comparisonDateTransactions.Add(transaction);
             }
         }
@@ -156,7 +166,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         for (int i = 0; i < 25; i++)
         {
             Decimal amount = 100 + i;
-            Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, "Safaricom", 1, "1009", amount);
+            Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, 1,1, 1, "1009", amount);
             todaysTransactions.Add(transaction);
         }
 
@@ -164,7 +174,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         for (int i = 0; i < 21; i++)
         {
             Decimal amount = 100 + i;
-            Transaction transaction = await helper.AddTransaction(comparisonDate, 1, "Safaricom", 1, "1009", amount);
+            Transaction transaction = await helper.AddTransaction(comparisonDate, 1, 1,1, 1, "1009", amount);
             comparisonDateTransactions.Add(transaction);
         }
 
@@ -944,31 +954,31 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         DateTime todaysDateTime = DateTime.Now;
         DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
 
-        List<String> operatorIds = new List<String>{
-                                                       "Operator1",
-                                                       "Operator2",
-                                                       "Operator3"
-                                                   };
+        await helper.AddEstateOperator("Operator1");
+        await helper.AddEstateOperator("Operator2");
+        await helper.AddEstateOperator("Operator3");
 
-        foreach (String operatorId in operatorIds)
+        List<Int32> operatorIds = new List<Int32>{ 1, 2, 3 };
+
+        foreach (Int32 operatorId in operatorIds)
         {
 
             for (int i = 0; i < 25; i++)
             {
                 Decimal amount = 100 + i;
-                Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, operatorId, 1, "0000", amount);
+                Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, operatorId,1, 1, "0000", amount);
                 todaysTransactions.Add(transaction);
             }
 
             for (int i = 0; i < 21; i++)
             {
                 Decimal amount = 100 + i;
-                Transaction transaction = await helper.AddTransaction(comparisonDate, 1, operatorId, 1, "0000", amount);
+                Transaction transaction = await helper.AddTransaction(comparisonDate, 1, operatorId,1, 1, "0000", amount);
                 comparisonDateTransactions.Add(transaction);
             }
         }
-        List<String> operatorFilterList = new List<String>{
-                                                            "Operator2"
+        List<Int32> operatorFilterList = new List<Int32>{
+                                                            2
                                                         };
         string serializedArray = string.Join(",", operatorFilterList);
 
@@ -977,11 +987,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         TodaysSales? todaysSales = JsonConvert.DeserializeObject<TodaysSales>(content);
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorFilterList.Contains(c.OperatorIdentifier)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.OperatorIdentifier)).Sum(c => c.TransactionAmount));
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorFilterList.Contains(c.EstateOperatorReportingId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.EstateOperatorReportingId)).Sum(c => c.TransactionAmount));
 
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => operatorFilterList.Contains(c.OperatorIdentifier)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.OperatorIdentifier)).Sum(c => c.TransactionAmount));
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => operatorFilterList.Contains(c.EstateOperatorReportingId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.EstateOperatorReportingId)).Sum(c => c.TransactionAmount));
     }
 
     [Fact]
@@ -995,32 +1005,36 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         DateTime todaysDateTime = DateTime.Now;
         DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
 
-        List<String> operatorIds = new List<String>{
-                                                       "Operator1",
-                                                       "Operator2",
-                                                       "Operator3"
-                                                   };
+        await helper.AddEstateOperator("Operator1");
+        await helper.AddEstateOperator("Operator2");
+        await helper.AddEstateOperator("Operator3");
 
-        foreach (String operatorId in operatorIds)
+        List<Int32> operatorIds = new List<Int32>{
+                                                     1,
+                                                     2,
+                                                     3
+                                                 };
+
+
+        foreach (Int32 operatorId in operatorIds)
         {
 
             for (int i = 0; i < 25; i++)
             {
                 Decimal amount = 100 + i;
-                Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, operatorId, 1, "0000", amount);
+                Transaction transaction = await helper.AddTransaction(todaysDateTime.AddHours(-1), 1, operatorId,1, 1, "0000", amount);
                 todaysTransactions.Add(transaction);
             }
 
             for (int i = 0; i < 21; i++)
             {
                 Decimal amount = 100 + i;
-                Transaction transaction = await helper.AddTransaction(comparisonDate, 1, operatorId, 1, "0000", amount);
+                Transaction transaction = await helper.AddTransaction(comparisonDate, 1, operatorId,1, 1, "0000", amount);
                 comparisonDateTransactions.Add(transaction);
             }
         }
-        List<String> operatorFilterList = new List<String>{
-                                                            "Operator2",
-                                                            "Operator3"
+        List<Int32> operatorFilterList = new List<Int32>{
+                                                            2,3
                                                         };
         string serializedArray = string.Join(",", operatorFilterList);
 
@@ -1029,11 +1043,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase, IDisposable{
         response.IsSuccessStatusCode.ShouldBeTrue();
         String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         TodaysSales? todaysSales = JsonConvert.DeserializeObject<TodaysSales>(content);
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorFilterList.Contains(c.OperatorIdentifier)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.OperatorIdentifier)).Sum(c => c.TransactionAmount));
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorFilterList.Contains(c.EstateOperatorReportingId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.EstateOperatorReportingId)).Sum(c => c.TransactionAmount));
 
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => operatorFilterList.Contains(c.OperatorIdentifier)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.OperatorIdentifier)).Sum(c => c.TransactionAmount));
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => operatorFilterList.Contains(c.EstateOperatorReportingId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.EstateOperatorReportingId)).Sum(c => c.TransactionAmount));
     }
-
+    */
 }

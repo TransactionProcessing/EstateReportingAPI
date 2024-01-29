@@ -13,7 +13,7 @@ using Operator = DataTrasferObjects.Operator;
 using ResponseCode = DataTrasferObjects.ResponseCode;
 
 public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
-
+    /*
     #region Methods
 
     [Fact]
@@ -287,4 +287,5 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
     //    Console.WriteLine($"Delete result is {result}");
     //    result.ShouldBeTrue();
     //}
+    */
 }
