@@ -2,7 +2,7 @@
 
   <PropertyGroup>
 	  <TargetFramework>net7.0</TargetFramework>
-    <DebugType>None</DebugType>
+    <DebugType>Full</DebugType>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -32,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EstateReportingAPI.Client\EstateReportingAPI.Client.csproj" />
     <ProjectReference Include="..\EstateReportingAPI\EstateReportingAPI.csproj" />
   </ItemGroup>
 

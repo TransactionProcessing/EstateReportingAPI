@@ -514,8 +514,7 @@ namespace EstateReportingAPI.Client{
 
         public async Task<TodaysSettlement> GetTodaysSettlement(String accessToken, Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             TodaysSettlement response = null;
-
-
+            
             QueryStringBuilder builder = new QueryStringBuilder();
             builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
             builder.AddParameter("merchantId", merchantId);
@@ -648,33 +647,62 @@ namespace EstateReportingAPI.Client{
 
 public class QueryStringBuilder
 {
-    private Dictionary<string, object> parameters;
+    private Dictionary<string, object> parameters = new Dictionary<String, Object>();
 
-    public QueryStringBuilder()
+    public QueryStringBuilder AddParameter(string key, Object value)
     {
-        parameters = new Dictionary<string, object>();
-    }
-
-    public QueryStringBuilder AddParameter(string key, object value)
-    {
-        // Check for null values, excluding value types like Guid
-        if (value != null && !(value is ValueType && Nullable.GetUnderlyingType(value.GetType()) == null))
-        {
-            parameters[key] = value;
-        }
+        this.parameters.Add(key, value);
         return this;
     }
 
-    public string BuildQueryString()
+    static Dictionary<string, object> FilterDictionary(Dictionary<string, object> inputDictionary)
     {
-        if (parameters.Count == 0)
+        Dictionary<string, object> result = new Dictionary<string, object>();
+
+        foreach (KeyValuePair<String, Object> entry in inputDictionary)
+        {
+            if (entry.Value != null && !IsDefaultValue(entry.Value))
+            {
+                result.Add(entry.Key, entry.Value);
+            }
+        }
+
+        return result;
+    }
+
+    static bool IsDefaultValue<T>(T value)
+    {
+        Object? defaultValue = GetDefault(value.GetType());
+
+        if (defaultValue == null && value.GetType() == typeof(String))
+        {
+            defaultValue = String.Empty;
+        }
+        return defaultValue.Equals(value);
+    }
+
+    public static object GetDefault(Type t)
+    {
+        Func<object> f = GetDefault<object>;
+        return f.Method.GetGenericMethodDefinition().MakeGenericMethod(t).Invoke(null, null);
+    }
+
+    private static T GetDefault<T>()
+    {
+        return default(T);
+    }
+
+    public string BuildQueryString(){
+        Dictionary<String, Object> filtered = FilterDictionary(this.parameters);
+
+        if (filtered.Count == 0)
         {
             return string.Empty;
         }
 
-        var queryString = new StringBuilder();
-
-        foreach (var kvp in parameters)
+        StringBuilder queryString = new StringBuilder();
+        
+        foreach (KeyValuePair<String, Object> kvp in filtered)
         {
             if (queryString.Length > 0)
             {
