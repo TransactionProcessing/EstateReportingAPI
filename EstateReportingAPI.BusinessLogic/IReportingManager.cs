@@ -23,7 +23,7 @@ public interface IReportingManager{
     Task<TodaysSales> GetMerchantPerformance(Guid estateId, DateTime comparisonDate, List<Int32> merchantIds,CancellationToken cancellationToken);
     Task<TodaysSales> GetProductPerformance(Guid estateId, DateTime comparisonDate, List<Int32> productIds, CancellationToken cancellationToken);
 
-    Task<TodaysSales> GetOperatorPerformance(Guid estateId, DateTime comparisonDate, List<String> operatorIds, CancellationToken cancellationToken);
+    Task<TodaysSales> GetOperatorPerformance(Guid estateId, DateTime comparisonDate, List<Int32> operatorIds, CancellationToken cancellationToken);
 
     #endregion
 }

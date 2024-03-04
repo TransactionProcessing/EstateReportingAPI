@@ -7,12 +7,34 @@ using Common;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
 using EstateManagement.Database.Contexts;
+using Newtonsoft.Json;
 using NLog;
 using Shared.IntegrationTesting;
 using Shared.Logger;
 using Shouldly;
+using Xunit;
 
-public abstract class ControllerTestsBase : IDisposable{
+public abstract class ControllerTestsBase : IAsyncLifetime
+{
+    protected List<String> merchantsList;
+    protected List<(String contract, String operatorname)> contractList;
+    protected Dictionary<String, List<String>> contractProducts;
+
+    public virtual async Task InitializeAsync()
+    {
+        await this.SetupStandingData();
+    }
+
+    public virtual async Task DisposeAsync()
+    {
+    }
+
+    protected DatabaseHelper helper;
+
+    protected EstateManagementGenericContext context;
+
+    protected abstract Task ClearStandingData();
+    protected abstract Task SetupStandingData();
 
     protected readonly HttpClient Client;
     protected readonly CustomWebApplicationFactory<Startup> factory;
@@ -27,17 +49,23 @@ public abstract class ControllerTestsBase : IDisposable{
 
         this.factory = new CustomWebApplicationFactory<Startup>(dbConnString);
         this.Client = this.factory.CreateClient();
+
+        this.context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        this.helper = new DatabaseHelper(context);
     }
 
-    internal async Task<HttpResponseMessage> CreateAndSendHttpRequestMessage(String url)
+    internal async Task<T?> CreateAndSendHttpRequestMessage<T>(String url, CancellationToken cancellationToken)
     {
         HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
         requestMessage.Headers.Add("estateId", this.TestId.ToString());
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Test");
 
-        HttpResponseMessage result = await this.Client.SendAsync(requestMessage, CancellationToken.None);
+        HttpResponseMessage result = await this.Client.SendAsync(requestMessage, cancellationToken);
         result.IsSuccessStatusCode.ShouldBeTrue(result.StatusCode.ToString());
-        return result;
+        String content = await result.Content.ReadAsStringAsync(cancellationToken);
+        content.ShouldNotBeNull();
+        return JsonConvert.DeserializeObject<T>(content);
     }
     public static IContainerService DatabaseServerContainer;
     public static INetworkService DatabaseServerNetwork;

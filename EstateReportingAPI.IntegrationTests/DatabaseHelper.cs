@@ -6,12 +6,32 @@ using EstateManagement.Database.Entities;
 using EstateManagement.Database.Migrations.MySql;
 using k8s.KubeConfigModels;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Asn1;
 
 public class DatabaseHelper{
-    /*private readonly EstateManagementGenericContext Context;
+    private readonly EstateManagementGenericContext Context;
 
     public DatabaseHelper(EstateManagementGenericContext context){
         this.Context = context;
+    }
+
+    public async Task DeleteAllMerchants(){
+        List<Merchant> merchants = await this.Context.Merchants.ToListAsync();
+        this.Context.RemoveRange(merchants);
+        await this.Context.SaveChangesAsync();
+    }
+    public async Task DeleteAllContracts(){
+        List<Contract> contracts = await this.Context.Contracts.ToListAsync();
+        List<ContractProduct> contractProducts = await this.Context.ContractProducts.ToListAsync();
+        this.Context.RemoveRange(contractProducts);
+        this.Context.RemoveRange(contracts);
+        await this.Context.SaveChangesAsync();
+    }
+    public async Task DeleteAllEstateOperator()
+    {
+        List<EstateOperator> operators = await this.Context.EstateOperators.ToListAsync();
+        this.Context.RemoveRange(operators);
+        await this.Context.SaveChangesAsync();
     }
 
     public async Task AddResponseCode(Int32 code, String description){
@@ -19,20 +39,15 @@ public class DatabaseHelper{
         try{
             StringBuilder builder = new StringBuilder();
             builder.AppendLine("SET IDENTITY_INSERT dbo.ResponseCodes ON");
-            //await this.Context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.ResponseCodes ON", CancellationToken.None);
             String sql = $"insert into dbo.ResponseCodes(ResponseCode, Description) SELECT {code}, '{description}'";
             builder.AppendLine(sql);
             builder.AppendLine("SET IDENTITY_INSERT dbo.ResponseCodes OFF");
-            //await this.Context.Database.ExecuteSqlRawAsync(sql, CancellationToken.None);
-            //await this.Context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.ResponseCodes OFF", CancellationToken.None);
             await this.Context.Database.ExecuteSqlRawAsync(builder.ToString(), CancellationToken.None);
         }
         finally
         {
             await this.Context.Database.CloseConnectionAsync();
         }
-
-        var x = await this.Context.ResponseCodes.ToListAsync(CancellationToken.None);
     }
 
     public async Task AddCalendarYear(Int32 year){
@@ -66,78 +81,117 @@ public class DatabaseHelper{
 
         return datesInYear;
     }
+    
+    public async Task<Transaction> AddTransaction(DateTime dateTime,
+                                                  String merchantName,
+                                                  String contractName,
+                                                  String contractProductName,
+                                                  String responseCode,
+                                                  Decimal? transactionAmount=null){
 
-    public async Task AddSettlementRecordWithFees(DateTime dateTime,
-                                                  Int32 estateReportingId,
-                                                  Int32 merchantReportingId,
-                                                  List<(Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId, Boolean isSettled)> feesList){
-        Settlement settlementRecord = new Settlement{
-                                                        ProcessingStarted = true,
-                                                        IsCompleted = true,
-                                                        EstateReportingId = estateReportingId,
-                                                        MerchantReportingId = merchantReportingId,
-                                                        ProcessingStartedDateTIme = dateTime,
-                                                        SettlementDate = dateTime,
-                                                        SettlementId = Guid.NewGuid(),
-                                                    };
-        await this.Context.Settlements.AddAsync(settlementRecord, CancellationToken.None);
-
-        await this.Context.SaveChangesAsync(CancellationToken.None);
-
-        var settlement = await this.Context.Settlements.Where(s => s.SettlementId == settlementRecord.SettlementId).SingleAsync(CancellationToken.None);
-
-        Int32 counter = 1;
-        foreach ((Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId, Boolean isSettled) fee in feesList){
-            MerchantSettlementFee merchantSettlementFee = new MerchantSettlementFee{
-                                                                                       MerchantReportingId = merchantReportingId,
-                                                                                       SettlementReportingId = settlement.SettlementReportingId,
-                                                                                       IsSettled = fee.isSettled,
-                                                                                       FeeCalculatedDateTime = dateTime,
-                                                                                       TransactionReportingId = counter,
-                                                                                       TransactionFeeReportingId = fee.transactionFeeReportingId,
-                                                                                       CalculatedValue = fee.calulatedValue,
-                                                                                       FeeValue = fee.feeValue
-                                                                                   };
-            counter++;
-            await this.Context.MerchantSettlementFees.AddAsync(merchantSettlementFee, CancellationToken.None);
+        var merchant = await this.Context.Merchants.SingleOrDefaultAsync(m => m.Name == merchantName);
+        if (merchant == null){
+            throw new Exception($"No Merchant found with name {merchantName}");
         }
 
-        await this.Context.SaveChangesAsync(CancellationToken.None);
-    }
+        var contract = await this.Context.Contracts.SingleOrDefaultAsync(c => c.Description == contractName);
 
-    public async Task<Transaction> AddTransaction(DateTime dateTime,
-                                                  Int32 merchantReportingId,
-                                                  Int32 operatorReportingId,
-                                                  Int32 contractReportingId,
-                                                  Int32 contractProductReportingId,
-                                                  String responseCode,
-                                                  Decimal transactionAmount){
+        if (contract == null)
+        {
+            throw new Exception($"No Contact record found with description {contractName}");
+        }
+
+        var estateOperator = await this.Context.EstateOperators.SingleOrDefaultAsync(eo => eo.OperatorId== contract.OperatorId);
+
+        if (estateOperator == null)
+        {
+            throw new Exception($"No Operator record found with for contract {contractName}");
+        }
+
+        var contractProduct = await this.Context.ContractProducts.SingleOrDefaultAsync(cp => cp.ContractReportingId == contract.ContractReportingId &&
+                                                                                             cp.ProductName == contractProductName);
+
+        if (contractProduct == null)
+        {
+            throw new Exception($"No Contact Product record found with description {contractProductName} for contract {contractName}");
+        }
+
+        if (contractProduct.Value.HasValue){
+            transactionAmount = contractProduct.Value.GetValueOrDefault();
+        }
+        else{
+            if (transactionAmount.HasValue == false){
+                transactionAmount = 75.00m;
+            }
+        }
 
         Transaction transaction = new Transaction{
-                                                     MerchantReportingId = merchantReportingId,
+                                                     MerchantReportingId = merchant.MerchantReportingId,
                                                      TransactionDate = dateTime.Date,
                                                      TransactionDateTime = dateTime,
                                                      IsCompleted = true,
                                                      AuthorisationCode = "ABCD1234",
                                                      DeviceIdentifier = "testdevice1",
-                                                     EstateOperatorReportingId = operatorReportingId,
-                                                     ContractReportingId = contractReportingId,
-                                                     ContractProductReportingId = contractProductReportingId,
+                                                     EstateOperatorReportingId = estateOperator.EstateOperatorReportingId,
+                                                     ContractReportingId = contract.ContractReportingId,
+                                                     ContractProductReportingId = contractProduct.ContractProductReportingId,
                                                      IsAuthorised = responseCode == "0000",
                                                      ResponseCode = responseCode,
-                                                     TransactionAmount = transactionAmount,
+                                                     TransactionAmount = transactionAmount.GetValueOrDefault(),
                                                      TransactionId = Guid.NewGuid(),
                                                      TransactionTime = dateTime.TimeOfDay,
                                                      TransactionType = "Sale"
                                                  };
         await this.Context.Transactions.AddAsync(transaction, CancellationToken.None);
         await this.Context.SaveChangesAsync(CancellationToken.None);
+        
         return transaction;
     }
+    public async Task<Int32> AddEstate(String estateName, String reference){
+        Estate estate = new(){
+                                 CreatedDateTime = DateTime.Now,
+                                 EstateId = Guid.NewGuid(),
+                                 Name = estateName,
+                                 Reference = reference
+                             };
+        await this.Context.Estates.AddAsync(estate);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
 
-    public async Task AddMerchant(Int32 estateReportingId, String merchantName, DateTime lastSaleDateTime, List<(String addressLine1, String town, String postCode, String region)> addressList = null){
+        return estate.EstateReportingId;
+    }
+
+    public async Task<Int32> AddEstateOperator(String estateName, String operatorIdentifier){
+        Estate? estate = await this.Context.Estates.SingleOrDefaultAsync(e => e.Name == estateName);
+
+        if (estate == null){
+            throw new Exception($"No estate found with name {estateName}");
+        }
+
+        EstateOperator estateOperator = new EstateOperator
+                                        {
+                                            EstateReportingId = estate.EstateReportingId,
+                                            Name = operatorIdentifier,
+                                            OperatorId = Guid.NewGuid(),
+                                            RequireCustomMerchantNumber = false,
+                                            RequireCustomTerminalNumber = false
+                                        };
+
+        await this.Context.EstateOperators.AddAsync(estateOperator);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+
+        return estateOperator.EstateReportingId;
+    }
+
+    public async Task<Int32> AddMerchant(String estateName, String merchantName, DateTime lastSaleDateTime, List<(String addressLine1, String town, String postCode, String region)> addressList = null){
+        Estate? estate = await this.Context.Estates.SingleOrDefaultAsync(e => e.Name == estateName);
+
+        if (estate == null)
+        {
+            throw new Exception($"No estate found with name {estateName}");
+        }
+
         Merchant merchant = new Merchant{
-                                            EstateReportingId = estateReportingId,
+                                            EstateReportingId = estate.EstateReportingId,
                                             MerchantId = Guid.NewGuid(),
                                             Name = merchantName,
                                             LastSaleDate = lastSaleDateTime.Date,
@@ -166,60 +220,154 @@ public class DatabaseHelper{
             }
         }
 
+        return merchant.MerchantReportingId;
     }
 
-    public async Task AddContractProduct(String productName){
-        ContractProduct contractProduct = new ContractProduct{
-                                                                 ContractReportingId = 1,
-                                                                 DisplayText = productName,
-                                                                 ProductId = Guid.NewGuid(),
-                                                                 ProductName = productName,
-                                                                 ProductType = 1,
-                                                                 Value = null
-                                                             };
+    public async Task<Int32> AddContract(String estateName, String contractName, String operatorName)
+    {
+        Estate? estate = await this.Context.Estates.SingleOrDefaultAsync(e => e.Name == estateName);
+
+        if (estate == null)
+        {
+            throw new Exception($"No estate found with name {estateName}");
+        }
+
+        // Look up operator
+        EstateOperator? estateOperator = await this.Context.EstateOperators.SingleOrDefaultAsync(eo => eo.Name == operatorName);
+
+        if (estateOperator == null){
+            throw new Exception($"No Operator found with name {operatorName}");
+        }
+
+        Contract contract = new Contract{
+                                        EstateReportingId = estate.EstateReportingId,
+                                        ContractId = Guid.NewGuid(),
+                                        Description = contractName,
+                                        OperatorId = estateOperator.OperatorId,
+                                        };
+
+        await this.Context.Contracts.AddAsync(contract);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+
+        return contract.ContractReportingId;
+    }
+
+    public async Task AddContractWithProducts(String estateName, String contractName, String operatorName, List<(String productName, Int32 productType, Decimal? value)> products){
+        await this.AddContract(estateName, contractName, operatorName);
+
+        foreach ((String productName, Int32 productType, Decimal? value) product in products){
+            await this.AddContractProduct(contractName, product.productName, product.productType, product.value);
+        }
+    }
+
+    public async Task AddContractProduct(String contractName, String productName, Int32 productType, Decimal? value){
+        Contract? contract = await this.Context.Contracts.SingleOrDefaultAsync(c => c.Description == contractName);
+
+        if (contract == null){
+            throw new Exception($"No Contact record found with description {contractName}");
+        }
+
+        ContractProduct contractProduct = new ContractProduct
+                                          {
+                                              ContractReportingId = contract.ContractReportingId,
+                                              DisplayText = productName,
+                                              ProductId = Guid.NewGuid(),
+                                              ProductName = productName,
+                                              ProductType = productType,
+                                              Value = value
+                                          };
 
         await this.Context.ContractProducts.AddAsync(contractProduct);
         await this.Context.SaveChangesAsync(CancellationToken.None);
     }
 
-    public async Task AddEstateOperator(String operatorIdentifier){
-        EstateOperator estateOperator = new EstateOperator{
-                                                              EstateReportingId = 1,
-                                                              Name = operatorIdentifier,
-                                                              OperatorId = Guid.NewGuid(),
-                                                              RequireCustomMerchantNumber = false,
-                                                              RequireCustomTerminalNumber = false
-                                                          };
-
-        await this.Context.EstateOperators.AddAsync(estateOperator);
-        await this.Context.SaveChangesAsync(CancellationToken.None);
-    }
-
-
-    public async Task<(Decimal settledTransactionsValue, Decimal pendingSettlementTransactionsValue, Decimal settlementFeesValue, Decimal pendingSettlementFeesValue)> AddSettlementRecord(DateTime settlementDate, Int32 estateReportingId, Int32 merchantReportingId, Int32 settledTransactionCount, Int32 pendingSettlementTransactionCount){
+    public async Task<(Decimal settledTransactions, Decimal pendingSettlementTransactions, Decimal settlementFees, Decimal pendingSettlementFees)> AddSettlementRecord(String merchantName, String operatorName,DateTime settlementDate, Int32 settledTransactionCount, Int32 pendingSettlementTransactionCount)
+    {
         List<Transaction> settledTransactions = new();
         List<Transaction> pendingSettlementTransactions = new();
         List<(Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId, Boolean isSettled)> settlementFees = new();
         List<(Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId, Boolean isSettled)> pendingSettlementFees = new();
 
-        for (int i = 1; i <= settledTransactionCount; i++){
-            Transaction transaction = await this.AddTransaction(settlementDate, 1, "Safaricom", 1, "0000", i);
+        var estateOperator = await this.Context.EstateOperators.SingleOrDefaultAsync(o => o.Name == operatorName);
+        //var contract = await this.Context.Contracts.SingleOrDefaultAsync(c => c.OperatorId == estateOperator.OperatorId);
+        //var contractProducts = await this.Context.ContractProducts.FirstAsync(cp => cp.ContractReportingId == contract.ContractReportingId);
+        var contractProducts = await this.Context.ContractProducts.Join(
+                                                                  this.Context.Contracts,
+                                                                  c => c.ContractReportingId,
+                                                                  o => o.ContractReportingId,
+                                                                  (cp, c) => new
+                                                                  {
+                                                                      cp,
+                                                                      c
+                                                                  }
+                                                                 ).Where(x => x.c.OperatorId == estateOperator.OperatorId).FirstAsync();
+
+        for (int i = 1; i <= settledTransactionCount; i++)
+        {
+            Transaction transaction = await this.AddTransaction(settlementDate, merchantName, contractProducts.c.Description, contractProducts.cp.ProductName, "0000", i);
             settledTransactions.Add(transaction);
             settlementFees.Add((0.5m, 0.5m * i, i, true));
         }
 
-        await this.AddSettlementRecordWithFees(settlementDate, 1, 1, settlementFees);
+        await this.AddSettlementRecordWithFees(settlementDate, merchantName, settlementFees);
 
-        for (int i = 1; i <= pendingSettlementTransactionCount; i++){
-            Transaction transaction = await this.AddTransaction(DateTime.Now, 1, "Safaricom", 1, "0000", i);
+        for (int i = 1; i <= pendingSettlementTransactionCount; i++)
+        {
+            Transaction transaction = await this.AddTransaction(DateTime.Now, merchantName, contractProducts.c.Description, contractProducts.cp.ProductName, "0000", i); pendingSettlementTransactions.Add(transaction);
             pendingSettlementTransactions.Add(transaction);
             pendingSettlementFees.Add((0.5m, 0.5m * i, i, false));
         }
 
-        await this.AddSettlementRecordWithFees(settlementDate, 1, 1, pendingSettlementFees);
+        await this.AddSettlementRecordWithFees(settlementDate, merchantName, pendingSettlementFees);
 
         return (settledTransactions.Sum(s => s.TransactionAmount), pendingSettlementTransactions.Sum(p => p.TransactionAmount),
             settlementFees.Sum(s => s.calulatedValue), pendingSettlementFees.Sum(p => p.calulatedValue));
     }
-    */
+
+    public async Task AddSettlementRecordWithFees(DateTime dateTime,
+                                                  String merchantName,
+                                                  List<(Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId, Boolean isSettled)> feesList)
+    {
+        var merchant = await this.Context.Merchants.SingleOrDefaultAsync(m => m.Name == merchantName);
+        if (merchant == null)
+        {
+            throw new Exception($"No Merchant found with name {merchantName}");
+        }
+
+        Settlement settlementRecord = new Settlement
+                                      {
+                                          ProcessingStarted = true,
+                                          IsCompleted = true,
+                                          EstateReportingId = merchant.EstateReportingId,
+                                          MerchantReportingId = merchant.MerchantReportingId,
+                                          ProcessingStartedDateTIme = dateTime,
+                                          SettlementDate = dateTime,
+                                          SettlementId = Guid.NewGuid(),
+                                      };
+        await this.Context.Settlements.AddAsync(settlementRecord, CancellationToken.None);
+
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+
+        //var settlement = await this.Context.Settlements.Where(s => s.SettlementId == settlementRecord.SettlementId).SingleAsync(CancellationToken.None);
+
+        Int32 counter = 1;
+        foreach ((Decimal feeValue, Decimal calulatedValue, Int32 transactionFeeReportingId, Boolean isSettled) fee in feesList)
+        {
+            MerchantSettlementFee merchantSettlementFee = new MerchantSettlementFee
+                                                          {
+                                                              MerchantReportingId = merchant.MerchantReportingId,
+                                                              SettlementReportingId = settlementRecord.SettlementReportingId,
+                                                              IsSettled = fee.isSettled,
+                                                              FeeCalculatedDateTime = dateTime,
+                                                              TransactionReportingId = counter,
+                                                              TransactionFeeReportingId = fee.transactionFeeReportingId,
+                                                              CalculatedValue = fee.calulatedValue,
+                                                              FeeValue = fee.feeValue
+                                                          };
+            counter++;
+            await this.Context.MerchantSettlementFees.AddAsync(merchantSettlementFee, CancellationToken.None);
+        }
+
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+    }
 }
