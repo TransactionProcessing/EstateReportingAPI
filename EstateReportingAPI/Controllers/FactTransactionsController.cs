@@ -235,13 +235,16 @@ namespace EstateReportingAPI.Controllers{
         public async Task<IActionResult> GetOperatorPerformance([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] string? operatorIds, CancellationToken cancellationToken)
         {
 
-            List<String> operatorIdFilter = new List<String>();
+            List<Int32> operatorIdFilter = new List<Int32>();
             if (String.IsNullOrEmpty(operatorIds) == false)
             {
-                operatorIdFilter = operatorIds.Split(',').ToList();
-                
+                List<String> productListStrings = operatorIds.Split(',').ToList();
+                foreach (String productListString in productListStrings)
+                {
+                    operatorIdFilter.Add(Int32.Parse(productListString));
+                }
             }
-
+            
             Models.TodaysSales model = await this.ReportingManager.GetOperatorPerformance(estateId, comparisonDate, operatorIdFilter, cancellationToken);
 
             TodaysSales response = new TodaysSales

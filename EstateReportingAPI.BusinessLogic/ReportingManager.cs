@@ -4,6 +4,7 @@
     using Microsoft.EntityFrameworkCore;
     using Models;
     using Shared.Exceptions;
+    using System.Linq;
     using System.Threading;
     using Calendar = Models.Calendar;
     using Merchant = Models.Merchant;
@@ -537,7 +538,7 @@
             return response;
         }
 
-        public async Task<TodaysSales> GetOperatorPerformance(Guid estateId, DateTime comparisonDate, List<String> operatorIds, CancellationToken cancellationToken){
+        public async Task<TodaysSales> GetOperatorPerformance(Guid estateId, DateTime comparisonDate, List<Int32> operatorIds, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             // First we need to get a value of todays sales
@@ -556,8 +557,8 @@
 
             if (operatorIds.Any())
             {
-                //todaysSalesQuery = todaysSalesQuery.Where(t => operatorIds.Contains(t.OperatorIdentifier));
-                //comparisonSalesQuery = comparisonSalesQuery.Where(t => operatorIds.Contains(t.OperatorIdentifier));
+                todaysSalesQuery = todaysSalesQuery.Where(t => operatorIds.Contains(t.EstateOperatorReportingId));
+                comparisonSalesQuery = comparisonSalesQuery.Where(t => operatorIds.Contains(t.EstateOperatorReportingId));
             }
 
             TodaysSales response = new TodaysSales

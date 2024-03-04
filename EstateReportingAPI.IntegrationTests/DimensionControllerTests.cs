@@ -3,6 +3,7 @@
 using Common;
 using DataTrasferObjects;
 using EstateManagement.Database.Contexts;
+using EstateManagement.Database.Entities;
 using EstateReportingAPI.Models;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
@@ -12,26 +13,27 @@ using Merchant = DataTrasferObjects.Merchant;
 using Operator = DataTrasferObjects.Operator;
 using ResponseCode = DataTrasferObjects.ResponseCode;
 
-public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
-    /*
-    #region Methods
+public class DimensionsControllerTests :ControllerTestsBase{
+    private DatabaseHelper helper;
+    public DimensionsControllerTests(){
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        this.helper = new DatabaseHelper(context);
+    }
+
 
     [Fact]
     public async Task DimensionsController_GetCalendarYears_NoDataInDatabase(){
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/years");
-
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<CalendarYear>? years = JsonConvert.DeserializeObject<List<CalendarYear>>(content);
+        List<CalendarYear>? years = await this.CreateAndSendHttpRequestMessage<List<CalendarYear>>("api/dimensions/calendar/years", CancellationToken.None);
+        years.ShouldNotBeNull();
         years.Count.ShouldBe(0);
     }
-
+    
     [Fact]
     public async Task DimensionsController_GetCalendarYears_YearsReturned(){
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        DatabaseHelper helper = new DatabaseHelper(context);
-
+        
         List<Int32> yearList = new(){
+                                        2024,
                                         2023,
                                         2022,
                                         2021
@@ -41,29 +43,22 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
             await helper.AddCalendarYear(year);
         }
 
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/years");
+        List<CalendarYear>? years= await this.CreateAndSendHttpRequestMessage<List<CalendarYear>>("api/dimensions/calendar/years", CancellationToken.None);
 
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<CalendarYear>? years = JsonConvert.DeserializeObject<List<CalendarYear>>(content);
+        years.ShouldNotBeNull();
         years.Count.ShouldBe(yearList.Count);
     }
-
+    
     [Fact]
     public async Task DimensionsController_GetCalendarComparisonDates_DatesReturned(){
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        DatabaseHelper helper = new DatabaseHelper(context);
-
-        List<DateTime> datesInYear = helper.GetDatesForYear(2023);
+        List<DateTime> datesInYear = helper.GetDatesForYear(DateTime.Now.Year);
         await helper.AddCalendarDates(datesInYear);
 
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/comparisondates");
-
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<ComparisonDate> dates = JsonConvert.DeserializeObject<List<ComparisonDate>>(content);
-
+        List<ComparisonDate>? dates = await this.CreateAndSendHttpRequestMessage<List<ComparisonDate>>("api/dimensions/calendar/comparisondates", CancellationToken.None);
+        
         List<DateTime> expectedDates = datesInYear.Where(d => d <= DateTime.Now.Date.AddDays(-1)).ToList();
         Int32 expectedCount = expectedDates.Count + 2;
+        dates.ShouldNotBeNull();
         dates.Count.ShouldBe(expectedCount);
         foreach (DateTime date in expectedDates){
             dates.Select(d => d.Date).Contains(date.Date).ShouldBeTrue();
@@ -76,17 +71,11 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
     [Fact]
     public async Task DimensionsController_GetCalendarDates_DatesReturned(){
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        DatabaseHelper helper = new DatabaseHelper(context);
-
         List<DateTime> datesInYear = helper.GetDatesForYear(2023);
         await helper.AddCalendarDates(datesInYear);
 
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/2023/dates");
-
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<CalendarDate> dates = JsonConvert.DeserializeObject<List<CalendarDate>>(content);
+        List<CalendarDate>? dates = await this.CreateAndSendHttpRequestMessage<List<CalendarDate>>("api/dimensions/calendar/2023/dates", CancellationToken.None);
+        dates.ShouldNotBeNull();
         dates.Count.ShouldBe(datesInYear.Where(d => d <= DateTime.Now.Date).ToList().Count);
 
         foreach (DateTime date in datesInYear.Where(d => d <= DateTime.Now.Date).ToList()){
@@ -97,77 +86,60 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
 
     [Fact]
     public async Task DimensionsController_GetCalendarDates_NoDataInDatabase(){
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/calendar/2023/dates");
-
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<CalendarDate> dates = JsonConvert.DeserializeObject<List<CalendarDate>>(content);
+        List<CalendarDate>? dates = await this.CreateAndSendHttpRequestMessage<List<CalendarDate>>("api/dimensions/calendar/2023/dates", CancellationToken.None);
+        dates.ShouldNotBeNull();
         dates.Count.ShouldBe(0);
     }
 
     [Fact]
     public async Task DimensionsController_GetMerchants_NoData_NoMerchantsReturned()
     {
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        DatabaseHelper helper = new DatabaseHelper(context);
-        
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
-
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
+        List<Merchant>? merchants = await this.CreateAndSendHttpRequestMessage<List<Merchant>>("api/dimensions/merchants", CancellationToken.None);
+        merchants.ShouldNotBeNull();
         merchants.Count.ShouldBe(0);
     }
-
     [Fact]
     public async Task DimensionsController_GetMerchants_NoAddresses_MerchantsReturned()
     {
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        DatabaseHelper helper = new DatabaseHelper(context);
+        Int32 estateReportingId = await helper.AddEstate("Test Estate", "Ref1");
 
         for (int i = 0; i < 10; i++){
-            await helper.AddMerchant(1, $"Test Merchant {i}", DateTime.Now);
+            await helper.AddMerchant("Test Estate", $"Test Merchant {i}", DateTime.Now);
         }
 
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
-
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
+        List<Merchant>? merchants = await this.CreateAndSendHttpRequestMessage<List<Merchant>?>("api/dimensions/merchants", CancellationToken.None);
+        merchants.ShouldNotBeNull();
         merchants.Count.ShouldBe(10);
         merchants.Any(m => String.IsNullOrEmpty(m.Region) == false || String.IsNullOrEmpty(m.Town) == false ||
             String.IsNullOrEmpty(m.PostCode) == false).ShouldBeFalse();
 
         for (int i = 0; i < 10; i++){
-            var expected = merchants.SingleOrDefault(m => m.Name == $"Test Merchant {i}");
+            Merchant? expected = merchants.SingleOrDefault(m => m.Name == $"Test Merchant {i}");
             expected.ShouldNotBeNull();
         }
     }
-
+    
     [Fact]
     public async Task DimensionsController_GetMerchants_EachMerchantHasOneAddress_MerchantsReturned()
     {
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        DatabaseHelper helper = new DatabaseHelper(context);
+        Int32 estateReportingId = await helper.AddEstate("Test Estate", "Ref1");
 
         for (int i = 0; i < 10; i++){
-            var addressList = new List<(String addressLine1, String town, String postCode, String region)>();
+            List<(String addressLine1, String town, String postCode, String region)> addressList = new List<(String addressLine1, String town, String postCode, String region)>();
 
             addressList.Add(("Address Line 1", $"Test Town {i}", $"TE57 {i}NG", $"Region {i}"));
-            await helper.AddMerchant(1, $"Test Merchant {i}", DateTime.Now,addressList );
+            await helper.AddMerchant("Test Estate", $"Test Merchant {i}", DateTime.Now,addressList );
         }
 
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
-
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
+        List<Merchant>? merchants = await this.CreateAndSendHttpRequestMessage<List<Merchant>?>("api/dimensions/merchants", CancellationToken.None);
+        merchants.ShouldNotBeNull();
         merchants.Count.ShouldBe(10);
         merchants.Any(m => String.IsNullOrEmpty(m.Region) == false || String.IsNullOrEmpty(m.Town) == false ||
                            String.IsNullOrEmpty(m.PostCode) == false).ShouldBeTrue();
 
         for (int i = 0; i < 10; i++)
         {
-            var expected = merchants.SingleOrDefault(m => m.Name == $"Test Merchant {i}");
+            Merchant? expected = merchants.SingleOrDefault(m => m.Name == $"Test Merchant {i}");
             expected.ShouldNotBeNull();
         }
     }
@@ -175,29 +147,26 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
     [Fact]
     public async Task DimensionsController_GetMerchants_EachMerchantHasTwoAddress_MerchantsReturned()
     {
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        DatabaseHelper helper = new DatabaseHelper(context);
+        Int32 estateReportingId = await helper.AddEstate("Test Estate", "Ref1");
 
         for (int i = 0; i < 10; i++){
-            var addressList = new List<(String addressLine1, String town, String postCode, String region)>();
+            List<(String addressLine1, String town, String postCode, String region)> addressList = new List<(String addressLine1, String town, String postCode, String region)>();
             for (int j = 0; j < 2; j++){
                 addressList.Add(("Address Line 1", $"Test Town {i}{j}", $"TE5{j} {i}NG", $"Region {i}{j}"));
             }
-            await helper.AddMerchant(1, $"Test Merchant {i}", DateTime.Now, addressList);
+            await helper.AddMerchant("Test Estate", $"Test Merchant {i}", DateTime.Now, addressList);
         }
 
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/merchants");
+        List<Merchant>? merchants = await this.CreateAndSendHttpRequestMessage<List<Merchant>>("api/dimensions/merchants", CancellationToken.None);
 
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<Merchant> merchants = JsonConvert.DeserializeObject<List<Merchant>>(content);
+        merchants.ShouldNotBeNull();
         merchants.Count.ShouldBe(10);
         merchants.Any(m => String.IsNullOrEmpty(m.Region) == false || String.IsNullOrEmpty(m.Town) == false ||
                            String.IsNullOrEmpty(m.PostCode) == false).ShouldBeTrue();
 
         for (int i = 0; i < 10; i++)
         {
-            var expected = merchants.SingleOrDefault(m => m.Name == $"Test Merchant {i}");
+            Merchant? expected = merchants.SingleOrDefault(m => m.Name == $"Test Merchant {i}");
             expected.ShouldNotBeNull();
         }
     }
@@ -205,56 +174,39 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
     [Fact]
     public async Task DimensionsController_GetOperators_NoData_NoOperatorsReturned()
     {
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        DatabaseHelper helper = new DatabaseHelper(context);
-
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/operators");
-        
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<Operator> operators = JsonConvert.DeserializeObject<List<Operator>>(content);
+        List<Operator>? operators = await this.CreateAndSendHttpRequestMessage<List<Operator>>("api/dimensions/operators", CancellationToken.None);
+        operators.ShouldNotBeNull();
         operators.Count.ShouldBe(0);
     }
 
     [Fact]
     public async Task DimensionsController_GetOperators_OperatorsReturned()
     {
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        Int32 estateReportingId = await helper.AddEstate("Test Estate", "Ref1");
 
-        DatabaseHelper helper = new DatabaseHelper(context);
-        await helper.AddEstateOperator("Operator1");
-        await helper.AddEstateOperator("Operator2");
-        await helper.AddEstateOperator("Operator3");
+        await helper.AddEstateOperator("Test Estate", "Operator1");
+        await helper.AddEstateOperator("Test Estate", "Operator2");
+        await helper.AddEstateOperator("Test Estate", "Operator3");
 
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/operators");
-
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<Operator> operators = JsonConvert.DeserializeObject<List<Operator>>(content);
+        List<Operator>? operators = await this.CreateAndSendHttpRequestMessage<List<Operator>>("api/dimensions/operators", CancellationToken.None);
+        operators.ShouldNotBeNull();
         operators.Count.ShouldBe(3);
         operators.Any(o => o.Name == "Operator1").ShouldBeTrue();
         operators.Any(o => o.Name == "Operator2").ShouldBeTrue();
         operators.Any(o => o.Name == "Operator3").ShouldBeTrue();
     }
 
-
     [Fact]
     public async Task DimensionsController_GetResponseCodes_ResponseCodesReturned()
     {
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        DatabaseHelper helper = new DatabaseHelper(context);
         await helper.AddResponseCode(0, "Success");
         await helper.AddResponseCode(1000, "Unknown Device");
         await helper.AddResponseCode(1001, "Unknown Estate");
         await helper.AddResponseCode(1002, "Unknown Merchant");
         await helper.AddResponseCode(1003, "No Devices Configured");
 
-        
-
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/responsecodes");
-
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<ResponseCode>? responseCodes = JsonConvert.DeserializeObject<List<ResponseCode>>(content);
+        List<ResponseCode>? responseCodes = await this.CreateAndSendHttpRequestMessage<List<ResponseCode>>("api/dimensions/responsecodes", CancellationToken.None);
+        responseCodes.ShouldNotBeNull();
         responseCodes.Count.ShouldBe(5);
         responseCodes.Any(o => o.Code == 0).ShouldBeTrue();
         responseCodes.Any(o => o.Code == 1000).ShouldBeTrue();
@@ -266,26 +218,24 @@ public class DimensionsControllerTests :ControllerTestsBase, IDisposable{
     [Fact]
     public async Task DimensionsController_GetResponseCodes_NoData_NoResponseCodesReturned()
     {
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        DatabaseHelper helper = new DatabaseHelper(context);
-
-        HttpResponseMessage response = await this.CreateAndSendHttpRequestMessage("api/dimensions/responsecodes");
-
-        String content = await response.Content.ReadAsStringAsync(CancellationToken.None);
-        List<ResponseCode>? responseCodes = JsonConvert.DeserializeObject<List<ResponseCode>>(content);
+        List<ResponseCode>? responseCodes = await this.CreateAndSendHttpRequestMessage<List<ResponseCode>>("api/dimensions/responsecodes", CancellationToken.None);
         responseCodes.ShouldBeEmpty();
     }
 
-    #endregion
+    protected override async Task ClearStandingData(){
+        
+    }
 
-    //public void Dispose(){
-    //    EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+    protected override async Task SetupStandingData(){
+        
+    }
 
-    //    Console.WriteLine($"About to delete database EstateReportingReadModel{this.TestId.ToString()}");
-    //    Boolean result = context.Database.EnsureDeleted();
-    //    Console.WriteLine($"Delete result is {result}");
-    //    result.ShouldBeTrue();
-    //}
-    */
+    public void Dispose(){
+        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+
+        Console.WriteLine($"About to delete database EstateReportingReadModel{this.TestId.ToString()}");
+        Boolean result = context.Database.EnsureDeleted();
+        Console.WriteLine($"Delete result is {result}");
+        result.ShouldBeTrue();
+    }
 }
