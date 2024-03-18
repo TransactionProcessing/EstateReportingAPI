@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Shared" Version="2023.12.2" />
-    <PackageReference Include="EstateManagement.Database" Version="2023.12.2-build67" />
+    <PackageReference Include="Shared" Version="2024.3.3" />
+    <PackageReference Include="EstateManagement.Database" Version="2024.3.5-build77" />
   </ItemGroup>
 
   <ItemGroup>

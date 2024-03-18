@@ -79,7 +79,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     }
 
     internal void StartSqlContainer(){
-        DockerHelper dockerHelper = new DockerHelper();
+        DockerHelper dockerHelper = new TestDockerHelper();
 
         NlogLogger logger = new NlogLogger();
         logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
@@ -90,7 +90,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 
         DatabaseServerNetwork = dockerHelper.SetupTestNetwork("sharednetwork", true);
         Retry.For(async () => {
-                      DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(DatabaseServerNetwork);
+                      DatabaseServerContainer = await dockerHelper.SetupSqlServerContainer(DatabaseServerNetwork);
                   });
     }
 
@@ -102,5 +102,11 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         Boolean result = context.Database.EnsureDeleted();
         Console.WriteLine($"Delete result is {result}");
         result.ShouldBeTrue();
+    }
+}
+
+public class TestDockerHelper : DockerHelper{
+    public override async Task CreateSubscriptions(){
+        // Nothing here
     }
 }
