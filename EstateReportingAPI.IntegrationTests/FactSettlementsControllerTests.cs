@@ -11,12 +11,12 @@
     public class FactSettlementsControllerTests : ControllerTestsBase
     {
         protected override async Task ClearStandingData(){
-        await this.helper.DeleteAllContracts();
-        await this.helper.DeleteAllEstateOperator();
-        await this.helper.DeleteAllMerchants();
-    }
+            await this.helper.DeleteAllContracts();
+            await this.helper.DeleteAllEstateOperator();
+            await this.helper.DeleteAllMerchants();
+        }
 
-    protected override async Task SetupStandingData(){
+        protected override async Task SetupStandingData(){
         // Estates
         await helper.AddEstate("Test Estate", "Ref1");
 

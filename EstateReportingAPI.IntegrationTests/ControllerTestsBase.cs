@@ -19,32 +19,13 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     protected List<String> merchantsList;
     protected List<(String contract, String operatorname)> contractList;
     protected Dictionary<String, List<String>> contractProducts;
-
+    protected DatabaseHelper helper;
     public virtual async Task InitializeAsync()
     {
-        await this.SetupStandingData();
-    }
-
-    public virtual async Task DisposeAsync()
-    {
-    }
-
-    protected DatabaseHelper helper;
-
-    protected EstateManagementGenericContext context;
-
-    protected abstract Task ClearStandingData();
-    protected abstract Task SetupStandingData();
-
-    protected readonly HttpClient Client;
-    protected readonly CustomWebApplicationFactory<Startup> factory;
-
-    protected readonly Guid TestId;
-
-    public ControllerTestsBase(){
-       this.StartSqlContainer();
-
         this.TestId = Guid.NewGuid();
+
+        await this.StartSqlContainer();
+
         String dbConnString = GetLocalConnectionString($"EstateReportingReadModel{this.TestId}");
 
         this.factory = new CustomWebApplicationFactory<Startup>(dbConnString);
@@ -53,8 +34,24 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         this.context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
         this.helper = new DatabaseHelper(context);
+
+        await this.SetupStandingData();
     }
 
+    public virtual async Task DisposeAsync()
+    {
+    }
+    
+    protected EstateManagementGenericContext context;
+
+    protected abstract Task ClearStandingData();
+    protected abstract Task SetupStandingData();
+
+    protected HttpClient Client;
+    protected CustomWebApplicationFactory<Startup> factory;
+
+    protected Guid TestId;
+    
     internal async Task<T?> CreateAndSendHttpRequestMessage<T>(String url, CancellationToken cancellationToken)
     {
         HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
@@ -78,8 +75,8 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         return $"server=localhost,{databaseHostPort};database={databaseName};user id={SqlCredentials.usename};password={SqlCredentials.password};Encrypt=false";
     }
 
-    internal void StartSqlContainer(){
-        DockerHelper dockerHelper = new DockerHelper();
+    internal async Task StartSqlContainer(){
+        DockerHelper dockerHelper = new TestDockerHelper();
 
         NlogLogger logger = new NlogLogger();
         logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
@@ -87,10 +84,11 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         dockerHelper.Logger = logger;
         dockerHelper.SqlCredentials = SqlCredentials;
         dockerHelper.SqlServerContainerName = "sharedsqlserver";
+        dockerHelper.RequiredDockerServices = DockerServices.SqlServer;
 
         DatabaseServerNetwork = dockerHelper.SetupTestNetwork("sharednetwork", true);
-        Retry.For(async () => {
-                      DatabaseServerContainer = dockerHelper.SetupSqlServerContainer(DatabaseServerNetwork);
+        await Retry.For(async () => {
+                      DatabaseServerContainer = await dockerHelper.SetupSqlServerContainer(DatabaseServerNetwork);
                   });
     }
 
@@ -102,5 +100,11 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         Boolean result = context.Database.EnsureDeleted();
         Console.WriteLine($"Delete result is {result}");
         result.ShouldBeTrue();
+    }
+}
+
+public class TestDockerHelper : DockerHelper{
+    public override async Task CreateSubscriptions(){
+        // Nothing here
     }
 }

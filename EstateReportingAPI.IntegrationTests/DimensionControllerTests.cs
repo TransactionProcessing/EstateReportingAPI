@@ -14,13 +14,6 @@ using Operator = DataTrasferObjects.Operator;
 using ResponseCode = DataTrasferObjects.ResponseCode;
 
 public class DimensionsControllerTests :ControllerTestsBase{
-    private DatabaseHelper helper;
-    public DimensionsControllerTests(){
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
-
-        this.helper = new DatabaseHelper(context);
-    }
-
 
     [Fact]
     public async Task DimensionsController_GetCalendarYears_NoDataInDatabase(){
