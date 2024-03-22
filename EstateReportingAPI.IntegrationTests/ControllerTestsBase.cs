@@ -1,6 +1,7 @@
 ﻿namespace EstateReportingAPI.IntegrationTests;
 
 using System.Net.Http.Headers;
+using System.Text;
 using Azure;
 using Client;
 using Common;
@@ -30,6 +31,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 
         this.factory = new CustomWebApplicationFactory<Startup>(dbConnString);
         this.Client = this.factory.CreateClient();
+        this.ApiClient = new EstateReportingApiClient((s) => "http://localhost", this.Client);
 
         this.context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
@@ -50,13 +52,31 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     protected HttpClient Client;
     protected CustomWebApplicationFactory<Startup> factory;
 
+    protected EstateReportingApiClient ApiClient;
+
     protected Guid TestId;
-    
+
     internal async Task<T?> CreateAndSendHttpRequestMessage<T>(String url, CancellationToken cancellationToken)
     {
         HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
         requestMessage.Headers.Add("estateId", this.TestId.ToString());
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Test");
+        
+        HttpResponseMessage result = await this.Client.SendAsync(requestMessage, cancellationToken);
+        result.IsSuccessStatusCode.ShouldBeTrue(result.StatusCode.ToString());
+        String content = await result.Content.ReadAsStringAsync(cancellationToken);
+        content.ShouldNotBeNull();
+        return JsonConvert.DeserializeObject<T>(content);
+    }
+
+    internal async Task<T?> CreateAndSendHttpRequestMessage<T>(String url, String payload, CancellationToken cancellationToken)
+    {
+        HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
+        requestMessage.Headers.Add("estateId", this.TestId.ToString());
+        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Test");
+        if (String.IsNullOrEmpty(payload) == false){
+            requestMessage.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+        }
 
         HttpResponseMessage result = await this.Client.SendAsync(requestMessage, cancellationToken);
         result.IsSuccessStatusCode.ShouldBeTrue(result.StatusCode.ToString());
@@ -64,6 +84,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         content.ShouldNotBeNull();
         return JsonConvert.DeserializeObject<T>(content);
     }
+    
     public static IContainerService DatabaseServerContainer;
     public static INetworkService DatabaseServerNetwork;
     public static (String usename, String password) SqlCredentials = ("sa", "thisisalongpassword123!");
@@ -100,6 +121,21 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         Boolean result = context.Database.EnsureDeleted();
         Console.WriteLine($"Delete result is {result}");
         result.ShouldBeTrue();
+    }
+
+    internal async Task<T> ExecuteAsyncFunction<T>(Func<Task<T>> asyncFunction)
+    {
+        try
+        {
+            // Execute the provided asynchronous function
+            return await asyncFunction();
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions here
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            return default(T);
+        }
     }
 }
 

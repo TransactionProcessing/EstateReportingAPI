@@ -25,5 +25,7 @@ public interface IReportingManager{
 
     Task<TodaysSales> GetOperatorPerformance(Guid estateId, DateTime comparisonDate, List<Int32> operatorIds, CancellationToken cancellationToken);
 
+    Task<List<TransactionResult>> TransactionSearch(Guid estateId, TransactionSearchRequest searchRequest, PagingRequest pagingRequest, SortingRequest sortingRequest, CancellationToken cancellationToken);
+
     #endregion
 }
