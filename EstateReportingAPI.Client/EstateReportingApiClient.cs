@@ -251,7 +251,7 @@ namespace EstateReportingAPI.Client{
             return response;
         }
 
-        public async Task<TodaysSales> GetOperatorPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<String> operatorIds, CancellationToken cancellationToken){
+        public async Task<TodaysSales> GetOperatorPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> operatorIds, CancellationToken cancellationToken){
             // Serialize the integer array into a comma-separated string
             string serializedArray = string.Join(",", operatorIds);
 
@@ -273,6 +273,56 @@ namespace EstateReportingAPI.Client{
 
                 // call was successful so now deserialise the body to the response object
                 response = JsonConvert.DeserializeObject<TodaysSales>(content);
+            }
+            catch (Exception ex)
+            {
+                // An exception has occurred, add some additional information to the message
+                Exception exception = new Exception($"Error getting operator performance for estate {estateId}.", ex);
+
+                throw exception;
+            }
+
+            return response;
+        }
+
+        public async Task<List<TransactionResult>> TransactionSearch(String accessToken, Guid estateId, TransactionSearchRequest searchRequest, Int32? page, Int32? pageSize, SortField? sortField, SortDirection? sortDirection, CancellationToken cancellationToken){
+
+            List<TransactionResult> response = null;
+            QueryStringBuilder builder = new QueryStringBuilder();
+            if (page.HasValue){
+                builder.AddParameter("page", page.Value);
+            }
+            if (pageSize.HasValue)
+            {
+                builder.AddParameter("pageSize", pageSize.Value);
+            }
+            if (sortField.HasValue)
+            {
+                builder.AddParameter("sortField", (Int32)sortField.Value);
+            }
+            if (sortDirection.HasValue)
+            {
+                builder.AddParameter("sortDirection", (Int32)sortDirection.Value);
+            }
+            
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/search?{builder.BuildQueryString()}");
+
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Add("EstateId", estateId.ToString());
+
+                request.Content = new StringContent(JsonConvert.SerializeObject(searchRequest), Encoding.UTF8, "application/json");
+
+                // Make the Http Call here
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
+
+                // Process the response
+                String content = await this.HandleResponse(httpResponse, cancellationToken);
+
+                // call was successful so now deserialise the body to the response object
+                response = JsonConvert.DeserializeObject<List<TransactionResult>>(content);
             }
             catch (Exception ex)
             {

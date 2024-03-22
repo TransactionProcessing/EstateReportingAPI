@@ -5,9 +5,13 @@
     using Models;
     using Shared.Exceptions;
     using System.Linq;
+    using System.Linq.Dynamic.Core;
+    using System.Linq.Expressions;
     using System.Threading;
     using Calendar = Models.Calendar;
     using Merchant = Models.Merchant;
+    using System.Linq.Expressions;
+    using System.Reflection;
 
     public class ReportingManager : IReportingManager{
         #region Fields
@@ -573,6 +577,95 @@
             return response;
         }
 
+        public async Task<List<TransactionResult>> TransactionSearch(Guid estateId, TransactionSearchRequest searchRequest, PagingRequest pagingRequest, SortingRequest sortingRequest, CancellationToken cancellationToken){
+
+            // Base query before any filtering is added
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+
+            var mainQuery = (from txn in context.Transactions
+                             join merchant in context.Merchants on txn.MerchantReportingId equals merchant.MerchantReportingId
+                             join estateOperator in context.EstateOperators on txn.EstateOperatorReportingId equals estateOperator.EstateOperatorReportingId
+                             join product in context.ContractProducts on txn.ContractProductReportingId equals product.ContractProductReportingId
+                             where txn.TransactionDate == searchRequest.QueryDate.Date
+                             select new
+                                    {
+                                        Transaction = txn,
+                                        Merchant = merchant,
+                                        Operator = estateOperator,
+                                        Product = product
+                                    }).AsQueryable();
+
+            // Now apply the filtering
+            if (searchRequest.Operators != null && searchRequest.Operators.Any()){
+                mainQuery = mainQuery.Where(m => searchRequest.Operators.Contains(m.Operator.EstateOperatorReportingId));
+            }
+
+            if (searchRequest.Merchants != null && searchRequest.Merchants.Any()){
+                mainQuery = mainQuery.Where(m => searchRequest.Merchants.Contains(m.Merchant.MerchantReportingId));
+            }
+
+            if (searchRequest.ValueRange != null){
+                mainQuery = mainQuery.Where(m => m.Transaction.TransactionAmount >= searchRequest.ValueRange.StartValue &&
+                                                 m.Transaction.TransactionAmount <= searchRequest.ValueRange.EndValue);
+            }
+
+            if (String.IsNullOrEmpty(searchRequest.AuthCode) == false){
+                mainQuery = mainQuery.Where(m => m.Transaction.AuthorisationCode == searchRequest.AuthCode);
+            }
+
+            if (String.IsNullOrEmpty(searchRequest.ResponseCode) == false){
+                mainQuery = mainQuery.Where(m => m.Transaction.ResponseCode == searchRequest.ResponseCode);
+            }
+
+            if (String.IsNullOrEmpty(searchRequest.TransactionNumber) == false){
+                mainQuery = mainQuery.Where(m => m.Transaction.TransactionNumber == searchRequest.TransactionNumber);
+            }
+
+            Int32 skipCount = 0;
+            if (pagingRequest.Page > 1){
+                skipCount = (pagingRequest.Page - 1) * pagingRequest.PageSize;
+            }
+
+            if (sortingRequest != null){
+                // Handle order by here, cant think of a better way of achieving this
+                mainQuery = (sortingRequest.SortDirection, sortingRequest.SortField) switch{
+                    (SortDirection.Ascending, SortField.MerchantName) => mainQuery.OrderBy(m => m.Merchant.Name),
+                    (SortDirection.Ascending, SortField.OperatorName) => mainQuery.OrderBy(m => m.Operator.Name),
+                    (SortDirection.Ascending, SortField.TransactionAmount) => mainQuery.OrderBy(m => m.Transaction.TransactionAmount),
+                    (SortDirection.Descending, SortField.MerchantName) => mainQuery.OrderByDescending(m => m.Merchant.Name),
+                    (SortDirection.Descending, SortField.OperatorName) => mainQuery.OrderByDescending(m => m.Operator.Name),
+                    (SortDirection.Descending, SortField.TransactionAmount) => mainQuery.OrderByDescending(m => m.Transaction.TransactionAmount),
+                    _ => mainQuery.OrderByDescending(m => m.Transaction.TransactionDateTime)
+                };
+            }
+
+            var queryResults = await mainQuery.Skip(skipCount).Take(pagingRequest.PageSize)
+                                              .ToListAsync(cancellationToken);
+
+            List<TransactionResult> results = new List<TransactionResult>();
+
+            queryResults.ForEach(qr => {
+                                     results.Add(new TransactionResult{
+                                         MerchantReportingId = qr.Merchant.MerchantReportingId,
+                                         ResponseCode = qr.Transaction.ResponseCode,
+                                         IsAuthorised = qr.Transaction.IsAuthorised,
+                                         MerchantName = qr.Merchant.Name,
+                                         OperatorName = qr.Operator.Name,
+                                         OperatorReportingId = qr.Operator.EstateOperatorReportingId,
+                                         Product = qr.Product.ProductName,
+                                         ProductReportingId = qr.Product.ContractProductReportingId,
+                                         ResponseMessage = qr.Transaction.ResponseMessage,
+                                         TransactionDateTime = qr.Transaction.TransactionDateTime,
+                                         TransactionId = qr.Transaction.TransactionId,
+                                         TransactionReportingId = qr.Transaction.TransactionReportingId,
+                                         TransactionSource = qr.Transaction.TransactionSource.ToString(), // TODO: Name for this
+                                         TransactionAmount = qr.Transaction.TransactionAmount
+                                     });
+                                 });
+
+            return results;
+        }
+        
         public async Task<List<Merchant>> GetMerchants(Guid estateId, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 

@@ -5,6 +5,16 @@ namespace EstateReportingAPI.Controllers{
     using DataTransferObjects;
     using BusinessLogic;
     using Microsoft.AspNetCore.Authorization;
+    using Newtonsoft.Json;
+    using EstateReportingAPI.Models;
+    using MerchantKpi = DataTransferObjects.MerchantKpi;
+    using SortDirection = DataTransferObjects.SortDirection;
+    using SortField = DataTransferObjects.SortField;
+    using TodaysSales = DataTransferObjects.TodaysSales;
+    using TodaysSalesCountByHour = DataTransferObjects.TodaysSalesCountByHour;
+    using TodaysSalesValueByHour = DataTransferObjects.TodaysSalesValueByHour;
+    using TransactionResult = DataTransferObjects.TransactionResult;
+    using TransactionSearchRequest = DataTransferObjects.TransactionSearchRequest;
 
     [ExcludeFromCodeCoverage]
     [Route(FactTransactionsController.ControllerRoute)]
@@ -259,17 +269,82 @@ namespace EstateReportingAPI.Controllers{
 
             return this.Ok(response);
         }
+
+        [HttpGet]
+        [Route("search")]
+        public async Task<IActionResult> TransactionSearch([FromHeader] Guid estateId, [FromBody] TransactionSearchRequest request,
+                                                           [FromQuery] int? page, [FromQuery] int? pageSize,
+                                                           [FromQuery] SortField? sortField, [FromQuery] SortDirection? sortDirection,
+                                                           CancellationToken cancellationToken){
+
+            PagingRequest pagingRequest = CreatePagingRequest(page, pageSize);
+            Models.SortingRequest sortingRequest = CreateSortingRequest(sortField, sortDirection);
+            // TODO: Convert the request
+            Models.TransactionSearchRequest searchModel = new Models.TransactionSearchRequest{
+                                                                                           AuthCode = request.AuthCode,
+                                                                                           Merchants = request.Merchants,
+                                                                                           Operators = request.Operators,
+                                                                                           QueryDate = request.QueryDate,
+                                                                                           ResponseCode = request.ResponseCode,
+                                                                                           TransactionNumber = request.TransactionNumber,
+                                                                                       };
+
+            if (request.ValueRange != null){
+                searchModel.ValueRange = new Models.ValueRange{
+                                                                  EndValue = request.ValueRange.EndValue,
+                                                                  StartValue = request.ValueRange.StartValue,
+                                                              };
+            }
+            
+            List<Models.TransactionResult> result = await this.ReportingManager.TransactionSearch(estateId, searchModel, pagingRequest, sortingRequest, cancellationToken);
+            
+            List<TransactionResult> response = new List<TransactionResult>();
+
+            result.ForEach(t => {
+                               response.Add(new TransactionResult{
+                                                                     MerchantReportingId = t.MerchantReportingId,
+                                                                     ResponseCode = t.ResponseCode,
+                                                                     Product = t.Product,
+                                                                     TransactionReportingId = t.TransactionReportingId,
+                                                                     TransactionSource = t.TransactionSource,
+                                                                     IsAuthorised = t.IsAuthorised,
+                                                                     MerchantName = t.MerchantName,
+                                                                     OperatorName = t.OperatorName,
+                                                                     OperatorReportingId = t.OperatorReportingId,
+                                                                     ProductReportingId = t.ProductReportingId,
+                                                                     ResponseMessage = t.ResponseMessage,
+                                                                     TransactionDateTime = t.TransactionDateTime,
+                                                                     TransactionId = t.TransactionId,
+                                                                     TransactionAmount = t.TransactionAmount
+                                                                 });
+                           });
+
+
+            return this.Ok(response);
+        }
+
+        private static PagingRequest CreatePagingRequest(int? page, int? pageSize) => new(page, pageSize);
+
+        private static SortingRequest CreateSortingRequest(SortField? sortField, SortDirection? sortDirection){
+            Models.SortField modelSortField = Models.SortField.TransactionAmount;
+            Models.SortDirection modelSortDirection = Models.SortDirection.Ascending;
+            if (sortField != null){
+                modelSortField = Enum.Parse<Models.SortField>(sortField.ToString(), true);
+            }
+            if (sortDirection != null)
+            {
+                modelSortDirection = Enum.Parse<Models.SortDirection>(sortDirection.ToString(), true);
+            }
+
+            return new Models.SortingRequest(modelSortField, modelSortDirection);
+        }
     }
-
-
-    public class TopBottomData{
-        public String DimensionName{ get; set; }
-        public Decimal SalesValue{ get; set; }
-    }
-
+    
     public enum TopBottom{
         Top = 0,
 
         Bottom = 1
     }
+
+    
 }
