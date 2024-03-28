@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
@@ -10,25 +10,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="EstateManagement.Database" Version="2024.3.5-build77" />
-	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.7" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
-    <PackageReference Include="xunit" Version="2.4.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+	  <PackageReference Include="EstateManagement.Database" Version="2024.3.6-build80" />
+	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="xunit" Version="2.7.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="coverlet.collector" Version="3.2.0">
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Shouldly" Version="4.2.1" />
-    <PackageReference Include="Shared" Version="2024.3.3" />
-    <PackageReference Include="Shared.IntegrationTesting" Version="2024.3.3" />
+    <PackageReference Include="Shared" Version="2024.4.2" />
+    <PackageReference Include="Shared.IntegrationTesting" Version="2024.4.2" />
     <PackageReference Include="Ductus.FluentDocker" Version="2.10.59" />
-	  <PackageReference Include="NLog" Version="5.2.0" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.0" />
-    <PackageReference Include="SecurityService.Client" Version="2023.12.2-build58" />
+	  <PackageReference Include="NLog" Version="5.2.8" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
+    <PackageReference Include="SecurityService.Client" Version="2024.3.2-build59" />
 
   </ItemGroup>
 

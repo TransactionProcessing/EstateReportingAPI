@@ -10,8 +10,6 @@ using Shared.Logger;
 namespace EstateReportingAPI
 {
     using BusinessLogic;
-    using Org.BouncyCastle.Asn1.Cmp;
-
     public class Startup
     {
         public static IConfigurationRoot Configuration { get; set; }

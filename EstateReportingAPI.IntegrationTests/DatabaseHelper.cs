@@ -7,7 +7,6 @@ using EstateManagement.Database.Migrations.MySql;
 using k8s.KubeConfigModels;
 using Microsoft.AspNetCore.Html;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Asn1;
 
 public class DatabaseHelper{
     private readonly EstateManagementGenericContext Context;
