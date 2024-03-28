@@ -1,15 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="7.3.10" />
-    <PackageReference Include="Shared" Version="2024.3.3" />
-    <PackageReference Include="EstateManagement.Database" Version="2024.3.5-build77" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="8.3.10" />
+    <PackageReference Include="Shared" Version="2024.4.2" />
+    <PackageReference Include="EstateManagement.Database" Version="2024.3.6-build80" />
   </ItemGroup>
 
   <ItemGroup>

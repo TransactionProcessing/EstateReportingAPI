@@ -1,7 +1,7 @@
 FROM stuartferguson/txnprocbase AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["EstateReportingAPI/NuGet.Config", "."]
 COPY ["EstateReportingAPI/EstateReportingAPI.csproj", "EstateReportingAPI/"]
