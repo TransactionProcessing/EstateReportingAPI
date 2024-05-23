@@ -100,6 +100,32 @@ namespace EstateReportingAPI.Controllers{
         }
 
         [HttpGet]
+        [Route("merchants/lastsale")]
+        public async Task<IActionResult> GetMerchantsByLastSale([FromHeader] Guid estateId, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate, CancellationToken cancellationToken){
+            List<Merchant> merchants = await this.ReportingManager.GetMerchantsByLastSale(estateId,startDate, endDate, cancellationToken);
+
+            List<Merchant> response = new List<Merchant>();
+
+            merchants.ForEach(m => response.Add(new Merchant
+                                                {
+                                                    MerchantReportingId = m.MerchantReportingId,
+                                                    MerchantId = m.MerchantId,
+                                                    EstateReportingId = m.EstateReportingId,
+                                                    Name = m.Name,
+                                                    LastSaleDateTime = m.LastSaleDateTime,
+                                                    CreatedDateTime = m.CreatedDateTime,
+                                                    LastSale = m.LastSale,
+                                                    LastStatement = m.LastStatement,
+                                                    PostCode = m.PostCode,
+                                                    Reference = m.Reference,
+                                                    Region = m.Region,
+                                                    Town = m.Town,
+                                                }));
+
+            return this.Ok(response.OrderBy(m => m.Name));
+        }
+
+        [HttpGet]
         [Route("merchantkpis")]
         public async Task<IActionResult> GetMerchantsTransactionKpis([FromHeader] Guid estateId, CancellationToken cancellationToken){
 

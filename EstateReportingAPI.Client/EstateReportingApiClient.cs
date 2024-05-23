@@ -251,6 +251,37 @@ namespace EstateReportingAPI.Client{
             return response;
         }
 
+        public async Task<List<Merchant>> GetMerchantsByLastSaleDate(String accessToken, Guid estateId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken){
+            List<Merchant> response = new List<Merchant>();
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/transactions/merchants/lastsale?startDate={startDate:yyyy-MM-dd HH:mm:ss}&enddate={endDate:yyyy-MM-dd HH:mm:ss}");
+
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Add("EstateId", estateId.ToString());
+
+                // Make the Http Call here
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
+
+                // Process the response
+                String content = await this.HandleResponse(httpResponse, cancellationToken);
+
+                // call was successful so now deserialise the body to the response object
+                response = JsonConvert.DeserializeObject<List<Merchant>>(content);
+            }
+            catch (Exception ex)
+            {
+                // An exception has occurred, add some additional information to the message
+                Exception exception = new Exception($"Error getting merchant by last sale date estate {estateId}.", ex);
+
+                throw exception;
+            }
+
+            return response;
+        }
+
         public async Task<TodaysSales> GetOperatorPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> operatorIds, CancellationToken cancellationToken){
             // Serialize the integer array into a comma-separated string
             string serializedArray = string.Join(",", operatorIds);
