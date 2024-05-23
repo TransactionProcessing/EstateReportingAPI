@@ -5,9 +5,11 @@ using DataTrasferObjects;
 using EstateManagement.Database.Contexts;
 using EstateManagement.Database.Entities;
 using EstateReportingAPI.DataTransferObjects;
+using Microsoft.OpenApi.Services;
 using Newtonsoft.Json;
 using Shouldly;
 using Xunit;
+using Merchant = DataTrasferObjects.Merchant;
 using SortDirection = DataTransferObjects.SortDirection;
 
 public class FactTransactionsControllerTests : ControllerTestsBase
@@ -1926,5 +1928,105 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult[1].TransactionAmount.ShouldBe(200);
         searchResult[2].TransactionAmount.ShouldBe(100);
     }
+
+    [Theory]
+    [InlineData(ClientType.Api)]
+    [InlineData(ClientType.Direct)]
+    public async Task FactTransactionsControllerController_GetMerchantsByLastDaleDate_MerchantsReturned(ClientType clientType)
+    {
+        DateTime todaysDateTime = DateTime.Now;
+
+        await ClearStandingData();
+
+        // Last Hour
+        await helper.AddMerchant("Test Estate", "Merchant 1", todaysDateTime.AddMinutes(-10));
+        await helper.AddMerchant("Test Estate", "Merchant 2", todaysDateTime.AddMinutes(-10));
+        await helper.AddMerchant("Test Estate", "Merchant 3", todaysDateTime.AddMinutes(-10));
+        await helper.AddMerchant("Test Estate", "Merchant 4", todaysDateTime.AddMinutes(-10));
+
+        // Yesterday             
+        await helper.AddMerchant("Test Estate", "Merchant 5", todaysDateTime.AddDays(-1));
+        await helper.AddMerchant("Test Estate", "Merchant 6", todaysDateTime.AddDays(-1));
+        await helper.AddMerchant("Test Estate", "Merchant 7", todaysDateTime.AddDays(-1));
+        await helper.AddMerchant("Test Estate", "Merchant 8", todaysDateTime.AddDays(-1));
+        await helper.AddMerchant("Test Estate", "Merchant 9", todaysDateTime.AddDays(-1));
+        await helper.AddMerchant("Test Estate", "Merchant 10", todaysDateTime.AddDays(-1));
+
+        // 5 days ago
+        await helper.AddMerchant("Test Estate", "Merchant 11", todaysDateTime.AddDays(-5));
+        await helper.AddMerchant("Test Estate", "Merchant 12", todaysDateTime.AddDays(-5));
+        await helper.AddMerchant("Test Estate", "Merchant 13", todaysDateTime.AddDays(-5));
+        
+        // 10 Days Ago
+        await helper.AddMerchant("Test Estate", "Merchant 14", todaysDateTime.AddDays(-10));
+        await helper.AddMerchant("Test Estate", "Merchant 15", todaysDateTime.AddDays(-10));
+        await helper.AddMerchant("Test Estate", "Merchant 16", todaysDateTime.AddDays(-10));
+        await helper.AddMerchant("Test Estate", "Merchant 17", todaysDateTime.AddDays(-10));
+        await helper.AddMerchant("Test Estate", "Merchant 18", todaysDateTime.AddDays(-10));
+
+        DateTime startDate = DateTime.Now;
+        DateTime endDate = DateTime.Now;
+
+        Func<Task<List<Merchant>?>> asyncFunction = async () =>
+                                                    {
+                                                        List<Merchant>? result = clientType switch
+                                                        {
+                                                            ClientType.Api => await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate,endDate, CancellationToken.None),
+                                                            _ => await CreateAndSendHttpRequestMessage<List<Merchant>>($"api/facts/transactions/merchants/lastsale?startDate={startDate:yyyy-MM-dd HH:mm:ss}&enddate={endDate:yyyy-MM-dd HH:mm:ss}", CancellationToken.None)
+                                                        };
+                                                        return result;
+                                                    };
+        // Test 1 - sale in last hour
+        startDate = DateTime.Now.AddHours(-1);
+        endDate = DateTime.Now;
+        List<Merchant>? searchResult = await ExecuteAsyncFunction(asyncFunction);
+        searchResult.ShouldNotBeNull();
+        searchResult.Count.ShouldBe(4);
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 1").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 2").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 3").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 4").ShouldNotBeNull();
+
+        // Test 2 - sale in last day but over an hour ago
+        startDate = DateTime.Now.Date.AddDays(-1);
+        endDate = DateTime.Now.AddHours(-1);
+        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        searchResult.ShouldNotBeNull();
+        searchResult.Count.ShouldBe(6);
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 5").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 6").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 7").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 8").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 9").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 10").ShouldNotBeNull();
+
+        // Test 3 - sale in last  7 days but non yesterday
+        startDate = DateTime.Now.Date.AddDays(-7);
+        endDate = DateTime.Now.Date.AddDays(-1);
+        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        searchResult.ShouldNotBeNull();
+        searchResult.Count.ShouldBe(3);
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 11").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 12").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 13").ShouldNotBeNull();
+
+        // Test 4 - sale more than 7 days ago 
+        startDate = DateTime.Now.Date.AddYears(-1);
+        endDate = DateTime.Now.Date.AddDays(-7);
+        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        searchResult.ShouldNotBeNull();
+        searchResult.Count.ShouldBe(5);
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 14").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 15").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 16").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 17").ShouldNotBeNull();
+        searchResult.SingleOrDefault(s => s.Name == "Merchant 18").ShouldNotBeNull();
+
+
+
+
+
+    }
+
 }
 

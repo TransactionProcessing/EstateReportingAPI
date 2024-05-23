@@ -5,6 +5,7 @@
     using Microsoft.AspNetCore.Mvc;
     using System.Diagnostics.CodeAnalysis;
     using BusinessLogic;
+    using IdentityModel;
 
     [ExcludeFromCodeCoverage]
     [Route(DimensionsController.ControllerRoute)]

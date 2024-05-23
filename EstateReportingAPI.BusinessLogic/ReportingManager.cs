@@ -145,6 +145,55 @@
             return response;
         }
 
+        public async Task<List<Merchant>> GetMerchantsByLastSale(Guid estateId, DateTime startDateTime, DateTime endDateTime, CancellationToken cancellationToken){
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+
+            List<Merchant> response = new();
+
+            var merchants = await context.Merchants
+                                   .Where(m => m.LastSaleDateTime >= startDateTime && m.LastSaleDateTime <= endDateTime)
+                                                    .Select(m => new
+                                                    {
+                                                        MerchantReportingId = m.MerchantReportingId,
+                                                        EstateReportingId = m.EstateReportingId,
+                                                        Name = m.Name,
+                                                        LastSaleDateTime = m.LastSaleDateTime,
+                                                        LastSale = m.LastSaleDate,
+                                                        CreatedDateTime = m.CreatedDateTime,
+                                                        LastStatement = m.LastStatementGenerated,
+                                                        MerchantId = m.MerchantId,
+                                                        Reference = m.Reference,
+                                                        AddressInfo = context.MerchantAddresses
+                                                                                          .Where(ma => ma.MerchantReportingId == m.MerchantReportingId)
+                                                                                          .OrderByDescending(ma => ma.CreatedDateTime)
+                                                                                          .Select(ma => new
+                                                                                          {
+                                                                                              PostCode = ma.PostalCode,
+                                                                                              Region = ma.Region,
+                                                                                              Town = ma.Town,
+                                                                                              // Add more properties as needed
+                                                                                          })
+                                                                                          .FirstOrDefault() // Get the first matching MerchantAddress or null
+                                                    }).ToListAsync(cancellationToken);
+            
+            merchants.ForEach(m => response.Add(new Merchant{
+                                                                LastSaleDateTime = m.LastSaleDateTime,
+                                                                CreatedDateTime = m.CreatedDateTime,
+                                                                EstateReportingId = m.EstateReportingId,
+                                                                LastSale = m.LastSale,
+                                                                LastStatement = m.LastStatement,
+                                                                MerchantId = m.MerchantId,
+                                                                MerchantReportingId = m.MerchantReportingId,
+                                                                Name = m.Name,
+                                                                Reference = m.Reference,
+                                                                PostCode = m.AddressInfo?.PostCode,
+                                                                Region = m.AddressInfo?.Region,
+                                                                Town = m.AddressInfo?.Town
+                                                            }));
+
+            return response;
+        }
+
         public async Task<List<ResponseCode>> GetResponseCodes(Guid estateId, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
             List<ResponseCode> response = new List<ResponseCode>();

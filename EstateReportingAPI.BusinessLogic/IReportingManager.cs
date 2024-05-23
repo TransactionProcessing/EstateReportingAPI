@@ -11,6 +11,7 @@ public interface IReportingManager{
     Task<LastSettlement> GetLastSettlement(Guid estateId, CancellationToken cancellationToken);
     Task<List<Merchant>> GetMerchants(Guid estateId, CancellationToken cancellationToken);
     Task<MerchantKpi> GetMerchantsTransactionKpis(Guid estateId, CancellationToken cancellationToken);
+    Task<List<Merchant>> GetMerchantsByLastSale(Guid estateId, DateTime startDateTime, DateTime endDateTime, CancellationToken cancellationToken);
     Task<List<Operator>> GetOperators(Guid estateId, CancellationToken cancellationToken);
     Task<List<ResponseCode>> GetResponseCodes(Guid estateId, CancellationToken cancellationToken);
     Task<TodaysSales> GetTodaysFailedSales(Guid estateId, DateTime comparisonDate, String responseCode, CancellationToken cancellationToken);
