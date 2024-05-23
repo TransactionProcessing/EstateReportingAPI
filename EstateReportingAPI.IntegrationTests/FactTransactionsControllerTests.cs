@@ -1971,7 +1971,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                     {
                                                         List<Merchant>? result = clientType switch
                                                         {
-                                                            ClientType.Api => await this.ApiClient.GetMerchantsByLastDaleDate(String.Empty, Guid.NewGuid(), startDate,endDate, CancellationToken.None),
+                                                            ClientType.Api => await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate,endDate, CancellationToken.None),
                                                             _ => await CreateAndSendHttpRequestMessage<List<Merchant>>($"api/facts/transactions/merchants/lastsale?startDate={startDate:yyyy-MM-dd HH:mm:ss}&enddate={endDate:yyyy-MM-dd HH:mm:ss}", CancellationToken.None)
                                                         };
                                                         return result;
