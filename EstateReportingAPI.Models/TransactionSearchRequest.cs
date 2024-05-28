@@ -39,6 +39,13 @@ public record SortingRequest{
     }
 }
 
+public enum GroupByOption
+{
+    Operator,
+    Merchant,
+    Product
+}
+
 public class TransactionResult{
     public Guid TransactionId { get; set; }
     public Int32 TransactionReportingId { get; set; }

@@ -1,4 +1,5 @@
 ﻿namespace EstateReportingAPI.BusinessLogic{
+    using System.Data.Common;
     using EstateManagement.Database.Contexts;
     using EstateManagement.Database.Entities;
     using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@
     using Merchant = Models.Merchant;
     using System.Linq.Expressions;
     using System.Reflection;
+    using Operator = Models.Operator;
 
     public class ReportingManager : IReportingManager{
         #region Fields
@@ -31,6 +33,94 @@
         #endregion
 
         #region Methods
+
+        public async Task<List<UnsettledFee>> GetUnsettledFees(Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption? groupByOption, CancellationToken cancellationToken){
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+
+            var fees = (from merchantSettlementFee in context.MerchantSettlementFees
+                        join transaction in context.Transactions
+                            on merchantSettlementFee.TransactionReportingId equals transaction.TransactionReportingId
+                        where merchantSettlementFee.FeeCalculatedDateTime.Date >= startDate &&
+                              merchantSettlementFee.FeeCalculatedDateTime.Date <= endDate
+                        select new{
+                                      fee = merchantSettlementFee,
+                                      txn = transaction
+                                  }).AsQueryable();
+
+            if (merchantIds.Any()){
+                fees = fees.Where(f => merchantIds.Contains(f.txn.MerchantReportingId));
+            }
+            if (operatorIds.Any())
+            {
+                fees = fees.Where(f => operatorIds.Contains(f.txn.EstateOperatorReportingId));
+            }
+            if (productIds.Any())
+            {
+                fees = fees.Where(f => merchantIds.Contains(f.txn.ContractProductReportingId));
+            }
+
+            List<UnsettledFee> unsettledFees = new();
+
+            switch(groupByOption){
+                case GroupByOption.Merchant:
+                    unsettledFees = await (from f in fees
+                                     join merchant in context.Merchants
+                                         on f.fee.MerchantReportingId equals merchant.MerchantReportingId
+                                     group new{
+                                                  f.fee.MerchantReportingId,
+                                                  CalculatedValue = f.fee.CalculatedValue,
+                                              } by merchant.Name
+                                     into grouped
+                                     select new UnsettledFee{
+                                                                  DimensionName = grouped.Key,
+                                                                  FeesValue = grouped.Sum(item => item.CalculatedValue),
+                                                                  FeesCount = grouped.Count()
+                                                              }).ToListAsync(cancellationToken);
+                    break;
+                case GroupByOption.Operator:
+                    unsettledFees = await (from f in fees
+                                           join estateOperator in context.EstateOperators
+                                               on f.txn.EstateOperatorReportingId equals estateOperator.OperatorReportingId
+                                           join @operator in context.Operators on estateOperator.OperatorReportingId equals @operator.OperatorReportingId
+                                           group new
+                                                 {
+                                                     @operator.OperatorReportingId,
+                                                     CalculatedValue = f.fee.CalculatedValue,
+                                                 } by @operator.Name
+                                           into grouped
+                                           select new UnsettledFee
+                                                  {
+                                                      DimensionName = grouped.Key,
+                                                      FeesValue = grouped.Sum(item => item.CalculatedValue),
+                                                      FeesCount = grouped.Count()
+                                                  }).ToListAsync(cancellationToken);
+                    break;
+                case GroupByOption.Product:
+                    unsettledFees = await (from f in fees
+                                           join contractProduct in context.ContractProducts
+                                               on f.txn.ContractProductReportingId equals contractProduct.ContractProductReportingId
+                                           join contract in context.Contracts
+                                               on contractProduct.ContractReportingId equals contract.ContractReportingId
+                                           join @operator in context.Operators
+                                               on contract.OperatorId equals @operator.OperatorId
+                                           group new
+                                                 {                                                     
+                                                     contractProduct.ContractProductReportingId,
+                                                     CalculatedValue = f.fee.CalculatedValue,
+                                                 } by new { @operator.Name, contractProduct.ProductName}
+                                           into grouped
+                                           select new UnsettledFee
+                                           {
+                                                      DimensionName = $"{grouped.Key.Name} - {grouped.Key.ProductName}",
+                                                      FeesValue = grouped.Sum(item => item.CalculatedValue),
+                                                      FeesCount = grouped.Count()
+                                                  }).ToListAsync(cancellationToken);
+
+                    break;
+            }
+
+            return unsettledFees;
+        }
 
         public async Task<List<Calendar>> GetCalendarComparisonDates(Guid estateId, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
@@ -210,7 +300,7 @@
 
         public async Task<TodaysSales> GetTodaysFailedSales(Guid estateId, DateTime comparisonDate, String responseCode, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
-
+            
             // First we need to get a value of todays sales
             Decimal todaysSalesValue = (from t in context.Transactions
                                         where t.IsAuthorised == false && t.TransactionType == "Sale"
@@ -255,7 +345,8 @@
         private async Task<IQueryable<Transaction>> GetSalesForDate(EstateManagementGenericContext context,
                                                                     DateTime queryDate,
                                                                     Guid? merchantId,
-                                                                    Guid? operatorId){
+                                                                    Guid? operatorId, 
+                                                                    CancellationToken cancellationToken){
             var salesForDate = (from t in context.Transactions
                                 where t.IsAuthorised && t.TransactionType == "Sale"
                                                      && t.TransactionDate == queryDate.Date
@@ -263,7 +354,7 @@
                                 select t).AsQueryable();
 
             if (merchantId.HasValue){
-                EstateManagement.Database.Entities.Merchant? m = await context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchantId.Value);
+                EstateManagement.Database.Entities.Merchant? m = await context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchantId.Value, cancellationToken);
 
                 if (m == null){
                     throw new NotFoundException($"Merchant Id {merchantId} not found");
@@ -273,13 +364,23 @@
             }
 
             if (operatorId.HasValue){
-                var o = await context.EstateOperators.SingleOrDefaultAsync(o => o.OperatorId == operatorId.Value);
+                var @operator = await (from e in context.EstateOperators
+                                       join o in context.Operators
+                                           on e.OperatorReportingId equals o.OperatorReportingId
+                                       where o.OperatorId == operatorId.Value
+                                       select new
+                                              {
+                                                  Name = o.Name,
+                                                  EstateReportingId = o.EstateReportingId,
+                                                  OperatorReportingId = e.OperatorReportingId,
+                                                  OperatorId = o.OperatorId
+                                              }).SingleOrDefaultAsync(cancellationToken);
 
-                if (o == null){
+                if (@operator == null){
                     throw new NotFoundException($"Operator Id {operatorId} not found");
                 }
 
-                salesForDate = salesForDate.Where(t => t.EstateOperatorReportingId == o.EstateOperatorReportingId).AsQueryable();
+                salesForDate = salesForDate.Where(t => t.EstateOperatorReportingId == @operator.OperatorReportingId).AsQueryable();
             }
 
             return salesForDate;
@@ -288,8 +389,8 @@
         public async Task<TodaysSales> GetTodaysSales(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            IQueryable<Transaction> todaysSales = await GetSalesForDate(context, DateTime.Now, merchantId,operatorId);
-            IQueryable<Transaction> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId);
+            IQueryable<Transaction> todaysSales = await GetSalesForDate(context, DateTime.Now, merchantId,operatorId,cancellationToken);
+            IQueryable<Transaction> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId, cancellationToken);
             
             var todaysSalesValue = await todaysSales.SumAsync(t => t.TransactionAmount, cancellationToken);
             var todaysSalesCount = await todaysSales.CountAsync(cancellationToken);
@@ -308,8 +409,8 @@
         public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            IQueryable<Transaction> todaysSales = await GetSalesForDate(context, DateTime.Now, merchantId, operatorId);
-            IQueryable<Transaction> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId);
+            IQueryable<Transaction> todaysSales = await GetSalesForDate(context, DateTime.Now, merchantId, operatorId, cancellationToken);
+            IQueryable<Transaction> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId, cancellationToken);
 
             // First we need to get a value of todays sales
             var todaysSalesByHour = (from t in todaysSales
@@ -343,8 +444,8 @@
         public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            IQueryable<Transaction> todaysSales = await GetSalesForDate(context, DateTime.Now, merchantId, operatorId);
-            IQueryable<Transaction> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId);
+            IQueryable<Transaction> todaysSales = await GetSalesForDate(context, DateTime.Now, merchantId, operatorId, cancellationToken);
+            IQueryable<Transaction> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId, cancellationToken);
 
             // First we need to get a value of todays sales
             var todaysSalesByHour = await (from t in todaysSales
@@ -375,7 +476,7 @@
             return response;
         }
 
-        private async Task<IQueryable<MerchantSettlementFee>> GetSettlementDataForDate(EstateManagementGenericContext context, Guid? merchantId, Guid? operatorId, DateTime queryDate)
+        private async Task<IQueryable<MerchantSettlementFee>> GetSettlementDataForDate(EstateManagementGenericContext context, Guid? merchantId, Guid? operatorId, DateTime queryDate, CancellationToken cancellationToken)
         {
             var settlementData = (from s in context.Settlements
                                   join f in context.MerchantSettlementFees on s.SettlementReportingId equals f.SettlementReportingId
@@ -385,7 +486,7 @@
             
             if (merchantId.HasValue)
             {
-                EstateManagement.Database.Entities.Merchant? m = await context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchantId.Value);
+                EstateManagement.Database.Entities.Merchant? m = await context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchantId.Value, cancellationToken);
 
                 if (m == null)
                 {
@@ -397,14 +498,25 @@
 
             if (operatorId.HasValue)
             {
-                EstateOperator? o = await context.EstateOperators.SingleOrDefaultAsync(o => o.OperatorId == operatorId.Value);
+                var @operator = await (from e in context.EstateOperators
+                                             join o in context.Operators
+                                                 on e.OperatorReportingId equals o.OperatorReportingId
+                                             where o.OperatorId == operatorId.Value
+                                             select new 
+                                                    {
+                                                        Name = o.Name,
+                                                        EstateReportingId = o.EstateReportingId,
+                                                        OperatorReportingId = e.OperatorReportingId,
+                                                        OperatorId = o.OperatorId
+                                                    }).SingleOrDefaultAsync(cancellationToken);
 
-                if (o == null)
+
+                if (@operator == null)
                 {
                     throw new NotFoundException($"Operator Id {operatorId} not found");
                 }
 
-                settlementData = settlementData.Where(t => t.Transaction.EstateOperatorReportingId == o.EstateOperatorReportingId).AsQueryable();
+                settlementData = settlementData.Where(t => t.Transaction.EstateOperatorReportingId == @operator.OperatorReportingId).AsQueryable();
             }
 
 
@@ -415,8 +527,8 @@
         public async Task<TodaysSettlement> GetTodaysSettlement(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            IQueryable<MerchantSettlementFee> todaySettlementData = await GetSettlementDataForDate(context, merchantId, operatorId, DateTime.Now.Date);
-            IQueryable<MerchantSettlementFee> comparisonSettlementData = await GetSettlementDataForDate(context, merchantId, operatorId, comparisonDate);
+            IQueryable<MerchantSettlementFee> todaySettlementData = await GetSettlementDataForDate(context, merchantId, operatorId, DateTime.Now.Date, cancellationToken);
+            IQueryable<MerchantSettlementFee> comparisonSettlementData = await GetSettlementDataForDate(context, merchantId, operatorId, comparisonDate, cancellationToken);
 
             var todaySettlement = await (from f in todaySettlementData
                                        group f by f.IsSettled into grouped
@@ -480,11 +592,18 @@
                 queryable = mainQuery
                             .Join(context.EstateOperators,
                                   t => t.EstateOperatorReportingId,
-                                  oper => oper.EstateOperatorReportingId,
+                                  oper => oper.OperatorReportingId,
                                   (t, oper) => new{
                                                       Transaction = t,
-                                                      Operator = oper
+                                                      EstateOperator = oper
                                                   })
+                            .Join(context.Operators,
+                                  eo => eo.EstateOperator.OperatorReportingId,
+                                  o => o.OperatorReportingId,
+                                  (eo, o) => new{
+                                      Transaction = eo.Transaction,
+                                      Operator = o
+                                  })
                             .GroupBy(joined => joined.Operator.Name)
                             .Select(g => new TopBottomData{
                                                               DimensionName = g.Key,
@@ -633,20 +752,21 @@
 
             var mainQuery = (from txn in context.Transactions
                              join merchant in context.Merchants on txn.MerchantReportingId equals merchant.MerchantReportingId
-                             join estateOperator in context.EstateOperators on txn.EstateOperatorReportingId equals estateOperator.EstateOperatorReportingId
+                             join estateOperator in context.EstateOperators on txn.EstateOperatorReportingId equals estateOperator.OperatorReportingId
+                             join @operator in context.Operators on estateOperator.OperatorReportingId equals @operator.OperatorReportingId
                              join product in context.ContractProducts on txn.ContractProductReportingId equals product.ContractProductReportingId
                              where txn.TransactionDate == searchRequest.QueryDate.Date
                              select new
                                     {
                                         Transaction = txn,
                                         Merchant = merchant,
-                                        Operator = estateOperator,
+                                        Operator = @operator,
                                         Product = product
                                     }).AsQueryable();
 
             // Now apply the filtering
             if (searchRequest.Operators != null && searchRequest.Operators.Any()){
-                mainQuery = mainQuery.Where(m => searchRequest.Operators.Contains(m.Operator.EstateOperatorReportingId));
+                mainQuery = mainQuery.Where(m => searchRequest.Operators.Contains(m.Operator.OperatorReportingId));
             }
 
             if (searchRequest.Merchants != null && searchRequest.Merchants.Any()){
@@ -700,7 +820,7 @@
                                          IsAuthorised = qr.Transaction.IsAuthorised,
                                          MerchantName = qr.Merchant.Name,
                                          OperatorName = qr.Operator.Name,
-                                         OperatorReportingId = qr.Operator.EstateOperatorReportingId,
+                                         OperatorReportingId = qr.Operator.OperatorReportingId,
                                          Product = qr.Product.ProductName,
                                          ProductReportingId = qr.Product.ContractProductReportingId,
                                          ResponseMessage = qr.Transaction.ResponseMessage,
@@ -771,12 +891,16 @@
         public async Task<List<Operator>> GetOperators(Guid estateId, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            var operators = await context.EstateOperators.Select(o => new Operator{
-                                                                                      Name = o.Name,
-                                                                                      EstateReportingId = o.EstateReportingId,
-                                                                                      OperatorId = o.OperatorId
-                                                                                  }).ToListAsync(cancellationToken);
-
+            List<Operator> operators = await (from e in context.EstateOperators
+                                              join o in context.Operators
+                                                  on e.OperatorReportingId equals o.OperatorReportingId
+                                              select new Operator
+                                                     {
+                                                         Name = o.Name,
+                                                         EstateReportingId = o.EstateReportingId,
+                                                         OperatorId = o.OperatorId
+                                                     }).ToListAsync(cancellationToken);
+            
             return operators;
         }
 

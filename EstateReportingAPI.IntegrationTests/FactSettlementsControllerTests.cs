@@ -1,13 +1,17 @@
 ﻿namespace EstateReportingAPI.IntegrationTests
 {
     using EstateManagement.Database.Contexts;
+    using EstateManagement.Database.Entities;
     using EstateReportingAPI.DataTransferObjects;
     using Microsoft.EntityFrameworkCore;
     using Shouldly;
+    using System.Diagnostics.Contracts;
     using Xunit;
 
     public class FactSettlementsControllerTests : ControllerTestsBase
     {
+        protected Dictionary<(String Name,Int32 contractReportingId, String Description), List<String>> contractProducts;
+
         protected override async Task ClearStandingData()
         {
             await helper.DeleteAllContracts();
@@ -20,11 +24,17 @@
             // Estates
             await helper.AddEstate("Test Estate", "Ref1");
 
+            // Operators
+            Int32 safaricomReportingId = await this.helper.AddOperator("Test Estate", "Safaricom");
+            Int32 voucherReportingId = await this.helper.AddOperator("Test Estate", "Voucher");
+            Int32 pataPawaPostPayReportingId = await this.helper.AddOperator("Test Estate", "PataPawa PostPay");
+            Int32 pataPawaPrePay = await this.helper.AddOperator("Test Estate", "PataPawa PrePay");
+
             // Estate Operators
-            await helper.AddEstateOperator("Test Estate", "Safaricom");
-            await helper.AddEstateOperator("Test Estate", "Voucher");
-            await helper.AddEstateOperator("Test Estate", "PataPawa PostPay");
-            await helper.AddEstateOperator("Test Estate", "PataPawa PrePay");
+            await helper.AddEstateOperator("Test Estate", safaricomReportingId);
+            await helper.AddEstateOperator("Test Estate", voucherReportingId);
+            await helper.AddEstateOperator("Test Estate", pataPawaPostPayReportingId);
+            await helper.AddEstateOperator("Test Estate", pataPawaPrePay);
 
             // Merchants
             await helper.AddMerchant("Test Estate", "Test Merchant 1", DateTime.MinValue);
@@ -67,7 +77,7 @@
             merchantsList = context.Merchants.Select(m => m.Name).ToList();
             contractList = context.Contracts
                                      .Join(
-                                           context.EstateOperators,
+                                           context.Operators,
                                            c => c.OperatorId,
                                            o => o.OperatorId,
                                            (c, o) => new { c.Description, OperatorName = o.Name }
@@ -83,6 +93,8 @@
                                         cp => cp.ContractReportingId,
                                         (c, productGroup) => new
                                         {
+                                            c.OperatorId,
+                                            c.ContractReportingId,
                                             c.Description,
                                             Products = productGroup.Select(p => new { p.ContractProductReportingId, p.ProductName })
                                                                                         .OrderBy(p => p.ContractProductReportingId)
@@ -91,17 +103,27 @@
                                         })
                              .ToList();
 
-            contractProducts = query1.ToDictionary(
-                                                        item => item.Description,
-                                                        item => item.Products
-                                                       );
+            var query2 = query1.Join(this.context.Operators,
+                                     c => c.OperatorId,
+                                     o => o.OperatorId,
+                                     (c, o) => new{
+                                                      o.Name,
+                                                      c.ContractReportingId,
+                                                      c.Description,
+                                                      c.Products
+                                                  }).ToList();
+
+            contractProducts = query2.ToDictionary(
+                                                   item => (item.Name, item.ContractReportingId, item.Description),
+                                                   item => item.Products
+                                                  );
         }
+        
         [Theory]
         [InlineData(ClientType.Api)]
         [InlineData(ClientType.Direct)]
         public async Task FactSettlementsController_TodaysSettlement_SettlementReturned(ClientType clientType)
         {
-
             int overallTodaysSettlementTransactionCount = 0;
             int overallTodaysPendingSettlementTransactionCount = 0;
 
@@ -109,7 +131,7 @@
             int overallComparisonPendingSettlementTransactionCount = 0;
             List<(decimal settledTransactions, decimal pendingSettlementTransactions, decimal settlementFees, decimal pendingSettlementFees)> todayOverallTotals = new();
             List<(decimal settledTransactions, decimal pendingSettlementTransactions, decimal settlementFees, decimal pendingSettlementFees)> comparisonOverallTotals = new();
-            var estateOperator = await context.EstateOperators.SingleOrDefaultAsync(o => o.Name == "Safaricom");
+            //var estateOperator = await context.EstateOperators.SingleOrDefaultAsync(o => o.Name == "Safaricom");
             foreach (string merchant in merchantsList)
             {
                 int todaysSettlementTransactionCount = 15;
@@ -168,7 +190,6 @@
             int overallComparisonPendingSettlementTransactionCount = 0;
             List<(decimal settledTransactions, decimal pendingSettlementTransactions, decimal settlementFees, decimal pendingSettlementFees)> todayOverallTotals = new();
             List<(decimal settledTransactions, decimal pendingSettlementTransactions, decimal settlementFees, decimal pendingSettlementFees)> comparisonOverallTotals = new();
-            var estateOperator = await this.context.EstateOperators.SingleOrDefaultAsync(o => o.Name == "Safaricom");
             foreach (string merchant in merchantsList)
             {
                 int todaysSettlementTransactionCount = 15;
@@ -187,9 +208,7 @@
                 overallComparisonSettlementTransactionCount += comparisonSettlementTransactionCount;
                 overallComparisonPendingSettlementTransactionCount += comparisonPendingSettlementTransactionCount;
             }
-
-            //LastSettlement lastSettlement = await this.CreateAndSendHttpRequestMessage<LastSettlement>($"api/facts/settlements/lastsettlement", CancellationToken.None);
-
+            
             Func<Task<LastSettlement>> asyncFunction = async () =>
                                                        {
                                                            LastSettlement result = clientType switch
@@ -205,6 +224,210 @@
             lastSettlement.FeesValue.ShouldBe(todayOverallTotals.Sum(t => t.settlementFees));
             lastSettlement.SalesCount.ShouldBe(overallTodaysSettlementTransactionCount);
             lastSettlement.SalesValue.ShouldBe(todayOverallTotals.Sum(c => c.settledTransactions));
+        }
+
+
+        [Theory]
+        //[InlineData(ClientType.Api)]
+        [InlineData(ClientType.Direct)]
+        public async Task FactSettlementsController_UnsettledFees_ByOperator_SettlementReturned(ClientType clientType){
+            // Add some fees over a date range for multiple operators
+            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+
+            DatabaseHelper helper = new DatabaseHelper(context);
+
+            List<DateTime> dates = new();
+            dates.Add(new DateTime(2024, 5, 24));
+            dates.Add(new DateTime(2024, 5, 25));
+            dates.Add(new DateTime(2024, 5, 26));
+            dates.Add(new DateTime(2024, 5, 27));
+
+            Int32 settlementReportingId = 1;
+            foreach (DateTime dateTime in dates){
+                
+                foreach (String merchant in this.merchantsList){
+                    foreach ((String contract, String operatorname) contract in this.contractList){
+                        var products = this.contractProducts.Single(cp => cp.Key.Description == contract.contract);
+
+                        foreach (var product in products.Value){
+                            await helper.AddMerchantSettlementFee(settlementReportingId, dateTime, merchant, contract.contract, product, CancellationToken.None);
+                        }
+                    }
+                }
+
+                settlementReportingId++;
+            }
+
+            DateTime startDate = dates.Min();
+            DateTime endDate = dates.Max();
+
+            Func<Task<List<UnsettledFee>>> asyncFunction = async () =>
+                                                       {
+                                                           List<UnsettledFee> result = clientType switch
+                                                           {
+                                                               //ClientType.Api => await ApiClient.GetU(string.Empty, Guid.NewGuid(), CancellationToken.None),
+                                                               _ => await CreateAndSendHttpRequestMessage<List<UnsettledFee>>($"api/facts/settlements/unsettledfees?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}&groupByOption={(Int32)GroupByOption.Operator}", CancellationToken.None)
+                                                           };
+                                                           return result;
+                                                       };
+            var unsettledFees = await ExecuteAsyncFunction(asyncFunction);
+
+            unsettledFees.ShouldNotBeNull();
+            unsettledFees.ShouldNotBeEmpty();
+            unsettledFees.Count.ShouldBe(this.contractList.Count);
+            foreach ((String contract, String operatorname) contract in this.contractList){
+                var c = await this.context.Contracts.SingleOrDefaultAsync(c => c.Description == contract.contract, CancellationToken.None);
+                var cps = await this.context.ContractProducts.Where(cp => cp.ContractReportingId== c.ContractReportingId).Select(cp => cp.ContractProductReportingId).ToListAsync(CancellationToken.None);
+                var tf = await context.ContractProductTransactionFees.Where(cptf => cps.Contains(cptf.ContractProductReportingId)).Select(t => t.TransactionFeeReportingId).ToListAsync(CancellationToken.None);
+
+                var expectedFees = this.context.MerchantSettlementFees.Where(f => tf.Contains(f.TransactionFeeReportingId));
+
+                var u = unsettledFees.SingleOrDefault(u => u.DimensionName == contract.operatorname);
+
+                u.ShouldNotBeNull();
+                u.FeesCount.ShouldBe(await expectedFees.CountAsync(CancellationToken.None));
+                u.FeesValue.ShouldBe(await expectedFees.SumAsync(f=> f.CalculatedValue,CancellationToken.None));
+            }
+        }
+
+        [Theory]
+        //[InlineData(ClientType.Api)]
+        [InlineData(ClientType.Direct)]
+        public async Task FactSettlementsController_UnsettledFees_ByMerchant_SettlementReturned(ClientType clientType)
+        {
+            // Add some fees over a date range for multiple operators
+            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+
+            DatabaseHelper helper = new DatabaseHelper(context);
+
+            List<DateTime> dates = new();
+            dates.Add(new DateTime(2024, 5, 24));
+            dates.Add(new DateTime(2024, 5, 25));
+            dates.Add(new DateTime(2024, 5, 26));
+            dates.Add(new DateTime(2024, 5, 27));
+
+            Int32 settlementReportingId = 1;
+            foreach (DateTime dateTime in dates)
+            {
+
+                foreach (String merchant in this.merchantsList)
+                {
+                    foreach ((String contract, String operatorname) contract in this.contractList)
+                    {
+                        var products = this.contractProducts.Single(cp => cp.Key.Description == contract.contract);
+
+                        foreach (var product in products.Value)
+                        {
+                            await helper.AddMerchantSettlementFee(settlementReportingId, dateTime, merchant, contract.contract, product, CancellationToken.None);
+                        }
+                    }
+                }
+
+                settlementReportingId++;
+            }
+
+            DateTime startDate = dates.Min();
+            DateTime endDate = dates.Max();
+
+            Func<Task<List<UnsettledFee>>> asyncFunction = async () =>
+            {
+                List<UnsettledFee> result = clientType switch
+                {
+                    //ClientType.Api => await ApiClient.GetU(string.Empty, Guid.NewGuid(), CancellationToken.None),
+                    _ => await CreateAndSendHttpRequestMessage<List<UnsettledFee>>($"api/facts/settlements/unsettledfees?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}&groupByOption={(Int32)GroupByOption.Merchant}", CancellationToken.None)
+                };
+                return result;
+            };
+            var unsettledFees = await ExecuteAsyncFunction(asyncFunction);
+
+            unsettledFees.ShouldNotBeNull();
+            unsettledFees.ShouldNotBeEmpty();
+            unsettledFees.Count.ShouldBe(this.merchantsList.Count);
+            foreach (var merchantName in this.merchantsList)
+            {
+                var merchant = await this.context.Merchants.SingleOrDefaultAsync(me => me.Name == merchantName);
+                var expectedFees = this.context.MerchantSettlementFees.Where(f => f.MerchantReportingId == merchant.MerchantReportingId);
+                
+                var u = unsettledFees.SingleOrDefault(u => u.DimensionName == merchantName);
+
+                u.ShouldNotBeNull();
+                u.FeesCount.ShouldBe(await expectedFees.CountAsync(CancellationToken.None));
+                u.FeesValue.ShouldBe(await expectedFees.SumAsync(f => f.CalculatedValue, CancellationToken.None));
+            }
+        }
+
+        [Theory]
+        //[InlineData(ClientType.Api)]
+        [InlineData(ClientType.Direct)]
+        public async Task FactSettlementsController_UnsettledFees_ByProduct_SettlementReturned(ClientType clientType)
+        {
+            // Add some fees over a date range for multiple operators
+            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+
+            DatabaseHelper helper = new DatabaseHelper(context);
+
+            List<DateTime> dates = new();
+            dates.Add(new DateTime(2024, 5, 24));
+            dates.Add(new DateTime(2024, 5, 25));
+            dates.Add(new DateTime(2024, 5, 26));
+            dates.Add(new DateTime(2024, 5, 27));
+
+            Int32 settlementReportingId = 1;
+            foreach (DateTime dateTime in dates)
+            {
+
+                foreach (String merchant in this.merchantsList)
+                {
+                    foreach ((String contract, String operatorname) contract in this.contractList)
+                    {
+                        var products = this.contractProducts.Single(cp => cp.Key.Description == contract.contract);
+
+                        foreach (var product in products.Value)
+                        {
+                            await helper.AddMerchantSettlementFee(settlementReportingId, dateTime, merchant, contract.contract, product, CancellationToken.None);
+                        }
+                    }
+                }
+
+                settlementReportingId++;
+            }
+
+            DateTime startDate = dates.Min();
+            DateTime endDate = dates.Max();
+
+            Func<Task<List<UnsettledFee>>> asyncFunction = async () =>
+            {
+                List<UnsettledFee> result = clientType switch
+                {
+                    //ClientType.Api => await ApiClient.GetU(string.Empty, Guid.NewGuid(), CancellationToken.None),
+                    _ => await CreateAndSendHttpRequestMessage<List<UnsettledFee>>($"api/facts/settlements/unsettledfees?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}&groupByOption={(Int32)GroupByOption.Product}", CancellationToken.None)
+                };
+                return result;
+            };
+            var unsettledFees = await ExecuteAsyncFunction(asyncFunction);
+
+            unsettledFees.ShouldNotBeNull();
+            unsettledFees.ShouldNotBeEmpty();
+            
+            List<(String,Int32,String)> allProducts = new();
+            foreach (var contractProduct in this.contractProducts){
+                foreach (String s in contractProduct.Value){
+                    allProducts.Add((contractProduct.Key.Name, contractProduct.Key.contractReportingId,s));
+                }
+            }
+            unsettledFees.Count.ShouldBe(allProducts.Distinct().Count());
+            foreach (var contractProduct in allProducts.Distinct())
+            {
+                var product = await this.context.ContractProducts.Where(cp => cp.ProductName == contractProduct.Item3 && cp.ContractReportingId == contractProduct.Item2).SingleOrDefaultAsync(CancellationToken.None);
+                var tf = await context.ContractProductTransactionFees.Where(cptf => cptf.ContractProductReportingId == product.ContractProductReportingId).ToListAsync(CancellationToken.None);
+                var expectedFees = this.context.MerchantSettlementFees.Where(f => tf.Select(t => t.TransactionFeeReportingId).Contains(f.TransactionFeeReportingId));
+
+                var u = unsettledFees.SingleOrDefault(u => u.DimensionName == $"{contractProduct.Item1} - {contractProduct.Item3}");
+
+                u.ShouldNotBeNull($"{contractProduct.Item1} - {contractProduct.Item2}");
+                u.FeesCount.ShouldBe(await expectedFees.CountAsync(CancellationToken.None));
+                u.FeesValue.ShouldBe(await expectedFees.SumAsync(f => f.CalculatedValue, CancellationToken.None));
+            }
         }
     }
 }

@@ -14,7 +14,7 @@ using SortDirection = DataTransferObjects.SortDirection;
 
 public class FactTransactionsControllerTests : ControllerTestsBase
 {
-
+    protected Dictionary<String, List<String>> contractProducts;
     protected override async Task ClearStandingData()
     {
         await helper.DeleteAllContracts();
@@ -27,11 +27,17 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         // Estates
         await helper.AddEstate("Test Estate", "Ref1");
 
+        // Operators
+        Int32 safaricomReportingId = await this.helper.AddOperator("Test Estate", "Safaricom");
+        Int32 voucherReportingId = await this.helper.AddOperator("Test Estate", "Voucher");
+        Int32 pataPawaPostPayReportingId = await this.helper.AddOperator("Test Estate", "PataPawa PostPay");
+        Int32 pataPawaPrePay = await this.helper.AddOperator("Test Estate", "PataPawa PrePay");
+
         // Estate Operators
-        await helper.AddEstateOperator("Test Estate", "Safaricom");
-        await helper.AddEstateOperator("Test Estate", "Voucher");
-        await helper.AddEstateOperator("Test Estate", "PataPawa PostPay");
-        await helper.AddEstateOperator("Test Estate", "PataPawa PrePay");
+        await helper.AddEstateOperator("Test Estate", safaricomReportingId);
+        await helper.AddEstateOperator("Test Estate", voucherReportingId);
+        await helper.AddEstateOperator("Test Estate", pataPawaPostPayReportingId);
+        await helper.AddEstateOperator("Test Estate", pataPawaPrePay);
 
         // Merchants
         await helper.AddMerchant("Test Estate", "Test Merchant 1", DateTime.MinValue);
@@ -74,7 +80,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         merchantsList = context.Merchants.Select(m => m.Name).ToList();
         contractList = context.Contracts
                                  .Join(
-                                       context.EstateOperators,
+                                       context.Operators,
                                        c => c.OperatorId,
                                        o => o.OperatorId,
                                        (c, o) => new { c.Description, OperatorName = o.Name }
@@ -370,11 +376,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         DateTime todaysDateTime = DateTime.Now;
 
         Dictionary<string, int> transactionCounts = new(){
-                                                               { "Test Merchant 1", 3 },
-                                                               { "Test Merchant 2", 6 },
-                                                               { "Test Merchant 3", 2 },
-                                                               { "Test Merchant 4", 0 }
-                                                           };
+            { "Test Merchant 1", 3 },
+            { "Test Merchant 2", 6 },
+            { "Test Merchant 3", 2 },
+            { "Test Merchant 4", 0 }
+        };
 
         foreach (string merchantName in merchantsList)
         {
@@ -405,7 +411,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                     var transactionCount = transactionCounts.Single(m => m.Key == merchantName).Value;
                     for (int i = 0; i < transactionCount; i++)
                     {
-                        Transaction transaction = await helper.AddTransaction(comparisonDate, merchantName, contract.contract, product, "1009");
+                        Transaction transaction = await helper.AddTransaction(comparisonDate.AddHours(-1), merchantName, contract.contract, product, "1009");
                         comparisonDateTransactions.Add(transaction);
                     }
                 }

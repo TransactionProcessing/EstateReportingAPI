@@ -1,10 +1,11 @@
 ﻿namespace EstateReportingAPI.BusinessLogic;
 
+using Microsoft.VisualBasic.CompilerServices;
 using Models;
 
 public interface IReportingManager{
     #region Methods
-
+    Task<List<UnsettledFee>> GetUnsettledFees(Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption? groupByOption, CancellationToken cancellationToken);
     Task<List<Calendar>> GetCalendarComparisonDates(Guid estateId, CancellationToken cancellationToken);
     Task<List<Calendar>> GetCalendarDates(Guid estateId, CancellationToken cancellationToken);
     Task<List<Int32>> GetCalendarYears(Guid estateId, CancellationToken cancellationToken);

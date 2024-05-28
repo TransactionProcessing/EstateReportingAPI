@@ -4,9 +4,12 @@ using System.Diagnostics.CodeAnalysis;
 namespace EstateReportingAPI.Controllers
 {
     using BusinessLogic;
-    using DataTransferObjects;
     using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc.Formatters;
+    using Models;
+    using GroupByOption = DataTransferObjects.GroupByOption;
     using LastSettlement = Models.LastSettlement;
+    using TodaysSettlement = DataTransferObjects.TodaysSettlement;
 
     [ExcludeFromCodeCoverage]
     [Route(FactSettlementsController.ControllerRoute)]
@@ -69,6 +72,70 @@ namespace EstateReportingAPI.Controllers
                                         };
 
             return this.Ok(response);
+        }
+
+        [HttpGet]
+        [Route("unsettledfees")]
+        public async Task<IActionResult> GetUnsettledFees([FromHeader] Guid estateId,
+                                                          [FromQuery] DateTime startDate,
+                                                          [FromQuery] DateTime endDate,
+                                                          [FromQuery] string? merchantIds, [FromQuery] string? operatorIds, 
+                                                          [FromQuery] string? productIds,
+                                                       [FromQuery] GroupByOption? groupByOption, CancellationToken cancellationToken)
+        {
+            List<Int32> merchantIdFilter = new List<Int32>();
+            if (String.IsNullOrEmpty(merchantIds) == false)
+            {
+                List<String> merchantListStrings = merchantIds.Split(',').ToList();
+                foreach (String merchantListString in merchantListStrings)
+                {
+                    merchantIdFilter.Add(Int32.Parse(merchantListString));
+                }
+            }
+
+            List<Int32> operatorIdFilter = new List<Int32>();
+            if (String.IsNullOrEmpty(operatorIds) == false)
+            {
+                List<String> operatorListStrings = operatorIds.Split(',').ToList();
+                foreach (String operatorListString in operatorListStrings)
+                {
+                    operatorIdFilter.Add(Int32.Parse(operatorListString));
+                }
+            }
+
+            List<Int32> productIdFilter = new List<Int32>();
+            if (String.IsNullOrEmpty(productIds) == false)
+            {
+                List<String> productListStrings = productIds.Split(',').ToList();
+                foreach (String productListString in productListStrings)
+                {
+                    productIdFilter.Add(Int32.Parse(productListString));
+                }
+            }
+
+            Models.GroupByOption groupByOptionConverted = ConvertGroupByOption(groupByOption.GetValueOrDefault());
+            List<UnsettledFee> model = await this.ReportingManager.GetUnsettledFees(estateId,  startDate, endDate, merchantIdFilter,
+                                                                                    operatorIdFilter, productIdFilter, groupByOptionConverted, cancellationToken);
+
+            List<EstateReportingAPI.DataTransferObjects.UnsettledFee> response = new();
+            
+            foreach (UnsettledFee unsettledFee in model){
+                response.Add(new DataTransferObjects.UnsettledFee{
+                                                                     DimensionName = unsettledFee.DimensionName,
+                                                                     FeesCount = unsettledFee.FeesCount,
+                                                                     FeesValue = unsettledFee.FeesValue
+                                                                 });
+            };
+
+            return this.Ok(response);
+        }
+
+        private static Models.GroupByOption ConvertGroupByOption(GroupByOption groupByOption){
+            return groupByOption switch{
+                GroupByOption.Merchant => Models.GroupByOption.Merchant,
+                GroupByOption.Product => Models.GroupByOption.Product,
+                _ => Models.GroupByOption.Operator
+            };
         }
     }
 }
