@@ -228,7 +228,7 @@
 
 
         [Theory]
-        //[InlineData(ClientType.Api)]
+        [InlineData(ClientType.Api)]
         [InlineData(ClientType.Direct)]
         public async Task FactSettlementsController_UnsettledFees_ByOperator_SettlementReturned(ClientType clientType){
             // Add some fees over a date range for multiple operators
@@ -265,7 +265,7 @@
                                                        {
                                                            List<UnsettledFee> result = clientType switch
                                                            {
-                                                               //ClientType.Api => await ApiClient.GetU(string.Empty, Guid.NewGuid(), CancellationToken.None),
+                                                               ClientType.Api => await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, null, GroupByOption.Operator, CancellationToken.None),
                                                                _ => await CreateAndSendHttpRequestMessage<List<UnsettledFee>>($"api/facts/settlements/unsettledfees?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}&groupByOption={(Int32)GroupByOption.Operator}", CancellationToken.None)
                                                            };
                                                            return result;
@@ -291,7 +291,7 @@
         }
 
         [Theory]
-        //[InlineData(ClientType.Api)]
+        [InlineData(ClientType.Api)]
         [InlineData(ClientType.Direct)]
         public async Task FactSettlementsController_UnsettledFees_ByMerchant_SettlementReturned(ClientType clientType)
         {
@@ -333,7 +333,7 @@
             {
                 List<UnsettledFee> result = clientType switch
                 {
-                    //ClientType.Api => await ApiClient.GetU(string.Empty, Guid.NewGuid(), CancellationToken.None),
+                    ClientType.Api => await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, null, GroupByOption.Merchant, CancellationToken.None),
                     _ => await CreateAndSendHttpRequestMessage<List<UnsettledFee>>($"api/facts/settlements/unsettledfees?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}&groupByOption={(Int32)GroupByOption.Merchant}", CancellationToken.None)
                 };
                 return result;
@@ -357,7 +357,7 @@
         }
 
         [Theory]
-        //[InlineData(ClientType.Api)]
+        [InlineData(ClientType.Api)]
         [InlineData(ClientType.Direct)]
         public async Task FactSettlementsController_UnsettledFees_ByProduct_SettlementReturned(ClientType clientType)
         {
@@ -399,7 +399,7 @@
             {
                 List<UnsettledFee> result = clientType switch
                 {
-                    //ClientType.Api => await ApiClient.GetU(string.Empty, Guid.NewGuid(), CancellationToken.None),
+                    ClientType.Api => await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate,endDate,null, null, null, GroupByOption.Product, CancellationToken.None),
                     _ => await CreateAndSendHttpRequestMessage<List<UnsettledFee>>($"api/facts/settlements/unsettledfees?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}&groupByOption={(Int32)GroupByOption.Product}", CancellationToken.None)
                 };
                 return result;
