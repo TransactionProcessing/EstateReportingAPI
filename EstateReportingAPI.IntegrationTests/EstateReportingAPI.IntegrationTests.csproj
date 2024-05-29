@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="EstateManagement.Database" Version="2024.3.6-build80" />
+	  <PackageReference Include="EstateManagement.Database" Version="2024.5.1" />
 	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
     <PackageReference Include="xunit" Version="2.7.0" />
@@ -23,7 +23,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Shouldly" Version="4.2.1" />
-    <PackageReference Include="Shared" Version="2024.4.2" />
+	  <PackageReference Include="Shared" Version="2024.4.3" />
     <PackageReference Include="Shared.IntegrationTesting" Version="2024.4.2" />
     <PackageReference Include="Ductus.FluentDocker" Version="2.10.59" />
 	  <PackageReference Include="NLog" Version="5.2.8" />
@@ -41,10 +41,6 @@
     <None Update="xunit.runner.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ApiClient\" />
   </ItemGroup>
 
 </Project>

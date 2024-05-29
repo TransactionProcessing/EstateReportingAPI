@@ -5,6 +5,7 @@ using System.Text;
 namespace EstateReportingAPI.Client{
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Threading;
@@ -364,6 +365,59 @@ namespace EstateReportingAPI.Client{
             }
 
             return response;
+        }
+
+        public async Task<List<UnsettledFee>> GetUnsettledFees(String accessToken, Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption groupBy, CancellationToken cancellationToken){
+            List<UnsettledFee> response = null;
+            QueryStringBuilder builder = new QueryStringBuilder();
+            builder.AddParameter("startDate", $"{startDate:yyyy-MM-dd}");
+            builder.AddParameter("endDate", $"{endDate:yyyy-MM-dd}");
+            if (merchantIds != null)
+            {
+                string serializedMerchantIdsArray = string.Join(",", merchantIds);
+                builder.AddParameter("merchantIds", serializedMerchantIdsArray);
+            }
+            if (operatorIds != null)
+            {
+                string serializedOperatorIdsArray = string.Join(",", operatorIds);
+                builder.AddParameter("operatorIds", serializedOperatorIdsArray);
+            }
+            if (productIds != null)
+            {
+                string serializedProductIdsArray = string.Join(",", productIds);
+                builder.AddParameter("productIds", serializedProductIdsArray);
+            }
+
+            builder.AddParameter("groupByOption", (Int32)groupBy, true);
+
+
+            String requestUri = this.BuildRequestUrl($"/api/facts/settlements/unsettledfees?{builder.BuildQueryString()}");
+
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Add("EstateId", estateId.ToString());
+                
+                // Make the Http Call here
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
+
+                // Process the response
+                String content = await this.HandleResponse(httpResponse, cancellationToken);
+
+                // call was successful so now deserialise the body to the response object
+                response = JsonConvert.DeserializeObject<List<UnsettledFee>>(content);
+            }
+            catch (Exception ex)
+            {
+                // An exception has occurred, add some additional information to the message
+                Exception exception = new Exception($"Error getting unsettled fees for estate {estateId}.", ex);
+
+                throw exception;
+            }
+
+            return response;
+
         }
 
         public async Task<MerchantKpi> GetMerchantKpi(String accessToken, Guid estateId, CancellationToken cancellationToken){
@@ -728,31 +782,33 @@ namespace EstateReportingAPI.Client{
 
 public class QueryStringBuilder
 {
-    private Dictionary<string, object> parameters = new Dictionary<String, Object>();
+    private Dictionary<string, (object value, Boolean alwaysInclude)> parameters = new Dictionary<String, (Object value, Boolean alwaysInclude)>();
 
-    public QueryStringBuilder AddParameter(string key, Object value)
+    public QueryStringBuilder AddParameter(string key, object value, Boolean alwaysInclude=false)
     {
-        this.parameters.Add(key, value);
+        this.parameters.Add(key, (value, alwaysInclude));
         return this;
     }
 
-    static Dictionary<string, object> FilterDictionary(Dictionary<string, object> inputDictionary)
+    static Dictionary<string, object> FilterDictionary(Dictionary<string, (object value, Boolean alwaysInclude)> inputDictionary)
     {
         Dictionary<string, object> result = new Dictionary<string, object>();
 
-        foreach (KeyValuePair<String, Object> entry in inputDictionary)
+        foreach (KeyValuePair<String, (object value, Boolean alwaysInclude)> entry in inputDictionary)
         {
-            if (entry.Value != null && !IsDefaultValue(entry.Value))
+            if (entry.Value.value != null && !IsDefaultValue(entry.Value.value, entry.Value.alwaysInclude))
             {
-                result.Add(entry.Key, entry.Value);
+                result.Add(entry.Key, entry.Value.value);
             }
         }
 
         return result;
     }
 
-    static bool IsDefaultValue<T>(T value)
-    {
+    static bool IsDefaultValue<T>(T value, Boolean alwaysInclude){
+        if (alwaysInclude)
+            return false;
+
         Object? defaultValue = GetDefault(value.GetType());
 
         if (defaultValue == null && value.GetType() == typeof(String))

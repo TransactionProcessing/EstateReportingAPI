@@ -19,7 +19,6 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 {
     protected List<String> merchantsList;
     protected List<(String contract, String operatorname)> contractList;
-    protected Dictionary<String, List<String>> contractProducts;
     protected DatabaseHelper helper;
     public virtual async Task InitializeAsync()
     {
