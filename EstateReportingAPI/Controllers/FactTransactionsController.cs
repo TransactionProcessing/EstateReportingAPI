@@ -149,7 +149,9 @@ namespace EstateReportingAPI.Controllers{
                                                       ComparisonSalesCount = model.ComparisonSalesCount,
                                                       ComparisonSalesValue = model.ComparisonSalesValue,
                                                       TodaysSalesCount = model.TodaysSalesCount,
-                                                      TodaysSalesValue = model.TodaysSalesValue
+                                                      TodaysSalesValue = model.TodaysSalesValue,
+                                                      ComparisonAverageSalesValue = model.ComparisonAverageSalesValue,
+                                                      TodaysAverageSalesValue = model.TodaysAverageSalesValue
                                                   };
 
             return this.Ok(response);

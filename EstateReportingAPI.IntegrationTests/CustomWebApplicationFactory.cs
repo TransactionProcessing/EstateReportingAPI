@@ -45,9 +45,9 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
 
             containerBuilder.AddAuthentication(TestAuthHandler.AuthenticationScheme)
                             .AddScheme<TestAuthHandlerOptions, TestAuthHandler>(TestAuthHandler.AuthenticationScheme, options => { });
-
+            
             bool b = context.Database.EnsureCreated();
-
+            
             b.ShouldBeTrue();
         });
 
