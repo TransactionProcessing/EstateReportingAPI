@@ -1,4 +1,6 @@
-﻿namespace EstateReportingAPI.IntegrationTests;
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace EstateReportingAPI.IntegrationTests;
 
 using System.Collections.Generic;
 using DataTrasferObjects;
@@ -18,7 +20,6 @@ public class FactTransactionsControllerTests : ControllerTestsBase
     protected override async Task ClearStandingData()
     {
         await helper.DeleteAllContracts();
-        await helper.DeleteAllEstateOperator();
         await helper.DeleteAllMerchants();
     }
 
@@ -32,13 +33,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         Int32 voucherReportingId = await this.helper.AddOperator("Test Estate", "Voucher");
         Int32 pataPawaPostPayReportingId = await this.helper.AddOperator("Test Estate", "PataPawa PostPay");
         Int32 pataPawaPrePay = await this.helper.AddOperator("Test Estate", "PataPawa PrePay");
-
-        // Estate Operators
-        await helper.AddEstateOperator("Test Estate", safaricomReportingId);
-        await helper.AddEstateOperator("Test Estate", voucherReportingId);
-        await helper.AddEstateOperator("Test Estate", pataPawaPostPayReportingId);
-        await helper.AddEstateOperator("Test Estate", pataPawaPrePay);
-
+        
         // Merchants
         await helper.AddMerchant("Test Estate", "Test Merchant 1", DateTime.MinValue);
         await helper.AddMerchant("Test Estate", "Test Merchant 2", DateTime.MinValue);
@@ -92,8 +87,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         var query1 = context.Contracts
                          .GroupJoin(
                                     context.ContractProducts,
-                                    c => c.ContractReportingId,
-                                    cp => cp.ContractReportingId,
+                                    c => c.ContractId,
+                                    cp => cp.ContractId,
                                     (c, productGroup) => new
                                     {
                                         c.Description,
@@ -165,6 +160,10 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                 }
             }
         }
+
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Func<Task<TodaysSales>> asyncFunction = async () =>
                                                 {
@@ -253,6 +252,10 @@ public class FactTransactionsControllerTests : ControllerTestsBase
             comparisonDateTransactions.AddRange(localList);
         }
 
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
         Func<Task<List<TodaysSalesCountByHour>>> asyncFunction = async () =>
                                                                  {
                                                                      List<TodaysSalesCountByHour>? result = clientType switch
@@ -338,7 +341,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
             comparisonDateTransactions.AddRange(localList);
         }
-        
+
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
         Func<Task<List<TodaysSalesValueByHour>?>> asyncFunction = async () =>
                                                                   {
                                                                       List<TodaysSalesValueByHour>? result = clientType switch
@@ -417,7 +424,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                 }
             }
         }
-        
+
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
         Func<Task<TodaysSales?>> asyncFunction = async () =>
                                                  {
                                                      TodaysSales? result = clientType switch
@@ -472,6 +483,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
             }
         }
 
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
         Func<Task<List<TopBottomProductData>?>> asyncFunction = async () =>
                                                                 {
                                                                     List<TopBottomProductData>? result = clientType switch
@@ -523,6 +536,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                 transactionsDictionary[product].Add(transaction);
             }
         }
+
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Func<Task<List<TopBottomProductData>?>> asyncFunction = async () =>
                                                                 {
@@ -576,7 +591,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                 transactionsDictionary[transactionCount.Key].Add(transaction);
             }
         }
-        
+
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
         Func<Task<List<TopBottomOperatorData>?>> asyncFunction = async () =>
                                                                  {
                                                                      List<TopBottomOperatorData>? result = clientType switch
@@ -630,7 +647,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                 transactionsDictionary[transactionCount.Key].Add(transaction);
             }
         }
-        
+
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
         Func<Task<List<TopBottomOperatorData>?>> asyncFunction = async () =>
                                                                  {
                                                                      List<TopBottomOperatorData>? result = clientType switch
@@ -681,6 +700,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                 transactionsDictionary[transactionCount.Key].Add(transaction);
             }
         }
+        
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Func<Task<List<TopBottomMerchantData>?>> asyncFunction = async () =>
                                                                  {
@@ -733,6 +754,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                 transactionsDictionary[transactionCount.Key].Add(transaction);
             }
         }
+
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Func<Task<List<TopBottomMerchantData>?>> asyncFunction = async () =>
                                                                  {
@@ -808,6 +831,10 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                 }
             }
         }
+
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Func<Task<TodaysSales?>> asyncFunction = async () =>
                                                  {
@@ -886,7 +913,15 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         List<int> merchantFilterList = new List<int>{
                                                             2
                                                         };
+
+        var merchantIdsForVerify = await this.context.Merchants.Where(m => m.MerchantReportingId == 2).Select(m => m.MerchantId)
+            .ToListAsync(CancellationToken.None);
+
         string serializedArray = string.Join(",", merchantFilterList);
+
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Func<Task<TodaysSales?>> asyncFunction = async () =>
                                                  {
@@ -900,11 +935,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
 
         todaysSales.ShouldNotBeNull();
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => merchantFilterList.Contains(c.MerchantReportingId)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => merchantFilterList.Contains(c.MerchantReportingId)).Sum(c => c.TransactionAmount));
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => merchantIdsForVerify.Contains(c.MerchantId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => merchantIdsForVerify.Contains(c.MerchantId)).Sum(c => c.TransactionAmount));
 
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => merchantFilterList.Contains(c.MerchantReportingId)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => merchantFilterList.Contains(c.MerchantReportingId)).Sum(c => c.TransactionAmount));
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => merchantIdsForVerify.Contains(c.MerchantId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => merchantIdsForVerify.Contains(c.MerchantId)).Sum(c => c.TransactionAmount));
     }
 
     [Theory]
@@ -947,6 +982,10 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                 comparisonDateTransactions.Add(transaction);
             }
         }
+
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Func<Task<TodaysSales?>> asyncFunction = async () =>
                                                  {
@@ -1008,9 +1047,18 @@ public class FactTransactionsControllerTests : ControllerTestsBase
             }
         }
 
-        List<int> productFilterList = new List<int>{
-                                                           2
-                                                       };
+        List<int> productFilterList = new List<int>
+        {
+            2
+        };
+
+        var productIdsForVerify = await context.ContractProducts.Where(cp => cp.ContractProductReportingId == 2)
+            .Select(cp => cp.ContractProductId).ToListAsync(CancellationToken.None);
+
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
         string serializedArray = string.Join(",", productFilterList);
         
         Func<Task<TodaysSales?>> asyncFunction = async () =>
@@ -1025,11 +1073,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
 
         todaysSales.ShouldNotBeNull();
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => productFilterList.Contains(c.ContractProductReportingId)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productFilterList.Contains(c.ContractProductReportingId)).Sum(c => c.TransactionAmount));
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => productIdsForVerify.Contains(c.ContractProductId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productIdsForVerify.Contains(c.ContractProductId)).Sum(c => c.TransactionAmount));
 
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => productFilterList.Contains(c.ContractProductReportingId)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productFilterList.Contains(c.ContractProductReportingId)).Sum(c => c.TransactionAmount));
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => productIdsForVerify.Contains(c.ContractProductId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productIdsForVerify.Contains(c.ContractProductId)).Sum(c => c.TransactionAmount));
     }
 
     [Theory]
@@ -1077,8 +1125,15 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                            2,
                                                            3
                                                        };
+        var productIdsForVerify = await context.ContractProducts.Where(cp => cp.ContractProductReportingId >= 2 && cp.ContractProductReportingId <= 3)
+            .Select(cp => cp.ContractProductId).ToListAsync(CancellationToken.None);
+
         string serializedArray = string.Join(",", productFilterList);
 
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+        
         Func<Task<TodaysSales?>> asyncFunction = async () =>
                                                  {
                                                      TodaysSales? result = clientType switch
@@ -1091,11 +1146,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
 
         todaysSales.ShouldNotBeNull();
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => productFilterList.Contains(c.ContractProductReportingId)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productFilterList.Contains(c.ContractProductReportingId)).Sum(c => c.TransactionAmount));
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => productIdsForVerify.Contains(c.ContractProductId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productIdsForVerify.Contains(c.ContractProductId)).Sum(c => c.TransactionAmount));
 
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => productFilterList.Contains(c.ContractProductReportingId)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productFilterList.Contains(c.ContractProductReportingId)).Sum(c => c.TransactionAmount));
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => productIdsForVerify.Contains(c.ContractProductId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productIdsForVerify.Contains(c.ContractProductId)).Sum(c => c.TransactionAmount));
     }
 
     [Theory]
@@ -1144,7 +1199,15 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         List<int> operatorFilterList = new List<int>{
                                                             2
                                                         };
+        var operatorIdsForVerify = await context.Operators.Where(cp => cp.OperatorReportingId == 2)
+            .Select(cp => cp.OperatorId).ToListAsync(CancellationToken.None);
+
+
         string serializedArray = string.Join(",", operatorFilterList);
+
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Func<Task<TodaysSales?>> asyncFunction = async () =>
                                                  {
@@ -1158,11 +1221,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
 
         todaysSales.ShouldNotBeNull();
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorFilterList.Contains(c.EstateOperatorReportingId)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.EstateOperatorReportingId)).Sum(c => c.TransactionAmount));
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorIdsForVerify.Contains(c.OperatorId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorIdsForVerify.Contains(c.OperatorId)).Sum(c => c.TransactionAmount));
 
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => operatorFilterList.Contains(c.EstateOperatorReportingId)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.EstateOperatorReportingId)).Sum(c => c.TransactionAmount));
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => operatorIdsForVerify.Contains(c.OperatorId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorIdsForVerify.Contains(c.OperatorId)).Sum(c => c.TransactionAmount));
     }
 
     [Theory]
@@ -1211,7 +1274,15 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         List<int> operatorFilterList = new List<int>{
                                                             2,3
                                                         };
+
+        var operatorIdsForVerify = await context.Operators.Where(cp => cp.OperatorReportingId >= 2 && cp.OperatorReportingId <= 3)
+            .Select(cp => cp.OperatorId).ToListAsync(CancellationToken.None);
+
         string serializedArray = string.Join(",", operatorFilterList);
+
+        await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Func<Task<TodaysSales?>> asyncFunction = async () =>
                                                  {
@@ -1225,11 +1296,11 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
 
         todaysSales.ShouldNotBeNull();
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorFilterList.Contains(c.EstateOperatorReportingId)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.EstateOperatorReportingId)).Sum(c => c.TransactionAmount));
+        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorIdsForVerify.Contains(c.OperatorId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorIdsForVerify.Contains(c.OperatorId)).Sum(c => c.TransactionAmount));
 
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => operatorFilterList.Contains(c.EstateOperatorReportingId)));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorFilterList.Contains(c.EstateOperatorReportingId)).Sum(c => c.TransactionAmount));
+        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => operatorIdsForVerify.Contains(c.OperatorId)));
+        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorIdsForVerify.Contains(c.OperatorId)).Sum(c => c.TransactionAmount));
     }
 
     [Theory]

@@ -310,11 +310,7 @@ public class DimensionsControllerTests : ControllerTestsBase
         Int32 operator1ReportingId = await this.helper.AddOperator("Test Estate", "Operator1");
         Int32 operator2ReportingId = await this.helper.AddOperator("Test Estate", "Operator2");
         Int32 operator3ReportingId = await this.helper.AddOperator("Test Estate", "Operator3");
-
-        await helper.AddEstateOperator("Test Estate", operator1ReportingId);
-        await helper.AddEstateOperator("Test Estate", operator2ReportingId);
-        await helper.AddEstateOperator("Test Estate", operator3ReportingId);
-
+        
         Func<Task<List<Operator>?>> asyncFunction = async () =>
                                                     {
                                                         List<Operator>? result = clientType switch

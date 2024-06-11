@@ -35,7 +35,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         this.context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
         this.helper = new DatabaseHelper(context);
-
+        await this.helper.CreateStoredProcedures(CancellationToken.None);
         await this.SetupStandingData();
     }
 

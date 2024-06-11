@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="EstateManagement.Database" Version="2024.5.1" />
+	  <PackageReference Include="EstateManagement.Database" Version="2024.6.3" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.3" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
@@ -19,7 +19,7 @@
 		<PackageReference Include="Lamar" Version="13.0.3" />
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="13.0.3" />
 		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
-		<PackageReference Include="Shared" Version="2024.4.3" />
+		<PackageReference Include="Shared" Version="2024.5.1" />
 		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="8.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.0" />
