@@ -157,7 +157,7 @@
                                                                 {
                                                                     TodaysSettlement result = clientType switch
                                                                     {
-                                                                        ClientType.Api => await ApiClient.GetTodaysSettlement(string.Empty, Guid.NewGuid(), null,null, DateTime.Now.AddDays(-1), CancellationToken.None),
+                                                                        ClientType.Api => await ApiClient.GetTodaysSettlement(string.Empty, Guid.NewGuid(), 0,0, DateTime.Now.AddDays(-1), CancellationToken.None),
                                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSettlement>($"api/facts/settlements/todayssettlement?comparisonDate={DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd")}", CancellationToken.None)
                                                                     };
                                                                     return result;
@@ -250,7 +250,8 @@
             dates.Add(new DateTime(2024, 5, 27));
 
             
-            foreach (DateTime dateTime in dates){
+            foreach (DateTime dateTime in dates)
+            {
                 Guid settlementId = Guid.NewGuid();
                 foreach (String merchant in this.merchantsList){
                     foreach ((String contract, String operatorname) contract in this.contractList){

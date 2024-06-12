@@ -327,43 +327,20 @@
         }
 
         private async Task<IQueryable<TodayTransaction>> GetTodaysSales(EstateManagementGenericContext context,
-                                                                    Guid? merchantId,
-                                                                    Guid? operatorId, 
-                                                                    CancellationToken cancellationToken){
+            Int32 merchantReportingId, Int32 operatorReportingId, CancellationToken cancellationToken){
                 var salesForDate = (from t in context.TodayTransactions
                                     where t.IsAuthorised && t.TransactionType == "Sale"
                                                          && t.TransactionDate == DateTime.Now.Date
                                                          && t.TransactionTime <= DateTime.Now.TimeOfDay
                                     select t).AsQueryable();
             
-            if (merchantId.HasValue){
-                EstateManagement.Database.Entities.Merchant? m = await context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchantId.Value, cancellationToken);
-
-                if (m == null){
-                    throw new NotFoundException($"Merchant Id {merchantId} not found");
-                }
-
-                salesForDate = salesForDate.Where(t => t.MerchantReportingId == m.MerchantReportingId).AsQueryable();
+            if (merchantReportingId> 0){
+                salesForDate = salesForDate.Where(t => t.MerchantReportingId == merchantReportingId).AsQueryable();
             }
 
-            if (operatorId.HasValue)
+            if (operatorReportingId> 0)
             {
-                var @operator = await (from o in context.Operators
-                                       where o.OperatorId == operatorId.Value
-                                       select new
-                                       {
-                                           Name = o.Name,
-                                           EstateReportingId = o.EstateId,
-                                           OperatorReportingId = o.OperatorReportingId,
-                                           OperatorId = o.OperatorId
-                                       }).SingleOrDefaultAsync(cancellationToken);
-
-                if (@operator == null)
-                {
-                    throw new NotFoundException($"Operator Id {operatorId} not found");
-                }
-
-                salesForDate = salesForDate.Where(t => t.OperatorReportingId == @operator.OperatorReportingId).AsQueryable();
+                salesForDate = salesForDate.Where(t => t.OperatorReportingId == operatorReportingId).AsQueryable();
             }
 
             return salesForDate;
@@ -371,8 +348,7 @@
 
         private async Task<IQueryable<TransactionHistory>> GetSalesForDate(EstateManagementGenericContext context,
                                                                     DateTime queryDate,
-                                                                    Guid? merchantId,
-                                                                    Guid? operatorId,
+                                                                    Int32 merchantReportingId, Int32 operatorReportingId,
                                                                     CancellationToken cancellationToken)
         {
             var salesForDate = (from t in context.TransactionHistory
@@ -381,46 +357,24 @@
                                                      && t.TransactionTime <= DateTime.Now.TimeOfDay
                                 select t).AsQueryable();
 
-            if (merchantId.HasValue)
+            if (merchantReportingId > 0)
             {
-                EstateManagement.Database.Entities.Merchant? m = await context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchantId.Value, cancellationToken);
-
-                if (m == null)
-                {
-                    throw new NotFoundException($"Merchant Id {merchantId} not found");
-                }
-
-                salesForDate = salesForDate.Where(t => t.MerchantReportingId == m.MerchantReportingId).AsQueryable();
+                salesForDate = salesForDate.Where(t => t.MerchantReportingId == merchantReportingId).AsQueryable();
             }
 
-            if (operatorId.HasValue)
+            if (operatorReportingId > 0)
             {
-                var @operator = await (from o in context.Operators
-                                       where o.OperatorId == operatorId.Value
-                                       select new
-                                       {
-                                           Name = o.Name,
-                                           EstateReportingId = o.EstateId,
-                                           OperatorReportingId = o.OperatorReportingId,
-                                           OperatorId = o.OperatorId
-                                       }).SingleOrDefaultAsync(cancellationToken);
-
-                if (@operator == null)
-                {
-                    throw new NotFoundException($"Operator Id {operatorId} not found");
-                }
-
-                salesForDate = salesForDate.Where(t => t.OperatorReportingId == @operator.OperatorReportingId).AsQueryable();
+                salesForDate = salesForDate.Where(t => t.OperatorReportingId == operatorReportingId).AsQueryable();
             }
 
             return salesForDate;
         }
 
-        public async Task<TodaysSales> GetTodaysSales(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<TodaysSales> GetTodaysSales(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantId,operatorId,cancellationToken);
-            IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId, cancellationToken);
+            IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantReportingId, operatorReportingId, cancellationToken);
+            IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId, cancellationToken);
 
             var todaysSalesValue = await todaysSales.SumAsync(t => t.TransactionAmount, cancellationToken);
             var todaysSalesCount = await todaysSales.CountAsync(cancellationToken);
@@ -438,11 +392,11 @@
             return response;
         }
 
-        public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantId, operatorId, cancellationToken);
-            IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId, cancellationToken);
+            IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantReportingId, operatorReportingId, cancellationToken);
+            IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId, cancellationToken);
 
             // First we need to get a value of todays sales
             var todaysSalesByHour = await (from t in todaysSales
@@ -474,11 +428,11 @@
             return response;
         }
 
-        public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantId, operatorId, cancellationToken);
-            IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantId, operatorId, cancellationToken);
+            IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantReportingId, operatorReportingId, cancellationToken);
+            IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId, cancellationToken);
 
             // First we need to get a value of todays sales
             var todaysSalesByHour = await (from t in todaysSales
@@ -512,51 +466,58 @@
             return response;
         }
 
-        private async Task<IQueryable<MerchantSettlementFee>> GetSettlementDataForDate(EstateManagementGenericContext context, Guid? merchantId, Guid? operatorId, DateTime queryDate, CancellationToken cancellationToken)
+        private async Task<IQueryable<MerchantSettlementFee>> GetSettlementDataForDate(EstateManagementGenericContext context, Int32 merchantReportingId, Int32 operatorReportingId, DateTime queryDate, CancellationToken cancellationToken)
         {
+            if (queryDate.Date == DateTime.Today.Date)
+            {
+                return await this.GetTodaysSettlement(context, merchantReportingId, operatorReportingId, cancellationToken);
+            }
+            
             var settlementData = (from s in context.Settlements
                 join f in context.MerchantSettlementFees on s.SettlementId equals f.SettlementId
+                join t in context.TransactionHistory on f.TransactionId equals t.TransactionId
                 where s.SettlementDate == queryDate.Date
-                select new { Settlement = s, Fees = f }).AsQueryable();
+                select new { Settlement = s, Fees = f, t.MerchantReportingId, t.OperatorReportingId }).AsQueryable();
 
-            if (merchantId.HasValue)
+            if (merchantReportingId > 0)
             {
-                settlementData = settlementData.Where(t => t.Settlement.MerchantId == merchantId.Value).AsQueryable();
+                settlementData = settlementData.Where(t => t.MerchantReportingId== merchantReportingId).AsQueryable();
             }
 
-            //if (operatorId.HasValue)
-            //{
-            //    settlementData = settlementData.Where(t => t.Transaction. == merchantId.Value).AsQueryable();
-            //}
+            if (operatorReportingId > 0)
+            {
+                settlementData = settlementData.Where(t => t.OperatorReportingId == operatorReportingId).AsQueryable();
+            }
 
             return settlementData.AsQueryable().Select(s => s.Fees);
-
         }
 
-        private async Task<IQueryable<MerchantSettlementFee>> GetTodaysSettlement(EstateManagementGenericContext? context, Guid? merchantId, Guid? operatorId, CancellationToken cancellationToken)
+        private async Task<IQueryable<MerchantSettlementFee>> GetTodaysSettlement(EstateManagementGenericContext? context, Int32 merchantReportingId, Int32 operatorReportingId, CancellationToken cancellationToken)
         {
             var settlementData = (from s in context.Settlements
                                   join f in context.MerchantSettlementFees on s.SettlementId equals f.SettlementId
+                                  join t in context.TodayTransactions on f.TransactionId equals t.TransactionId
                                   where s.SettlementDate == DateTime.Today.Date
-                                  select new { Settlement = s, Fees = f }).AsQueryable();
+                                  select new { Settlement = s, Fees = f, Transactions = t}).AsQueryable();
 
-            if (merchantId.HasValue)
+            if (merchantReportingId > 0)
             {
-                settlementData = settlementData.Where(t => t.Settlement.MerchantId== merchantId.Value).AsQueryable();
+                settlementData = settlementData.Where(t => t.Transactions.MerchantReportingId == merchantReportingId).AsQueryable();
             }
 
-            //if (operatorId.HasValue)
-            //{
-            //    settlementData = settlementData.Where(t => t.Transaction. == merchantId.Value).AsQueryable();
-            //}
+            if (operatorReportingId > 0)
+            {
+                settlementData = settlementData.Where(t => t.Transactions.OperatorReportingId == operatorReportingId).AsQueryable();
+            }
+
             return settlementData.AsQueryable().Select(s => s.Fees);
         }
 
-        public async Task<TodaysSettlement> GetTodaysSettlement(Guid estateId, Guid? merchantId, Guid? operatorId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<TodaysSettlement> GetTodaysSettlement(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            IQueryable<MerchantSettlementFee> todaySettlementData = await GetTodaysSettlement(context, merchantId, operatorId, cancellationToken);
-            IQueryable<MerchantSettlementFee> comparisonSettlementData = await GetSettlementDataForDate(context, merchantId, operatorId, comparisonDate, cancellationToken);
+            IQueryable<MerchantSettlementFee> todaySettlementData = await GetTodaysSettlement(context, merchantReportingId, operatorReportingId, cancellationToken);
+            IQueryable<MerchantSettlementFee> comparisonSettlementData = await GetSettlementDataForDate(context, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
 
             var todaySettlement = await (from f in todaySettlementData
                                          group f by f.IsSettled into grouped
@@ -674,7 +635,7 @@
             return await queryable.Take(resultCount).ToListAsync(cancellationToken);
         }
 
-        public async Task<TodaysSales> GetMerchantPerformance(Guid estateId, DateTime comparisonDate, List<Int32> merchantIds, CancellationToken cancellationToken){
+        public async Task<TodaysSales> GetMerchantPerformance(Guid estateId, DateTime comparisonDate, List<Int32> merchantReportingIds, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             // First we need to get a value of todays sales
@@ -691,9 +652,9 @@
                                              select t);
 
 
-            if (merchantIds.Any()){
-                todaysSalesQuery = todaysSalesQuery.Where(t => merchantIds.Contains(t.MerchantReportingId));
-                comparisonSalesQuery = comparisonSalesQuery.Where(t => merchantIds.Contains(t.MerchantReportingId));
+            if (merchantReportingIds.Any()){
+                todaysSalesQuery = todaysSalesQuery.Where(t => merchantReportingIds.Contains(t.MerchantReportingId));
+                comparisonSalesQuery = comparisonSalesQuery.Where(t => merchantReportingIds.Contains(t.MerchantReportingId));
             }
 
             TodaysSales response = new TodaysSales
@@ -731,7 +692,7 @@
             return number / divisor;
         }
 
-        public async Task<TodaysSales> GetProductPerformance(Guid estateId, DateTime comparisonDate, List<Int32> productIds, CancellationToken cancellationToken)
+        public async Task<TodaysSales> GetProductPerformance(Guid estateId, DateTime comparisonDate, List<Int32> productReportingIds, CancellationToken cancellationToken)
         {
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
@@ -749,10 +710,10 @@
                 select t);
 
 
-            if (productIds.Any())
+            if (productReportingIds.Any())
             {
-                todaysSalesQuery = todaysSalesQuery.Where(t => productIds.Contains(t.ContractProductReportingId));
-                comparisonSalesQuery = comparisonSalesQuery.Where(t => productIds.Contains(t.ContractProductReportingId));
+                todaysSalesQuery = todaysSalesQuery.Where(t => productReportingIds.Contains(t.ContractProductReportingId));
+                comparisonSalesQuery = comparisonSalesQuery.Where(t => productReportingIds.Contains(t.ContractProductReportingId));
             }
 
             TodaysSales response = new TodaysSales
@@ -770,7 +731,7 @@
             return response;
         }
 
-        public async Task<TodaysSales> GetOperatorPerformance(Guid estateId, DateTime comparisonDate, List<Int32> operatorIds, CancellationToken cancellationToken){
+        public async Task<TodaysSales> GetOperatorPerformance(Guid estateId, DateTime comparisonDate, List<Int32> operatorReportingIds, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             // First we need to get a value of todays sales
@@ -787,10 +748,10 @@
                 select t);
 
 
-            if (operatorIds.Any())
+            if (operatorReportingIds.Any())
             {
-                todaysSalesQuery = todaysSalesQuery.Where(t => operatorIds.Contains(t.OperatorReportingId));
-                comparisonSalesQuery = comparisonSalesQuery.Where(t => operatorIds.Contains(t.OperatorReportingId));
+                todaysSalesQuery = todaysSalesQuery.Where(t => operatorReportingIds.Contains(t.OperatorReportingId));
+                comparisonSalesQuery = comparisonSalesQuery.Where(t => operatorReportingIds.Contains(t.OperatorReportingId));
             }
 
             TodaysSales response = new TodaysSales
@@ -971,7 +932,8 @@
                                                      {
                                                          Name = o.Name,
                                                          EstateReportingId = context.Estates.Single(e => e.EstateId == o.EstateId).EstateReportingId,
-                                                         OperatorId = o.OperatorId
+                                                         OperatorId = o.OperatorId,
+                                                         OperatorReportingId = o.OperatorReportingId
                                                      }).ToListAsync(cancellationToken);
             
             return operators;
