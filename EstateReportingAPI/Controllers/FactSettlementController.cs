@@ -39,8 +39,8 @@ namespace EstateReportingAPI.Controllers
         
         [HttpGet]
         [Route("todayssettlement")]
-        public async Task<IActionResult> TodaysSettlement([FromHeader] Guid estateId, [FromQuery] Guid? merchantId, [FromQuery] Guid? operatorId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
-            Models.TodaysSettlement model = await this.ReportingManager.GetTodaysSettlement(estateId, merchantId, operatorId, comparisonDate, cancellationToken);
+        public async Task<IActionResult> TodaysSettlement([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
+            Models.TodaysSettlement model = await this.ReportingManager.GetTodaysSettlement(estateId, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
             
             TodaysSettlement response = new TodaysSettlement{
                                                                 ComparisonSettlementCount = model.ComparisonSettlementCount,
@@ -79,14 +79,14 @@ namespace EstateReportingAPI.Controllers
         public async Task<IActionResult> GetUnsettledFees([FromHeader] Guid estateId,
                                                           [FromQuery] DateTime startDate,
                                                           [FromQuery] DateTime endDate,
-                                                          [FromQuery] string? merchantIds, [FromQuery] string? operatorIds, 
-                                                          [FromQuery] string? productIds,
+                                                          [FromQuery] string? merchantReportingIds, [FromQuery] string? operatorReportingIds, 
+                                                          [FromQuery] string? productReportingIds,
                                                        [FromQuery] GroupByOption? groupByOption, CancellationToken cancellationToken)
         {
             List<Int32> merchantIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(merchantIds) == false)
+            if (String.IsNullOrEmpty(merchantReportingIds) == false)
             {
-                List<String> merchantListStrings = merchantIds.Split(',').ToList();
+                List<String> merchantListStrings = merchantReportingIds.Split(',').ToList();
                 foreach (String merchantListString in merchantListStrings)
                 {
                     merchantIdFilter.Add(Int32.Parse(merchantListString));
@@ -94,9 +94,9 @@ namespace EstateReportingAPI.Controllers
             }
 
             List<Int32> operatorIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(operatorIds) == false)
+            if (String.IsNullOrEmpty(operatorReportingIds) == false)
             {
-                List<String> operatorListStrings = operatorIds.Split(',').ToList();
+                List<String> operatorListStrings = operatorReportingIds.Split(',').ToList();
                 foreach (String operatorListString in operatorListStrings)
                 {
                     operatorIdFilter.Add(Int32.Parse(operatorListString));
@@ -104,9 +104,9 @@ namespace EstateReportingAPI.Controllers
             }
 
             List<Int32> productIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(productIds) == false)
+            if (String.IsNullOrEmpty(productReportingIds) == false)
             {
-                List<String> productListStrings = productIds.Split(',').ToList();
+                List<String> productListStrings = productReportingIds.Split(',').ToList();
                 foreach (String productListString in productListStrings)
                 {
                     productIdFilter.Add(Int32.Parse(productListString));

@@ -5,5 +5,6 @@
         public Int32 EstateReportingId { get; set; }
         public Guid OperatorId{ get; set; }
         public String Name { get; set; }
+        public Int32 OperatorReportingId { get; set; }
     }
 }

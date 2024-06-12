@@ -46,8 +46,8 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("todayssales")]
-        public async Task<IActionResult> TodaysSales([FromHeader] Guid estateId, [FromQuery] Guid? merchantId, [FromQuery] Guid? operatorId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
-            Models.TodaysSales model = await this.ReportingManager.GetTodaysSales(estateId, merchantId, operatorId, comparisonDate, cancellationToken);
+        public async Task<IActionResult> TodaysSales([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
+            Models.TodaysSales model = await this.ReportingManager.GetTodaysSales(estateId, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
 
             TodaysSales response = new TodaysSales{
                                                       ComparisonSalesCount = model.ComparisonSalesCount,
@@ -63,8 +63,8 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("todayssales/countbyhour")]
-        public async Task<IActionResult> TodaysSalesCountByHour([FromHeader] Guid estateId, Guid? merchantId, [FromQuery] Guid? operatorId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
-            List<Models.TodaysSalesCountByHour> models = await this.ReportingManager.GetTodaysSalesCountByHour(estateId, merchantId, operatorId, comparisonDate, cancellationToken);
+        public async Task<IActionResult> TodaysSalesCountByHour([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
+            List<Models.TodaysSalesCountByHour> models = await this.ReportingManager.GetTodaysSalesCountByHour(estateId, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
 
             List<TodaysSalesCountByHour> response = new List<TodaysSalesCountByHour>();
 
@@ -81,10 +81,10 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("todayssales/valuebyhour")]
-        public async Task<IActionResult> TodaysSalesValueByHour([FromHeader] Guid estateId, Guid? merchantId, [FromQuery] Guid? operatorId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<IActionResult> TodaysSalesValueByHour([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
 
 
-            List<Models.TodaysSalesValueByHour> models = await this.ReportingManager.GetTodaysSalesValueByHour(estateId, merchantId, operatorId, comparisonDate, cancellationToken);
+            List<Models.TodaysSalesValueByHour> models = await this.ReportingManager.GetTodaysSalesValueByHour(estateId, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
 
             List<TodaysSalesValueByHour> response = new List<TodaysSalesValueByHour>();
 
@@ -142,7 +142,7 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("todaysfailedsales")]
-        public async Task<IActionResult> TodaysFailedSales([FromHeader] Guid estateId, Guid? merchantId, [FromQuery] Guid? operatorId, [FromQuery] DateTime comparisonDate, [FromQuery] String responseCode, CancellationToken cancellationToken){
+        public async Task<IActionResult> TodaysFailedSales([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] String responseCode, CancellationToken cancellationToken){
             Models.TodaysSales model = await this.ReportingManager.GetTodaysFailedSales(estateId, comparisonDate, responseCode, cancellationToken);
 
             TodaysSales response = new TodaysSales{
@@ -213,11 +213,11 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("merchants/performance")]
-        public async Task<IActionResult> GetMerchantPerformance([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] string? merchantIds, CancellationToken cancellationToken){
+        public async Task<IActionResult> GetMerchantPerformance([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] string? merchantReportingIds, CancellationToken cancellationToken){
 
             List<Int32> merchantIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(merchantIds) == false){
-                List<String> merchantListStrings = merchantIds.Split(',').ToList();
+            if (String.IsNullOrEmpty(merchantReportingIds) == false){
+                List<String> merchantListStrings = merchantReportingIds.Split(',').ToList();
                 foreach (String merchantListString in merchantListStrings){
                     merchantIdFilter.Add(Int32.Parse(merchantListString));
                 }
@@ -240,13 +240,13 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("products/performance")]
-        public async Task<IActionResult> GetProductPerformance([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] string? productIds, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetProductPerformance([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] string? productReportingIds, CancellationToken cancellationToken)
         {
 
             List<Int32> productIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(productIds) == false)
+            if (String.IsNullOrEmpty(productReportingIds) == false)
             {
-                List<String> productListStrings = productIds.Split(',').ToList();
+                List<String> productListStrings = productReportingIds.Split(',').ToList();
                 foreach (String productListString in productListStrings)
                 {
                     productIdFilter.Add(Int32.Parse(productListString));
@@ -270,13 +270,13 @@ namespace EstateReportingAPI.Controllers{
 
         [HttpGet]
         [Route("operators/performance")]
-        public async Task<IActionResult> GetOperatorPerformance([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] string? operatorIds, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetOperatorPerformance([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] string? operatorReportingIds, CancellationToken cancellationToken)
         {
 
             List<Int32> operatorIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(operatorIds) == false)
+            if (String.IsNullOrEmpty(operatorReportingIds) == false)
             {
-                List<String> productListStrings = operatorIds.Split(',').ToList();
+                List<String> productListStrings = operatorReportingIds.Split(',').ToList();
                 foreach (String productListString in productListStrings)
                 {
                     operatorIdFilter.Add(Int32.Parse(productListString));

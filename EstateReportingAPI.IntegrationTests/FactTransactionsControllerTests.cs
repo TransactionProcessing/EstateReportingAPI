@@ -169,7 +169,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                 {
                                                     TodaysSales result = clientType switch
                                                     {
-                                                        ClientType.Api => await ApiClient.GetTodaysSales(string.Empty, Guid.NewGuid(), null, null, comparisonDate, CancellationToken.None),
+                                                        ClientType.Api => await ApiClient.GetTodaysSales(string.Empty, Guid.NewGuid(), 0, 0, comparisonDate, CancellationToken.None),
                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/todayssales?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}", CancellationToken.None)
                                                     };
                                                     return result;
@@ -260,7 +260,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                                  {
                                                                      List<TodaysSalesCountByHour>? result = clientType switch
                                                                      {
-                                                                         ClientType.Api => await ApiClient.GetTodaysSalesCountByHour(string.Empty, Guid.NewGuid(), null,null, comparisonDate, CancellationToken.None),
+                                                                         ClientType.Api => await ApiClient.GetTodaysSalesCountByHour(string.Empty, Guid.NewGuid(), 0,0, comparisonDate, CancellationToken.None),
                                                                          _ => await CreateAndSendHttpRequestMessage<List<TodaysSalesCountByHour>>($"api/facts/transactions/todayssales/countbyhour?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}", CancellationToken.None)
                                                                      };
                                                                      return result;
@@ -350,7 +350,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                                   {
                                                                       List<TodaysSalesValueByHour>? result = clientType switch
                                                                       {
-                                                                          ClientType.Api => await ApiClient.GetTodaysSalesValueByHour(string.Empty, Guid.NewGuid(), null,null, comparisonDate, CancellationToken.None),
+                                                                          ClientType.Api => await ApiClient.GetTodaysSalesValueByHour(string.Empty, Guid.NewGuid(), 0,0, comparisonDate, CancellationToken.None),
                                                                           _ => await CreateAndSendHttpRequestMessage<List<TodaysSalesValueByHour>>($"api/facts/transactions/todayssales/valuebyhour?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}", CancellationToken.None)
                                                                       };
                                                                       return result;
@@ -433,7 +433,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                  {
                                                      TodaysSales? result = clientType switch
                                                      {
-                                                         ClientType.Api => await ApiClient.GetTodaysFailedSales(string.Empty, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1009", comparisonDate, CancellationToken.None),
+                                                         ClientType.Api => await ApiClient.GetTodaysFailedSales(string.Empty, Guid.NewGuid(), 1, 1, "1009", comparisonDate, CancellationToken.None),
                                                          _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/todaysfailedsales?responseCode=1009&comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}", CancellationToken.None)
                                                      };
                                                      return result;
@@ -928,7 +928,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                      TodaysSales? result = clientType switch
                                                      {
                                                          ClientType.Api => await ApiClient.GetMerchantPerformance(string.Empty, Guid.NewGuid(), comparisonDate, merchantFilterList, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/merchants/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&merchantIds={serializedArray}", CancellationToken.None)
+                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/merchants/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&merchantReportingIds={serializedArray}", CancellationToken.None)
                                                      };
                                                      return result;
                                                  };
@@ -1066,7 +1066,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                      TodaysSales? result = clientType switch
                                                      {
                                                          ClientType.Api => await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, productFilterList, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/products/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&productIds={serializedArray}", CancellationToken.None)
+                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/products/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&productReportingIds={serializedArray}", CancellationToken.None)
                                                      };
                                                      return result;
                                                  };
@@ -1139,7 +1139,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                      TodaysSales? result = clientType switch
                                                      {
                                                          ClientType.Api => await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, productFilterList, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/products/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&productIds={serializedArray}", CancellationToken.None)
+                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/products/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&productReportingIds={serializedArray}", CancellationToken.None)
                                                      };
                                                      return result;
                                                  };
@@ -1214,7 +1214,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                      TodaysSales? result = clientType switch
                                                      {
                                                          ClientType.Api => await ApiClient.GetOperatorPerformance(string.Empty, Guid.NewGuid(), comparisonDate, operatorFilterList, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/operators/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&operatorIds={serializedArray}", CancellationToken.None)
+                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/operators/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&operatorReportingIds={serializedArray}", CancellationToken.None)
                                                      };
                                                      return result;
                                                  };
@@ -1289,7 +1289,7 @@ public class FactTransactionsControllerTests : ControllerTestsBase
                                                      TodaysSales? result = clientType switch
                                                      {
                                                          ClientType.Api => await ApiClient.GetOperatorPerformance(string.Empty, Guid.NewGuid(), comparisonDate, operatorFilterList, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/operators/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&operatorIds={serializedArray}", CancellationToken.None)
+                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/operators/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&operatorReportingIds={serializedArray}", CancellationToken.None)
                                                      };
                                                      return result;
                                                  };

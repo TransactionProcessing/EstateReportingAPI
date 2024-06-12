@@ -144,7 +144,8 @@
                                                 {
                                                     EstateReportingId = o.EstateReportingId,
                                                     Name = o.Name,
-                                                    OperatorId = o.OperatorId
+                                                    OperatorId = o.OperatorId,
+                                                    OperatorReportingId = o.OperatorReportingId
                                                 }));
 
             return this.Ok(response.OrderBy(m => m.Name));
