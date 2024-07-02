@@ -63,6 +63,11 @@ namespace EstateReportingAPI
 
             if (env.IsDevelopment())
             {
+                var developmentNlogConfigFilename = "nlog.development.config";
+                if (File.Exists(Path.Combine(env.ContentRootPath, developmentNlogConfigFilename)))
+                {
+                    nlogConfigFilename = developmentNlogConfigFilename;
+                }
                 app.UseDeveloperExceptionPage();
             }
 
@@ -72,12 +77,7 @@ namespace EstateReportingAPI
             Microsoft.Extensions.Logging.ILogger logger = loggerFactory.CreateLogger("EstateManagement");
 
             Logger.Initialise(logger);
-
-            Action<string> loggerAction = message =>
-                                          {
-                                              Logger.LogInformation(message);
-                                          };
-            Configuration.LogConfiguration(loggerAction);
+            Configuration.LogConfiguration(Logger.LogWarning);
 
             ConfigurationReader.Initialise(Configuration);
 
