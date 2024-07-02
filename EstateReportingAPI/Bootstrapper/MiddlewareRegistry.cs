@@ -1,4 +1,6 @@
-﻿namespace EstateReportingAPI.Bootstrapper{
+﻿using Shared.Middleware;
+
+namespace EstateReportingAPI.Bootstrapper{
     using System.Diagnostics.CodeAnalysis;
     using System.Net.Security;
     using System.Reflection;
@@ -88,6 +90,15 @@
 
             Assembly assembly = this.GetType().GetTypeInfo().Assembly;
             this.AddMvcCore().AddApplicationPart(assembly).AddControllersAsServices();
+
+            bool logRequests = ConfigurationReaderExtensions.GetValueOrDefault<Boolean>("MiddlewareLogging", "LogRequests", true);
+            bool logResponses = ConfigurationReaderExtensions.GetValueOrDefault<Boolean>("MiddlewareLogging", "LogResponses", true);
+            LogLevel middlewareLogLevel = ConfigurationReaderExtensions.GetValueOrDefault<LogLevel>("MiddlewareLogging", "MiddlewareLogLevel", LogLevel.Warning);
+
+            RequestResponseMiddlewareLoggingConfig config =
+                new RequestResponseMiddlewareLoggingConfig(middlewareLogLevel, logRequests, logResponses);
+
+            this.AddSingleton(config);
         }
 
         private HttpClientHandler ApiEndpointHttpHandler(IServiceProvider serviceProvider){
@@ -99,6 +110,28 @@
                                                                                             return true;
                                                                                         }
                                         };
+        }
+    }
+
+    public static class ConfigurationReaderExtensions
+    {
+        public static T GetValueOrDefault<T>(String sectionName, String keyName, T defaultValue)
+        {
+            try
+            {
+                var value = ConfigurationReader.GetValue(sectionName, keyName);
+
+                if (String.IsNullOrEmpty(value))
+                {
+                    return defaultValue;
+                }
+
+                return (T)Convert.ChangeType(value, typeof(T));
+            }
+            catch (KeyNotFoundException kex)
+            {
+                return defaultValue;
+            }
         }
     }
 }

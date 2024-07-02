@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="EstateManagement.Database" Version="2024.6.3" />
+	  <PackageReference Include="EstateManagement.Database" Version="2024.6.5" />
 	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
     <PackageReference Include="xunit" Version="2.7.0" />
@@ -23,8 +23,8 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Shouldly" Version="4.2.1" />
-	  <PackageReference Include="Shared" Version="2024.5.1" />
-    <PackageReference Include="Shared.IntegrationTesting" Version="2024.5.1" />
+	  <PackageReference Include="Shared" Version="2024.7.1" />
+    <PackageReference Include="Shared.IntegrationTesting" Version="2024.7.1" />
     <PackageReference Include="Ductus.FluentDocker" Version="2.10.59" />
 	  <PackageReference Include="NLog" Version="5.2.8" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
