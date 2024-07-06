@@ -29,6 +29,8 @@
 	  <PackageReference Include="NLog" Version="5.2.8" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
     <PackageReference Include="SecurityService.Client" Version="2024.5.1" />
+	  <PackageReference Include="Lamar" Version="13.0.3" />
+	  <PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="13.0.3" />
 
   </ItemGroup>
 
