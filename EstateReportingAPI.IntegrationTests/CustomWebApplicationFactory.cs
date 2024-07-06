@@ -1,4 +1,6 @@
-﻿namespace EstateReportingAPI.IntegrationTests;
+﻿using Shared.Repositories;
+
+namespace EstateReportingAPI.IntegrationTests;
 
 using BusinessLogic;
 using EstateManagement.Database.Contexts;
@@ -35,7 +37,7 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
             var context = new EstateManagementSqlServerContext(DatabaseConnectionString);
             Func<string, EstateManagementGenericContext> f = connectionString => context;
 
-            IDbContextFactory<EstateManagementGenericContext> factory = new DbContextFactory<EstateManagementGenericContext>(new ConfigurationReaderConnectionStringRepository(), f);
+            IDbContextFactory<EstateManagementGenericContext> factory = new DbContextFactory<EstateManagementGenericContext>(new TestConnectionStringConfigurationRepository(DatabaseConnectionString), f);
 
             IReportingManager manager = new ReportingManager(factory);
 
@@ -51,6 +53,34 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
             b.ShouldBeTrue();
         });
 
+    }
+
+}
+
+public class TestConnectionStringConfigurationRepository : IConnectionStringConfigurationRepository
+{
+    private readonly string DbConnectionString;
+
+    public TestConnectionStringConfigurationRepository(String dbConnectionString)
+    {
+        DbConnectionString = dbConnectionString;
+    }
+    public Task DeleteConnectionStringConfiguration(string externalIdentifier, string connectionStringIdentifier,
+        CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<string> GetConnectionString(string externalIdentifier, string connectionStringIdentifier,
+        CancellationToken cancellationToken)
+    {
+        return DbConnectionString;
+    }
+
+    public Task CreateConnectionString(string externalIdentifier, string connectionStringIdentifier, string connectionString,
+        CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 }
 

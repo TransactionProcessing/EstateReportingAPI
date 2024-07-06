@@ -17,15 +17,24 @@ namespace EstateReportingAPI.Bootstrapper{
 
     [ExcludeFromCodeCoverage]
     public class MiddlewareRegistry : ServiceRegistry{
-        public MiddlewareRegistry(){
+        public MiddlewareRegistry()
+        {
 
+            var connectionStringSection = Startup.Configuration.GetSection("ConnectionStrings");
+            if (connectionStringSection.Exists() == false)
+            {
+                this.AddHealthChecks();
+            }
+            else
+            {
+                this.AddHealthChecks().AddSqlServer(
+                    connectionString: ConfigurationReader.GetConnectionString("HealthCheck"),
+                    healthQuery: "SELECT 1;",
+                    name: "Read Model Server",
+                    failureStatus: HealthStatus.Degraded,
+                    tags: new[] { "db", "sql", "sqlserver" });
+            }
 
-            this.AddHealthChecks()
-                .AddSqlServer(connectionString:ConfigurationReader.GetConnectionString("HealthCheck"),
-                              healthQuery:"SELECT 1;",
-                              name:"Read Model Server",
-                              failureStatus:HealthStatus.Degraded,
-                              tags:new[]{ "db", "sql", "sqlserver" });
             this.AddSwaggerGen(c => {
                                    c.SwaggerDoc("v1",
                                                 new OpenApiInfo{
