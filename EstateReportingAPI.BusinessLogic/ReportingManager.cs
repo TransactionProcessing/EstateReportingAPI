@@ -932,7 +932,8 @@
                                                      {
                                                          Name = o.Name,
                                                          EstateReportingId = context.Estates.Single(e => e.EstateId == o.EstateId).EstateReportingId,
-                                                         OperatorId = o.OperatorId
+                                                         OperatorId = o.OperatorId,
+                                                         OperatorReportingId = o.OperatorReportingId
                                                      }).ToListAsync(cancellationToken);
             
             return operators;
