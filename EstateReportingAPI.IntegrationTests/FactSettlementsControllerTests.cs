@@ -233,6 +233,35 @@
             lastSettlement.SalesValue.ShouldBe(completeTotalsList.Sum(c => c.settledTransactions));
         }
 
+        [Theory]
+        [InlineData(ClientType.Api)]
+        [InlineData(ClientType.Direct)]
+        public async Task FactSettlementsController_LastSettlement_NoSettlementRecords_SettlementReturned(ClientType clientType)
+        {
+            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+
+            DatabaseHelper helper = new DatabaseHelper(context);
+            
+            await helper.RunSettlementSummaryProcessing(DateTime.Now.AddDays(-1));
+
+            Func<Task<LastSettlement>> asyncFunction = async () =>
+            {
+                LastSettlement result = clientType switch
+                {
+                    ClientType.Api => await ApiClient.GetLastSettlement(string.Empty, Guid.NewGuid(), CancellationToken.None),
+                    _ => await CreateAndSendHttpRequestMessage<LastSettlement>($"api/facts/settlements/lastsettlement", CancellationToken.None)
+                };
+                return result;
+            };
+
+            LastSettlement lastSettlement = await ExecuteAsyncFunction(asyncFunction);
+
+            lastSettlement.ShouldNotBeNull();
+            lastSettlement.FeesValue.ShouldBe(0);
+            lastSettlement.SalesCount.ShouldBe(0);
+            lastSettlement.SalesValue.ShouldBe(0);
+        }
+
 
         [Theory(Skip = "To be fixed")]
         [InlineData(ClientType.Api)]

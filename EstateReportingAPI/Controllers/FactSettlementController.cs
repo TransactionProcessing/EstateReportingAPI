@@ -59,17 +59,20 @@ namespace EstateReportingAPI.Controllers
 
         [HttpGet]
         [Route("lastsettlement")]
-        public async Task<IActionResult> LastSettlement([FromHeader] Guid estateId, CancellationToken cancellationToken)
-        {
+        public async Task<IActionResult> LastSettlement([FromHeader] Guid estateId,
+                                                        CancellationToken cancellationToken) {
             LastSettlement model = await this.ReportingManager.GetLastSettlement(estateId, cancellationToken);
 
-            LastSettlement response = new LastSettlement()
-                                        {
-                                            SalesCount = model.SalesCount,
-                                            FeesValue = model.FeesValue,
-                                            SalesValue = model.SalesValue,
-                                            SettlementDate = model.SettlementDate,
-                                        };
+            if (model == null) {
+                return this.Ok(new LastSettlement());
+            }
+
+            LastSettlement response = new LastSettlement() {
+                SalesCount = model.SalesCount,
+                FeesValue = model.FeesValue,
+                SalesValue = model.SalesValue,
+                SettlementDate = model.SettlementDate,
+            };
 
             return this.Ok(response);
         }
