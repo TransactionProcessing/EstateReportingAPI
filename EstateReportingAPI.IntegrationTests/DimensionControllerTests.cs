@@ -324,9 +324,20 @@ public class DimensionsControllerTests : ControllerTestsBase
 
         operators.ShouldNotBeNull();
         operators.Count.ShouldBe(3);
-        operators.Any(o => o.Name == "Operator1").ShouldBeTrue();
-        operators.Any(o => o.Name == "Operator2").ShouldBeTrue();
-        operators.Any(o => o.Name == "Operator3").ShouldBeTrue();
+        var operator1 = operators.SingleOrDefault(o => o.Name == "Operator1");
+        operator1.ShouldNotBeNull();
+        operator1.EstateReportingId.ShouldBe(estateReportingId);
+        operator1.OperatorReportingId.ShouldBe(operator1ReportingId);
+        var operator2 = operators.SingleOrDefault(o => o.Name == "Operator2");
+        operator2.ShouldNotBeNull();
+        operator2.EstateReportingId.ShouldBe(estateReportingId);
+        operator2.OperatorReportingId.ShouldBe(operator2ReportingId);
+        var operator3 = operators.SingleOrDefault(o => o.Name == "Operator3");
+        operator3.ShouldNotBeNull();
+        operator3.EstateReportingId.ShouldBe(estateReportingId);
+        operator3.OperatorReportingId.ShouldBe(operator3ReportingId);
+
+
     }
 
     [Theory]
