@@ -233,6 +233,63 @@
             lastSettlement.SalesValue.ShouldBe(completeTotalsList.Sum(c => c.settledTransactions));
         }
 
+        [Theory]
+        [InlineData(ClientType.Api)]
+        [InlineData(ClientType.Direct)]
+        public async Task FactSettlementsController_LastSettlement_NoSettlementRecords_SettlementReturned(ClientType clientType)
+        {
+            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+
+            DatabaseHelper helper = new DatabaseHelper(context);
+
+            //List<(decimal settledTransactions, decimal pendingSettlementTransactions, decimal settlementFees, decimal
+            //    pendingSettlementFees)> incompleteTotalsList = new();
+            //List<(decimal settledTransactions, decimal pendingSettlementTransactions, decimal settlementFees, decimal
+            //    pendingSettlementFees)> completeTotalsList = new();
+
+            //// Add todays settlement (incomplete)
+            //Int32 totalSettledTransactionCount = 0;
+            //Int32 totalPendingSettlementTransactionCount = 21;
+            //foreach (string merchant in merchantsList)
+            //{
+            //    Int32 settledTransactionCount = 0;
+            //    totalSettledTransactionCount += settledTransactionCount;
+            //    int pendingSettlementTransactionCount = 21;
+            //    totalPendingSettlementTransactionCount += pendingSettlementTransactionCount;
+            //    var incompleteTotals = await helper.AddSettlementRecord(merchant, "Safaricom", DateTime.Now, settledTransactionCount, pendingSettlementTransactionCount);
+            //    incompleteTotalsList.Add(incompleteTotals);
+            //}
+
+            //// Add yesterdays settlement (complete)
+            //foreach (string merchant in merchantsList)
+            //{
+            //    Int32 settledTransactionCount = 18;
+            //    totalSettledTransactionCount += settledTransactionCount;
+            //    int pendingSettlementTransactionCount = 0;
+            //    totalPendingSettlementTransactionCount += pendingSettlementTransactionCount;
+            //    var completeTotals = await helper.AddSettlementRecord(merchant, "Safaricom", DateTime.Now.AddDays(-1), settledTransactionCount, pendingSettlementTransactionCount);
+            //    completeTotalsList.Add(completeTotals);
+            //}
+
+            await helper.RunSettlementSummaryProcessing(DateTime.Now.AddDays(-1));
+
+            Func<Task<LastSettlement>> asyncFunction = async () =>
+            {
+                LastSettlement result = clientType switch
+                {
+                    ClientType.Api => await ApiClient.GetLastSettlement(string.Empty, Guid.NewGuid(), CancellationToken.None),
+                    _ => await CreateAndSendHttpRequestMessage<LastSettlement>($"api/facts/settlements/lastsettlement", CancellationToken.None)
+                };
+                return result;
+            };
+            LastSettlement lastSettlement = await ExecuteAsyncFunction(asyncFunction);
+
+            lastSettlement.ShouldNotBeNull();
+            lastSettlement.FeesValue.ShouldBe(0);
+            lastSettlement.SalesCount.ShouldBe(0);
+            lastSettlement.SalesValue.ShouldBe(0);
+        }
+
 
         [Theory(Skip = "To be fixed")]
         [InlineData(ClientType.Api)]

@@ -63,6 +63,10 @@ namespace EstateReportingAPI.Controllers
         {
             LastSettlement model = await this.ReportingManager.GetLastSettlement(estateId, cancellationToken);
 
+            if (model == null) {
+                return this.Ok(new LastSettlement());
+            }
+
             LastSettlement response = new LastSettlement()
                                         {
                                             SalesCount = model.SalesCount,
