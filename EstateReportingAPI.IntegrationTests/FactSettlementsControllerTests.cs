@@ -253,6 +253,7 @@
                 };
                 return result;
             };
+
             LastSettlement lastSettlement = await ExecuteAsyncFunction(asyncFunction);
 
             lastSettlement.ShouldNotBeNull();
