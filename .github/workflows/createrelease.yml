@@ -5,7 +5,7 @@ on:
     types: [published]
 
 jobs:
-  build:
+  buildlinux:
     name: "Release"
     env:
         ASPNETCORE_ENVIRONMENT: "Production"
@@ -52,69 +52,85 @@ jobs:
       if: ${{ github.event.release.prerelease == false }} 
       run: dotnet publish "EstateReportingAPI\EstateReportingAPI.csproj" --configuration Release --output publishOutput -r win-x64 --self-contained
 
-    - name: Install Octopus CLI
-      if: ${{ github.event.release.prerelease == false }} 
+    - name: Build Release Package
       run: |
-        sudo apt update && sudo apt install --no-install-recommends gnupg curl ca-certificates apt-transport-https && \
-        curl -sSfL https://apt.octopus.com/public.key | sudo apt-key add - && \
-        sudo sh -c "echo deb https://apt.octopus.com/ stable main > /etc/apt/sources.list.d/octopus.com.list" && \
-        sudo apt update && sudo apt install octopuscli
+         cd /home/runner/work/EstateReportingAPI/EstateReportingAPI/publishOutput
+         zip -r ../estatereportingapi.zip ./*
 
-    - name: Pack Files for Octopus
-      if: ${{ github.event.release.prerelease == false }} 
-      run: >-
-        octo pack
-        --outFolder /home/runner/work/EstateReportingAPI/EstateReportingAPI
-        --basePath /home/runner/work/EstateReportingAPI/EstateReportingAPI/publishOutput
-        --id EstateReportingAPI
-        --version ${{ steps.get_version.outputs.VERSION }}
-        --format zip
-        --verbose
-        --logLevel=verbose
-
-    - name: Push Package to Octopus
-      if: ${{ github.event.release.prerelease == false }} 
-      run: >-
-        octo push
-        --server ${{ secrets.OCTOPUS_URL }}
-        --apiKey ${{ secrets.OCTOPUS_APIKEY }}
-        --package /home/runner/work/EstateReportingAPI/EstateReportingAPI/EstateReportingAPI.${{ steps.get_version.outputs.VERSION }}.zip
-        --overwrite-mode IgnoreIfExists
-    
-    - name: Get Release
-      if: ${{ github.event.release.prerelease == false }} 
-      id: getrelease
-      uses: octokit/request-action@v2.0.17
+    - name: Upload the artifact
+      uses: actions/upload-artifact@v3
       with:
-          route: GET /repos/TransactionProcessing/EstateReportingAPI/releases/tags/${{ steps.get_version.outputs.VERSION }}
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Build Release Notes
-      if: ${{ github.event.release.prerelease == false }} 
-      id: buildreleasenotes
-      uses: gr2m/get-json-paths-action@v1.x
-      with:
-          json: ${{ steps.getrelease.outputs.data }}
-          releasenote: "body"
-    
-    - name: Create & Deploy Release in Octopus
-      if: ${{ github.event.release.prerelease == false }} 
-      run: >-
-        octo  create-release
-        --server ${{ secrets.OCTOPUS_URL }}
-        --apiKey ${{ secrets.OCTOPUS_APIKEY }}
-        --project "Estate Reporting API"
-        --version ${{ steps.get_version.outputs.VERSION }}
-        --channel Default
-        --deployTo Staging
-        --waitfordeployment
-        --deploymenttimeout 00:05:00
-        --releasenotes "${{ steps.buildreleasenotes.outputs.releasenote }}" 
+        name: estatereportingapi
+        path: estatereportingapi.zip
         
     - name: Build and Publish Nuget Packages
       if: ${{ github.event.release.prerelease == false }} 
       run: |
         dotnet pack "EstateReportingAPI.Client\EstateReportingAPI.Client.csproj" /p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output Nugets -c Release            
-        dotnet nuget push Nugets/EstateReportingAPI.Client.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }}    
-        
+        dotnet nuget push Nugets/EstateReportingAPI.Client.${{ steps.get_version.outputs.VERSION }}.nupkg --api-key ${{ secrets.PRIVATEFEED_APIKEY }} --source ${{ secrets.PRIVATEFEED_URL }} --skip-duplicate
+
+  deploystaging:
+    runs-on: stagingserver
+    needs: buildlinux
+    environment: staging
+    name: "Deploy to Staging"
+    
+    steps:
+      - name: Download the artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: estatereportingapi
+
+      - name: Remove existing  Windows service
+        run: |
+          $serviceName = "Transaction Processing - Estate Reporting"
+          # Check if the service exists
+          if (Get-Service -Name $serviceName -ErrorAction SilentlyContinue) {
+            Stop-Service -Name $serviceName
+            sc.exe delete $serviceName
+          }
+
+      - name: Unzip the files
+        run: |
+          Expand-Archive -Path estatereportingapi.zip -DestinationPath "C:\txnproc\transactionprocessing\estatereportingapi" -Force
+      
+      - name: Install as a Windows service
+        run: |
+          $serviceName = "Transaction Processing - Estate Reporting"
+          $servicePath = "C:\txnproc\transactionprocessing\estatereportingapi\EstateReportingApi.exe"
+                   
+          New-Service -Name $serviceName -BinaryPathName $servicePath -Description "Transaction Processing - Estate Reporting" -DisplayName "Transaction Processing - Estate Reporting" -StartupType Automatic
+          Start-Service -Name $serviceName      
+
+  deployproduction:
+    runs-on: productionserver
+    needs: [buildlinux, deploystaging]
+    environment: production
+    name: "Deploy to Production"
+    
+    steps:
+      - name: Download the artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: estatereportingapi
+
+      - name: Remove existing  Windows service
+        run: |
+          $serviceName = "Transaction Processing - Estate Reporting"
+          # Check if the service exists
+          if (Get-Service -Name $serviceName -ErrorAction SilentlyContinue) {
+            Stop-Service -Name $serviceName
+            sc.exe delete $serviceName
+          }
+
+      - name: Unzip the files
+        run: |
+          Expand-Archive -Path estatereportingapi.zip -DestinationPath "C:\txnproc\transactionprocessing\estatereportingapi" -Force
+      
+      - name: Install as a Windows service
+        run: |
+          $serviceName = "Transaction Processing - Estate Reporting"
+          $servicePath = "C:\txnproc\transactionprocessing\estatereportingapi\EstateReportingApi.exe"
+                   
+          New-Service -Name $serviceName -BinaryPathName $servicePath -Description "Transaction Processing - Estate Reporting" -DisplayName "Transaction Processing - Estate Reporting" -StartupType Automatic
+          Start-Service -Name $serviceName
