@@ -58,7 +58,7 @@ jobs:
          zip -r ../estatereportingapi.zip ./*
 
     - name: Upload the artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.4.0
       with:
         name: estatereportingapi
         path: estatereportingapi.zip
@@ -77,7 +77,7 @@ jobs:
     
     steps:
       - name: Download the artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.8
         with:
           name: estatereportingapi
 
@@ -110,7 +110,7 @@ jobs:
     
     steps:
       - name: Download the artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.8
         with:
           name: estatereportingapi
 
