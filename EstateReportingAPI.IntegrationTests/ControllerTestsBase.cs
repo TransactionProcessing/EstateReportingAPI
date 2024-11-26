@@ -1,4 +1,6 @@
-﻿namespace EstateReportingAPI.IntegrationTests;
+﻿using SimpleResults;
+
+namespace EstateReportingAPI.IntegrationTests;
 
 using System.Net.Http.Headers;
 using System.Text;
@@ -55,7 +57,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 
     protected Guid TestId;
 
-    internal async Task<T?> CreateAndSendHttpRequestMessage<T>(String url, CancellationToken cancellationToken)
+    internal async Task<Result<T?>> CreateAndSendHttpRequestMessage<T>(String url, CancellationToken cancellationToken)
     {
         HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
         requestMessage.Headers.Add("estateId", this.TestId.ToString());
@@ -65,10 +67,11 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         result.IsSuccessStatusCode.ShouldBeTrue(result.StatusCode.ToString());
         String content = await result.Content.ReadAsStringAsync(cancellationToken);
         content.ShouldNotBeNull();
-        return JsonConvert.DeserializeObject<T>(content);
+
+        return null;
     }
 
-    internal async Task<T?> CreateAndSendHttpRequestMessage<T>(String url, String payload, CancellationToken cancellationToken)
+    internal async Task<Result<T?>> CreateAndSendHttpRequestMessage<T>(String url, String payload, CancellationToken cancellationToken)
     {
         HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
         requestMessage.Headers.Add("estateId", this.TestId.ToString());
@@ -81,7 +84,8 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         result.IsSuccessStatusCode.ShouldBeTrue(result.StatusCode.ToString());
         String content = await result.Content.ReadAsStringAsync(cancellationToken);
         content.ShouldNotBeNull();
-        return JsonConvert.DeserializeObject<T>(content);
+
+        return null;
     }
     
     public static IContainerService DatabaseServerContainer;
@@ -137,6 +141,8 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         }
     }
 }
+
+
 
 public class TestDockerHelper : DockerHelper{
     public override async Task CreateSubscriptions(){
