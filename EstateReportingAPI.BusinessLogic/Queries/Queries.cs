@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using EstateReportingAPI.Models;
 using MediatR;
+using Microsoft.AspNetCore.WebUtilities;
 using SimpleResults;
 
 namespace EstateReportingAPI.BusinessLogic.Queries
@@ -40,5 +41,14 @@ namespace EstateReportingAPI.BusinessLogic.Queries
 
     public record ResponseCodeQueries {
         public record GetResponseCodesQuery(Guid EstateId) : IRequest<Result<List<ResponseCode>>>;
+    }
+
+    public record SettlementQueries {
+        public record GetTodaysSettlementQuery(Guid EstateId, Int32 MerchantReportingId, Int32 OperatorReportingId, DateTime ComparisonDate) : IRequest<Result<TodaysSettlement>>;
+
+        public record GetLastSettlementQuery(Guid EstateId) : IRequest<Result<LastSettlement>>;
+
+        public record GetUnsettledFeesQuery(Guid EstateId,DateTime StartDate, DateTime EndDate, List<Int32> MerchantIdFilter, List<Int32> OperatorIdFilter, List<Int32> ProductIdFilter, GroupByOption GroupByOption) : IRequest<Result<List<UnsettledFee>>>;
+
     }
 }

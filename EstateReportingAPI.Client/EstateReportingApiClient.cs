@@ -121,7 +121,7 @@ namespace EstateReportingAPI.Client{
             }
         }
 
-        public async Task<LastSettlement> GetLastSettlement(String accessToken, Guid estateId, CancellationToken cancellationToken){
+        public async Task<Result<LastSettlement>> GetLastSettlement(String accessToken, Guid estateId, CancellationToken cancellationToken){
             LastSettlement response = null;
 
             String requestUri = this.BuildRequestUrl("/api/facts/settlements/lastsettlement");
@@ -135,10 +135,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<LastSettlement>(content);
+                return await ProcessResponse<LastSettlement>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -358,7 +355,7 @@ namespace EstateReportingAPI.Client{
             return response;
         }
 
-        public async Task<List<UnsettledFee>> GetUnsettledFees(String accessToken, Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption groupBy, CancellationToken cancellationToken){
+        public async Task<Result<List<UnsettledFee>>> GetUnsettledFees(String accessToken, Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption groupBy, CancellationToken cancellationToken){
             List<UnsettledFee> response = null;
             QueryStringBuilder builder = new QueryStringBuilder();
             builder.AddParameter("startDate", $"{startDate:yyyy-MM-dd}");
@@ -394,10 +391,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<UnsettledFee>>(content);
+                return await ProcessResponse<List<UnsettledFee>>(httpResponse, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -626,7 +620,7 @@ namespace EstateReportingAPI.Client{
             return response;
         }
 
-        public async Task<TodaysSettlement> GetTodaysSettlement(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<Result<TodaysSettlement>> GetTodaysSettlement(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
             TodaysSettlement response = null;
             
             QueryStringBuilder builder = new QueryStringBuilder();
@@ -645,10 +639,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<TodaysSettlement>(content);
+                return await ProcessResponse<TodaysSettlement>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message

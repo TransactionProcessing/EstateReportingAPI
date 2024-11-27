@@ -18,12 +18,9 @@ namespace EstateReportingAPI.Controllers
     [ApiController]
     [Authorize]
     public class DimensionsController : ControllerBase{
-        private readonly IReportingManager ReportingManager;
         private readonly IMediator Mediator;
 
-        public DimensionsController(IReportingManager reportingManager,
-                                    IMediator mediator) {
-            this.ReportingManager = reportingManager;
+        public DimensionsController(IMediator mediator) {
             this.Mediator = mediator;
         }
 

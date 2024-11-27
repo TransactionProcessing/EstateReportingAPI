@@ -20,5 +20,9 @@ public class MediatorRegistry : ServiceRegistry {
         this.AddSingleton<IRequestHandler<OperatorQueries.GetOperatorsQuery, Result<List<Operator>>>, OperatorRequestHandler>();
 
         this.AddSingleton<IRequestHandler<ResponseCodeQueries.GetResponseCodesQuery, Result<List<ResponseCode>>>, ResponseCodeRequestHandler>();
+        
+        this.AddSingleton<IRequestHandler<SettlementQueries.GetLastSettlementQuery, Result<LastSettlement>>, SettlementRequestHandler>();
+        this.AddSingleton<IRequestHandler<SettlementQueries.GetTodaysSettlementQuery, Result<TodaysSettlement>>, SettlementRequestHandler>();
+        this.AddSingleton<IRequestHandler<SettlementQueries.GetUnsettledFeesQuery, Result<List<UnsettledFee>>>, SettlementRequestHandler>();
     }
 }

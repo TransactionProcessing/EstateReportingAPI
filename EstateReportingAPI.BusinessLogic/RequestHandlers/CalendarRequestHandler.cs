@@ -108,4 +108,35 @@ namespace EstateReportingAPI.BusinessLogic.RequestHandlers
             return Result.Success(result);
         }
     }
+
+    public class SettlementRequestHandler : IRequestHandler<SettlementQueries.GetTodaysSettlementQuery, Result<TodaysSettlement>>,
+        IRequestHandler<SettlementQueries.GetLastSettlementQuery, Result<LastSettlement>>,
+        IRequestHandler<SettlementQueries.GetUnsettledFeesQuery, Result<List<UnsettledFee>>> {
+        private readonly IReportingManager Manager;
+        public SettlementRequestHandler(IReportingManager manager)
+        {
+            this.Manager = manager;
+        }
+
+        public async Task<Result<TodaysSettlement>> Handle(SettlementQueries.GetTodaysSettlementQuery request,
+                                                           CancellationToken cancellationToken) {
+            Models.TodaysSettlement model = await this.Manager.GetTodaysSettlement(request.EstateId, request.MerchantReportingId, request.OperatorReportingId, request.ComparisonDate, cancellationToken);
+
+            return Result.Success(model);
+        }
+
+        public async Task<Result<LastSettlement>> Handle(SettlementQueries.GetLastSettlementQuery request,
+                                                         CancellationToken cancellationToken)
+        {
+            LastSettlement model = await this.Manager.GetLastSettlement(request.EstateId, cancellationToken);
+
+            return Result.Success(model);
+        }
+
+        public async Task<Result<List<UnsettledFee>>> Handle(SettlementQueries.GetUnsettledFeesQuery request,
+                                                             CancellationToken cancellationToken) {
+            List<UnsettledFee> model = await this.Manager.GetUnsettledFees(request.EstateId, request.StartDate, request.EndDate, request.MerchantIdFilter, request.OperatorIdFilter, request.ProductIdFilter, request.GroupByOption, cancellationToken);
+            return Result.Success(model);
+        }
+    }
 }
