@@ -114,10 +114,8 @@
                                                   );
         }
         
-        [Theory]
-        [InlineData(ClientType.Api)]
-        [InlineData(ClientType.Direct)]
-        public async Task FactSettlementsController_TodaysSettlement_SettlementReturned(ClientType clientType)
+        [Fact]
+        public async Task FactSettlementsController_TodaysSettlement_SettlementReturned()
         {
             int overallTodaysSettlementTransactionCount = 0;
             int overallTodaysPendingSettlementTransactionCount = 0;
@@ -153,17 +151,9 @@
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDate.Date.AddDays(-1));
             await helper.RunSettlementSummaryProcessing(comparisonDate.Date);
 
-            Func<Task<TodaysSettlement>> asyncFunction = async () =>
-                                                                {
-                                                                    TodaysSettlement result = clientType switch
-                                                                    {
-                                                                        ClientType.Api => await ApiClient.GetTodaysSettlement(string.Empty, Guid.NewGuid(), 0,0, DateTime.Now.AddDays(-1), CancellationToken.None),
-                                                                        _ => await CreateAndSendHttpRequestMessage<TodaysSettlement>($"api/facts/settlements/todayssettlement?comparisonDate={DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd")}", CancellationToken.None)
-                                                                    };
-                                                                    return result;
-                                                                };
-            TodaysSettlement todaysSettlement = await ExecuteAsyncFunction(asyncFunction);
-
+            var result = await ApiClient.GetTodaysSettlement(string.Empty, Guid.NewGuid(), 0, 0, DateTime.Now.AddDays(-1), CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var todaysSettlement = result.Data;
             todaysSettlement.ShouldNotBeNull();
             todaysSettlement.ComparisonSettlementCount.ShouldBe(overallComparisonSettlementTransactionCount);
             todaysSettlement.ComparisonSettlementValue.ShouldBe(comparisonOverallTotals.Sum(c => c.settlementFees));
@@ -176,10 +166,8 @@
             todaysSettlement.TodaysPendingSettlementValue.ShouldBe(todayOverallTotals.Sum(c => c.pendingSettlementFees));
         }
 
-        [Theory]
-        [InlineData(ClientType.Api)]
-        [InlineData(ClientType.Direct)]
-        public async Task FactSettlementsController_LastSettlement_SettlementReturned(ClientType clientType)
+        [Fact]
+        public async Task FactSettlementsController_LastSettlement_SettlementReturned()
         {
             EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
@@ -215,17 +203,10 @@
             }
             
             await helper.RunSettlementSummaryProcessing(DateTime.Now.AddDays(-1));
-            
-            Func<Task<LastSettlement>> asyncFunction = async () =>
-                                                       {
-                                                           LastSettlement result = clientType switch
-                                                           {
-                                                               ClientType.Api => await ApiClient.GetLastSettlement(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                               _ => await CreateAndSendHttpRequestMessage<LastSettlement>($"api/facts/settlements/lastsettlement", CancellationToken.None)
-                                                           };
-                                                           return result;
-                                                       };
-            LastSettlement lastSettlement = await ExecuteAsyncFunction(asyncFunction);
+
+            var result = await ApiClient.GetLastSettlement(string.Empty, Guid.NewGuid(), CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var lastSettlement = result.Data;
 
             lastSettlement.ShouldNotBeNull();
             lastSettlement.FeesValue.ShouldBe(completeTotalsList.Sum(t => t.settlementFees));
@@ -233,10 +214,8 @@
             lastSettlement.SalesValue.ShouldBe(completeTotalsList.Sum(c => c.settledTransactions));
         }
 
-        [Theory]
-        [InlineData(ClientType.Api)]
-        [InlineData(ClientType.Direct)]
-        public async Task FactSettlementsController_LastSettlement_NoSettlementRecords_SettlementReturned(ClientType clientType)
+        [Fact]
+        public async Task FactSettlementsController_LastSettlement_NoSettlementRecords_SettlementReturned()
         {
             EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
@@ -244,29 +223,13 @@
             
             await helper.RunSettlementSummaryProcessing(DateTime.Now.AddDays(-1));
 
-            Func<Task<LastSettlement>> asyncFunction = async () =>
-            {
-                LastSettlement result = clientType switch
-                {
-                    ClientType.Api => await ApiClient.GetLastSettlement(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                    _ => await CreateAndSendHttpRequestMessage<LastSettlement>($"api/facts/settlements/lastsettlement", CancellationToken.None)
-                };
-                return result;
-            };
-
-            LastSettlement lastSettlement = await ExecuteAsyncFunction(asyncFunction);
-
-            lastSettlement.ShouldNotBeNull();
-            lastSettlement.FeesValue.ShouldBe(0);
-            lastSettlement.SalesCount.ShouldBe(0);
-            lastSettlement.SalesValue.ShouldBe(0);
+            var result = await ApiClient.GetLastSettlement(string.Empty, Guid.NewGuid(), CancellationToken.None);
+            result.IsFailed.ShouldBeTrue();
         }
 
 
-        [Theory(Skip = "To be fixed")]
-        [InlineData(ClientType.Api)]
-        [InlineData(ClientType.Direct)]
-        public async Task FactSettlementsController_UnsettledFees_ByOperator_SettlementReturned(ClientType clientType){
+        [Fact(Skip = "To be fixed")]
+        public async Task FactSettlementsController_UnsettledFees_ByOperator_SettlementReturned(){
             // Add some fees over a date range for multiple operators
             EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
@@ -296,16 +259,9 @@
             DateTime startDate = dates.Min();
             DateTime endDate = dates.Max();
 
-            Func<Task<List<UnsettledFee>>> asyncFunction = async () =>
-                                                       {
-                                                           List<UnsettledFee> result = clientType switch
-                                                           {
-                                                               ClientType.Api => await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, null, GroupByOption.Operator, CancellationToken.None),
-                                                               _ => await CreateAndSendHttpRequestMessage<List<UnsettledFee>>($"api/facts/settlements/unsettledfees?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}&groupByOption={(Int32)GroupByOption.Operator}", CancellationToken.None)
-                                                           };
-                                                           return result;
-                                                       };
-            var unsettledFees = await ExecuteAsyncFunction(asyncFunction);
+            var result = await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, null, GroupByOption.Merchant, CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var unsettledFees = result.Data;
 
             unsettledFees.ShouldNotBeNull();
             unsettledFees.ShouldNotBeEmpty();
@@ -325,10 +281,8 @@
             }
         }
 
-        [Theory(Skip = "To be fixed")]
-        [InlineData(ClientType.Api)]
-        [InlineData(ClientType.Direct)]
-        public async Task FactSettlementsController_UnsettledFees_ByMerchant_SettlementReturned(ClientType clientType)
+        [Fact(Skip = "To be fixed")]
+        public async Task FactSettlementsController_UnsettledFees_ByMerchant_SettlementReturned()
         {
             // Add some fees over a date range for multiple operators
             EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
@@ -361,17 +315,9 @@
             DateTime startDate = dates.Min();
             DateTime endDate = dates.Max();
 
-            Func<Task<List<UnsettledFee>>> asyncFunction = async () =>
-            {
-                List<UnsettledFee> result = clientType switch
-                {
-                    ClientType.Api => await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, null, GroupByOption.Merchant, CancellationToken.None),
-                    _ => await CreateAndSendHttpRequestMessage<List<UnsettledFee>>($"api/facts/settlements/unsettledfees?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}&groupByOption={(Int32)GroupByOption.Merchant}", CancellationToken.None)
-                };
-                return result;
-            };
-            var unsettledFees = await ExecuteAsyncFunction(asyncFunction);
-
+            var result = await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, null, GroupByOption.Merchant, CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var unsettledFees = result.Data;
             unsettledFees.ShouldNotBeNull();
             unsettledFees.ShouldNotBeEmpty();
             unsettledFees.Count.ShouldBe(this.merchantsList.Count);
@@ -388,10 +334,8 @@
             }
         }
 
-        [Theory(Skip = "To be fixed")]
-        [InlineData(ClientType.Api)]
-        [InlineData(ClientType.Direct)]
-        public async Task FactSettlementsController_UnsettledFees_ByProduct_SettlementReturned(ClientType clientType)
+        [Fact(Skip = "To be fixed")]
+        public async Task FactSettlementsController_UnsettledFees_ByProduct_SettlementReturned()
         {
             // Add some fees over a date range for multiple operators
             EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
@@ -424,16 +368,9 @@
             DateTime startDate = dates.Min();
             DateTime endDate = dates.Max();
 
-            Func<Task<List<UnsettledFee>>> asyncFunction = async () =>
-            {
-                List<UnsettledFee> result = clientType switch
-                {
-                    ClientType.Api => await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate,endDate,null, null, null, GroupByOption.Product, CancellationToken.None),
-                    _ => await CreateAndSendHttpRequestMessage<List<UnsettledFee>>($"api/facts/settlements/unsettledfees?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}&groupByOption={(Int32)GroupByOption.Product}", CancellationToken.None)
-                };
-                return result;
-            };
-            var unsettledFees = await ExecuteAsyncFunction(asyncFunction);
+            var result = await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, null, GroupByOption.Merchant, CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var unsettledFees = result.Data;
 
             unsettledFees.ShouldNotBeNull();
             unsettledFees.ShouldNotBeEmpty();

@@ -37,6 +37,7 @@ namespace EstateReportingAPI
 
             services.IncludeRegistry<MiddlewareRegistry>();
             services.IncludeRegistry<RepositoryRegistry>();
+            services.IncludeRegistry<MediatorRegistry>();
 
             Container = new Container(services);
         }

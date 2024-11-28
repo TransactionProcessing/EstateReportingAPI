@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Shared.Results;
+using SimpleResults;
 
 namespace EstateReportingAPI.Client{
     using System;
@@ -13,7 +15,13 @@ namespace EstateReportingAPI.Client{
     using ClientProxyBase;
     using DataTransferObjects;
     using DataTrasferObjects;
+    using Microsoft.AspNetCore.Http;
     using Newtonsoft.Json;
+
+    internal class ResponseData<T>
+    {
+        public T Data { get; set; }
+    }
 
     public class EstateReportingApiClient : ClientProxyBase, IEstateReportingApiClient{
         #region Fields
@@ -36,9 +44,7 @@ namespace EstateReportingAPI.Client{
 
         #region Methods
 
-        public async Task<List<CalendarDate>> GetCalendarDates(String accessToken, Guid estateId, Int32 year, CancellationToken cancellationToken){
-            List<CalendarDate> response = null;
-
+        public async Task<Result<List<CalendarDate>>> GetCalendarDates(String accessToken, Guid estateId, Int32 year, CancellationToken cancellationToken){
             String requestUri = this.BuildRequestUrl($"/api/dimensions/calendar/{year}/dates");
 
             try{
@@ -50,10 +56,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<CalendarDate>>(content);
+                return await ProcessResponse<List<CalendarDate>>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -61,12 +64,19 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
+        }
+        
+        private async Task<Result<T>> ProcessResponse<T>(HttpResponseMessage httpResponse, CancellationToken cancellationToken) {
+            Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+            if (result.IsFailed)
+                return ResultHelpers.CreateFailure(result);
 
-            return response;
+            ResponseData<T> response = JsonConvert.DeserializeObject<ResponseData<T>>(result.Data);
+
+            return Result.Success(response.Data);
         }
 
-        public async Task<List<CalendarYear>> GetCalendarYears(String accessToken, Guid estateId, CancellationToken cancellationToken){
-            List<CalendarYear> response = null;
+        public async Task<Result<List<CalendarYear>>> GetCalendarYears(String accessToken, Guid estateId, CancellationToken cancellationToken){
 
             String requestUri = this.BuildRequestUrl("/api/dimensions/calendar/years");
 
@@ -79,10 +89,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<CalendarYear>>(content);
+                return await ProcessResponse<List<CalendarYear>>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -90,13 +97,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<ComparisonDate>> GetComparisonDates(String accessToken, Guid estateId, CancellationToken cancellationToken){
-            List<ComparisonDate> response = null;
-
+        public async Task<Result<List<ComparisonDate>>> GetComparisonDates(String accessToken, Guid estateId, CancellationToken cancellationToken){
             String requestUri = this.BuildRequestUrl("/api/dimensions/calendar/comparisondates");
 
             try{
@@ -108,10 +111,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<ComparisonDate>>(content);
+                return await ProcessResponse<List<ComparisonDate>>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -119,11 +119,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<LastSettlement> GetLastSettlement(String accessToken, Guid estateId, CancellationToken cancellationToken){
+        public async Task<Result<LastSettlement>> GetLastSettlement(String accessToken, Guid estateId, CancellationToken cancellationToken){
             LastSettlement response = null;
 
             String requestUri = this.BuildRequestUrl("/api/facts/settlements/lastsettlement");
@@ -137,10 +135,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<LastSettlement>(content);
+                return await ProcessResponse<LastSettlement>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -152,9 +147,7 @@ namespace EstateReportingAPI.Client{
             return response;
         }
 
-        public async Task<List<ResponseCode>> GetResponseCodes(String accessToken, Guid estateId, CancellationToken cancellationToken){
-            List<ResponseCode> response = null;
-
+        public async Task<Result<List<ResponseCode>>> GetResponseCodes(String accessToken, Guid estateId, CancellationToken cancellationToken){
             String requestUri = this.BuildRequestUrl("/api/dimensions/responsecodes");
 
             try
@@ -167,10 +160,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<ResponseCode>>(content);
+                return await ProcessResponse<List<ResponseCode>>(httpResponse, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -179,17 +169,13 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<TodaysSales> GetMerchantPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> merchantReportingIds, CancellationToken cancellationToken){
+        public async Task<Result<TodaysSales>> GetMerchantPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> merchantReportingIds, CancellationToken cancellationToken){
             
             // Serialize the integer array into a comma-separated string
             string serializedArray = string.Join(",", merchantReportingIds);
             
-            TodaysSales response = null;
-
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/merchants/performance?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&merchantReportingIds={serializedArray}");
 
             try
@@ -202,10 +188,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<TodaysSales>(content);
+                return await ProcessResponse<TodaysSales>(httpResponse, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -214,15 +197,11 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<TodaysSales> GetProductPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> productReportingIds, CancellationToken cancellationToken){
+        public async Task<Result<TodaysSales>> GetProductPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> productReportingIds, CancellationToken cancellationToken){
             // Serialize the integer array into a comma-separated string
             string serializedArray = string.Join(",", productReportingIds);
-
-            TodaysSales response = null;
 
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/products/performance?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&productReportingIds={serializedArray}");
 
@@ -236,10 +215,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<TodaysSales>(content);
+                return await ProcessResponse<TodaysSales>(httpResponse, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -248,12 +224,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<Merchant>> GetMerchantsByLastSaleDate(String accessToken, Guid estateId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken){
-            List<Merchant> response = new List<Merchant>();
+        public async Task<Result<List<Merchant>>> GetMerchantsByLastSaleDate(String accessToken, Guid estateId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken){
 
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/merchants/lastsale?startDate={startDate:yyyy-MM-dd HH:mm:ss}&enddate={endDate:yyyy-MM-dd HH:mm:ss}");
 
@@ -267,10 +240,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<Merchant>>(content);
+                return await ProcessResponse<List<Merchant>>(httpResponse, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -279,15 +249,11 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<TodaysSales> GetOperatorPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> operatorReportingIds, CancellationToken cancellationToken){
+        public async Task<Result<TodaysSales>> GetOperatorPerformance(String accessToken, Guid estateId, DateTime comparisonDate, List<Int32> operatorReportingIds, CancellationToken cancellationToken){
             // Serialize the integer array into a comma-separated string
             string serializedArray = string.Join(",", operatorReportingIds);
-
-            TodaysSales response = null;
 
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/operators/performance?comparisonDate={comparisonDate.Date:yyyy-MM-dd}&operatorReportingIds={serializedArray}");
 
@@ -301,10 +267,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<TodaysSales>(content);
+                return await ProcessResponse<TodaysSales>(httpResponse, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -313,13 +276,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<TransactionResult>> TransactionSearch(String accessToken, Guid estateId, TransactionSearchRequest searchRequest, Int32? page, Int32? pageSize, SortField? sortField, SortDirection? sortDirection, CancellationToken cancellationToken){
-
-            List<TransactionResult> response = null;
+        public async Task<Result<List<TransactionResult>>> TransactionSearch(String accessToken, Guid estateId, TransactionSearchRequest searchRequest, Int32? page, Int32? pageSize, SortField? sortField, SortDirection? sortDirection, CancellationToken cancellationToken){
             QueryStringBuilder builder = new QueryStringBuilder();
             if (page.HasValue){
                 builder.AddParameter("page", page.Value);
@@ -351,10 +310,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<TransactionResult>>(content);
+                return await ProcessResponse<List<TransactionResult>>(httpResponse, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -363,12 +319,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<UnsettledFee>> GetUnsettledFees(String accessToken, Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption groupBy, CancellationToken cancellationToken){
-            List<UnsettledFee> response = null;
+        public async Task<Result<List<UnsettledFee>>> GetUnsettledFees(String accessToken, Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption groupBy, CancellationToken cancellationToken){
             QueryStringBuilder builder = new QueryStringBuilder();
             builder.AddParameter("startDate", $"{startDate:yyyy-MM-dd}");
             builder.AddParameter("endDate", $"{endDate:yyyy-MM-dd}");
@@ -403,10 +356,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<UnsettledFee>>(content);
+                return await ProcessResponse<List<UnsettledFee>>(httpResponse, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -416,13 +366,9 @@ namespace EstateReportingAPI.Client{
                 throw exception;
             }
 
-            return response;
-
         }
 
-        public async Task<MerchantKpi> GetMerchantKpi(String accessToken, Guid estateId, CancellationToken cancellationToken){
-            MerchantKpi response = null;
-
+        public async Task<Result<MerchantKpi>> GetMerchantKpi(String accessToken, Guid estateId, CancellationToken cancellationToken){
             String requestUri = this.BuildRequestUrl("/api/facts/transactions/merchantkpis");
 
             try{
@@ -434,10 +380,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<MerchantKpi>(content);
+                return await ProcessResponse<MerchantKpi>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -445,13 +388,10 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<Merchant>> GetMerchants(String accessToken, Guid estateId, CancellationToken cancellationToken){
-            List<Merchant> response = null;
-
+        public async Task<Result<List<Merchant>>> GetMerchants(String accessToken, Guid estateId, CancellationToken cancellationToken){
+            
             String requestUri = this.BuildRequestUrl("/api/dimensions/merchants");
 
             try{
@@ -463,10 +403,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<Merchant>>(content);
+                return await ProcessResponse<List<Merchant>>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -474,13 +411,10 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<Operator>> GetOperators(String accessToken, Guid estateId, CancellationToken cancellationToken){
-            List<Operator> response = null;
-
+        public async Task<Result<List<Operator>>> GetOperators(String accessToken, Guid estateId, CancellationToken cancellationToken){
+            
             String requestUri = this.BuildRequestUrl("/api/dimensions/operators");
 
             try{
@@ -492,10 +426,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<Operator>>(content);
+                return await ProcessResponse<List<Operator>>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -503,14 +434,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<TodaysSales> GetTodaysFailedSales(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, String responseCode, DateTime comparisonDate, CancellationToken cancellationToken){
-            TodaysSales response = null;
-
-
+        public async Task<Result<TodaysSales>> GetTodaysFailedSales(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, String responseCode, DateTime comparisonDate, CancellationToken cancellationToken){
             QueryStringBuilder builder = new QueryStringBuilder();
             builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
             builder.AddParameter("merchantReportingId", merchantReportingId);
@@ -519,7 +445,7 @@ namespace EstateReportingAPI.Client{
 
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todaysfailedsales?{builder.BuildQueryString()}");
 
-            try{
+            try {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 request.Headers.Add("EstateId", estateId.ToString());
@@ -528,24 +454,17 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<TodaysSales>(content);
+                return await ProcessResponse<TodaysSales>(httpResponse, cancellationToken);
             }
-            catch(Exception ex){
+            catch (Exception ex) {
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting todays failed sales for estate {estateId} and response code {responseCode}.", ex);
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<TodaysSales> GetTodaysSales(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
-            TodaysSales response = null;
-
+        public async Task<Result<TodaysSales>> GetTodaysSales(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
             QueryStringBuilder builder = new QueryStringBuilder();
             builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
             builder.AddParameter("merchantReportingId", merchantReportingId);
@@ -562,10 +481,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<TodaysSales>(content);
+                return await ProcessResponse<TodaysSales>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -573,14 +489,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
-            List<TodaysSalesCountByHour> response = null;
-
-
+        public async Task<Result<List<TodaysSalesCountByHour>>> GetTodaysSalesCountByHour(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
             QueryStringBuilder builder = new QueryStringBuilder();
             builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
             builder.AddParameter("merchantReportingId", merchantReportingId);
@@ -597,10 +508,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<TodaysSalesCountByHour>>(content);
+                return await ProcessResponse<List<TodaysSalesCountByHour>>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -608,14 +516,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
-            List<TodaysSalesValueByHour> response = null;
-
-
+        public async Task<Result<List<TodaysSalesValueByHour>>> GetTodaysSalesValueByHour(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
             QueryStringBuilder builder = new QueryStringBuilder();
             builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
             builder.AddParameter("merchantReportingId", merchantReportingId);
@@ -632,10 +535,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<TodaysSalesValueByHour>>(content);
+                return await ProcessResponse<List<TodaysSalesValueByHour>>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -643,13 +543,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<TodaysSettlement> GetTodaysSettlement(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
-            TodaysSettlement response = null;
-            
+        public async Task<Result<TodaysSettlement>> GetTodaysSettlement(String accessToken, Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
             QueryStringBuilder builder = new QueryStringBuilder();
             builder.AddParameter("comparisonDate", $"{comparisonDate.Date:yyyy-MM-dd}");
             builder.AddParameter("merchantReportingId", merchantReportingId);
@@ -666,10 +562,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<TodaysSettlement>(content);
+                return await ProcessResponse<TodaysSettlement>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -677,13 +570,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<TopBottomMerchantData>> GetTopBottomMerchantData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken){
-            List<TopBottomMerchantData> response = null;
-
+        public async Task<Result<List<TopBottomMerchantData>>> GetTopBottomMerchantData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken){
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/merchants/topbottombyvalue?topOrBottom={(Int32)topBottom}&count={resultCount}");
 
             try{
@@ -695,10 +584,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<TopBottomMerchantData>>(content);
+                return await ProcessResponse<List<TopBottomMerchantData>>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -706,13 +592,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<TopBottomOperatorData>> GetTopBottomOperatorData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken){
-            List<TopBottomOperatorData> response = null;
-
+        public async Task<Result<List<TopBottomOperatorData>>> GetTopBottomOperatorData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken){
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/operators/topbottombyvalue?topOrBottom={(Int32)topBottom}&count={resultCount}");
 
             try{
@@ -724,10 +606,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<TopBottomOperatorData>>(content);
+                return await ProcessResponse<List<TopBottomOperatorData>>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -735,13 +614,9 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
-        public async Task<List<TopBottomProductData>> GetTopBottomProductData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken){
-            List<TopBottomProductData> response = null;
-
+        public async Task<Result<List<TopBottomProductData>>> GetTopBottomProductData(String accessToken, Guid estateId, TopBottom topBottom, Int32 resultCount, CancellationToken cancellationToken){
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/products/topbottombyvalue?topOrBottom={(Int32)topBottom}&count={resultCount}");
 
             try{
@@ -753,10 +628,7 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                String content = await this.HandleResponse(httpResponse, cancellationToken);
-
-                // call was successful so now deserialise the body to the response object
-                response = JsonConvert.DeserializeObject<List<TopBottomProductData>>(content);
+                return await ProcessResponse<List<TopBottomProductData>>(httpResponse, cancellationToken);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -764,8 +636,6 @@ namespace EstateReportingAPI.Client{
 
                 throw exception;
             }
-
-            return response;
         }
 
         private String BuildRequestUrl(String route){

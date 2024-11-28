@@ -1,4 +1,6 @@
-﻿namespace EstateReportingAPI.IntegrationTests;
+﻿using SimpleResults;
+
+namespace EstateReportingAPI.IntegrationTests;
 
 using EstateManagement.Database.Contexts;
 using EstateReportingAPI.DataTrasferObjects;
@@ -10,30 +12,15 @@ using ResponseCode = DataTrasferObjects.ResponseCode;
 
 public class DimensionsControllerTests : ControllerTestsBase
 {
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetCalendarYears_NoDataInDatabase(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetCalendarYears_NoDataInDatabase()
     {
-        Func<Task<List<CalendarYear>?>> asyncFunction = async () =>
-                                                        {
-                                                            List<CalendarYear>? result = clientType switch
-                                                            {
-                                                                ClientType.Api => await ApiClient.GetCalendarYears(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                                _ => await CreateAndSendHttpRequestMessage<List<CalendarYear>>("api/dimensions/calendar/years", CancellationToken.None)
-                                                            };
-                                                            return result;
-                                                        };
-        List<CalendarYear> years = await ExecuteAsyncFunction(asyncFunction);
-
-        years.ShouldNotBeNull();
-        years.Count.ShouldBe(0);
+        var yearsResult = await ApiClient.GetCalendarYears(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        yearsResult.IsFailed.ShouldBeTrue();
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetCalendarYears_YearsReturned(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetCalendarYears_YearsReturned()
     {
 
         List<int> yearList = new(){
@@ -48,40 +35,19 @@ public class DimensionsControllerTests : ControllerTestsBase
             await helper.AddCalendarYear(year);
         }
 
-        Func<Task<List<CalendarYear>?>> asyncFunction = async () =>
-                                                        {
-                                                            List<CalendarYear>? result = clientType switch
-                                                            {
-                                                                ClientType.Api => await ApiClient.GetCalendarYears(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                                _ => await CreateAndSendHttpRequestMessage<List<CalendarYear>>("api/dimensions/calendar/years", CancellationToken.None)
-                                                            };
-                                                            return result;
-                                                        };
-        List<CalendarYear> years = await ExecuteAsyncFunction(asyncFunction);
+        List<CalendarYear> years = await ApiClient.GetCalendarYears(string.Empty, Guid.NewGuid(), CancellationToken.None);
 
         years.ShouldNotBeNull();
         years.Count.ShouldBe(yearList.Count);
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetCalendarComparisonDates_DatesReturned(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetCalendarComparisonDates_DatesReturned()
     {
         List<DateTime> datesInYear = helper.GetDatesForYear(DateTime.Now.Year);
         await helper.AddCalendarDates(datesInYear);
 
-        Func<Task<List<ComparisonDate>?>> asyncFunction = async () =>
-                                                          {
-                                                              List<ComparisonDate>? result = clientType switch
-                                                              {
-                                                                  ClientType.Api => await ApiClient.GetComparisonDates(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                                  _ => await CreateAndSendHttpRequestMessage<List<ComparisonDate>>("api/dimensions/calendar/comparisondates", CancellationToken.None)
-                                                              };
-                                                              return result;
-                                                          };
-        List<ComparisonDate> dates = await ExecuteAsyncFunction(asyncFunction);
-
+        List<ComparisonDate> dates = await ApiClient.GetComparisonDates(string.Empty, Guid.NewGuid(), CancellationToken.None);
 
         List<DateTime> expectedDates = datesInYear.Where(d => d <= DateTime.Now.Date.AddDays(-1)).ToList();
         int expectedCount = expectedDates.Count + 2;
@@ -97,25 +63,16 @@ public class DimensionsControllerTests : ControllerTestsBase
         dates.Select(d => d.Description).Contains("Last Month");
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetCalendarDates_DatesReturned(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetCalendarDates_DatesReturned()
     {
         List<DateTime> datesInYear = helper.GetDatesForYear(2023);
         await helper.AddCalendarDates(datesInYear);
 
-        Func<Task<List<CalendarDate>?>> asyncFunction = async () =>
-                                                        {
-                                                            List<CalendarDate>? result = clientType switch
-                                                            {
-                                                                ClientType.Api => await ApiClient.GetCalendarDates(string.Empty, Guid.NewGuid(), 2023, CancellationToken.None),
-                                                                _ => await CreateAndSendHttpRequestMessage<List<CalendarDate>>("api/dimensions/calendar/2023/dates", CancellationToken.None)
-                                                            };
-                                                            return result;
-                                                        };
-        List<CalendarDate> dates = await ExecuteAsyncFunction(asyncFunction);
-        
+        var datesResult = await ApiClient.GetCalendarDates(string.Empty, Guid.NewGuid(), 2023, CancellationToken.None);
+
+        datesResult.IsSuccess.ShouldBeTrue();
+        var dates = datesResult.Data;
         dates.ShouldNotBeNull();
         dates.Count.ShouldBe(datesInYear.Where(d => d <= DateTime.Now.Date).ToList().Count);
 
@@ -126,69 +83,32 @@ public class DimensionsControllerTests : ControllerTestsBase
         }
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetCalendarDates_NoDataInDatabase(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetCalendarDates_NoDataInDatabase()
     {
-        Func<Task<List<CalendarDate>?>> asyncFunction = async () =>
-                                                        {
-                                                            List<CalendarDate>? result = clientType switch
-                                                            {
-                                                                ClientType.Api => await ApiClient.GetCalendarDates(string.Empty, Guid.NewGuid(), 2023, CancellationToken.None),
-                                                                _ => await CreateAndSendHttpRequestMessage<List<CalendarDate>>("api/dimensions/calendar/2023/dates", CancellationToken.None)
-                                                            };
-                                                            return result;
-                                                        };
-        List<CalendarDate> dates = await ExecuteAsyncFunction(asyncFunction);
-
-        dates.ShouldNotBeNull();
-        dates.Count.ShouldBe(0);
+        var datesResult = await ApiClient.GetCalendarDates(string.Empty, Guid.NewGuid(), 2023, CancellationToken.None);
+        datesResult.IsFailed.ShouldBeTrue();
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetMerchants_NoData_NoMerchantsReturned(ClientType clientType)
-    {
-        Func<Task<List<Merchant>?>> asyncFunction = async () =>
-                                                    {
-                                                        List<Merchant>? result = clientType switch
-                                                        {
-                                                            ClientType.Api => await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                            _ => await CreateAndSendHttpRequestMessage<List<Merchant>>("api/dimensions/merchants", CancellationToken.None)
-                                                        };
-                                                        return result;
-                                                    };
-        List<Merchant> merchants = await ExecuteAsyncFunction(asyncFunction);
-
-
-        merchants.ShouldNotBeNull();
-        merchants.Count.ShouldBe(0);
+    [Fact]
+    public async Task DimensionsController_GetMerchants_NoData_NoMerchantsReturned() {
+        var result = await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsFailed.ShouldBeTrue();
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetMerchants_NoAddresses_MerchantsReturned(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetMerchants_NoAddresses_MerchantsReturned()
     {
-        int estateReportingId = await helper.AddEstate("Test Estate", "Ref1");
+        await helper.AddEstate("Test Estate", "Ref1");
 
         for (int i = 0; i < 10; i++)
         {
             await helper.AddMerchant("Test Estate", $"Test Merchant {i}", DateTime.Now);
         }
 
-        Func<Task<List<Merchant>?>> asyncFunction = async () =>
-                                                    {
-                                                        List<Merchant>? result = clientType switch
-                                                        {
-                                                            ClientType.Api => await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                            _ => await CreateAndSendHttpRequestMessage<List<Merchant>>("api/dimensions/merchants", CancellationToken.None)
-                                                        };
-                                                        return result;
-                                                    };
-        List<Merchant> merchants = await ExecuteAsyncFunction(asyncFunction);
+        var result = await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var merchants = result.Data;
 
         merchants.ShouldNotBeNull();
         merchants.Count.ShouldBe(10);
@@ -202,31 +122,23 @@ public class DimensionsControllerTests : ControllerTestsBase
         }
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetMerchants_EachMerchantHasOneAddress_MerchantsReturned(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetMerchants_EachMerchantHasOneAddress_MerchantsReturned()
     {
-        int estateReportingId = await helper.AddEstate("Test Estate", "Ref1");
+        await helper.AddEstate("Test Estate", "Ref1");
 
         for (int i = 0; i < 10; i++)
         {
-            List<(string addressLine1, string town, string postCode, string region)> addressList = new List<(string addressLine1, string town, string postCode, string region)>();
+            List<(string addressLine1, string town, string postCode, string region)> addressList = [
+                ("Address Line 1", $"Test Town {i}", $"TE57 {i}NG", $"Region {i}")
+            ];
 
-            addressList.Add(("Address Line 1", $"Test Town {i}", $"TE57 {i}NG", $"Region {i}"));
             await helper.AddMerchant("Test Estate", $"Test Merchant {i}", DateTime.Now, addressList);
         }
 
-        Func<Task<List<Merchant>?>> asyncFunction = async () =>
-                                                    {
-                                                        List<Merchant>? result = clientType switch
-                                                        {
-                                                            ClientType.Api => await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                            _ => await CreateAndSendHttpRequestMessage<List<Merchant>>("api/dimensions/merchants", CancellationToken.None)
-                                                        };
-                                                        return result;
-                                                    };
-        List<Merchant> merchants = await ExecuteAsyncFunction(asyncFunction);
+        var result = await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var merchants = result.Data;
 
         merchants.ShouldNotBeNull();
         merchants.Count.ShouldBe(10);
@@ -240,16 +152,14 @@ public class DimensionsControllerTests : ControllerTestsBase
         }
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetMerchants_EachMerchantHasTwoAddress_MerchantsReturned(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetMerchants_EachMerchantHasTwoAddress_MerchantsReturned()
     {
-        int estateReportingId = await helper.AddEstate("Test Estate", "Ref1");
+        await helper.AddEstate("Test Estate", "Ref1");
 
         for (int i = 0; i < 10; i++)
         {
-            List<(string addressLine1, string town, string postCode, string region)> addressList = new List<(string addressLine1, string town, string postCode, string region)>();
+            List<(string addressLine1, string town, string postCode, string region)> addressList = [];
             for (int j = 0; j < 2; j++)
             {
                 addressList.Add(("Address Line 1", $"Test Town {i}{j}", $"TE5{j} {i}NG", $"Region {i}{j}"));
@@ -257,16 +167,9 @@ public class DimensionsControllerTests : ControllerTestsBase
             await helper.AddMerchant("Test Estate", $"Test Merchant {i}", DateTime.Now, addressList);
         }
 
-        Func<Task<List<Merchant>?>> asyncFunction = async () =>
-                                                    {
-                                                        List<Merchant>? result = clientType switch
-                                                        {
-                                                            ClientType.Api => await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                            _ => await CreateAndSendHttpRequestMessage<List<Merchant>>("api/dimensions/merchants", CancellationToken.None)
-                                                        };
-                                                        return result;
-                                                    };
-        List<Merchant> merchants = await ExecuteAsyncFunction(asyncFunction);
+        var result = await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var merchants = result.Data;
 
         merchants.ShouldNotBeNull();
         merchants.Count.ShouldBe(10);
@@ -280,30 +183,15 @@ public class DimensionsControllerTests : ControllerTestsBase
         }
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetOperators_NoData_NoOperatorsReturned(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetOperators_NoData_NoOperatorsReturned()
     {
-        Func<Task<List<Operator>?>> asyncFunction = async () =>
-                                                    {
-                                                        List<Operator>? result = clientType switch
-                                                        {
-                                                            ClientType.Api => await ApiClient.GetOperators(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                            _ => await CreateAndSendHttpRequestMessage<List<Operator>>("api/dimensions/operators", CancellationToken.None)
-                                                        };
-                                                        return result;
-                                                    };
-        List<Operator> operators = await ExecuteAsyncFunction(asyncFunction);
-
-        operators.ShouldNotBeNull();
-        operators.Count.ShouldBe(0);
+        Result<List<Operator>> result = await ApiClient.GetOperators(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsFailed.ShouldBeTrue();
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetOperators_OperatorsReturned(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetOperators_OperatorsReturned()
     {
         int estateReportingId = await helper.AddEstate("Test Estate", "Ref1");
 
@@ -311,17 +199,10 @@ public class DimensionsControllerTests : ControllerTestsBase
         Int32 operator2ReportingId = await this.helper.AddOperator("Test Estate", "Operator2");
         Int32 operator3ReportingId = await this.helper.AddOperator("Test Estate", "Operator3");
         
-        Func<Task<List<Operator>?>> asyncFunction = async () =>
-                                                    {
-                                                        List<Operator>? result = clientType switch
-                                                        {
-                                                            ClientType.Api => await ApiClient.GetOperators(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                            _ => await CreateAndSendHttpRequestMessage<List<Operator>>("api/dimensions/operators", CancellationToken.None)
-                                                        };
-                                                        return result;
-                                                    };
-        List<Operator> operators = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetOperators(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        
+        var operators = result.Data;
         operators.ShouldNotBeNull();
         operators.Count.ShouldBe(3);
         var operator1 = operators.SingleOrDefault(o => o.Name == "Operator1");
@@ -340,10 +221,8 @@ public class DimensionsControllerTests : ControllerTestsBase
 
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetResponseCodes_ResponseCodesReturned(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetResponseCodes_ResponseCodesReturned()
     {
         await helper.AddResponseCode(0, "Success");
         await helper.AddResponseCode(1000, "Unknown Device");
@@ -351,16 +230,10 @@ public class DimensionsControllerTests : ControllerTestsBase
         await helper.AddResponseCode(1002, "Unknown Merchant");
         await helper.AddResponseCode(1003, "No Devices Configured");
 
-        Func<Task<List<ResponseCode>?>> asyncFunction = async () =>
-                                                        {
-                                                            List<ResponseCode>? result = clientType switch
-                                                            {
-                                                                ClientType.Api => await ApiClient.GetResponseCodes(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                                _ => await CreateAndSendHttpRequestMessage<List<ResponseCode>>("api/dimensions/responsecodes", CancellationToken.None)
-                                                            };
-                                                            return result;
-                                                        };
-        List<ResponseCode> responseCodes = await ExecuteAsyncFunction(asyncFunction);
+        var result = await ApiClient.GetResponseCodes(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+
+        var responseCodes = result.Data;
 
         responseCodes.ShouldNotBeNull();
         responseCodes.Count.ShouldBe(5);
@@ -371,23 +244,11 @@ public class DimensionsControllerTests : ControllerTestsBase
         responseCodes.Any(o => o.Code == 1003).ShouldBeTrue();
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task DimensionsController_GetResponseCodes_NoData_NoResponseCodesReturned(ClientType clientType)
+    [Fact]
+    public async Task DimensionsController_GetResponseCodes_NoData_NoResponseCodesReturned()
     {
-        Func<Task<List<ResponseCode>?>> asyncFunction = async () =>
-                                                        {
-                                                            List<ResponseCode>? result = clientType switch
-                                                            {
-                                                                ClientType.Api => await ApiClient.GetResponseCodes(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                                _ => await CreateAndSendHttpRequestMessage<List<ResponseCode>>("api/dimensions/responsecodes", CancellationToken.None)
-                                                            };
-                                                            return result;
-                                                        };
-        List<ResponseCode> responseCodes = await ExecuteAsyncFunction(asyncFunction);
-
-        responseCodes.ShouldBeEmpty();
+        var result = await ApiClient.GetResponseCodes(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsFailed.ShouldBeTrue();
     }
 
     protected override async Task ClearStandingData()
