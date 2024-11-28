@@ -5,11 +5,22 @@ using System.Text;
 using System.Threading.Tasks;
 using EstateReportingAPI.Models;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using SimpleResults;
 
 namespace EstateReportingAPI.BusinessLogic.Queries
 {
+    public record TransactionQueries {
+        public record TodaysSalesQuery(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate) : IRequest<Result<TodaysSales>>;
+        public record TodaysFailedSales(Guid estateId, DateTime comparisonDate, String responseCode) : IRequest<Result<TodaysSales>>;
+
+        public record TodaysSalesCountByHour(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate) : IRequest<Result<List<Models.TodaysSalesCountByHour>>>;
+        public record TodaysSalesValueByHour(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate) : IRequest<Result<List<Models.TodaysSalesValueByHour>>>;
+
+        public record TransactionSearchQuery(Guid estateId, TransactionSearchRequest request, PagingRequest pagingRequest, Models.SortingRequest sortingRequest) : IRequest<Result<List<Models.TransactionResult>>>;
+    }
+
     public record CalendarQueries {
         public record GetComparisonDatesQuery(Guid EstateId) : IRequest<Result<List<Calendar>>>;
         public record GetAllDatesQuery(Guid EstateId) : IRequest<Result<List<Calendar>>>;

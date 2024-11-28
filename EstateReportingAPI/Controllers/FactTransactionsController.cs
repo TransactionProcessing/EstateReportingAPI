@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics.CodeAnalysis;
+using EstateReportingAPI.BusinessLogic.Queries;
+using JasperFx.Core;
+using MediatR;
+using Shared.Results;
 
 namespace EstateReportingAPI.Controllers{
     using DataTransferObjects;
@@ -15,6 +19,7 @@ namespace EstateReportingAPI.Controllers{
     using TodaysSalesValueByHour = DataTransferObjects.TodaysSalesValueByHour;
     using TransactionResult = DataTransferObjects.TransactionResult;
     using TransactionSearchRequest = DataTransferObjects.TransactionSearchRequest;
+    using SimpleResults;
 
     [ExcludeFromCodeCoverage]
     [Route(FactTransactionsController.ControllerRoute)]
@@ -37,38 +42,45 @@ namespace EstateReportingAPI.Controllers{
 
 
         private readonly IReportingManager ReportingManager;
+        private readonly IMediator Mediator;
 
-        public FactTransactionsController(IReportingManager reportingManager){
+        public FactTransactionsController(IReportingManager reportingManager, IMediator mediator) {
             this.ReportingManager = reportingManager;
+            this.Mediator = mediator;
         }
 
         private const String ConnectionStringIdentifier = "EstateReportingReadModel";
 
         [HttpGet]
         [Route("todayssales")]
-        public async Task<IActionResult> TodaysSales([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
-            Models.TodaysSales model = await this.ReportingManager.GetTodaysSales(estateId, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
-
+        public async Task<IActionResult> TodaysSales([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken) {
+            TransactionQueries.TodaysSalesQuery query = new(estateId, merchantReportingId, operatorReportingId, comparisonDate);
+            var result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
             TodaysSales response = new TodaysSales{
-                                                      ComparisonSalesCount = model.ComparisonSalesCount,
-                                                      ComparisonSalesValue = model.ComparisonSalesValue,
-                                                      TodaysSalesCount = model.TodaysSalesCount,
-                                                      TodaysSalesValue = model.TodaysSalesValue,
-                                                      ComparisonAverageSalesValue = model.ComparisonAverageSalesValue,
-                                                      TodaysAverageSalesValue = model.TodaysAverageSalesValue,
+                                                      ComparisonSalesCount = result.Data.ComparisonSalesCount,
+                                                      ComparisonSalesValue = result.Data.ComparisonSalesValue,
+                                                      TodaysSalesCount = result.Data.TodaysSalesCount,
+                                                      TodaysSalesValue = result.Data.TodaysSalesValue,
+                                                      ComparisonAverageSalesValue = result.Data.ComparisonAverageSalesValue,
+                                                      TodaysAverageSalesValue = result.Data.TodaysAverageSalesValue,
                                                   };
 
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
         [Route("todayssales/countbyhour")]
-        public async Task<IActionResult> TodaysSalesCountByHour([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
-            List<Models.TodaysSalesCountByHour> models = await this.ReportingManager.GetTodaysSalesCountByHour(estateId, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
+        public async Task<IActionResult> TodaysSalesCountByHour([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken) {
+            TransactionQueries.TodaysSalesCountByHour query = new TransactionQueries.TodaysSalesCountByHour(estateId, merchantReportingId, operatorReportingId, comparisonDate);
+            var result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
 
             List<TodaysSalesCountByHour> response = new List<TodaysSalesCountByHour>();
 
-            foreach (Models.TodaysSalesCountByHour todaysSalesCountByHour in models){
+            foreach (Models.TodaysSalesCountByHour todaysSalesCountByHour in result.Data){
                 response.Add(new TodaysSalesCountByHour{
                                                            ComparisonSalesCount = todaysSalesCountByHour.ComparisonSalesCount,
                                                            Hour = todaysSalesCountByHour.Hour,
@@ -76,19 +88,20 @@ namespace EstateReportingAPI.Controllers{
                                                        });
             }
 
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
         [Route("todayssales/valuebyhour")]
         public async Task<IActionResult> TodaysSalesValueByHour([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
 
-
-            List<Models.TodaysSalesValueByHour> models = await this.ReportingManager.GetTodaysSalesValueByHour(estateId, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
-
+            TransactionQueries.TodaysSalesValueByHour query = new TransactionQueries.TodaysSalesValueByHour(estateId, merchantReportingId, operatorReportingId, comparisonDate);
+            var result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
             List<TodaysSalesValueByHour> response = new List<TodaysSalesValueByHour>();
 
-            foreach (Models.TodaysSalesValueByHour todaysSalesValueByHour in models){
+            foreach (Models.TodaysSalesValueByHour todaysSalesValueByHour in result.Data){
                 response.Add(new TodaysSalesValueByHour{
                                                            ComparisonSalesValue = todaysSalesValueByHour.ComparisonSalesValue,
                                                            Hour = todaysSalesValueByHour.Hour,
@@ -96,17 +109,19 @@ namespace EstateReportingAPI.Controllers{
                                                        });
             }
 
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
         [Route("merchants/lastsale")]
         public async Task<IActionResult> GetMerchantsByLastSale([FromHeader] Guid estateId, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate, CancellationToken cancellationToken){
-            List<Merchant> merchants = await this.ReportingManager.GetMerchantsByLastSale(estateId,startDate, endDate, cancellationToken);
-
+            MerchantQueries.GetByLastSaleQuery query = new(estateId, startDate, endDate);
+            Result<List<Merchant>> result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
             List<Merchant> response = new List<Merchant>();
 
-            merchants.ForEach(m => response.Add(new Merchant
+            result.Data.ForEach(m => response.Add(new Merchant
                                                 {
                                                     MerchantReportingId = m.MerchantReportingId,
                                                     MerchantId = m.MerchantId,
@@ -122,39 +137,45 @@ namespace EstateReportingAPI.Controllers{
                                                     Town = m.Town,
                                                 }));
 
-            return this.Ok(response.OrderBy(m => m.Name));
+            return Result.Success(response.OrderBy(m=> m.Name)).ToActionResultX();
         }
 
         [HttpGet]
         [Route("merchantkpis")]
         public async Task<IActionResult> GetMerchantsTransactionKpis([FromHeader] Guid estateId, CancellationToken cancellationToken){
 
-            Models.MerchantKpi model = await this.ReportingManager.GetMerchantsTransactionKpis(estateId, cancellationToken);
+            MerchantQueries.GetTransactionKpisQuery query = new MerchantQueries.GetTransactionKpisQuery(estateId);
+            var result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
 
             MerchantKpi response = new MerchantKpi{
-                                                      MerchantsWithNoSaleInLast7Days = model.MerchantsWithNoSaleInLast7Days,
-                                                      MerchantsWithNoSaleToday = model.MerchantsWithNoSaleToday,
-                                                      MerchantsWithSaleInLastHour = model.MerchantsWithSaleInLastHour
+                                                      MerchantsWithNoSaleInLast7Days = result.Data.MerchantsWithNoSaleInLast7Days,
+                                                      MerchantsWithNoSaleToday = result.Data.MerchantsWithNoSaleToday,
+                                                      MerchantsWithSaleInLastHour = result.Data.MerchantsWithSaleInLastHour
                                                   };
 
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
         [Route("todaysfailedsales")]
         public async Task<IActionResult> TodaysFailedSales([FromHeader] Guid estateId, [FromQuery] DateTime comparisonDate, [FromQuery] String responseCode, CancellationToken cancellationToken){
-            Models.TodaysSales model = await this.ReportingManager.GetTodaysFailedSales(estateId, comparisonDate, responseCode, cancellationToken);
+            TransactionQueries.TodaysFailedSales query = new(estateId, comparisonDate, responseCode);
+            var result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
+            TodaysSales response = new TodaysSales
+            {
+                ComparisonSalesCount = result.Data.ComparisonSalesCount,
+                ComparisonSalesValue = result.Data.ComparisonSalesValue,
+                TodaysSalesCount = result.Data.TodaysSalesCount,
+                TodaysSalesValue = result.Data.TodaysSalesValue,
+                ComparisonAverageSalesValue = result.Data.ComparisonAverageSalesValue,
+                TodaysAverageSalesValue = result.Data.TodaysAverageSalesValue,
+            };
 
-            TodaysSales response = new TodaysSales{
-                                                      ComparisonSalesCount = model.ComparisonSalesCount,
-                                                      ComparisonSalesValue = model.ComparisonSalesValue,
-                                                      TodaysSalesCount = model.TodaysSalesCount,
-                                                      TodaysSalesValue = model.TodaysSalesValue,
-                                                      ComparisonAverageSalesValue = model.ComparisonAverageSalesValue,
-                                                      TodaysAverageSalesValue = model.TodaysAverageSalesValue
-                                                  };
-
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
@@ -163,16 +184,23 @@ namespace EstateReportingAPI.Controllers{
 
             Models.TopBottom modelTopBottom = Enum.Parse<Models.TopBottom>(topOrBottom.ToString());
 
-            List<Models.TopBottomData> topbottomData = await this.ReportingManager.GetTopBottomData(estateId, modelTopBottom, count, Models.Dimension.Product, cancellationToken);
+            IRequest<Result<List<TopBottomData>>> query = modelTopBottom switch
+            {
+                Models.TopBottom.Bottom => new ProductQueries.GetBottomProductsBySalesValueQuery(estateId, count),
+                _ => new ProductQueries.GetTopProductsBySalesValueQuery(estateId, count)
+            };
+            Result<List<TopBottomData>> result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
 
             List<TopBottomProductData> response = new List<TopBottomProductData>();
-            topbottomData.ForEach(t => {
+            result.Data.ForEach(t => {
                                       response.Add(new TopBottomProductData{
                                                                                ProductName = t.DimensionName,
                                                                                SalesValue = t.SalesValue
                                                                            });
                                   });
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
@@ -180,17 +208,22 @@ namespace EstateReportingAPI.Controllers{
         public async Task<IActionResult> GetTopBottomMerchantsByValue([FromHeader] Guid estateId, [FromQuery] TopBottom topOrBottom, [FromQuery] Int32 count, CancellationToken cancellationToken){
             Models.TopBottom modelTopBottom = Enum.Parse<Models.TopBottom>(topOrBottom.ToString());
 
-            List<Models.TopBottomData> topbottomData = await this.ReportingManager.GetTopBottomData(estateId, modelTopBottom, count, Models.Dimension.Merchant, cancellationToken);
-
+            IRequest<Result<List<TopBottomData>>> query = modelTopBottom switch {
+                Models.TopBottom.Bottom => new MerchantQueries.GetBottomMerchantsBySalesValueQuery(estateId, count),
+                _ => new MerchantQueries.GetTopMerchantsBySalesValueQuery(estateId, count)
+            };
+            Result<List<TopBottomData>> result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
 
             List<TopBottomMerchantData> response = new List<TopBottomMerchantData>();
-            topbottomData.ForEach(t => {
+            result.Data.ForEach(t => {
                                       response.Add(new TopBottomMerchantData{
                                                                                 MerchantName = t.DimensionName,
                                                                                 SalesValue = t.SalesValue
                                                                             });
                                   });
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
@@ -198,17 +231,23 @@ namespace EstateReportingAPI.Controllers{
         public async Task<IActionResult> GetTopBottomOperatorsByValue([FromHeader] Guid estateId, [FromQuery] TopBottom topOrBottom, [FromQuery] Int32 count, CancellationToken cancellationToken){
             Models.TopBottom modelTopBottom = Enum.Parse<Models.TopBottom>(topOrBottom.ToString());
 
-            List<Models.TopBottomData> topbottomData = await this.ReportingManager.GetTopBottomData(estateId, modelTopBottom, count, Models.Dimension.Operator, cancellationToken);
-
+            IRequest<Result<List<TopBottomData>>> query = modelTopBottom switch
+            {
+                Models.TopBottom.Bottom => new OperatorQueries.GetBottomOperatorsBySalesValueQuery(estateId, count),
+                _ => new OperatorQueries.GetTopOperatorsBySalesValueQuery(estateId, count)
+            };
+            Result<List<TopBottomData>> result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
 
             List<TopBottomOperatorData> response = new List<TopBottomOperatorData>();
-            topbottomData.ForEach(t => {
+            result.Data.ForEach(t => {
                                       response.Add(new TopBottomOperatorData{
                                                                                 OperatorName = t.DimensionName,
                                                                                 SalesValue = t.SalesValue
                                                                             });
                                   });
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
@@ -223,19 +262,22 @@ namespace EstateReportingAPI.Controllers{
                 }
             }
 
-            Models.TodaysSales model = await this.ReportingManager.GetMerchantPerformance(estateId, comparisonDate, merchantIdFilter, cancellationToken);
-
+            MerchantQueries.GetMerchantPerformanceQuery query = new(estateId, comparisonDate, merchantIdFilter);
+            var result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
+            
             TodaysSales response = new TodaysSales
             {
-                ComparisonSalesCount = model.ComparisonSalesCount,
-                ComparisonSalesValue = model.ComparisonSalesValue,
-                TodaysSalesCount = model.TodaysSalesCount,
-                TodaysSalesValue = model.TodaysSalesValue,
-                ComparisonAverageSalesValue = model.ComparisonAverageSalesValue,
-                TodaysAverageSalesValue = model.TodaysAverageSalesValue,
+                ComparisonSalesCount = result.Data.ComparisonSalesCount,
+                ComparisonSalesValue = result.Data.ComparisonSalesValue,
+                TodaysSalesCount = result.Data.TodaysSalesCount,
+                TodaysSalesValue = result.Data.TodaysSalesValue,
+                ComparisonAverageSalesValue = result.Data.ComparisonAverageSalesValue,
+                TodaysAverageSalesValue = result.Data.TodaysAverageSalesValue,
             };
 
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
@@ -253,19 +295,21 @@ namespace EstateReportingAPI.Controllers{
                 }
             }
 
-            Models.TodaysSales model = await this.ReportingManager.GetProductPerformance(estateId, comparisonDate, productIdFilter, cancellationToken);
-
+            ProductQueries.GetProductPerformanceQuery query = new(estateId, comparisonDate, productIdFilter);
+            var result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
             TodaysSales response = new TodaysSales
                                    {
-                                       ComparisonSalesCount = model.ComparisonSalesCount,
-                                       ComparisonSalesValue = model.ComparisonSalesValue,
-                                       TodaysSalesCount = model.TodaysSalesCount,
-                                       TodaysSalesValue = model.TodaysSalesValue,
-                                       ComparisonAverageSalesValue = model.ComparisonAverageSalesValue,
-                                       TodaysAverageSalesValue = model.TodaysAverageSalesValue,
+                                       ComparisonSalesCount = result.Data.ComparisonSalesCount,
+                                       ComparisonSalesValue = result.Data.ComparisonSalesValue,
+                                       TodaysSalesCount = result.Data.TodaysSalesCount,
+                                       TodaysSalesValue = result.Data.TodaysSalesValue,
+                                       ComparisonAverageSalesValue = result.Data.ComparisonAverageSalesValue,
+                                       TodaysAverageSalesValue = result.Data.TodaysAverageSalesValue,
                                    };
 
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
@@ -282,20 +326,23 @@ namespace EstateReportingAPI.Controllers{
                     operatorIdFilter.Add(Int32.Parse(productListString));
                 }
             }
-            
-            Models.TodaysSales model = await this.ReportingManager.GetOperatorPerformance(estateId, comparisonDate, operatorIdFilter, cancellationToken);
+
+            OperatorQueries.GetOperatorPerformanceQuery query = new(estateId, comparisonDate, operatorIdFilter);
+            var result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
 
             TodaysSales response = new TodaysSales
                                    {
-                                       ComparisonSalesCount = model.ComparisonSalesCount,
-                                       ComparisonSalesValue = model.ComparisonSalesValue,
-                                       TodaysSalesCount = model.TodaysSalesCount,
-                                       TodaysSalesValue = model.TodaysSalesValue,
-                                       ComparisonAverageSalesValue = model.ComparisonAverageSalesValue,
-                                       TodaysAverageSalesValue = model.TodaysAverageSalesValue,
+                                       ComparisonSalesCount = result.Data.ComparisonSalesCount,
+                                       ComparisonSalesValue = result.Data.ComparisonSalesValue,
+                                       TodaysSalesCount = result.Data.TodaysSalesCount,
+                                       TodaysSalesValue = result.Data.TodaysSalesValue,
+                                       ComparisonAverageSalesValue = result.Data.ComparisonAverageSalesValue,
+                                       TodaysAverageSalesValue = result.Data.TodaysAverageSalesValue,
                                    };
 
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         [HttpGet]
@@ -323,12 +370,15 @@ namespace EstateReportingAPI.Controllers{
                                                                   StartValue = request.ValueRange.StartValue,
                                                               };
             }
-            
-            List<Models.TransactionResult> result = await this.ReportingManager.TransactionSearch(estateId, searchModel, pagingRequest, sortingRequest, cancellationToken);
+
+            TransactionQueries.TransactionSearchQuery query = new(estateId, searchModel, pagingRequest, sortingRequest);
+            var result = await this.Mediator.Send(query, cancellationToken);
+            if (result.IsFailed)
+                return result.ToActionResultX();
             
             List<TransactionResult> response = new List<TransactionResult>();
 
-            result.ForEach(t => {
+            result.Data.ForEach(t => {
                                response.Add(new TransactionResult{
                                                                      MerchantReportingId = t.MerchantReportingId,
                                                                      ResponseCode = t.ResponseCode,
@@ -348,15 +398,17 @@ namespace EstateReportingAPI.Controllers{
                            });
 
 
-            return this.Ok(response);
+            return Result.Success(response).ToActionResultX();
         }
 
         private static PagingRequest CreatePagingRequest(int? page, int? pageSize) => new(page, pageSize);
 
-        private static SortingRequest CreateSortingRequest(SortField? sortField, SortDirection? sortDirection){
+        private static SortingRequest CreateSortingRequest(SortField? sortField, SortDirection? sortDirection)
+        {
             Models.SortField modelSortField = Models.SortField.TransactionAmount;
             Models.SortDirection modelSortDirection = Models.SortDirection.Ascending;
-            if (sortField != null){
+            if (sortField != null)
+            {
                 modelSortField = Enum.Parse<Models.SortField>(sortField.ToString(), true);
             }
             if (sortDirection != null)

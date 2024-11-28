@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Ductus.FluentDocker.Common;
+using Microsoft.EntityFrameworkCore;
 
 namespace EstateReportingAPI.IntegrationTests;
 
@@ -107,10 +108,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
     #region Todays Sales Tests
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_TodaysSales_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_TodaysSales_SalesReturned()
     {
         List<Transaction>? todaysTransactions = new List<Transaction>();
         List<Transaction> comparisonDateTransactions = new List<Transaction>();
@@ -165,17 +164,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<TodaysSales>> asyncFunction = async () =>
-                                                {
-                                                    TodaysSales result = clientType switch
-                                                    {
-                                                        ClientType.Api => await ApiClient.GetTodaysSales(string.Empty, Guid.NewGuid(), 0, 0, comparisonDate, CancellationToken.None),
-                                                        _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/todayssales?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}", CancellationToken.None)
-                                                    };
-                                                    return result;
-                                                };
-        TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetTodaysSales(string.Empty, Guid.NewGuid(), 0, 0, comparisonDate, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var todaysSales = result.Data;
 
         todaysSales.ShouldNotBeNull();
         todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count);
@@ -185,10 +176,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_TodaysSalesCountByHour_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_TodaysSalesCountByHour_SalesReturned()
     {
         List<Transaction> todaysTransactions = new List<Transaction>();
         List<Transaction> comparisonDateTransactions = new List<Transaction>();
@@ -256,16 +245,10 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<List<TodaysSalesCountByHour>>> asyncFunction = async () =>
-                                                                 {
-                                                                     List<TodaysSalesCountByHour>? result = clientType switch
-                                                                     {
-                                                                         ClientType.Api => await ApiClient.GetTodaysSalesCountByHour(string.Empty, Guid.NewGuid(), 0,0, comparisonDate, CancellationToken.None),
-                                                                         _ => await CreateAndSendHttpRequestMessage<List<TodaysSalesCountByHour>>($"api/facts/transactions/todayssales/countbyhour?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}", CancellationToken.None)
-                                                                     };
-                                                                     return result;
-                                                                 };
-        List<TodaysSalesCountByHour>? todaysSalesCountByHour = await ExecuteAsyncFunction(asyncFunction);
+        var result = await ApiClient.GetTodaysSalesCountByHour(string.Empty, Guid.NewGuid(), 0, 0, comparisonDate, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var todaysSalesCountByHour= result.Data;
+
         todaysSalesCountByHour.ShouldNotBeNull();
         foreach (TodaysSalesCountByHour salesCountByHour in todaysSalesCountByHour)
         {
@@ -276,10 +259,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         }
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_TodaysSalesValueByHour_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_TodaysSalesValueByHour_SalesReturned()
     {
         var todaysTransactions = new List<Transaction>();
         var comparisonDateTransactions = new List<Transaction>();
@@ -346,17 +327,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<List<TodaysSalesValueByHour>?>> asyncFunction = async () =>
-                                                                  {
-                                                                      List<TodaysSalesValueByHour>? result = clientType switch
-                                                                      {
-                                                                          ClientType.Api => await ApiClient.GetTodaysSalesValueByHour(string.Empty, Guid.NewGuid(), 0,0, comparisonDate, CancellationToken.None),
-                                                                          _ => await CreateAndSendHttpRequestMessage<List<TodaysSalesValueByHour>>($"api/facts/transactions/todayssales/valuebyhour?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}", CancellationToken.None)
-                                                                      };
-                                                                      return result;
-                                                                  };
-        List<TodaysSalesValueByHour>? todaysSalesValueByHour = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetTodaysSalesValueByHour(string.Empty, Guid.NewGuid(), 0, 0, comparisonDate, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TodaysSalesValueByHour>? todaysSalesValueByHour = result.Data;
         foreach (TodaysSalesValueByHour salesValueByHour in todaysSalesValueByHour)
         {
             IEnumerable<Transaction> todayHour = todaysTransactions.Where(t => t.TransactionDateTime.Hour == salesValueByHour.Hour);
@@ -370,10 +343,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
     #region Todays Failed Sales Tests
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_TodaysFailedSales_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_TodaysFailedSales_SalesReturned()
     {
         EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
         var todaysTransactions = new List<Transaction>();
@@ -429,16 +400,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<TodaysSales?>> asyncFunction = async () =>
-                                                 {
-                                                     TodaysSales? result = clientType switch
-                                                     {
-                                                         ClientType.Api => await ApiClient.GetTodaysFailedSales(string.Empty, Guid.NewGuid(), 1, 1, "1009", comparisonDate, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/todaysfailedsales?responseCode=1009&comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}", CancellationToken.None)
-                                                     };
-                                                     return result;
-                                                 };
-        TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
+        var result = await ApiClient.GetTodaysFailedSales(string.Empty, Guid.NewGuid(), 1, 1, "1009", comparisonDate, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        TodaysSales? todaysSales = result.Data;
 
         todaysSales.ShouldNotBeNull();
         todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count);
@@ -450,10 +414,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
     #endregion
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_GetTopBottomProductsByValue_BottomProducts_ProductsReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_GetTopBottomProductsByValue_BottomProducts_ProductsReturned()
     {
         DateTime todaysDateTime = DateTime.Now;
 
@@ -485,16 +447,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<List<TopBottomProductData>?>> asyncFunction = async () =>
-                                                                {
-                                                                    List<TopBottomProductData>? result = clientType switch
-                                                                    {
-                                                                        ClientType.Api => await ApiClient.GetTopBottomProductData(string.Empty, Guid.NewGuid(), TopBottom.Bottom,3, CancellationToken.None),
-                                                                        _ => await CreateAndSendHttpRequestMessage<List<TopBottomProductData>>($"api/facts/transactions/products/topbottombyvalue?count=3&topOrBottom=bottom", CancellationToken.None)
-                                                                    };
-                                                                    return result;
-                                                                };
-        List<TopBottomProductData>? topBottomProductData = await ExecuteAsyncFunction(asyncFunction);
+        var result = await ApiClient.GetTopBottomProductData(string.Empty, Guid.NewGuid(), TopBottom.Bottom, 3, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TopBottomProductData>? topBottomProductData = result.Data;
 
         topBottomProductData[0].ProductName.ShouldBe("Custom");
         topBottomProductData[0].SalesValue.ShouldBe(transactionsDictionary["Custom"].Sum(p => p.TransactionAmount));
@@ -504,10 +459,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         topBottomProductData[2].SalesValue.ShouldBe(transactionsDictionary["50 KES Topup"].Sum(p => p.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_GetTopBottomProductsByValue_TopProducts_ProductsReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_GetTopBottomProductsByValue_TopProducts_ProductsReturned()
     {
         DateTime todaysDateTime = DateTime.Now;
 
@@ -539,17 +492,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<List<TopBottomProductData>?>> asyncFunction = async () =>
-                                                                {
-                                                                    List<TopBottomProductData>? result = clientType switch
-                                                                    {
-                                                                        ClientType.Api => await ApiClient.GetTopBottomProductData(string.Empty, Guid.NewGuid(), TopBottom.Top, 3, CancellationToken.None),
-                                                                        _ => await CreateAndSendHttpRequestMessage<List<TopBottomProductData>>($"api/facts/transactions/products/topbottombyvalue?count=3&topOrBottom=top", CancellationToken.None)
-                                                                    };
-                                                                    return result;
-                                                                };
-        List<TopBottomProductData>? topBottomProductData = await ExecuteAsyncFunction(asyncFunction);
-
+        var result= await ApiClient.GetTopBottomProductData(string.Empty, Guid.NewGuid(), TopBottom.Top, 3, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TopBottomProductData>? topBottomProductData = result.Data;
         topBottomProductData[0].ProductName.ShouldBe("200 KES Topup");
         topBottomProductData[0].SalesValue.ShouldBe(transactionsDictionary["200 KES Topup"].Sum(p => p.TransactionAmount));
         topBottomProductData[1].ProductName.ShouldBe("50 KES Topup");
@@ -558,10 +503,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         topBottomProductData[2].SalesValue.ShouldBe(transactionsDictionary["100 KES Topup"].Sum(p => p.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_GetTopBottomOperatorsByValue_BottomOperators_OperatorsReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_GetTopBottomOperatorsByValue_BottomOperators_OperatorsReturned()
     {
         DateTime todaysDateTime = DateTime.Now;
 
@@ -594,17 +537,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<List<TopBottomOperatorData>?>> asyncFunction = async () =>
-                                                                 {
-                                                                     List<TopBottomOperatorData>? result = clientType switch
-                                                                     {
-                                                                         ClientType.Api => await ApiClient.GetTopBottomOperatorData(string.Empty, Guid.NewGuid(), TopBottom.Bottom, 3, CancellationToken.None),
-                                                                         _ => await CreateAndSendHttpRequestMessage<List<TopBottomOperatorData>>($"api/facts/transactions/operators/topbottombyvalue?count=3&topOrBottom=bottom", CancellationToken.None)
-                                                                     };
-                                                                     return result;
-                                                                 };
-        List<TopBottomOperatorData>? topBottomOperatorData = await ExecuteAsyncFunction(asyncFunction);
-
+        var result= await ApiClient.GetTopBottomOperatorData(string.Empty, Guid.NewGuid(), TopBottom.Bottom, 3, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TopBottomOperatorData>? topBottomOperatorData = result.Data;
         topBottomOperatorData.ShouldNotBeNull();
         topBottomOperatorData[0].OperatorName.ShouldBe("Voucher");
         topBottomOperatorData[0].SalesValue.ShouldBe(transactionsDictionary["Voucher"].Sum(p => p.TransactionAmount));
@@ -614,10 +549,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         topBottomOperatorData[2].SalesValue.ShouldBe(transactionsDictionary["PataPawa PostPay"].Sum(p => p.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_GetTopBottomOperatorsByValue_TopOperators_OperatorsReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_GetTopBottomOperatorsByValue_TopOperators_OperatorsReturned()
     {
         DateTime todaysDateTime = DateTime.Now;
 
@@ -630,7 +563,6 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
         Dictionary<string, List<Transaction>> transactionsDictionary = new();
         string merchantName = merchantsList.First();
-        //List<String> productList = contractProducts.Single(cp => cp.Key == contractName).Value;
         foreach (KeyValuePair<string, int> transactionCount in transactionCounts)
         {
             var contract = contractList.Single(s => s.operatorname == transactionCount.Key);
@@ -650,17 +582,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<List<TopBottomOperatorData>?>> asyncFunction = async () =>
-                                                                 {
-                                                                     List<TopBottomOperatorData>? result = clientType switch
-                                                                     {
-                                                                         ClientType.Api => await ApiClient.GetTopBottomOperatorData(string.Empty, Guid.NewGuid(), TopBottom.Top, 3, CancellationToken.None),
-                                                                         _ => await CreateAndSendHttpRequestMessage<List<TopBottomOperatorData>>($"api/facts/transactions/operators/topbottombyvalue?count=3&topOrBottom=top", CancellationToken.None)
-                                                                     };
-                                                                     return result;
-                                                                 };
-        List<TopBottomOperatorData>? topBottomOperatorData = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetTopBottomOperatorData(string.Empty, Guid.NewGuid(), TopBottom.Top, 3, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TopBottomOperatorData>? topBottomOperatorData = result.Data;
         topBottomOperatorData[0].OperatorName.ShouldBe("Safaricom");
         topBottomOperatorData[0].SalesValue.ShouldBe(transactionsDictionary["Safaricom"].Sum(p => p.TransactionAmount));
         topBottomOperatorData[1].OperatorName.ShouldBe("PataPawa PostPay");
@@ -669,10 +593,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         topBottomOperatorData[2].SalesValue.ShouldBe(transactionsDictionary["PataPawa PrePay"].Sum(p => p.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_GetTopBottomMerchantsByValue_BottomMerchants_MerchantsReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_GetTopBottomMerchantsByValue_BottomMerchants_MerchantsReturned()
     {
         DateTime todaysDateTime = DateTime.Now;
 
@@ -703,17 +625,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<List<TopBottomMerchantData>?>> asyncFunction = async () =>
-                                                                 {
-                                                                     List<TopBottomMerchantData>? result = clientType switch
-                                                                     {
-                                                                         ClientType.Api => await ApiClient.GetTopBottomMerchantData(string.Empty, Guid.NewGuid(), TopBottom.Bottom, 3, CancellationToken.None),
-                                                                         _ => await CreateAndSendHttpRequestMessage<List<TopBottomMerchantData>>($"api/facts/transactions/merchants/topbottombyvalue?count=3&topOrBottom=bottom", CancellationToken.None)
-                                                                     };
-                                                                     return result;
-                                                                 };
-        List<TopBottomMerchantData>? topBottomMerchantData = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetTopBottomMerchantData(string.Empty, Guid.NewGuid(), TopBottom.Bottom, 3, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TopBottomMerchantData>? topBottomMerchantData = result.Data;
         topBottomMerchantData.ShouldNotBeNull();
         topBottomMerchantData[0].MerchantName.ShouldBe("Test Merchant 4");
         topBottomMerchantData[0].SalesValue.ShouldBe(transactionsDictionary["Test Merchant 4"].Sum(p => p.TransactionAmount));
@@ -723,10 +637,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         topBottomMerchantData[2].SalesValue.ShouldBe(transactionsDictionary["Test Merchant 1"].Sum(p => p.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_GetTopBottomMerchantsByValue_TopMerchants_MerchantsReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_GetTopBottomMerchantsByValue_TopMerchants_MerchantsReturned()
     {
         DateTime todaysDateTime = DateTime.Now;
 
@@ -756,18 +668,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         }
 
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
-
-        Func<Task<List<TopBottomMerchantData>?>> asyncFunction = async () =>
-                                                                 {
-                                                                     List<TopBottomMerchantData>? result = clientType switch
-                                                                     {
-                                                                         ClientType.Api => await ApiClient.GetTopBottomMerchantData(string.Empty, Guid.NewGuid(), TopBottom.Top, 3, CancellationToken.None),
-                                                                         _ => await CreateAndSendHttpRequestMessage<List<TopBottomMerchantData>>($"api/facts/transactions/merchants/topbottombyvalue?count=3&topOrBottom=top", CancellationToken.None)
-                                                                     };
-                                                                     return result;
-                                                                 };
-        List<TopBottomMerchantData>? topBottomMerchantData = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetTopBottomMerchantData(string.Empty, Guid.NewGuid(), TopBottom.Top, 3, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TopBottomMerchantData>? topBottomMerchantData = result.Data;
         topBottomMerchantData.ShouldNotBeNull();
         topBottomMerchantData[0].MerchantName.ShouldBe("Test Merchant 3");
         topBottomMerchantData[0].SalesValue.ShouldBe(transactionsDictionary["Test Merchant 3"].Sum(p => p.TransactionAmount));
@@ -777,10 +680,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         topBottomMerchantData[2].SalesValue.ShouldBe(transactionsDictionary["Test Merchant 2"].Sum(p => p.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_MerchantPerformance_AllMerchants_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_MerchantPerformance_AllMerchants_SalesReturned()
     {
 
         var todaysTransactions = new List<Transaction>();
@@ -836,17 +737,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<TodaysSales?>> asyncFunction = async () =>
-                                                 {
-                                                     TodaysSales? result = clientType switch
-                                                     {
-                                                         ClientType.Api => await ApiClient.GetMerchantPerformance(string.Empty, Guid.NewGuid(), comparisonDate, new List<Int32>(), CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/merchants/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}", CancellationToken.None)
-                                                     };
-                                                     return result;
-                                                 };
-        TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
-
+        var result= await ApiClient.GetMerchantPerformance(string.Empty, Guid.NewGuid(), comparisonDate, new List<Int32>(), CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        TodaysSales? todaysSales = result.Data;
         todaysSales.ShouldNotBeNull();
         todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count);
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
@@ -855,10 +748,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_MerchantPerformance_SingleMerchant_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_MerchantPerformance_SingleMerchant_SalesReturned()
     {
 
         var todaysTransactions = new List<Transaction>();
@@ -923,17 +814,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<TodaysSales?>> asyncFunction = async () =>
-                                                 {
-                                                     TodaysSales? result = clientType switch
-                                                     {
-                                                         ClientType.Api => await ApiClient.GetMerchantPerformance(string.Empty, Guid.NewGuid(), comparisonDate, merchantFilterList, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/merchants/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&merchantReportingIds={serializedArray}", CancellationToken.None)
-                                                     };
-                                                     return result;
-                                                 };
-        TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetMerchantPerformance(string.Empty, Guid.NewGuid(), comparisonDate, merchantFilterList, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        TodaysSales? todaysSales = result.Data;
         todaysSales.ShouldNotBeNull();
         todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => merchantIdsForVerify.Contains(c.MerchantId)));
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => merchantIdsForVerify.Contains(c.MerchantId)).Sum(c => c.TransactionAmount));
@@ -942,10 +825,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => merchantIdsForVerify.Contains(c.MerchantId)).Sum(c => c.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_ProductPerformance_AllProducts_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_ProductPerformance_AllProducts_SalesReturned()
     {
         var todaysTransactions = new List<Transaction>();
         var comparisonDateTransactions = new List<Transaction>();
@@ -987,17 +868,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<TodaysSales?>> asyncFunction = async () =>
-                                                 {
-                                                     TodaysSales? result = clientType switch
-                                                     {
-                                                         ClientType.Api => await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, new List<Int32>(), CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/products/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}", CancellationToken.None)
-                                                     };
-                                                     return result;
-                                                 };
-        TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, new List<Int32>(), CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        TodaysSales? todaysSales = result.Data;
         todaysSales.ShouldNotBeNull();
         todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count);
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
@@ -1006,10 +879,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_ProductPerformance_SingleProduct_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_ProductPerformance_SingleProduct_SalesReturned()
     {
         var todaysTransactions = new List<Transaction>();
         var comparisonDateTransactions = new List<Transaction>();
@@ -1061,17 +932,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
         string serializedArray = string.Join(",", productFilterList);
         
-        Func<Task<TodaysSales?>> asyncFunction = async () =>
-                                                 {
-                                                     TodaysSales? result = clientType switch
-                                                     {
-                                                         ClientType.Api => await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, productFilterList, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/products/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&productReportingIds={serializedArray}", CancellationToken.None)
-                                                     };
-                                                     return result;
-                                                 };
-        TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, productFilterList, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        TodaysSales? todaysSales = result.Data;
         todaysSales.ShouldNotBeNull();
         todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => productIdsForVerify.Contains(c.ContractProductId)));
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productIdsForVerify.Contains(c.ContractProductId)).Sum(c => c.TransactionAmount));
@@ -1080,10 +943,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productIdsForVerify.Contains(c.ContractProductId)).Sum(c => c.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_ProductPerformance_MultipleProducts_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_ProductPerformance_MultipleProducts_SalesReturned()
     {
         var todaysTransactions = new List<Transaction>();
         var comparisonDateTransactions = new List<Transaction>();
@@ -1134,17 +995,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
         
-        Func<Task<TodaysSales?>> asyncFunction = async () =>
-                                                 {
-                                                     TodaysSales? result = clientType switch
-                                                     {
-                                                         ClientType.Api => await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, productFilterList, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/products/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&productReportingIds={serializedArray}", CancellationToken.None)
-                                                     };
-                                                     return result;
-                                                 };
-        TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, productFilterList, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        TodaysSales? todaysSales = result.Data;
         todaysSales.ShouldNotBeNull();
         todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => productIdsForVerify.Contains(c.ContractProductId)));
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productIdsForVerify.Contains(c.ContractProductId)).Sum(c => c.TransactionAmount));
@@ -1153,10 +1006,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => productIdsForVerify.Contains(c.ContractProductId)).Sum(c => c.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_OperatorPerformance_SingleOperator_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_OperatorPerformance_SingleOperator_SalesReturned()
     {
         var todaysTransactions = new List<Transaction>();
         var comparisonDateTransactions = new List<Transaction>();
@@ -1209,17 +1060,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<TodaysSales?>> asyncFunction = async () =>
-                                                 {
-                                                     TodaysSales? result = clientType switch
-                                                     {
-                                                         ClientType.Api => await ApiClient.GetOperatorPerformance(string.Empty, Guid.NewGuid(), comparisonDate, operatorFilterList, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/operators/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&operatorReportingIds={serializedArray}", CancellationToken.None)
-                                                     };
-                                                     return result;
-                                                 };
-        TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetOperatorPerformance(string.Empty, Guid.NewGuid(), comparisonDate, operatorFilterList, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        TodaysSales? todaysSales = result.Data;
         todaysSales.ShouldNotBeNull();
         todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorIdsForVerify.Contains(c.OperatorId)));
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorIdsForVerify.Contains(c.OperatorId)).Sum(c => c.TransactionAmount));
@@ -1228,10 +1071,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorIdsForVerify.Contains(c.OperatorId)).Sum(c => c.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_OperatorPerformance_MultipleOperators_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_OperatorPerformance_MultipleOperators_SalesReturned()
     {
         var todaysTransactions = new List<Transaction>();
         var comparisonDateTransactions = new List<Transaction>();
@@ -1284,17 +1125,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        Func<Task<TodaysSales?>> asyncFunction = async () =>
-                                                 {
-                                                     TodaysSales? result = clientType switch
-                                                     {
-                                                         ClientType.Api => await ApiClient.GetOperatorPerformance(string.Empty, Guid.NewGuid(), comparisonDate, operatorFilterList, CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<TodaysSales>($"api/facts/transactions/operators/performance?comparisonDate={comparisonDate.ToString("yyyy-MM-dd")}&operatorReportingIds={serializedArray}", CancellationToken.None)
-                                                     };
-                                                     return result;
-                                                 };
-        TodaysSales? todaysSales = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetOperatorPerformance(string.Empty, Guid.NewGuid(), comparisonDate, operatorFilterList, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        TodaysSales? todaysSales = result.Data;
         todaysSales.ShouldNotBeNull();
         todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => operatorIdsForVerify.Contains(c.OperatorId)));
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorIdsForVerify.Contains(c.OperatorId)).Sum(c => c.TransactionAmount));
@@ -1303,10 +1136,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => operatorIdsForVerify.Contains(c.OperatorId)).Sum(c => c.TransactionAmount));
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_GetMerchantsTransactionKpis_SalesReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_GetMerchantsTransactionKpis_SalesReturned()
     {
         DateTime todaysDateTime = DateTime.Now;
 
@@ -1336,27 +1167,17 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         await helper.AddMerchant("Test Estate", "Merchant 17", todaysDateTime.AddDays(-10));
         await helper.AddMerchant("Test Estate", "Merchant 18", todaysDateTime.AddDays(-10));
         
-        Func<Task<MerchantKpi?>> asyncFunction = async () =>
-                                                 {
-                                                     MerchantKpi? result = clientType switch
-                                                     {
-                                                         ClientType.Api => await ApiClient.GetMerchantKpi(string.Empty, Guid.NewGuid(), CancellationToken.None),
-                                                         _ => await CreateAndSendHttpRequestMessage<MerchantKpi>($"api/facts/transactions/merchantkpis", CancellationToken.None)
-                                                     };
-                                                     return result;
-                                                 };
-        MerchantKpi? merchantKpi = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.GetMerchantKpi(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        MerchantKpi? merchantKpi = result.Data;
         merchantKpi.ShouldNotBeNull();
         merchantKpi.MerchantsWithSaleInLastHour.ShouldBe(4);
         merchantKpi.MerchantsWithNoSaleToday.ShouldBe(6);
         merchantKpi.MerchantsWithNoSaleInLast7Days.ShouldBe(8);
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_TransactionSearch_NoAdditionalFiltering_TransactionReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_TransactionSearch_NoAdditionalFiltering_TransactionReturned()
     {
 
         DateTime transactionDate = new DateTime(2024, 3, 19);
@@ -1379,17 +1200,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         };
 
         // No Paging or Sorting
-        Func<Task<List<TransactionResult>?>> asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        List<TransactionResult> searchResult = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var searchResult = result.Data;
         searchResult.Count.ShouldBe(10);
         searchResult.Any(s => s.TransactionReportingId == 1).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 2).ShouldBeTrue();
@@ -1402,17 +1215,10 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult.Any(s => s.TransactionReportingId == 9).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 10).ShouldBeTrue();
 
-        asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 5, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?page=1&pageSize=5", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
 
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 5, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(5);
         searchResult.Any(s => s.TransactionReportingId == 2).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 4).ShouldBeTrue();
@@ -1420,17 +1226,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult.Any(s => s.TransactionReportingId == 8).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 10).ShouldBeTrue();
 
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 5, null, null, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?page=2&pageSize=5", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
-
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 5, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(5);
         searchResult.Any(s => s.TransactionReportingId == 1).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 3).ShouldBeTrue();
@@ -1439,10 +1237,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult.Any(s => s.TransactionReportingId == 9).ShouldBeTrue();
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_TransactionSearch_ValueRangeFiltering_TransactionReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_TransactionSearch_ValueRangeFiltering_TransactionReturned()
     {
 
         DateTime transactionDate = new DateTime(2024, 3, 19);
@@ -1470,17 +1266,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         };
 
         // No Paging
-        Func<Task<List<TransactionResult>?>> asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        List<TransactionResult> searchResult = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TransactionResult> searchResult = result.Data;
         searchResult.Count.ShouldBe(7);
         searchResult.Any(s => s.TransactionReportingId == 2).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 3).ShouldBeTrue();
@@ -1490,33 +1278,17 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult.Any(s => s.TransactionReportingId == 7).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 10).ShouldBeTrue();
 
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 3, null, null, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?page=1&pageSize=3", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
-
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 3, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(3);
         searchResult.Any(s => s.TransactionReportingId == 10).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 3).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 4).ShouldBeTrue();
-
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 3, null, null, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?page=2&pageSize=3", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
-
+        
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 3, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(3);
         searchResult.Any(s => s.TransactionReportingId == 2).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 6).ShouldBeTrue();
@@ -1524,10 +1296,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
 
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_TransactionSearch_AuthCodeFiltering_TransactionReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_TransactionSearch_AuthCodeFiltering_TransactionReturned()
     {
 
         DateTime transactionDate = new DateTime(2024, 3, 19);
@@ -1550,25 +1320,15 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         };
 
         // No Paging
-        Func<Task<List<TransactionResult>?>> asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        List<TransactionResult> searchResult = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TransactionResult> searchResult = result.Data;
         searchResult.Count.ShouldBe(1);
         searchResult.Any(s => s.TransactionReportingId == 5).ShouldBeTrue();
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_TransactionSearch_TransactionNumberFiltering_TransactionReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_TransactionSearch_TransactionNumberFiltering_TransactionReturned()
     {
 
         DateTime transactionDate = new DateTime(2024, 3, 19);
@@ -1591,25 +1351,16 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         };
 
         // No Paging
-        Func<Task<List<TransactionResult>?>> asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        List<TransactionResult> searchResult = await ExecuteAsyncFunction(asyncFunction);
+        var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TransactionResult> searchResult = result.Data;
 
         searchResult.Count.ShouldBe(1);
         searchResult.Any(s => s.TransactionReportingId == 4).ShouldBeTrue();
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_TransactionSearch_ResponseCodeFiltering_TransactionReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_TransactionSearch_ResponseCodeFiltering_TransactionReturned()
     {
 
         DateTime transactionDate = new DateTime(2024, 3, 19);
@@ -1632,59 +1383,34 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         };
 
         // No Paging
-        Func<Task<List<TransactionResult>?>> asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        List<TransactionResult> searchResult = await ExecuteAsyncFunction(asyncFunction);
-
+        var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TransactionResult> searchResult = result.Data;
         searchResult.Count.ShouldBe(5);
         searchResult.Any(s => s.TransactionReportingId == 2).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 4).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 6).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 8).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 10).ShouldBeTrue();
-
-        asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 3, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?page=1&pageSize=3", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
-
+        
+        result= await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 3, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(3);
         searchResult.Any(s => s.TransactionReportingId == 2).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 4).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 6).ShouldBeTrue();
 
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 3, null, null, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?page=2&pageSize=3", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result= await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 3, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(2);
         searchResult.Any(s => s.TransactionReportingId == 8).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 10).ShouldBeTrue();
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_TransactionSearch_MerchantFiltering_TransactionReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_TransactionSearch_MerchantFiltering_TransactionReturned()
     {
 
         DateTime transactionDate = new DateTime(2024, 3, 19);
@@ -1729,16 +1455,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         };
 
         // No Paging
-        Func<Task<List<TransactionResult>?>> asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        List<TransactionResult> searchResult = await ExecuteAsyncFunction(asyncFunction);
+        var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TransactionResult> searchResult = result.Data;
 
         searchResult.Count.ShouldBe(10);
         searchResult.Any(s => s.TransactionReportingId == 11).ShouldBeTrue();
@@ -1754,16 +1473,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult.Count(s => s.MerchantName == "Test Merchant 2").ShouldBe(6);
         searchResult.Count(s => s.MerchantName == "Test Merchant 3").ShouldBe(4);
 
-        asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 5, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?page=1&pageSize=5", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 5, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
 
         searchResult.Count.ShouldBe(5);
         searchResult.Any(s => s.TransactionReportingId == 11).ShouldBeTrue();
@@ -1774,16 +1486,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult.Count(s => s.MerchantName == "Test Merchant 2").ShouldBe(5);
         searchResult.Count(s => s.MerchantName == "Test Merchant 3").ShouldBe(0);
 
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 5, null, null, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?page=2&pageSize=5", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 5, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
 
         searchResult.Count.ShouldBe(5);
         searchResult.Any(s => s.TransactionReportingId == 16).ShouldBeTrue();
@@ -1795,10 +1500,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult.Count(s => s.MerchantName == "Test Merchant 3").ShouldBe(4);
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_TransactionSearch_OperatorFiltering_TransactionReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_TransactionSearch_OperatorFiltering_TransactionReturned()
     {
 
         DateTime transactionDate = new DateTime(2024, 3, 19);
@@ -1823,16 +1526,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         };
 
         // No Paging
-        Func<Task<List<TransactionResult>?>> asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        List<TransactionResult> searchResult = await ExecuteAsyncFunction(asyncFunction);
+        var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<TransactionResult> searchResult = result.Data;
         searchResult.Count.ShouldBe(4);
         searchResult.Any(s => s.TransactionReportingId == 2).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 6).ShouldBeTrue();
@@ -1841,33 +1537,18 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult.Count(s => s.OperatorName == "Voucher").ShouldBe(2);
         searchResult.Count(s => s.OperatorName == "PataPawa PrePay").ShouldBe(2);
 
-        asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 2, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?page=1&pageSize=2", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
-
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 2, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(2);
         searchResult.Any(s => s.TransactionReportingId == 2).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 6).ShouldBeTrue();
         searchResult.Count(s => s.OperatorName == "Voucher").ShouldBe(2);
         searchResult.Count(s => s.OperatorName == "PataPawa PrePay").ShouldBe(0);
 
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 2, null, null, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?page=2&pageSize=2", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result= await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 2, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(2);
         searchResult.Any(s => s.TransactionReportingId == 9).ShouldBeTrue();
         searchResult.Any(s => s.TransactionReportingId == 10).ShouldBeTrue();
@@ -1875,10 +1556,8 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult.Count(s => s.OperatorName == "PataPawa PrePay").ShouldBe(2);
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsController_TransactionSearch_SortingTest_TransactionReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsController_TransactionSearch_SortingTest_TransactionReturned()
     {
 
         DateTime transactionDate = new DateTime(2024, 3, 19);
@@ -1893,123 +1572,72 @@ public class FactTransactionsControllerTests : ControllerTestsBase
             QueryDate = transactionDate
         };
         // Default Sort
-        Func<Task<List<TransactionResult>?>> asyncFunction = async () =>
-                                                             {
-                                                                 List<TransactionResult>? result = clientType switch
-                                                                 {
-                                                                     ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None),
-                                                                     _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                                                                 };
-                                                                 return result;
-                                                             };
-        List<TransactionResult> searchResult = await ExecuteAsyncFunction(asyncFunction);
+        var result =  await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var searchResult = result.Data;
         searchResult.Count.ShouldBe(3);
         searchResult[0].TransactionAmount.ShouldBe(100);
         searchResult[1].TransactionAmount.ShouldBe(200);
         searchResult[2].TransactionAmount.ShouldBe(300);
 
         // Sort By merchant Name ascending
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.MerchantName, SortDirection.Ascending, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?sortField=2&sortDirection=0", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
-
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.MerchantName, SortDirection.Ascending, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(3);
         searchResult[0].MerchantName.ShouldBe("Test Merchant 1");
         searchResult[1].MerchantName.ShouldBe("Test Merchant 2");
         searchResult[2].MerchantName.ShouldBe("Test Merchant 3");
 
         // Sort By merchant Name descending
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.MerchantName, SortDirection.Descending, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?sortField=2&sortDirection=1", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.MerchantName, SortDirection.Descending, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(3);
         searchResult[0].MerchantName.ShouldBe("Test Merchant 3");
         searchResult[1].MerchantName.ShouldBe("Test Merchant 2");
         searchResult[2].MerchantName.ShouldBe("Test Merchant 1");
 
         // Sort By operator Name ascending
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.OperatorName, SortDirection.Ascending, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?sortField=3&sortDirection=0", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.OperatorName, SortDirection.Ascending, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
+
         searchResult.Count.ShouldBe(3);
         searchResult[0].OperatorName.ShouldBe("PataPawa PostPay");
         searchResult[1].OperatorName.ShouldBe("Safaricom");
         searchResult[2].OperatorName.ShouldBe("Voucher");
 
         // Sort By operator Name descending
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.OperatorName, SortDirection.Descending, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?sortField=3&sortDirection=1", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.OperatorName, SortDirection.Descending, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(3);
         searchResult[0].OperatorName.ShouldBe("Voucher");
         searchResult[1].OperatorName.ShouldBe("Safaricom");
         searchResult[2].OperatorName.ShouldBe("PataPawa PostPay");
 
         // Sort By transaction amount ascending
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.TransactionAmount, SortDirection.Ascending, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?sortField=1&sortDirection=0", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result= await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.TransactionAmount, SortDirection.Ascending, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(3);
         searchResult[0].TransactionAmount.ShouldBe(100);
         searchResult[1].TransactionAmount.ShouldBe(200);
         searchResult[2].TransactionAmount.ShouldBe(300);
 
         // Sort By transaction amount descending
-        asyncFunction = async () =>
-                        {
-                            List<TransactionResult>? result = clientType switch
-                            {
-                                ClientType.Api => await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.TransactionAmount, SortDirection.Descending, CancellationToken.None),
-                                _ => await CreateAndSendHttpRequestMessage<List<TransactionResult>>("api/facts/transactions/search?sortField=1&sortDirection=1", JsonConvert.SerializeObject(searchRequest), CancellationToken.None)
-                            };
-                            return result;
-                        };
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result= await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, SortField.TransactionAmount, SortDirection.Descending, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.Count.ShouldBe(3);
         searchResult[0].TransactionAmount.ShouldBe(300);
         searchResult[1].TransactionAmount.ShouldBe(200);
         searchResult[2].TransactionAmount.ShouldBe(100);
     }
 
-    [Theory]
-    [InlineData(ClientType.Api)]
-    [InlineData(ClientType.Direct)]
-    public async Task FactTransactionsControllerController_GetMerchantsByLastDaleDate_MerchantsReturned(ClientType clientType)
+    [Fact]
+    public async Task FactTransactionsControllerController_GetMerchantsByLastDaleDate_MerchantsReturned()
     {
         DateTime todaysDateTime = DateTime.Now;
 
@@ -2044,19 +1672,12 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         DateTime startDate = DateTime.Now;
         DateTime endDate = DateTime.Now;
 
-        Func<Task<List<Merchant>?>> asyncFunction = async () =>
-                                                    {
-                                                        List<Merchant>? result = clientType switch
-                                                        {
-                                                            ClientType.Api => await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate,endDate, CancellationToken.None),
-                                                            _ => await CreateAndSendHttpRequestMessage<List<Merchant>>($"api/facts/transactions/merchants/lastsale?startDate={startDate:yyyy-MM-dd HH:mm:ss}&enddate={endDate:yyyy-MM-dd HH:mm:ss}", CancellationToken.None)
-                                                        };
-                                                        return result;
-                                                    };
         // Test 1 - sale in last hour
         startDate = DateTime.Now.AddHours(-1);
         endDate = DateTime.Now;
-        List<Merchant>? searchResult = await ExecuteAsyncFunction(asyncFunction);
+        var result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate, endDate, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var searchResult = result.Data;
         searchResult.ShouldNotBeNull();
         searchResult.Count.ShouldBe(4);
         searchResult.SingleOrDefault(s => s.Name == "Merchant 1").ShouldNotBeNull();
@@ -2067,7 +1688,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         // Test 2 - sale in last day but over an hour ago
         startDate = DateTime.Now.Date.AddDays(-1);
         endDate = DateTime.Now.AddHours(-1);
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate, endDate, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.ShouldNotBeNull();
         searchResult.Count.ShouldBe(6);
         searchResult.SingleOrDefault(s => s.Name == "Merchant 5").ShouldNotBeNull();
@@ -2080,7 +1703,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         // Test 3 - sale in last  7 days but non yesterday
         startDate = DateTime.Now.Date.AddDays(-7);
         endDate = DateTime.Now.Date.AddDays(-1);
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate, endDate, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.ShouldNotBeNull();
         searchResult.Count.ShouldBe(3);
         searchResult.SingleOrDefault(s => s.Name == "Merchant 11").ShouldNotBeNull();
@@ -2090,7 +1715,9 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         // Test 4 - sale more than 7 days ago 
         startDate = DateTime.Now.Date.AddYears(-1);
         endDate = DateTime.Now.Date.AddDays(-7);
-        searchResult = await ExecuteAsyncFunction(asyncFunction);
+        result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate, endDate, CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        searchResult = result.Data;
         searchResult.ShouldNotBeNull();
         searchResult.Count.ShouldBe(5);
         searchResult.SingleOrDefault(s => s.Name == "Merchant 14").ShouldNotBeNull();
@@ -2098,12 +1725,6 @@ public class FactTransactionsControllerTests : ControllerTestsBase
         searchResult.SingleOrDefault(s => s.Name == "Merchant 16").ShouldNotBeNull();
         searchResult.SingleOrDefault(s => s.Name == "Merchant 17").ShouldNotBeNull();
         searchResult.SingleOrDefault(s => s.Name == "Merchant 18").ShouldNotBeNull();
-
-
-
-
-
     }
-
 }
 
