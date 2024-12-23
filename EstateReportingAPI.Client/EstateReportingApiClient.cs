@@ -62,7 +62,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting calendar dates for year {year} for estate {{estateId}}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
         
@@ -95,7 +95,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting calendar years for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -117,7 +117,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting comparison dates for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -141,7 +141,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting last settlement for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
 
             return response;
@@ -167,7 +167,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting response codes for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -195,7 +195,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting merchant performance for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -222,7 +222,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting product performance for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -247,7 +247,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting merchant by last sale date estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -274,7 +274,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting operator performance for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -317,7 +317,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting operator performance for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -363,7 +363,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting unsettled fees for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
 
         }
@@ -386,7 +386,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting merchant kpis for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -409,7 +409,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting merchants for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -432,7 +432,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting operators for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -460,7 +460,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting todays failed sales for estate {estateId} and response code {responseCode}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -487,7 +487,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting todays sales for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -514,7 +514,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting todays sales count by hour for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -541,7 +541,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting todays sales value by hour for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -568,7 +568,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting todays settlement for estate {estateId}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -590,7 +590,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting top/bottom sales by merchant for estate {estateId} TopOrBottom {topBottom} ans count {resultCount}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -612,7 +612,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting top/bottom sales by operator for estate {estateId} TopOrBottom {topBottom} ans count {resultCount}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 
@@ -634,7 +634,7 @@ namespace EstateReportingAPI.Client{
                 // An exception has occurred, add some additional information to the message
                 Exception exception = new Exception($"Error getting top/bottom sales by product for estate {estateId} TopOrBottom {topBottom} ans count {resultCount}.", ex);
 
-                throw exception;
+                return Result.Failure(exception.Message);
             }
         }
 

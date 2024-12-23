@@ -36,93 +36,104 @@
         #region Methods
 
         public async Task<List<UnsettledFee>> GetUnsettledFees(Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption? groupByOption, CancellationToken cancellationToken){
-            // TODO: GetUnsettledFees
-            //EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            
+            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            //var fees = (from merchantSettlementFee in context.MerchantSettlementFees
-            //            join transaction in context.Transactions
-            //                on merchantSettlementFee.TransactionId equals transaction.TransactionId
-            //            where merchantSettlementFee.FeeCalculatedDateTime.Date >= startDate &&
-            //                  merchantSettlementFee.FeeCalculatedDateTime.Date <= endDate
-            //            select new{
-            //                          fee = merchantSettlementFee,
-            //                          txn = transaction
-            //                      }).AsQueryable();
+            var fees = (from merchantSettlementFee in context.MerchantSettlementFees
+                        join transaction in context.Transactions
+                            on merchantSettlementFee.TransactionId equals transaction.TransactionId
+                        where merchantSettlementFee.FeeCalculatedDateTime.Date >= startDate &&
+                              merchantSettlementFee.FeeCalculatedDateTime.Date <= endDate
+                        select new
+                        {
+                            fee = merchantSettlementFee,
+                            txn = transaction
+                        }).AsQueryable();
 
-            //if (merchantIds.Any()){
-            //    fees = fees.Where(f => merchantIds.Contains(f.txn.MerchantReportingId));
-            //}
-            //if (operatorIds.Any())
-            //{
-            //    fees = fees.Where(f => operatorIds.Contains(f.txn.EstateOperatorReportingId));
-            //}
-            //if (productIds.Any())
-            //{
-            //    fees = fees.Where(f => merchantIds.Contains(f.txn.ContractProductReportingId));
-            //}
+            if (merchantIds.Any())
+            {
+                // Get a list of the merchant guid's
+                List<Guid> merchantGuids = await context.Merchants.Where(m => merchantIds.Contains(m.MerchantReportingId)).Select(m => m.MerchantId).ToListAsync(cancellationToken);
+                // Filter the fees now
+                fees = fees.Where(f => merchantGuids.Contains(f.txn.MerchantId));
+            }
+            if (operatorIds.Any())
+            {
+                // Get a list of the operator guid's
+                List<Guid> operatorGuids = await context.Operators.Where(m => operatorIds.Contains(m.OperatorReportingId)).Select(m => m.OperatorId).ToListAsync(cancellationToken);
+                // Filter the fees now
+                fees = fees.Where(f => operatorGuids.Contains(f.txn.OperatorId));
+            }
+            if (productIds.Any())
+            {
+                // Get a list of the operator guid's
+                List<Guid> productGuids = await context.ContractProducts.Where(m => productIds.Contains(m.ContractProductReportingId)).Select(m => m.ContractProductId).ToListAsync(cancellationToken);
+                // Filter the fees now
+                fees = fees.Where(f => productGuids.Contains(f.txn.ContractProductId));
+            }
 
-            //List<UnsettledFee> unsettledFees = new();
+            List<UnsettledFee> unsettledFees = new();
 
-            //switch(groupByOption){
-            //    case GroupByOption.Merchant:
-            //        unsettledFees = await (from f in fees
-            //                         join merchant in context.Merchants
-            //                             on f.fee.MerchantReportingId equals merchant.MerchantReportingId
-            //                         group new{
-            //                                      f.fee.MerchantReportingId,
-            //                                      CalculatedValue = f.fee.CalculatedValue,
-            //                                  } by merchant.Name
-            //                         into grouped
-            //                         select new UnsettledFee{
-            //                                                      DimensionName = grouped.Key,
-            //                                                      FeesValue = grouped.Sum(item => item.CalculatedValue),
-            //                                                      FeesCount = grouped.Count()
-            //                                                  }).ToListAsync(cancellationToken);
-            //        break;
-            //    case GroupByOption.Operator:
-            //        unsettledFees = await (from f in fees
-            //                               join estateOperator in context.EstateOperators
-            //                                   on f.txn.EstateOperatorReportingId equals estateOperator.OperatorReportingId
-            //                               join @operator in context.Operators on estateOperator.OperatorReportingId equals @operator.OperatorReportingId
-            //                               group new
-            //                                     {
-            //                                         @operator.OperatorReportingId,
-            //                                         CalculatedValue = f.fee.CalculatedValue,
-            //                                     } by @operator.Name
-            //                               into grouped
-            //                               select new UnsettledFee
-            //                                      {
-            //                                          DimensionName = grouped.Key,
-            //                                          FeesValue = grouped.Sum(item => item.CalculatedValue),
-            //                                          FeesCount = grouped.Count()
-            //                                      }).ToListAsync(cancellationToken);
-            //        break;
-            //    case GroupByOption.Product:
-            //        unsettledFees = await (from f in fees
-            //                               join contractProduct in context.ContractProducts
-            //                                   on f.txn.ContractProductReportingId equals contractProduct.ContractProductReportingId
-            //                               join contract in context.Contracts
-            //                                   on contractProduct.ContractReportingId equals contract.ContractReportingId
-            //                               join @operator in context.Operators
-            //                                   on contract.OperatorId equals @operator.OperatorId
-            //                               group new
-            //                                     {                                                     
-            //                                         contractProduct.ContractProductReportingId,
-            //                                         CalculatedValue = f.fee.CalculatedValue,
-            //                                     } by new { @operator.Name, contractProduct.ProductName}
-            //                               into grouped
-            //                               select new UnsettledFee
-            //                               {
-            //                                          DimensionName = $"{grouped.Key.Name} - {grouped.Key.ProductName}",
-            //                                          FeesValue = grouped.Sum(item => item.CalculatedValue),
-            //                                          FeesCount = grouped.Count()
-            //                                      }).ToListAsync(cancellationToken);
+            switch (groupByOption)
+            {
+                case GroupByOption.Merchant:
+                    unsettledFees = await (from f in fees
+                                           join merchant in context.Merchants
+                                               on f.fee.MerchantId equals merchant.MerchantId
+                                           group new
+                                           {
+                                               f.fee.MerchantId,
+                                               CalculatedValue = f.fee.CalculatedValue,
+                                           } by merchant.Name
+                                     into grouped
+                                           select new UnsettledFee
+                                           {
+                                               DimensionName = grouped.Key,
+                                               FeesValue = grouped.Sum(item => item.CalculatedValue),
+                                               FeesCount = grouped.Count()
+                                           }).ToListAsync(cancellationToken);
+                    break;
+                case GroupByOption.Operator:
+                    unsettledFees = await (from f in fees
+                                           join @operator in context.Operators on f.txn.OperatorId equals @operator.OperatorId
+                                           group new
+                                           {
+                                               @operator.OperatorId,
+                                               CalculatedValue = f.fee.CalculatedValue,
+                                           } by @operator.Name
+                                           into grouped
+                                           select new UnsettledFee
+                                           {
+                                               DimensionName = grouped.Key,
+                                               FeesValue = grouped.Sum(item => item.CalculatedValue),
+                                               FeesCount = grouped.Count()
+                                           }).ToListAsync(cancellationToken);
+                    break;
+                case GroupByOption.Product:
+                    unsettledFees = await (from f in fees
+                                           join contractProduct in context.ContractProducts
+                                               on f.txn.ContractProductId equals contractProduct.ContractProductId
+                                           join contract in context.Contracts
+                                               on contractProduct.ContractId equals contract.ContractId
+                                           join @operator in context.Operators
+                                               on contract.OperatorId equals @operator.OperatorId
+                                           group new
+                                           {
+                                               contractProduct.ContractProductId,
+                                               CalculatedValue = f.fee.CalculatedValue,
+                                           } by new { @operator.Name, contractProduct.ProductName }
+                                           into grouped
+                                           select new UnsettledFee
+                                           {
+                                               DimensionName = $"{grouped.Key.Name} - {grouped.Key.ProductName}",
+                                               FeesValue = grouped.Sum(item => item.CalculatedValue),
+                                               FeesCount = grouped.Count()
+                                           }).ToListAsync(cancellationToken);
 
-            //        break;
-            //}
+                    break;
+            }
 
-            //return unsettledFees;
-            return null;
+            return unsettledFees;
         }
 
         public async Task<List<Calendar>> GetCalendarComparisonDates(Guid estateId, CancellationToken cancellationToken){

@@ -8,7 +8,9 @@ using Shared.EntityFramework;
 using Shared.EntityFramework.ConnectionStringConfiguration;
 using Shared.General;
 using Shared.Repositories;
+using System.Diagnostics.CodeAnalysis;
 
+[ExcludeFromCodeCoverage]
 public class RepositoryRegistry : ServiceRegistry{
     public RepositoryRegistry(){
 

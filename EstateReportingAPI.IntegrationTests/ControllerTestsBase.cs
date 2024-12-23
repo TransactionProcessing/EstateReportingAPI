@@ -1,4 +1,5 @@
-﻿using SimpleResults;
+﻿using EstateManagement.Database.Entities;
+using SimpleResults;
 
 namespace EstateReportingAPI.IntegrationTests;
 
@@ -16,12 +17,15 @@ using Shared.IntegrationTesting;
 using Shared.Logger;
 using Shouldly;
 using Xunit;
+using Xunit.Abstractions;
 
 public abstract class ControllerTestsBase : IAsyncLifetime
 {
-    protected List<String> merchantsList;
-    protected List<(String contract, String operatorname)> contractList;
+    protected List<Merchant> merchantsList;
+    protected List<(Guid contractId, String contractName, Guid operatorId, String operatorName)> contractList;
+    protected Dictionary<Guid, List<(Guid productId, String productName, Decimal? productValue)>> contractProducts;
     protected DatabaseHelper helper;
+    protected ITestOutputHelper TestOutputHelper;
     public virtual async Task InitializeAsync()
     {
         this.TestId = Guid.NewGuid();
@@ -44,7 +48,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     public virtual async Task DisposeAsync()
     {
     }
-    
+
     protected EstateManagementGenericContext context;
 
     protected abstract Task ClearStandingData();

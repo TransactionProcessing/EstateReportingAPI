@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using EstateReportingAPI.Bootstrapper;
 using HealthChecks.UI.Client;
 using Lamar;
@@ -10,6 +11,7 @@ using Shared.Logger;
 namespace EstateReportingAPI
 {
     using BusinessLogic;
+    [ExcludeFromCodeCoverage]
     public class Startup
     {
         public static IConfigurationRoot Configuration { get; set; }
