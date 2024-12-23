@@ -64,6 +64,13 @@ public class DimensionsControllerTests : ControllerTestsBase
     }
 
     [Fact]
+    public async Task DimensionsController_GetCalendarComparisonDates_NoDataInDatabase()
+    {
+        var result= await ApiClient.GetComparisonDates(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsFailed.ShouldBeTrue();;
+    }
+
+    [Fact]
     public async Task DimensionsController_GetCalendarDates_DatesReturned()
     {
         List<DateTime> datesInYear = helper.GetDatesForYear(2023);

@@ -1,12 +1,14 @@
-﻿using EstateReportingAPI.BusinessLogic.Queries;
-using EstateReportingAPI.BusinessLogic.RequestHandlers;
+﻿using EstateReportingAPI.BusinessLogic.RequestHandlers;
 using EstateReportingAPI.Models;
 using Lamar;
 using MediatR;
 using SimpleResults;
+using System.Diagnostics.CodeAnalysis;
+using EstateReportingAPI.BusinessLogic.Queries;
 
 namespace EstateReportingAPI.Bootstrapper;
 
+[ExcludeFromCodeCoverage]
 public class MediatorRegistry : ServiceRegistry {
     public MediatorRegistry() {
         this.AddTransient<IMediator, Mediator>();

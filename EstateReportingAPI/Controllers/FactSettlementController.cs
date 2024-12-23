@@ -92,14 +92,14 @@ namespace EstateReportingAPI.Controllers
         public async Task<IActionResult> GetUnsettledFees([FromHeader] Guid estateId,
                                                           [FromQuery] DateTime startDate,
                                                           [FromQuery] DateTime endDate,
-                                                          [FromQuery] string? merchantReportingIds, [FromQuery] string? operatorReportingIds, 
-                                                          [FromQuery] string? productReportingIds,
+                                                          [FromQuery] string? merchantIds, [FromQuery] string? operatorIds, 
+                                                          [FromQuery] string? productIds,
                                                        [FromQuery] GroupByOption? groupByOption, CancellationToken cancellationToken)
         {
             List<Int32> merchantIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(merchantReportingIds) == false)
+            if (String.IsNullOrEmpty(merchantIds) == false)
             {
-                List<String> merchantListStrings = merchantReportingIds.Split(',').ToList();
+                List<String> merchantListStrings = merchantIds.Split(',').ToList();
                 foreach (String merchantListString in merchantListStrings)
                 {
                     merchantIdFilter.Add(Int32.Parse(merchantListString));
@@ -107,9 +107,9 @@ namespace EstateReportingAPI.Controllers
             }
 
             List<Int32> operatorIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(operatorReportingIds) == false)
+            if (String.IsNullOrEmpty(operatorIds) == false)
             {
-                List<String> operatorListStrings = operatorReportingIds.Split(',').ToList();
+                List<String> operatorListStrings = operatorIds.Split(',').ToList();
                 foreach (String operatorListString in operatorListStrings)
                 {
                     operatorIdFilter.Add(Int32.Parse(operatorListString));
@@ -117,9 +117,9 @@ namespace EstateReportingAPI.Controllers
             }
 
             List<Int32> productIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(productReportingIds) == false)
+            if (String.IsNullOrEmpty(productIds) == false)
             {
-                List<String> productListStrings = productReportingIds.Split(',').ToList();
+                List<String> productListStrings = productIds.Split(',').ToList();
                 foreach (String productListString in productListStrings)
                 {
                     productIdFilter.Add(Int32.Parse(productListString));
