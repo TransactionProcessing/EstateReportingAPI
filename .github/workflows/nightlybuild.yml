@@ -29,6 +29,7 @@ jobs:
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet test "EstateReportingAPI.Tests\EstateReportingAPI.Tests.csproj" /p:CollectCoverage=true /p:Exclude="[xunit*]*" /p:ExcludeByAttribute="Obsolete" /p:ExcludeByAttribute="GeneratedCodeAttribute" /p:ExcludeByAttribute="CompilerGeneratedAttribute" /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" /p:CoverletOutput="../lcov1.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"        
+        dotnet test "EstateReportingAPI.IntegrationTests\EstateReportingAPI.IntegrationTests.csproj" /p:CollectCoverage=true /p:Exclude="[xunit*]*" /p:ExcludeByAttribute="Obsolete" /p:ExcludeByAttribute="GeneratedCodeAttribute" /p:ExcludeByAttribute="CompilerGeneratedAttribute" /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"        
 
     - name: Setup Node.js for use with actions
       uses: actions/setup-node@v1.4.4
@@ -37,7 +38,7 @@ jobs:
       uses: codecov/codecov-action@v3  
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./lcov1.info
+        files: ./lcov1.info,./lcov2.info
 
     - name: Build Docker Image
       run: docker build . --file EstateReportingAPI/Dockerfile --tag estatereportingapi:latest
