@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using Ductus.FluentDocker.Common;
 using EstateReportingAPI.IntegrationTests;
 using Microsoft.EntityFrameworkCore;

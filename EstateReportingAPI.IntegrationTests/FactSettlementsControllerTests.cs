@@ -1,4 +1,9 @@
-﻿namespace EstateReportingAPI.IntegrationTests {
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace EstateReportingAPI.IntegrationTests {
     using EstateManagement.Database.Contexts;
     using EstateManagement.Database.Entities;
     using EstateReportingAPI.DataTransferObjects;
@@ -6,6 +11,7 @@
     using Shouldly;
     using System.Diagnostics.Contracts;
     using Xunit;
+    using System.Linq;
 
     public class FactSettlementsControllerTests : ControllerTestsBase {
 

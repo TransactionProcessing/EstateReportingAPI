@@ -1,0 +1,1679 @@
+SF:c:\Projects\TransactionProcessing\EstateReportingAPI\EstateReportingAPI.BusinessLogic\ReportingManager.cs
+FN:686,System.Int32 EstateReportingAPI.BusinessLogic.ReportingManager::SafeDivide(System.Int32,System.Int32)
+FNDA:0,System.Int32 EstateReportingAPI.BusinessLogic.ReportingManager::SafeDivide(System.Int32,System.Int32)
+DA:687,0
+DA:688,0
+DA:689,0
+DA:690,0
+DA:693,0
+DA:694,0
+BRDA:688,7,0,0
+BRDA:688,7,1,0
+FN:696,System.Decimal EstateReportingAPI.BusinessLogic.ReportingManager::SafeDivide(System.Decimal,System.Int32)
+FNDA:0,System.Decimal EstateReportingAPI.BusinessLogic.ReportingManager::SafeDivide(System.Decimal,System.Int32)
+DA:697,0
+DA:698,0
+DA:699,0
+DA:700,0
+DA:703,0
+DA:704,0
+BRDA:698,7,0,0
+BRDA:698,7,1,0
+FN:29,System.Void EstateReportingAPI.BusinessLogic.ReportingManager::.ctor(Shared.EntityFramework.IDbContextFactory`1<EstateManagement.Database.Contexts.EstateManagementGenericContext>)
+FNDA:2,System.Void EstateReportingAPI.BusinessLogic.ReportingManager::.ctor(Shared.EntityFramework.IDbContextFactory`1<EstateManagement.Database.Contexts.EstateManagementGenericContext>)
+DA:30,2
+DA:31,1
+DA:32,1
+FN:430,System.Nullable`1<System.Int32> EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSalesCountByHour>b__15_0(<>f__AnonymousType14`2<System.Nullable`1<System.Int32>,System.Int32>)
+FNDA:0,System.Nullable`1<System.Int32> EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSalesCountByHour>b__15_0(<>f__AnonymousType14`2<System.Nullable`1<System.Int32>,System.Int32>)
+DA:431,0
+FN:431,EstateReportingAPI.Models.TodaysSalesCountByHour EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSalesCountByHour>b__15_2(<>f__AnonymousType14`2<System.Nullable`1<System.Int32>,System.Int32>,<>f__AnonymousType14`2<System.Nullable`1<System.Int32>,System.Int32>)
+FNDA:0,EstateReportingAPI.Models.TodaysSalesCountByHour EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSalesCountByHour>b__15_2(<>f__AnonymousType14`2<System.Nullable`1<System.Int32>,System.Int32>,<>f__AnonymousType14`2<System.Nullable`1<System.Int32>,System.Int32>)
+DA:432,0
+DA:433,0
+DA:434,0
+DA:435,0
+DA:436,0
+DA:437,0
+FN:468,System.Nullable`1<System.Int32> EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSalesValueByHour>b__16_0(<>f__AnonymousType15`2<System.Nullable`1<System.Int32>,System.Decimal>)
+FNDA:0,System.Nullable`1<System.Int32> EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSalesValueByHour>b__16_0(<>f__AnonymousType15`2<System.Nullable`1<System.Int32>,System.Decimal>)
+DA:469,0
+FN:469,EstateReportingAPI.Models.TodaysSalesValueByHour EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSalesValueByHour>b__16_2(<>f__AnonymousType15`2<System.Nullable`1<System.Int32>,System.Decimal>,<>f__AnonymousType15`2<System.Nullable`1<System.Int32>,System.Decimal>)
+FNDA:0,EstateReportingAPI.Models.TodaysSalesValueByHour EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSalesValueByHour>b__16_2(<>f__AnonymousType15`2<System.Nullable`1<System.Int32>,System.Decimal>,<>f__AnonymousType15`2<System.Nullable`1<System.Int32>,System.Decimal>)
+DA:470,0
+DA:471,0
+DA:472,0
+DA:473,0
+DA:474,0
+DA:475,0
+FN:553,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_6(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+FNDA:0,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_6(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+DA:554,0
+FN:554,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_7(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+FNDA:0,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_7(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+DA:555,0
+FN:555,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_8(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+FNDA:0,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_8(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+DA:556,0
+FN:556,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_9(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+FNDA:0,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_9(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+DA:557,0
+FN:557,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_10(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+FNDA:0,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_10(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+DA:558,0
+FN:558,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_11(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+FNDA:0,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_11(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+DA:559,0
+FN:559,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_12(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+FNDA:0,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_12(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+DA:560,0
+FN:560,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_13(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+FNDA:0,System.Boolean EstateReportingAPI.BusinessLogic.ReportingManager/<>c::<GetTodaysSettlement>b__19_13(<>f__AnonymousType20`3<System.Boolean,System.Decimal,System.Int32>)
+DA:561,0
+FN:304,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<>c__DisplayClass10_0::<GetResponseCodes>b__0(EstateManagement.Database.Entities.ResponseCodes)
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<>c__DisplayClass10_0::<GetResponseCodes>b__0(EstateManagement.Database.Entities.ResponseCodes)
+DA:305,0
+DA:306,0
+DA:307,0
+DA:308,0
+FN:858,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<>c__DisplayClass26_0::<TransactionSearch>b__17(<>f__AnonymousType27`4<EstateManagement.Database.Entities.Transaction,EstateManagement.Database.Entities.Merchant,EstateManagement.Database.Entities.Operator,EstateManagement.Database.Entities.ContractProduct>)
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<>c__DisplayClass26_0::<TransactionSearch>b__17(<>f__AnonymousType27`4<EstateManagement.Database.Entities.Transaction,EstateManagement.Database.Entities.Merchant,EstateManagement.Database.Entities.Operator,EstateManagement.Database.Entities.ContractProduct>)
+DA:859,0
+DA:860,0
+DA:861,0
+DA:862,0
+DA:863,0
+DA:864,0
+DA:865,0
+DA:866,0
+DA:867,0
+DA:868,0
+DA:869,0
+DA:870,0
+DA:871,0
+DA:872,0
+DA:873,0
+DA:874,0
+DA:875,0
+DA:876,0
+DA:877,0
+FN:279,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<>c__DisplayClass9_0::<GetMerchantsByLastSale>b__0(<>f__AnonymousType12`10<System.Int32,System.Int32,System.String,System.DateTime,System.DateTime,System.DateTime,System.DateTime,System.Guid,System.String,<>f__AnonymousType13`3<System.String,System.String,System.String>>)
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<>c__DisplayClass9_0::<GetMerchantsByLastSale>b__0(<>f__AnonymousType12`10<System.Int32,System.Int32,System.String,System.DateTime,System.DateTime,System.DateTime,System.DateTime,System.Guid,System.String,<>f__AnonymousType13`3<System.String,System.String,System.String>>)
+DA:280,0
+DA:281,0
+DA:282,0
+DA:283,0
+DA:284,0
+DA:285,0
+DA:286,0
+DA:287,0
+DA:288,0
+DA:289,0
+DA:290,0
+DA:291,0
+DA:292,0
+DA:293,0
+DA:294,0
+BRDA:280,136,0,0
+BRDA:280,136,1,0
+BRDA:280,161,0,0
+BRDA:280,161,1,0
+BRDA:280,186,0,0
+BRDA:280,186,1,0
+FN:138,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetCalendarComparisonDates>d__4::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetCalendarComparisonDates>d__4::MoveNext()
+DA:139,0
+DA:140,0
+DA:142,0
+DA:144,0
+DA:146,0
+DA:147,0
+DA:148,0
+DA:149,0
+DA:150,0
+DA:151,0
+DA:152,0
+DA:153,0
+DA:154,0
+DA:155,0
+DA:156,0
+DA:157,0
+DA:158,0
+DA:159,0
+DA:160,0
+DA:161,0
+DA:163,0
+DA:164,0
+BRDA:147,847,1,0
+BRDA:147,847,0,0
+FN:165,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetCalendarDates>d__5::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetCalendarDates>d__5::MoveNext()
+DA:166,0
+DA:167,0
+DA:169,0
+DA:171,0
+DA:172,0
+DA:173,0
+DA:174,0
+DA:175,0
+DA:176,0
+DA:177,0
+DA:178,0
+DA:179,0
+DA:180,0
+DA:181,0
+DA:182,0
+DA:183,0
+DA:184,0
+DA:185,0
+DA:186,0
+DA:188,0
+DA:189,0
+BRDA:172,597,1,0
+BRDA:172,597,0,0
+FN:190,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetCalendarYears>d__6::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetCalendarYears>d__6::MoveNext()
+DA:191,0
+DA:192,0
+DA:194,0
+DA:196,0
+DA:197,0
+FN:198,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetLastSettlement>d__7::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetLastSettlement>d__7::MoveNext()
+DA:199,0
+DA:200,0
+DA:202,0
+DA:204,0
+DA:205,0
+DA:206,0
+DA:207,0
+DA:208,0
+DA:209,0
+DA:210,0
+DA:211,0
+DA:212,0
+DA:213,0
+DA:214,0
+DA:215,0
+DA:216,0
+DA:217,0
+DA:218,0
+DA:219,0
+DA:221,0
+DA:222,0
+FN:648,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetMerchantPerformance>d__21::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetMerchantPerformance>d__21::MoveNext()
+DA:649,0
+DA:650,0
+DA:653,0
+DA:654,0
+DA:655,0
+DA:656,0
+DA:657,0
+DA:659,0
+DA:660,0
+DA:661,0
+DA:662,0
+DA:663,0
+DA:666,0
+DA:667,0
+DA:668,0
+DA:669,0
+DA:671,0
+DA:672,0
+DA:673,0
+DA:674,0
+DA:675,0
+DA:676,0
+DA:677,0
+DA:678,0
+DA:679,0
+DA:680,0
+DA:681,0
+DA:683,0
+DA:684,0
+BRDA:666,849,0,0
+BRDA:666,849,1,0
+FN:881,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetMerchants>d__27::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetMerchants>d__27::MoveNext()
+DA:882,0
+DA:883,0
+DA:885,0
+DA:886,0
+DA:887,0
+DA:888,0
+DA:889,0
+DA:890,0
+DA:891,0
+DA:892,0
+DA:893,0
+DA:894,0
+DA:895,0
+DA:896,0
+DA:897,0
+DA:898,0
+DA:899,0
+DA:900,0
+DA:901,0
+DA:902,0
+DA:903,0
+DA:904,0
+DA:905,0
+DA:906,0
+DA:907,0
+DA:908,0
+DA:910,0
+DA:911,0
+DA:912,0
+DA:913,0
+DA:914,0
+DA:915,0
+DA:916,0
+DA:917,0
+DA:918,0
+DA:919,0
+DA:920,0
+DA:921,0
+DA:922,0
+DA:923,0
+DA:924,0
+DA:926,0
+DA:927,0
+DA:928,0
+DA:929,0
+DA:930,0
+DA:931,0
+DA:932,0
+DA:933,0
+DA:935,0
+DA:936,0
+BRDA:911,1894,1,0
+BRDA:926,1762,0,0
+BRDA:926,1762,1,0
+BRDA:911,1894,0,0
+FN:248,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetMerchantsByLastSale>d__9::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetMerchantsByLastSale>d__9::MoveNext()
+DA:249,0
+DA:250,0
+DA:252,0
+DA:254,0
+DA:255,0
+DA:256,0
+DA:257,0
+DA:258,0
+DA:259,0
+DA:260,0
+DA:261,0
+DA:262,0
+DA:263,0
+DA:264,0
+DA:265,0
+DA:266,0
+DA:267,0
+DA:268,0
+DA:269,0
+DA:270,0
+DA:271,0
+DA:272,0
+DA:273,0
+DA:274,0
+DA:275,0
+DA:276,0
+DA:277,0
+DA:278,0
+DA:296,0
+DA:297,0
+FN:223,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetMerchantsTransactionKpis>d__8::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetMerchantsTransactionKpis>d__8::MoveNext()
+DA:224,0
+DA:225,0
+DA:227,0
+DA:228,0
+DA:229,0
+DA:230,0
+DA:232,0
+DA:233,0
+DA:234,0
+DA:236,0
+DA:237,0
+DA:238,0
+DA:240,0
+DA:241,0
+DA:242,0
+DA:243,0
+DA:244,0
+DA:246,0
+DA:247,0
+FN:744,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetOperatorPerformance>d__25::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetOperatorPerformance>d__25::MoveNext()
+DA:745,0
+DA:746,0
+DA:749,0
+DA:750,0
+DA:751,0
+DA:752,0
+DA:753,0
+DA:755,0
+DA:756,0
+DA:757,0
+DA:758,0
+DA:759,0
+DA:762,0
+DA:763,0
+DA:764,0
+DA:765,0
+DA:766,0
+DA:768,0
+DA:769,0
+DA:770,0
+DA:771,0
+DA:772,0
+DA:773,0
+DA:774,0
+DA:775,0
+DA:776,0
+DA:777,0
+DA:778,0
+DA:780,0
+DA:781,0
+BRDA:762,849,0,0
+BRDA:762,849,1,0
+FN:937,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetOperators>d__28::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetOperators>d__28::MoveNext()
+DA:938,0
+DA:939,0
+DA:941,0
+DA:942,0
+DA:943,0
+DA:944,0
+DA:945,0
+DA:946,0
+DA:947,0
+DA:948,0
+DA:950,0
+DA:951,0
+FN:706,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetProductPerformance>d__24::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetProductPerformance>d__24::MoveNext()
+DA:707,0
+DA:708,0
+DA:711,0
+DA:712,0
+DA:713,0
+DA:714,0
+DA:715,0
+DA:717,0
+DA:718,0
+DA:719,0
+DA:720,0
+DA:721,0
+DA:724,0
+DA:725,0
+DA:726,0
+DA:727,0
+DA:728,0
+DA:730,0
+DA:731,0
+DA:732,0
+DA:733,0
+DA:734,0
+DA:735,0
+DA:736,0
+DA:737,0
+DA:738,0
+DA:739,0
+DA:740,0
+DA:742,0
+DA:743,0
+BRDA:724,849,0,0
+BRDA:724,849,1,0
+FN:298,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetResponseCodes>d__10::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetResponseCodes>d__10::MoveNext()
+DA:299,0
+DA:300,0
+DA:301,0
+DA:303,0
+DA:310,0
+DA:311,0
+FN:363,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetSalesForDate>d__13::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetSalesForDate>d__13::MoveNext()
+DA:364,0
+DA:365,0
+DA:366,0
+DA:367,0
+DA:368,0
+DA:369,0
+DA:371,0
+DA:372,0
+DA:373,0
+DA:374,0
+DA:376,0
+DA:377,0
+DA:378,0
+DA:379,0
+DA:381,0
+DA:382,0
+BRDA:371,412,0,0
+BRDA:371,412,1,0
+BRDA:376,554,0,0
+BRDA:376,554,1,0
+FN:480,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetSettlementDataForDate>d__17::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetSettlementDataForDate>d__17::MoveNext()
+DA:481,0
+DA:482,0
+DA:483,0
+DA:484,0
+DA:487,0
+DA:488,0
+DA:489,0
+DA:490,0
+DA:491,0
+DA:493,0
+DA:494,0
+DA:495,0
+DA:496,0
+DA:498,0
+DA:499,0
+DA:500,0
+DA:501,0
+DA:503,0
+DA:504,0
+BRDA:482,116,0,0
+BRDA:482,116,1,0
+BRDA:493,1505,0,0
+BRDA:493,1505,1,0
+BRDA:498,1658,0,0
+BRDA:498,1658,1,0
+FN:312,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysFailedSales>d__11::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysFailedSales>d__11::MoveNext()
+DA:313,0
+DA:314,0
+DA:316,0
+DA:317,0
+DA:318,0
+DA:319,0
+DA:320,0
+DA:322,0
+DA:323,0
+DA:324,0
+DA:325,0
+DA:326,0
+DA:327,0
+DA:329,0
+DA:330,0
+DA:331,0
+DA:332,0
+DA:333,0
+DA:334,0
+DA:335,0
+DA:336,0
+DA:337,0
+DA:338,0
+FN:340,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSales>d__12::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSales>d__12::MoveNext()
+DA:341,0
+DA:342,0
+DA:343,0
+DA:344,0
+DA:345,0
+DA:346,0
+DA:348,0
+DA:349,0
+DA:350,0
+DA:352,0
+DA:353,0
+DA:354,0
+DA:355,0
+DA:357,0
+DA:358,0
+BRDA:348,380,0,0
+BRDA:348,380,1,0
+BRDA:352,522,0,0
+BRDA:352,522,1,0
+FN:383,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSales>d__14::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSales>d__14::MoveNext()
+DA:384,0
+DA:385,0
+DA:387,0
+DA:388,0
+DA:390,0
+DA:391,0
+DA:392,0
+DA:393,0
+DA:395,0
+DA:396,0
+DA:397,0
+DA:398,0
+DA:399,0
+DA:400,0
+DA:401,0
+DA:402,0
+DA:403,0
+DA:404,0
+FN:405,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSalesCountByHour>d__15::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSalesCountByHour>d__15::MoveNext()
+DA:406,0
+DA:407,0
+DA:409,0
+DA:410,0
+DA:413,0
+DA:414,0
+DA:415,0
+DA:416,0
+DA:417,0
+DA:418,0
+DA:419,0
+DA:421,0
+DA:422,0
+DA:423,0
+DA:424,0
+DA:425,0
+DA:426,0
+DA:427,0
+DA:429,0
+DA:430,0
+DA:439,0
+DA:440,0
+FN:441,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSalesValueByHour>d__16::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSalesValueByHour>d__16::MoveNext()
+DA:442,0
+DA:443,0
+DA:445,0
+DA:446,0
+DA:449,0
+DA:450,0
+DA:451,0
+DA:452,0
+DA:453,0
+DA:454,0
+DA:455,0
+DA:456,0
+DA:458,0
+DA:459,0
+DA:460,0
+DA:461,0
+DA:462,0
+DA:463,0
+DA:464,0
+DA:465,0
+DA:467,0
+DA:468,0
+DA:477,0
+DA:478,0
+FN:506,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSettlement>d__18::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSettlement>d__18::MoveNext()
+DA:507,0
+DA:508,0
+DA:509,0
+DA:510,0
+DA:511,0
+DA:512,0
+DA:514,0
+DA:515,0
+DA:516,0
+DA:517,0
+DA:519,0
+DA:520,0
+DA:521,0
+DA:522,0
+DA:524,0
+DA:525,0
+BRDA:514,1140,0,0
+BRDA:514,1140,1,0
+BRDA:519,1310,0,0
+BRDA:519,1310,1,0
+FN:526,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSettlement>d__19::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTodaysSettlement>d__19::MoveNext()
+DA:527,0
+DA:528,0
+DA:530,0
+DA:531,0
+DA:533,0
+DA:534,0
+DA:535,0
+DA:536,0
+DA:537,0
+DA:538,0
+DA:539,0
+DA:540,0
+DA:542,0
+DA:543,0
+DA:544,0
+DA:545,0
+DA:546,0
+DA:547,0
+DA:548,0
+DA:549,0
+DA:552,0
+DA:553,0
+DA:562,0
+DA:564,0
+DA:565,0
+BRDA:552,1587,0,0
+BRDA:552,1587,1,0
+BRDA:552,1648,0,0
+BRDA:552,1648,1,0
+BRDA:552,1713,0,0
+BRDA:552,1713,1,0
+BRDA:552,1774,0,0
+BRDA:552,1774,1,0
+BRDA:552,1839,0,0
+BRDA:552,1839,1,0
+BRDA:552,1900,0,0
+BRDA:552,1900,1,0
+BRDA:552,1965,0,0
+BRDA:552,1965,1,0
+BRDA:552,2026,0,0
+BRDA:552,2026,1,0
+FN:566,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTopBottomData>d__20::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetTopBottomData>d__20::MoveNext()
+DA:567,0
+DA:568,0
+DA:570,0
+DA:571,0
+DA:572,0
+DA:573,0
+DA:575,0
+DA:576,0
+DA:577,0
+DA:579,0
+DA:580,0
+DA:581,0
+DA:582,0
+DA:583,0
+DA:584,0
+DA:585,0
+DA:586,0
+DA:587,0
+DA:588,0
+DA:589,0
+DA:590,0
+DA:591,0
+DA:592,0
+DA:593,0
+DA:594,0
+DA:595,0
+DA:596,0
+DA:598,0
+DA:599,0
+DA:600,0
+DA:601,0
+DA:602,0
+DA:603,0
+DA:604,0
+DA:605,0
+DA:606,0
+DA:607,0
+DA:608,0
+DA:609,0
+DA:610,0
+DA:611,0
+DA:612,0
+DA:613,0
+DA:614,0
+DA:615,0
+DA:617,0
+DA:618,0
+DA:619,0
+DA:620,0
+DA:621,0
+DA:622,0
+DA:623,0
+DA:624,0
+DA:625,0
+DA:626,0
+DA:627,0
+DA:628,0
+DA:629,0
+DA:630,0
+DA:631,0
+DA:632,0
+DA:634,0
+DA:635,0
+DA:637,0
+DA:638,0
+DA:639,0
+DA:640,0
+DA:642,0
+DA:643,0
+DA:646,0
+DA:647,0
+BRDA:576,442,0,0
+BRDA:576,442,1,0
+BRDA:595,1125,0,0
+BRDA:595,1125,1,0
+BRDA:614,1808,0,0
+BRDA:614,1808,1,0
+BRDA:634,2486,0,0
+BRDA:634,2486,1,0
+BRDA:639,2582,0,0
+BRDA:639,2582,1,0
+FN:37,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetUnsettledFees>d__3::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<GetUnsettledFees>d__3::MoveNext()
+DA:38,0
+DA:40,0
+DA:42,0
+DA:43,0
+DA:44,0
+DA:45,0
+DA:46,0
+DA:47,0
+DA:48,0
+DA:49,0
+DA:50,0
+DA:51,0
+DA:53,0
+DA:54,0
+DA:56,0
+DA:58,0
+DA:59,0
+DA:60,0
+DA:61,0
+DA:63,0
+DA:65,0
+DA:66,0
+DA:67,0
+DA:68,0
+DA:70,0
+DA:72,0
+DA:73,0
+DA:75,0
+DA:77,0
+DA:80,0
+DA:81,0
+DA:82,0
+DA:83,0
+DA:84,0
+DA:85,0
+DA:86,0
+DA:87,0
+DA:88,0
+DA:89,0
+DA:90,0
+DA:91,0
+DA:92,0
+DA:93,0
+DA:94,0
+DA:95,0
+DA:97,0
+DA:98,0
+DA:99,0
+DA:100,0
+DA:101,0
+DA:102,0
+DA:103,0
+DA:104,0
+DA:105,0
+DA:106,0
+DA:107,0
+DA:108,0
+DA:109,0
+DA:110,0
+DA:111,0
+DA:113,0
+DA:114,0
+DA:115,0
+DA:116,0
+DA:117,0
+DA:118,0
+DA:119,0
+DA:120,0
+DA:121,0
+DA:122,0
+DA:123,0
+DA:124,0
+DA:125,0
+DA:126,0
+DA:127,0
+DA:128,0
+DA:129,0
+DA:130,0
+DA:131,0
+DA:133,0
+DA:136,0
+DA:137,0
+BRDA:53,1140,0,0
+BRDA:53,1140,1,0
+BRDA:60,1701,0,0
+BRDA:60,1701,1,0
+BRDA:67,2262,0,0
+BRDA:67,2262,1,0
+BRDA:77,2841,0,0
+BRDA:77,2873,2,0
+BRDA:77,2873,1,0
+BRDA:77,2873,3,0
+BRDA:77,2841,1,0
+BRDA:77,2873,0,0
+FN:782,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<TransactionSearch>d__26::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.ReportingManager/<TransactionSearch>d__26::MoveNext()
+DA:783,0
+DA:785,0
+DA:787,0
+DA:788,0
+DA:789,0
+DA:790,0
+DA:791,0
+DA:792,0
+DA:793,0
+DA:794,0
+DA:795,0
+DA:796,0
+DA:797,0
+DA:798,0
+DA:801,0
+DA:802,0
+DA:803,0
+DA:804,0
+DA:806,0
+DA:807,0
+DA:808,0
+DA:809,0
+DA:811,0
+DA:812,0
+DA:813,0
+DA:814,0
+DA:815,0
+DA:817,0
+DA:818,0
+DA:819,0
+DA:820,0
+DA:822,0
+DA:823,0
+DA:824,0
+DA:825,0
+DA:827,0
+DA:828,0
+DA:829,0
+DA:830,0
+DA:832,0
+DA:833,0
+DA:834,0
+DA:835,0
+DA:836,0
+DA:838,0
+DA:839,0
+DA:841,0
+DA:842,0
+DA:843,0
+DA:844,0
+DA:845,0
+DA:846,0
+DA:847,0
+DA:848,0
+DA:849,0
+DA:850,0
+DA:851,0
+DA:853,0
+DA:854,0
+DA:856,0
+DA:858,0
+DA:879,0
+DA:880,0
+BRDA:801,1850,0,0
+BRDA:801,1850,1,0
+BRDA:801,1880,0,0
+BRDA:801,1880,1,0
+BRDA:806,2095,0,0
+BRDA:806,2095,1,0
+BRDA:806,2125,0,0
+BRDA:806,2125,1,0
+BRDA:811,2347,0,0
+BRDA:811,2347,1,0
+BRDA:817,2698,0,0
+BRDA:817,2698,1,0
+BRDA:822,2896,0,0
+BRDA:822,2896,1,0
+BRDA:827,3094,0,0
+BRDA:827,3094,1,0
+BRDA:833,3289,0,0
+BRDA:833,3289,1,0
+BRDA:838,3340,0,0
+BRDA:841,3394,0,0
+BRDA:841,3394,1,0
+BRDA:841,3401,1,0
+BRDA:841,3420,2,0
+BRDA:841,3420,3,0
+BRDA:841,3420,1,0
+BRDA:841,3454,2,0
+BRDA:841,3454,3,0
+BRDA:841,3454,1,0
+BRDA:841,3401,0,0
+BRDA:841,3420,0,0
+BRDA:841,3454,0,0
+BRDA:838,3340,1,0
+LF:745
+LH:3
+BRF:112
+BRH:0
+FNF:42
+FNH:1
+end_of_record
+SF:c:\Projects\TransactionProcessing\EstateReportingAPI\EstateReportingAPI.BusinessLogic\RequestHandlers\CalendarRequestHandler.cs
+FN:19,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+FNDA:10,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+DA:20,10
+DA:21,5
+DA:22,5
+FN:24,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler/<Handle>d__2::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler/<Handle>d__2::MoveNext()
+DA:25,0
+DA:26,0
+DA:27,0
+DA:28,0
+FN:30,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler/<Handle>d__3::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler/<Handle>d__3::MoveNext()
+DA:31,0
+DA:32,0
+DA:33,0
+DA:34,0
+FN:36,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler/<Handle>d__4::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler/<Handle>d__4::MoveNext()
+DA:37,0
+DA:38,0
+DA:39,0
+DA:40,0
+FN:42,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler/<Handle>d__5::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler/<Handle>d__5::MoveNext()
+DA:43,0
+DA:44,0
+DA:45,0
+DA:46,0
+FN:48,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler/<Handle>d__6::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.TransactionRequestHandler/<Handle>d__6::MoveNext()
+DA:49,0
+DA:50,0
+DA:51,0
+DA:52,0
+FN:62,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.CalendarRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+FNDA:6,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.CalendarRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+DA:63,6
+DA:64,3
+DA:65,3
+FN:66,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.CalendarRequestHandler/<Handle>d__2::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.CalendarRequestHandler/<Handle>d__2::MoveNext()
+DA:67,0
+DA:68,0
+DA:70,0
+DA:71,0
+DA:74,0
+DA:76,0
+BRDA:70,180,0,0
+BRDA:70,180,1,0
+FN:78,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.CalendarRequestHandler/<Handle>d__3::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.CalendarRequestHandler/<Handle>d__3::MoveNext()
+DA:79,0
+DA:80,0
+DA:81,0
+DA:82,0
+DA:83,0
+DA:86,0
+DA:87,0
+BRDA:81,180,0,0
+BRDA:81,180,1,0
+FN:89,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.CalendarRequestHandler/<Handle>d__4::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.CalendarRequestHandler/<Handle>d__4::MoveNext()
+DA:90,0
+DA:91,0
+DA:92,0
+DA:93,0
+DA:94,0
+DA:97,0
+DA:98,0
+BRDA:92,180,0,0
+BRDA:92,180,1,0
+FN:108,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+FNDA:6,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+DA:109,6
+DA:110,6
+DA:111,6
+DA:112,6
+FN:113,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__2::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__2::MoveNext()
+DA:114,0
+DA:115,0
+DA:116,0
+DA:117,0
+DA:118,0
+DA:121,0
+DA:122,0
+BRDA:116,180,0,0
+BRDA:116,180,1,0
+FN:124,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__3::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__3::MoveNext()
+DA:125,0
+DA:126,0
+DA:127,0
+DA:128,0
+FN:130,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__4::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__4::MoveNext()
+DA:131,0
+DA:132,0
+DA:133,0
+DA:134,0
+FN:136,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__5::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__5::MoveNext()
+DA:137,0
+DA:138,0
+DA:139,0
+DA:140,0
+FN:142,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__6::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__6::MoveNext()
+DA:143,0
+DA:144,0
+DA:145,0
+DA:146,0
+FN:148,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__7::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.MerchantRequestHandler/<Handle>d__7::MoveNext()
+DA:149,0
+DA:150,0
+DA:151,0
+DA:152,0
+FN:160,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.OperatorRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+FNDA:4,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.OperatorRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+DA:161,4
+DA:162,4
+DA:163,4
+DA:164,4
+FN:167,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.OperatorRequestHandler/<Handle>d__2::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.OperatorRequestHandler/<Handle>d__2::MoveNext()
+DA:168,0
+DA:169,0
+DA:170,0
+DA:171,0
+DA:172,0
+DA:175,0
+DA:176,0
+BRDA:170,180,0,0
+BRDA:170,180,1,0
+FN:179,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.OperatorRequestHandler/<Handle>d__3::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.OperatorRequestHandler/<Handle>d__3::MoveNext()
+DA:180,0
+DA:181,0
+DA:182,0
+DA:183,0
+FN:185,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.OperatorRequestHandler/<Handle>d__4::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.OperatorRequestHandler/<Handle>d__4::MoveNext()
+DA:186,0
+DA:187,0
+DA:188,0
+DA:189,0
+FN:191,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.OperatorRequestHandler/<Handle>d__5::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.OperatorRequestHandler/<Handle>d__5::MoveNext()
+DA:192,0
+DA:193,0
+DA:194,0
+DA:195,0
+FN:200,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ResponseCodeRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+FNDA:2,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ResponseCodeRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+DA:201,2
+DA:202,1
+DA:203,1
+FN:205,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ResponseCodeRequestHandler/<Handle>d__2::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ResponseCodeRequestHandler/<Handle>d__2::MoveNext()
+DA:206,0
+DA:207,0
+DA:208,0
+DA:209,0
+DA:212,0
+DA:213,0
+BRDA:208,180,0,0
+BRDA:208,180,1,0
+FN:219,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.SettlementRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+FNDA:3,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.SettlementRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+DA:220,3
+DA:221,3
+DA:222,3
+DA:223,3
+FN:225,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.SettlementRequestHandler/<Handle>d__2::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.SettlementRequestHandler/<Handle>d__2::MoveNext()
+DA:226,0
+DA:227,0
+DA:229,0
+DA:230,0
+FN:233,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.SettlementRequestHandler/<Handle>d__3::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.SettlementRequestHandler/<Handle>d__3::MoveNext()
+DA:234,0
+DA:235,0
+DA:237,0
+DA:238,0
+FN:240,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.SettlementRequestHandler/<Handle>d__4::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.SettlementRequestHandler/<Handle>d__4::MoveNext()
+DA:241,0
+DA:242,0
+DA:243,0
+DA:244,0
+FN:252,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ProductRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+FNDA:6,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ProductRequestHandler::.ctor(EstateReportingAPI.BusinessLogic.IReportingManager)
+DA:253,6
+DA:254,3
+DA:255,3
+FN:256,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ProductRequestHandler/<Handle>d__2::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ProductRequestHandler/<Handle>d__2::MoveNext()
+DA:257,0
+DA:258,0
+DA:260,0
+DA:261,0
+FN:263,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ProductRequestHandler/<Handle>d__3::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ProductRequestHandler/<Handle>d__3::MoveNext()
+DA:264,0
+DA:265,0
+DA:266,0
+DA:267,0
+FN:269,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ProductRequestHandler/<Handle>d__4::MoveNext()
+FNDA:0,System.Void EstateReportingAPI.BusinessLogic.RequestHandlers.ProductRequestHandler/<Handle>d__4::MoveNext()
+DA:270,0
+DA:271,0
+DA:272,0
+DA:273,0
+LF:140
+LH:24
+BRF:12
+BRH:0
+FNF:32
+FNH:7
+end_of_record
+SF:c:\Projects\TransactionProcessing\EstateReportingAPI\EstateReportingAPI.Client\EstateReportingApiClient.cs
+FN:657,QueryStringBuilder QueryStringBuilder::AddParameter(System.String,System.Object,System.Boolean)
+FNDA:59,QueryStringBuilder QueryStringBuilder::AddParameter(System.String,System.Object,System.Boolean)
+DA:658,59
+DA:659,59
+DA:660,59
+DA:661,59
+FN:663,System.Collections.Generic.Dictionary`2<System.String,System.Object> QueryStringBuilder::FilterDictionary(System.Collections.Generic.Dictionary`2<System.String,System.ValueTuple`2<System.Object,System.Boolean>>)
+FNDA:28,System.Collections.Generic.Dictionary`2<System.String,System.Object> QueryStringBuilder::FilterDictionary(System.Collections.Generic.Dictionary`2<System.String,System.ValueTuple`2<System.Object,System.Boolean>>)
+DA:664,28
+DA:665,28
+DA:667,202
+DA:668,59
+DA:669,59
+DA:670,52
+DA:671,52
+DA:672,52
+DA:673,59
+DA:675,28
+DA:676,28
+BRDA:667,115,1,59
+BRDA:669,38,0,58
+BRDA:669,38,1,1
+BRDA:669,77,0,52
+BRDA:669,77,1,59
+BRDA:667,115,0,28
+FN:677,System.Boolean QueryStringBuilder::IsDefaultValue(T,System.Boolean)
+FNDA:58,System.Boolean QueryStringBuilder::IsDefaultValue(T,System.Boolean)
+DA:678,58
+DA:679,58
+DA:680,2
+DA:682,56
+DA:684,56
+DA:685,24
+DA:686,24
+DA:687,24
+DA:688,56
+DA:689,58
+BRDA:679,4,0,2
+BRDA:679,4,1,56
+BRDA:684,30,0,24
+BRDA:684,30,1,32
+BRDA:684,65,0,24
+BRDA:684,65,1,56
+FN:691,System.Object QueryStringBuilder::GetDefault(System.Type)
+FNDA:56,System.Object QueryStringBuilder::GetDefault(System.Type)
+DA:692,56
+DA:693,56
+DA:694,56
+DA:695,56
+FN:697,T QueryStringBuilder::GetDefault()
+FNDA:56,T QueryStringBuilder::GetDefault()
+DA:698,56
+DA:699,56
+DA:700,56
+FN:701,System.String QueryStringBuilder::BuildQueryString()
+FNDA:28,System.String QueryStringBuilder::BuildQueryString()
+DA:702,28
+DA:703,28
+DA:705,28
+DA:706,8
+DA:707,8
+DA:710,20
+DA:712,164
+DA:713,52
+DA:714,52
+DA:715,32
+DA:716,32
+DA:717,32
+DA:719,52
+DA:720,52
+DA:722,20
+DA:723,28
+BRDA:705,24,0,8
+BRDA:705,24,1,20
+BRDA:712,184,1,52
+BRDA:714,78,0,32
+BRDA:714,78,1,52
+BRDA:712,184,0,20
+FN:654,System.Void QueryStringBuilder::.ctor()
+FNDA:28,System.Void QueryStringBuilder::.ctor()
+DA:655,28
+FN:22,T EstateReportingAPI.Client.ResponseData`1::get_Data()
+FNDA:75,T EstateReportingAPI.Client.ResponseData`1::get_Data()
+DA:23,75
+FN:640,System.String EstateReportingAPI.Client.EstateReportingApiClient::BuildRequestUrl(System.String)
+FNDA:48,System.String EstateReportingAPI.Client.EstateReportingApiClient::BuildRequestUrl(System.String)
+DA:641,48
+DA:642,48
+DA:644,48
+DA:646,48
+DA:647,48
+FN:35,System.Void EstateReportingAPI.Client.EstateReportingApiClient::.ctor(System.Func`2<System.String,System.String>,System.Net.Http.HttpClient)
+FNDA:96,System.Void EstateReportingAPI.Client.EstateReportingApiClient::.ctor(System.Func`2<System.String,System.String>,System.Net.Http.HttpClient)
+DA:36,96
+DA:37,48
+DA:40,48
+DA:41,48
+FN:46,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetCalendarDates>d__2::MoveNext()
+FNDA:3,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetCalendarDates>d__2::MoveNext()
+DA:47,3
+DA:48,3
+DA:50,3
+DA:51,3
+DA:52,3
+DA:53,3
+DA:56,3
+DA:59,2
+DA:61,2
+DA:63,1
+DA:65,1
+DA:67,3
+FN:78,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetCalendarYears>d__4::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetCalendarYears>d__4::MoveNext()
+DA:79,2
+DA:81,2
+DA:83,2
+DA:84,2
+DA:85,2
+DA:86,2
+DA:89,2
+DA:92,1
+DA:94,2
+DA:96,1
+DA:98,1
+DA:100,2
+FN:101,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetComparisonDates>d__5::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetComparisonDates>d__5::MoveNext()
+DA:102,2
+DA:103,2
+DA:105,2
+DA:106,2
+DA:107,2
+DA:108,2
+DA:111,2
+DA:114,1
+DA:116,2
+DA:118,1
+DA:120,1
+DA:122,2
+FN:123,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetLastSettlement>d__6::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetLastSettlement>d__6::MoveNext()
+DA:124,2
+DA:125,2
+DA:127,2
+DA:129,2
+DA:130,2
+DA:131,2
+DA:132,2
+DA:135,2
+DA:138,1
+DA:140,2
+DA:142,1
+DA:144,1
+DA:148,2
+FN:370,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetMerchantKpi>d__14::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetMerchantKpi>d__14::MoveNext()
+DA:371,2
+DA:372,2
+DA:374,2
+DA:375,2
+DA:376,2
+DA:377,2
+DA:380,2
+DA:383,1
+DA:385,2
+DA:387,1
+DA:389,1
+DA:391,2
+FN:173,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetMerchantPerformance>d__8::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetMerchantPerformance>d__8::MoveNext()
+DA:174,2
+DA:177,2
+DA:179,2
+DA:182,2
+DA:183,2
+DA:184,2
+DA:185,2
+DA:188,2
+DA:191,1
+DA:193,1
+DA:194,1
+DA:196,1
+DA:198,1
+DA:200,2
+FN:392,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetMerchants>d__15::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetMerchants>d__15::MoveNext()
+DA:393,2
+DA:395,2
+DA:397,2
+DA:398,2
+DA:399,2
+DA:400,2
+DA:403,2
+DA:406,1
+DA:408,2
+DA:410,1
+DA:412,1
+DA:414,2
+FN:228,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetMerchantsByLastSaleDate>d__10::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetMerchantsByLastSaleDate>d__10::MoveNext()
+DA:229,2
+DA:231,2
+DA:234,2
+DA:235,2
+DA:236,2
+DA:237,2
+DA:240,2
+DA:243,1
+DA:245,1
+DA:246,1
+DA:248,1
+DA:250,1
+DA:252,2
+FN:253,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetOperatorPerformance>d__11::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetOperatorPerformance>d__11::MoveNext()
+DA:254,2
+DA:256,2
+DA:258,2
+DA:261,2
+DA:262,2
+DA:263,2
+DA:264,2
+DA:267,2
+DA:270,1
+DA:272,1
+DA:273,1
+DA:275,1
+DA:277,1
+DA:279,2
+FN:415,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetOperators>d__16::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetOperators>d__16::MoveNext()
+DA:416,2
+DA:418,2
+DA:420,2
+DA:421,2
+DA:422,2
+DA:423,2
+DA:426,2
+DA:429,1
+DA:431,2
+DA:433,1
+DA:435,1
+DA:437,2
+FN:201,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetProductPerformance>d__9::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetProductPerformance>d__9::MoveNext()
+DA:202,2
+DA:204,2
+DA:206,2
+DA:209,2
+DA:210,2
+DA:211,2
+DA:212,2
+DA:215,2
+DA:218,1
+DA:220,1
+DA:221,1
+DA:223,1
+DA:225,1
+DA:227,2
+FN:149,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetResponseCodes>d__7::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetResponseCodes>d__7::MoveNext()
+DA:150,2
+DA:151,2
+DA:154,2
+DA:155,2
+DA:156,2
+DA:157,2
+DA:160,2
+DA:163,1
+DA:165,1
+DA:166,1
+DA:168,1
+DA:170,1
+DA:172,2
+FN:438,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTodaysFailedSales>d__17::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTodaysFailedSales>d__17::MoveNext()
+DA:439,2
+DA:440,2
+DA:441,2
+DA:442,2
+DA:443,2
+DA:444,2
+DA:446,2
+DA:448,2
+DA:449,2
+DA:450,2
+DA:451,2
+DA:454,2
+DA:457,1
+DA:459,2
+DA:461,1
+DA:463,1
+DA:465,2
+FN:466,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTodaysSales>d__18::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTodaysSales>d__18::MoveNext()
+DA:467,2
+DA:468,2
+DA:469,2
+DA:470,2
+DA:471,2
+DA:473,2
+DA:475,2
+DA:476,2
+DA:477,2
+DA:478,2
+DA:481,2
+DA:484,1
+DA:486,2
+DA:488,1
+DA:490,1
+DA:492,2
+FN:493,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTodaysSalesCountByHour>d__19::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTodaysSalesCountByHour>d__19::MoveNext()
+DA:494,2
+DA:495,2
+DA:496,2
+DA:497,2
+DA:498,2
+DA:500,2
+DA:502,2
+DA:503,2
+DA:504,2
+DA:505,2
+DA:508,2
+DA:511,1
+DA:513,2
+DA:515,1
+DA:517,1
+DA:519,2
+FN:520,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTodaysSalesValueByHour>d__20::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTodaysSalesValueByHour>d__20::MoveNext()
+DA:521,2
+DA:522,2
+DA:523,2
+DA:524,2
+DA:525,2
+DA:527,2
+DA:529,2
+DA:530,2
+DA:531,2
+DA:532,2
+DA:535,2
+DA:538,1
+DA:540,2
+DA:542,1
+DA:544,1
+DA:546,2
+FN:547,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTodaysSettlement>d__21::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTodaysSettlement>d__21::MoveNext()
+DA:548,2
+DA:549,2
+DA:550,2
+DA:551,2
+DA:552,2
+DA:554,2
+DA:556,2
+DA:557,2
+DA:558,2
+DA:559,2
+DA:562,2
+DA:565,1
+DA:567,2
+DA:569,1
+DA:571,1
+DA:573,2
+FN:574,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTopBottomMerchantData>d__22::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTopBottomMerchantData>d__22::MoveNext()
+DA:575,2
+DA:576,2
+DA:578,2
+DA:579,2
+DA:580,2
+DA:581,2
+DA:584,2
+DA:587,1
+DA:589,2
+DA:591,1
+DA:593,1
+DA:595,2
+FN:596,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTopBottomOperatorData>d__23::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTopBottomOperatorData>d__23::MoveNext()
+DA:597,2
+DA:598,2
+DA:600,2
+DA:601,2
+DA:602,2
+DA:603,2
+DA:606,2
+DA:609,1
+DA:611,2
+DA:613,1
+DA:615,1
+DA:617,2
+FN:618,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTopBottomProductData>d__24::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetTopBottomProductData>d__24::MoveNext()
+DA:619,2
+DA:620,2
+DA:622,2
+DA:623,2
+DA:624,2
+DA:625,2
+DA:628,2
+DA:631,1
+DA:633,2
+DA:635,1
+DA:637,1
+DA:639,2
+FN:323,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetUnsettledFees>d__13::MoveNext()
+FNDA:2,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<GetUnsettledFees>d__13::MoveNext()
+DA:324,2
+DA:325,2
+DA:326,2
+DA:327,2
+DA:328,2
+DA:329,2
+DA:330,2
+DA:331,2
+DA:332,2
+DA:333,2
+DA:334,2
+DA:335,2
+DA:336,2
+DA:337,2
+DA:338,2
+DA:339,2
+DA:340,2
+DA:341,2
+DA:342,2
+DA:344,2
+DA:347,2
+DA:350,2
+DA:351,2
+DA:352,2
+DA:353,2
+DA:356,2
+DA:359,1
+DA:361,1
+DA:362,1
+DA:364,1
+DA:366,1
+DA:369,2
+BRDA:328,145,0,2
+BRDA:328,145,1,2
+BRDA:333,215,0,2
+BRDA:333,215,1,2
+BRDA:338,285,0,2
+BRDA:338,285,1,2
+FN:68,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<ProcessResponse>d__3`1::MoveNext()
+FNDA:26,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<ProcessResponse>d__3`1::MoveNext()
+DA:69,26
+DA:70,26
+DA:71,26
+DA:72,1
+DA:74,25
+DA:76,25
+DA:77,26
+BRDA:71,167,0,1
+BRDA:71,167,1,25
+FN:280,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<TransactionSearch>d__12::MoveNext()
+FNDA:5,System.Void EstateReportingAPI.Client.EstateReportingApiClient/<TransactionSearch>d__12::MoveNext()
+DA:281,5
+DA:282,5
+DA:283,6
+DA:284,1
+DA:285,1
+DA:286,5
+DA:287,1
+DA:288,1
+DA:289,1
+DA:290,5
+DA:291,1
+DA:292,1
+DA:293,1
+DA:294,5
+DA:295,1
+DA:296,1
+DA:297,1
+DA:299,5
+DA:302,5
+DA:303,5
+DA:304,5
+DA:305,5
+DA:307,5
+DA:310,5
+DA:313,4
+DA:315,1
+DA:316,1
+DA:318,1
+DA:320,1
+DA:322,5
+BRDA:283,43,0,1
+BRDA:283,43,1,5
+BRDA:286,94,0,1
+BRDA:286,94,1,5
+BRDA:290,147,0,1
+BRDA:290,147,1,5
+BRDA:294,200,0,1
+BRDA:294,200,1,5
+LF:398
+LH:398
+BRF:34
+BRH:34
+FNF:33
+FNH:33
+end_of_record
