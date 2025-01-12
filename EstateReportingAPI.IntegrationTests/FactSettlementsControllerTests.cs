@@ -22,6 +22,7 @@ namespace EstateReportingAPI.IntegrationTests {
 
         protected override async Task SetupStandingData() {
             await helper.AddCalendarYear(2024);
+            await helper.AddCalendarYear(2025);
 
             // Estates
             await helper.AddEstate("Test Estate", "Ref1");
