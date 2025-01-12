@@ -12,7 +12,7 @@
 	  <PackageReference Include="EstateManagement.Database" Version="2024.8.2-build128" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.3" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.0" />
-    <PackageReference Include="Shared.Results" Version="2024.11.4" />
+    <PackageReference Include="Shared.Results" Version="2025.1.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
@@ -20,7 +20,7 @@
 		<PackageReference Include="Lamar" Version="13.0.3" />
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="13.0.3" />
 		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
-		<PackageReference Include="Shared" Version="2024.11.4" />
+		<PackageReference Include="Shared" Version="2025.1.2" />
 		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="8.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.0" />
