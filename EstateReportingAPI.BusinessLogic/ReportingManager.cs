@@ -1,20 +1,15 @@
-﻿namespace EstateReportingAPI.BusinessLogic{
-    using System.Data.Common;
-    using EstateManagement.Database.Contexts;
-    using EstateManagement.Database.Entities;
+﻿using TransactionProcessor.Database.Contexts;
+using TransactionProcessor.Database.Entities;
+using TransactionProcessor.Database.Entities.Summary;
+
+namespace EstateReportingAPI.BusinessLogic{
     using Microsoft.EntityFrameworkCore;
     using Models;
-    using Shared.Exceptions;
     using System.Linq;
-    using System.Linq.Dynamic.Core;
-    using System.Linq.Expressions;
     using System.Threading;
     using Calendar = Models.Calendar;
     using Merchant = Models.Merchant;
-    using System.Linq.Expressions;
-    using System.Reflection;
     using Operator = Models.Operator;
-    using EstateManagement.Database.Entities.Summary;
 
     public class ReportingManager : IReportingManager{
         #region Fields
@@ -141,10 +136,10 @@
 
             DateTime startOfYear = new DateTime(DateTime.Now.Year, 1, 1);
 
-            List<EstateManagement.Database.Entities.Calendar> entities = context.Calendar.Where(c => c.Date >= startOfYear && c.Date < DateTime.Now.Date.AddDays(-1)).OrderByDescending(d => d.Date).ToList();
+            List<TransactionProcessor.Database.Entities.Calendar> entities = context.Calendar.Where(c => c.Date >= startOfYear && c.Date < DateTime.Now.Date.AddDays(-1)).OrderByDescending(d => d.Date).ToList();
 
             List<Calendar> result = new List<Calendar>();
-            foreach (EstateManagement.Database.Entities.Calendar calendar in entities){
+            foreach (TransactionProcessor.Database.Entities.Calendar calendar in entities){
                 result.Add(new Calendar{
                                            Date = calendar.Date,
                                            DayOfWeek = calendar.DayOfWeek,
@@ -166,10 +161,10 @@
         public async Task<List<Calendar>> GetCalendarDates(Guid estateId, CancellationToken cancellationToken){
             EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
-            List<EstateManagement.Database.Entities.Calendar> entities = context.Calendar.Where(c => c.Date <= DateTime.Now.Date).ToList();
+            List<TransactionProcessor.Database.Entities.Calendar> entities = context.Calendar.Where(c => c.Date <= DateTime.Now.Date).ToList();
 
             List<Calendar> result = new List<Calendar>();
-            foreach (EstateManagement.Database.Entities.Calendar calendar in entities){
+            foreach (TransactionProcessor.Database.Entities.Calendar calendar in entities){
                 result.Add(new Calendar{
                                            Date = calendar.Date,
                                            DayOfWeek = calendar.DayOfWeek,
