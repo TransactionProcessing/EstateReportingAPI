@@ -8,17 +8,13 @@ using System.Threading.Tasks;
 using JasperFx.Core;
 using Microsoft.Data.SqlClient;
 using Shared.Logger;
+using TransactionProcessor.Database.Contexts;
+using TransactionProcessor.Database.Entities;
 
 namespace EstateReportingAPI.IntegrationTests;
 
 using System.Reflection;
 using System.Text;
-using System.Xml.Linq;
-using EstateManagement.Database.Contexts;
-using EstateManagement.Database.Entities;
-using EstateManagement.Database.Migrations.MySql;
-using k8s.KubeConfigModels;
-using Microsoft.AspNetCore.Html;
 using Microsoft.EntityFrameworkCore;
 
 public class DatabaseHelper{
@@ -64,7 +60,7 @@ public class DatabaseHelper{
 
     public async Task AddCalendarDates(List<DateTime> dates){
         foreach (DateTime dateTime in dates){
-            EstateManagement.Database.Entities.Calendar c = dateTime.ToCalendar();
+            Calendar c = dateTime.ToCalendar();
             await this.Context.Calendar.AddAsync(c);
         }
 

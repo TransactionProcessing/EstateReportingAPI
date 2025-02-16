@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using EstateManagement.Database.Entities;
 using SimpleResults;
+using TransactionProcessor.Database.Contexts;
+using TransactionProcessor.Database.Entities;
 
 namespace EstateReportingAPI.IntegrationTests;
 
@@ -15,8 +16,6 @@ using Client;
 using Common;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
-using EstateManagement.Database.Contexts;
-using Newtonsoft.Json;
 using NLog;
 using Shared.IntegrationTesting;
 using Shared.Logger;

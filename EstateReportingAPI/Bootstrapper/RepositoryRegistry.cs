@@ -1,8 +1,9 @@
-﻿namespace EstateReportingAPI.Bootstrapper;
+﻿using TransactionProcessor.Database.Contexts;
+
+namespace EstateReportingAPI.Bootstrapper;
 
 using BusinessLogic;
 using Common;
-using EstateManagement.Database.Contexts;
 using Lamar;
 using Shared.EntityFramework;
 using Shared.EntityFramework.ConnectionStringConfiguration;
