@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SimpleResults;
+using TransactionProcessor.Database.Contexts;
 
 namespace EstateReportingAPI.IntegrationTests;
 
-using EstateManagement.Database.Contexts;
 using EstateReportingAPI.DataTrasferObjects;
 using Shouldly;
 using Xunit;

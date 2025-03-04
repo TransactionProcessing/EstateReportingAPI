@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Ductus.FluentDocker.Common;
 using EstateReportingAPI.IntegrationTests;
 using Microsoft.EntityFrameworkCore;
+using TransactionProcessor.Database.Contexts;
+using TransactionProcessor.Database.Entities;
 using Xunit.Abstractions;
 
 namespace EstateReportingAPI.IntegrationTests;
@@ -13,8 +15,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using DataTrasferObjects;
-using EstateManagement.Database.Contexts;
-using EstateManagement.Database.Entities;
 using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.Models;
 using Microsoft.OpenApi.Services;

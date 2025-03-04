@@ -1,22 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Calendar = TransactionProcessor.Database.Entities.Calendar;
 
 namespace EstateReportingAPI.IntegrationTests
 {
-    using BusinessLogic;
-    using EstateManagement.Database.Entities;
-    using EstateReportingAPI.Common;
-    using Microsoft.Extensions.DependencyInjection;
-    using Shared.EntityFramework;
-    using System.Globalization;
-    using Calendar = System.Globalization.Calendar;
-
     public static class Extensions{
-        public static EstateManagement.Database.Entities.Calendar ToCalendar(this DateTime date){
-            return new EstateManagement.Database.Entities.Calendar{
+        public static Calendar ToCalendar(this DateTime date){
+            return new Calendar{
                                    Date = date,
                                    DayOfWeek = date.DayOfWeek.ToString(),
                                    DayOfWeekShort = date.DayOfWeek.ToString().Substring(0, 3),
@@ -33,7 +27,7 @@ namespace EstateReportingAPI.IntegrationTests
 
         public static Int32 GetWeekNumber(this DateTime date){
             // Define the calendar to use (in this case, the Gregorian calendar)
-            Calendar calendar = CultureInfo.InvariantCulture.Calendar;
+            System.Globalization.Calendar calendar = CultureInfo.InvariantCulture.Calendar;
 
             // Get the week number for the current date
             int weekNumber = calendar.GetWeekOfYear(date, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
@@ -43,7 +37,7 @@ namespace EstateReportingAPI.IntegrationTests
         public static Int32 GetDayOfWeekNumber(this DateTime date)
         {
             // Define the calendar to use (in this case, the Gregorian calendar)
-            Calendar calendar = CultureInfo.InvariantCulture.Calendar;
+            System.Globalization.Calendar calendar = CultureInfo.InvariantCulture.Calendar;
 
             // Get the week number for the current date
             int dayOfWeekNumber = (Int32)calendar.GetDayOfWeek(date);

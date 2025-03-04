@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Shared.Repositories;
+using TransactionProcessor.Database.Contexts;
 
 namespace EstateReportingAPI.IntegrationTests;
 
 using BusinessLogic;
-using EstateManagement.Database.Contexts;
 using EstateReportingAPI.Common;
 using k8s.KubeConfigModels;
 using Microsoft.AspNetCore.Authentication;

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using TransactionProcessor.Database.Contexts;
+using TransactionProcessor.Database.Entities;
 
 namespace EstateReportingAPI.IntegrationTests {
-    using EstateManagement.Database.Contexts;
-    using EstateManagement.Database.Entities;
     using EstateReportingAPI.DataTransferObjects;
     using Microsoft.EntityFrameworkCore;
     using Shouldly;
