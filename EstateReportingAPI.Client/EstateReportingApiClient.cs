@@ -18,11 +18,6 @@ namespace EstateReportingAPI.Client{
     using Microsoft.AspNetCore.Http;
     using Newtonsoft.Json;
 
-    internal class ResponseData<T>
-    {
-        public T Data { get; set; }
-    }
-
     public class EstateReportingApiClient : ClientProxyBase, IEstateReportingApiClient{
         #region Fields
 
@@ -54,9 +49,17 @@ namespace EstateReportingAPI.Client{
 
                 // Make the Http Call here
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
+                
                 // Process the response
-                return await ProcessResponse<List<CalendarDate>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<CalendarDate>> responseData = this.HandleResponseContent<List<CalendarDate>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -64,16 +67,6 @@ namespace EstateReportingAPI.Client{
 
                 return Result.Failure(exception.Message);
             }
-        }
-        
-        private async Task<Result<T>> ProcessResponse<T>(HttpResponseMessage httpResponse, CancellationToken cancellationToken) {
-            Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
-            if (result.IsFailed)
-                return ResultHelpers.CreateFailure(result);
-
-            ResponseData<T> response = JsonConvert.DeserializeObject<ResponseData<T>>(result.Data);
-
-            return Result.Success(response.Data);
         }
 
         public async Task<Result<List<CalendarYear>>> GetCalendarYears(String accessToken, Guid estateId, CancellationToken cancellationToken){
@@ -89,7 +82,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<CalendarYear>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<CalendarYear>> responseData = this.HandleResponseContent<List<CalendarYear>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -111,7 +112,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<ComparisonDate>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<ComparisonDate>> responseData = this.HandleResponseContent<List<ComparisonDate>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -135,7 +144,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<LastSettlement>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<LastSettlement> responseData = this.HandleResponseContent<LastSettlement>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -160,7 +177,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<ResponseCode>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<ResponseCode>> responseData = this.HandleResponseContent<List<ResponseCode>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch (Exception ex)
             {
@@ -188,7 +213,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<TodaysSales>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<TodaysSales> responseData = this.HandleResponseContent<TodaysSales>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch (Exception ex)
             {
@@ -215,7 +248,16 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<TodaysSales>(httpResponse, cancellationToken);
+                // Process the response
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<TodaysSales> responseData = this.HandleResponseContent<TodaysSales>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch (Exception ex)
             {
@@ -240,7 +282,16 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<Merchant>>(httpResponse, cancellationToken);
+                // Process the response
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<Merchant>> responseData = this.HandleResponseContent<List<Merchant>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch (Exception ex)
             {
@@ -267,7 +318,16 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<TodaysSales>(httpResponse, cancellationToken);
+                // Process the response
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<TodaysSales> responseData = this.HandleResponseContent<TodaysSales>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch (Exception ex)
             {
@@ -310,7 +370,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<TransactionResult>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<TransactionResult>> responseData = this.HandleResponseContent<List<TransactionResult>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch (Exception ex)
             {
@@ -356,7 +424,16 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<UnsettledFee>>(httpResponse, cancellationToken);
+                // Process the response
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<UnsettledFee>> responseData = this.HandleResponseContent<List<UnsettledFee>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch (Exception ex)
             {
@@ -380,7 +457,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<MerchantKpi>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<MerchantKpi> responseData = this.HandleResponseContent<MerchantKpi>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -403,7 +488,16 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<Merchant>>(httpResponse, cancellationToken);
+                // Process the response
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<Merchant>> responseData = this.HandleResponseContent<List<Merchant>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -426,7 +520,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<Operator>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<Operator>> responseData = this.HandleResponseContent<List<Operator>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -454,7 +556,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<TodaysSales>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<TodaysSales> responseData = this.HandleResponseContent<TodaysSales>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch (Exception ex) {
                 // An exception has occurred, add some additional information to the message
@@ -481,7 +591,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<TodaysSales>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<TodaysSales> responseData = this.HandleResponseContent<TodaysSales>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -508,7 +626,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<TodaysSalesCountByHour>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<TodaysSalesCountByHour>> responseData = this.HandleResponseContent<List<TodaysSalesCountByHour>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -535,7 +661,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<TodaysSalesValueByHour>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<TodaysSalesValueByHour>> responseData = this.HandleResponseContent<List<TodaysSalesValueByHour>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -562,7 +696,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<TodaysSettlement>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<TodaysSettlement> responseData = this.HandleResponseContent<TodaysSettlement>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -584,7 +726,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<TopBottomMerchantData>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<TopBottomMerchantData>> responseData = this.HandleResponseContent<List<TopBottomMerchantData>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -606,7 +756,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<TopBottomOperatorData>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<TopBottomOperatorData>> responseData = this.HandleResponseContent<List<TopBottomOperatorData>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -628,7 +786,15 @@ namespace EstateReportingAPI.Client{
                 HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
 
                 // Process the response
-                return await ProcessResponse<List<TopBottomProductData>>(httpResponse, cancellationToken);
+                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+
+                if (result.IsFailed)
+                    return ResultHelpers.CreateFailure(result);
+
+                // call was successful so now deserialise the body to the response object
+                ResponseData<List<TopBottomProductData>> responseData = this.HandleResponseContent<List<TopBottomProductData>>(result.Data);
+
+                return Result.Success(responseData.Data);
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
