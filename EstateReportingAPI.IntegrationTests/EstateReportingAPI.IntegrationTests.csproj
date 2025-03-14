@@ -7,28 +7,28 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="TransactionProcessor.Database" Version="2025.1.5-build147" />
-	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.3" />
-	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
-    <PackageReference Include="xunit" Version="2.7.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7">
+	  <PackageReference Include="TransactionProcessor.Database" Version="2025.2.10" />
+	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.14" />
+	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.0.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-	  <PackageReference Include="coverlet.msbuild" Version="6.0.2">
+	  <PackageReference Include="coverlet.msbuild" Version="6.0.4">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
-    <PackageReference Include="Shouldly" Version="4.2.1" />
-	  <PackageReference Include="Shared" Version="2025.1.2" />
-    <PackageReference Include="Shared.IntegrationTesting" Version="2025.1.2" />
+    <PackageReference Include="Shouldly" Version="4.3.0" />
+	  <PackageReference Include="Shared" Version="2025.3.1" />
+    <PackageReference Include="Shared.IntegrationTesting" Version="2025.3.1" />
     <PackageReference Include="Ductus.FluentDocker" Version="2.10.59" />
-	  <PackageReference Include="NLog" Version="5.2.8" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
+	  <PackageReference Include="NLog" Version="5.4.0" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.4.0" />
     <PackageReference Include="SecurityService.Client" Version="2025.1.1" />
-	  <PackageReference Include="Lamar" Version="13.0.3" />
-	  <PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="13.0.3" />
+	  <PackageReference Include="Lamar" Version="14.0.1" />
+	  <PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="14.0.1" />
 
   </ItemGroup>
 
