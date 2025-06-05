@@ -4,6 +4,7 @@ using EstateReportingAPI.BusinessLogic.Queries;
 using JasperFx.Core;
 using MediatR;
 using Shared.Results;
+using Shared.Results.Web;
 
 namespace EstateReportingAPI.Controllers{
     using DataTransferObjects;

@@ -1310,7 +1310,8 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             var comparisonDateTransactions = new List<Transaction>();
             DatabaseHelper helper = new DatabaseHelper(context);
             // TODO: make counts dynamic
-            DateTime todaysDateTime = DateTime.Now;
+            DateTime todaysDateTime = DateTime.Now.Date;
+            todaysDateTime = todaysDateTime.AddHours(12).AddMinutes(30);
 
             Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 3 }, { "Test Merchant 2", 6 }, { "Test Merchant 3", 2 }, { "Test Merchant 4", 0 } };
 
@@ -1338,7 +1339,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
                     foreach ((Guid productId, String productName, Decimal? productValue) product in productList) {
                         var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
                         for (int i = 0; i < transactionCount; i++) {
-                            Transaction transaction = await helper.BuildTransactionX(comparisonDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
+                            Transaction transaction = await helper.BuildTransactionX(comparisonDate.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
                             comparisonDateTransactions.Add(transaction);
                         }
                     }

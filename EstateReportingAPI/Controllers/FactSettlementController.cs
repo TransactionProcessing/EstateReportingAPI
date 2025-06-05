@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics.CodeAnalysis;
 using EstateReportingAPI.BusinessLogic.Queries;
+using Shared.Results.Web;
 
 namespace EstateReportingAPI.Controllers
 {
