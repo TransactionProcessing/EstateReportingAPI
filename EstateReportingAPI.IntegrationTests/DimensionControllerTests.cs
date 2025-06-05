@@ -40,8 +40,9 @@ public class DimensionsControllerTests : ControllerTestsBase
             await helper.AddCalendarYear(year);
         }
 
-        List<CalendarYear> years = await ApiClient.GetCalendarYears(string.Empty, Guid.NewGuid(), CancellationToken.None);
-
+        var result = await ApiClient.GetCalendarYears(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var years = result.Data;
         years.ShouldNotBeNull();
         years.Count.ShouldBe(yearList.Count);
     }
@@ -52,9 +53,10 @@ public class DimensionsControllerTests : ControllerTestsBase
         List<DateTime> datesInYear = helper.GetDatesForYear(DateTime.Now.Year);
         await helper.AddCalendarDates(datesInYear);
 
-        List<ComparisonDate> dates = await ApiClient.GetComparisonDates(string.Empty, Guid.NewGuid(), CancellationToken.None);
-
-        List<DateTime> expectedDates = datesInYear.Where(d => d <= DateTime.Now.Date.AddDays(-1)).ToList();
+        Result<List<ComparisonDate>> result = await ApiClient.GetComparisonDates(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        List<ComparisonDate> dates = result.Data;
+        List <DateTime> expectedDates = datesInYear.Where(d => d <= DateTime.Now.Date.AddDays(-1)).ToList();
         int expectedCount = expectedDates.Count + 2;
         dates.ShouldNotBeNull();
         dates.Count.ShouldBe(expectedCount);

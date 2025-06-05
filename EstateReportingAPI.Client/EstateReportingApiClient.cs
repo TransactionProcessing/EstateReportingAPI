@@ -15,7 +15,6 @@ namespace EstateReportingAPI.Client{
     using ClientProxyBase;
     using DataTransferObjects;
     using DataTrasferObjects;
-    using Microsoft.AspNetCore.Http;
     using Newtonsoft.Json;
 
     public class EstateReportingApiClient : ClientProxyBase, IEstateReportingApiClient{

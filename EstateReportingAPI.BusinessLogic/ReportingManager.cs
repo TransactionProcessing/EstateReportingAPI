@@ -324,10 +324,10 @@ namespace EstateReportingAPI.BusinessLogic{
             TodaysSales response = new TodaysSales{
                                                       ComparisonSalesCount = comparisonSales.Count,
                                                       ComparisonSalesValue = comparisonSales.Sum(),
-                                                      ComparisonAverageSalesValue = comparisonSales.Sum() / comparisonSales.Count,
+                                                      ComparisonAverageSalesValue = SafeDivide(comparisonSales.Sum(),comparisonSales.Count),
                                                       TodaysSalesCount = todaysSales.Count,
                                                       TodaysSalesValue = todaysSales.Sum(),
-                                                      TodaysAverageSalesValue = todaysSales.Sum() / todaysSales.Count
+                                                      TodaysAverageSalesValue = SafeDivide(todaysSales.Sum(),todaysSales.Count)
             };
             return response;
         }
