@@ -107,7 +107,7 @@ jobs:
       - name: Unzip the files
         run: |
           sudo mkdir -p /opt/txnproc/transactionprocessing/estatereportingapi
-          sudo unzip -o /tmp/securityservice/estatereportingapi.zip -d /opt/txnproc/transactionprocessing/estatereportingapi
+          sudo unzip -o /tmp/estatereportingapi/estatereportingapi.zip -d /opt/txnproc/transactionprocessing/estatereportingapi
   
       # IMPORTANT: Add a step to ensure the .NET runtime is installed on the server
       # This assumes it's not already there. If your base image already has it, you can skip this.
