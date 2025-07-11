@@ -1,5 +1,4 @@
 ﻿using Microsoft.Data.SqlClient;
-using MySqlConnector;
 using Shared.General;
 using Shared.Repositories;
 using System.Data.Common;
