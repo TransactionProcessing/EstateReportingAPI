@@ -35,20 +35,10 @@ public class RepositoryRegistry : ServiceRegistry{
             this.AddSingleton<IReportingManager, ReportingManager>();
         }
 
-        this.AddSingleton<IDbContextFactory<EstateManagementGenericContext>, DbContextFactory<EstateManagementGenericContext>>();
+        this.AddSingleton<IDbContextFactory<EstateManagementContext>, DbContextFactory<EstateManagementContext>>();
 
-        this.AddSingleton<Func<String, EstateManagementGenericContext>>(cont => connectionString =>
-                                                                                {
-                                                                                    String databaseEngine =
-                                                                                        ConfigurationReader.GetValue("AppSettings", "DatabaseEngine");
-
-                                                                                    return databaseEngine switch
-                                                                                    {
-                                                                                        "MySql" => new EstateManagementMySqlContext(connectionString),
-                                                                                        "SqlServer" => new EstateManagementSqlServerContext(connectionString),
-                                                                                        _ => throw new
-                                                                                            NotSupportedException($"Unsupported Database Engine {databaseEngine}")
-                                                                                    };
-                                                                                });
+        this.AddSingleton<Func<String, EstateManagementContext>>(cont => connectionString => {
+            return new EstateManagementContext(connectionString);
+        });
     }
 }

@@ -14,7 +14,7 @@ namespace EstateReportingAPI.BusinessLogic{
     public class ReportingManager : IReportingManager{
         #region Fields
 
-        private readonly Shared.EntityFramework.IDbContextFactory<EstateManagementGenericContext> ContextFactory;
+        private readonly Shared.EntityFramework.IDbContextFactory<EstateManagementContext> ContextFactory;
 
         private Guid Id;
 
@@ -22,7 +22,7 @@ namespace EstateReportingAPI.BusinessLogic{
 
         #region Constructors
 
-        public ReportingManager(Shared.EntityFramework.IDbContextFactory<EstateManagementGenericContext> contextFactory){
+        public ReportingManager(Shared.EntityFramework.IDbContextFactory<EstateManagementContext> contextFactory){
             this.ContextFactory = contextFactory;
         }
 
@@ -31,8 +31,8 @@ namespace EstateReportingAPI.BusinessLogic{
         #region Methods
 
         public async Task<List<UnsettledFee>> GetUnsettledFees(Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption? groupByOption, CancellationToken cancellationToken){
-            
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             var fees = (from merchantSettlementFee in context.MerchantSettlementFees
                         join transaction in context.Transactions
@@ -132,7 +132,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<List<Calendar>> GetCalendarComparisonDates(Guid estateId, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             DateTime startOfYear = new DateTime(DateTime.Now.Year, 1, 1);
 
@@ -159,7 +159,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<List<Calendar>> GetCalendarDates(Guid estateId, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             List<TransactionProcessor.Database.Entities.Calendar> entities = context.Calendar.Where(c => c.Date <= DateTime.Now.Date).ToList();
 
@@ -184,7 +184,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<List<Int32>> GetCalendarYears(Guid estateId, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
             
             List<Int32> years = context.Calendar.Where(c => c.Date <= DateTime.Now.Date).GroupBy(c => c.Year).Select(y => y.Key).ToList();
 
@@ -192,7 +192,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<LastSettlement> GetLastSettlement(Guid estateId, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             DateTime settlementDate = await context.SettlementSummary.Where(s => s.IsCompleted).OrderByDescending(s => s.SettlementDate).Select(s => s.SettlementDate).FirstOrDefaultAsync(cancellationToken);
 
@@ -217,7 +217,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<MerchantKpi> GetMerchantsTransactionKpis(Guid estateId, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             Int32 merchantsWithSaleInLastHour = (from m in context.Merchants
                                                  where m.LastSaleDate == DateTime.Now.Date
@@ -242,7 +242,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<List<Merchant>> GetMerchantsByLastSale(Guid estateId, DateTime startDateTime, DateTime endDateTime, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             List<Merchant> response = new();
 
@@ -292,7 +292,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<List<ResponseCode>> GetResponseCodes(Guid estateId, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
             List<ResponseCode> response = new List<ResponseCode>();
             
             List<ResponseCodes> responseCodes = await context.ResponseCodes.ToListAsync(cancellationToken);
@@ -306,7 +306,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<TodaysSales> GetTodaysFailedSales(Guid estateId, DateTime comparisonDate, String responseCode, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             List<decimal> todaysSales = await (from t in context.TodayTransactions
                                         where t.IsAuthorised == false 
@@ -332,8 +332,8 @@ namespace EstateReportingAPI.BusinessLogic{
             return response;
         }
 
-        private async Task<IQueryable<TodayTransaction>> GetTodaysSales(EstateManagementGenericContext context,
-            Int32 merchantReportingId, Int32 operatorReportingId, CancellationToken cancellationToken){
+        private async Task<IQueryable<TodayTransaction>> GetTodaysSales(EstateManagementContext context,
+                                                                        Int32 merchantReportingId, Int32 operatorReportingId, CancellationToken cancellationToken){
                 var salesForDate = (from t in context.TodayTransactions
                                     where t.IsAuthorised && t.TransactionType == "Sale"
                                                          && t.TransactionDate == DateTime.Now.Date
@@ -352,10 +352,10 @@ namespace EstateReportingAPI.BusinessLogic{
             return salesForDate;
         }
 
-        private async Task<IQueryable<TransactionHistory>> GetSalesForDate(EstateManagementGenericContext context,
-                                                                    DateTime queryDate,
-                                                                    Int32 merchantReportingId, Int32 operatorReportingId,
-                                                                    CancellationToken cancellationToken)
+        private async Task<IQueryable<TransactionHistory>> GetSalesForDate(EstateManagementContext context,
+                                                                           DateTime queryDate,
+                                                                           Int32 merchantReportingId, Int32 operatorReportingId,
+                                                                           CancellationToken cancellationToken)
         {
             var salesForDate = (from t in context.TransactionHistory
                                 where t.IsAuthorised && t.TransactionType == "Sale"
@@ -377,7 +377,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<TodaysSales> GetTodaysSales(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantReportingId, operatorReportingId, cancellationToken);
             IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId, cancellationToken);
@@ -399,7 +399,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantReportingId, operatorReportingId, cancellationToken);
             IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId, cancellationToken);
@@ -435,7 +435,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantReportingId, operatorReportingId, cancellationToken);
             IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId, cancellationToken);
@@ -472,7 +472,7 @@ namespace EstateReportingAPI.BusinessLogic{
             return response;
         }
 
-        private async Task<IQueryable<MerchantSettlementFee>> GetSettlementDataForDate(EstateManagementGenericContext context, Int32 merchantReportingId, Int32 operatorReportingId, DateTime queryDate, CancellationToken cancellationToken)
+        private async Task<IQueryable<MerchantSettlementFee>> GetSettlementDataForDate(EstateManagementContext context, Int32 merchantReportingId, Int32 operatorReportingId, DateTime queryDate, CancellationToken cancellationToken)
         {
             if (queryDate.Date == DateTime.Today.Date)
             {
@@ -498,7 +498,7 @@ namespace EstateReportingAPI.BusinessLogic{
             return settlementData.AsQueryable().Select(s => s.Fees);
         }
 
-        private async Task<IQueryable<MerchantSettlementFee>> GetTodaysSettlement(EstateManagementGenericContext? context, Int32 merchantReportingId, Int32 operatorReportingId, CancellationToken cancellationToken)
+        private async Task<IQueryable<MerchantSettlementFee>> GetTodaysSettlement(EstateManagementContext? context, Int32 merchantReportingId, Int32 operatorReportingId, CancellationToken cancellationToken)
         {
             var settlementData = (from s in context.Settlements
                                   join f in context.MerchantSettlementFees on s.SettlementId equals f.SettlementId
@@ -520,7 +520,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<TodaysSettlement> GetTodaysSettlement(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             IQueryable<MerchantSettlementFee> todaySettlementData = await GetTodaysSettlement(context, merchantReportingId, operatorReportingId, cancellationToken);
             IQueryable<MerchantSettlementFee> comparisonSettlementData = await GetSettlementDataForDate(context, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
@@ -560,7 +560,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<List<TopBottomData>> GetTopBottomData(Guid estateId, TopBottom direction, Int32 resultCount, Dimension dimension, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             IQueryable<TodayTransaction> mainQuery = context.TodayTransactions
                 .Where(joined => joined.IsAuthorised == true
@@ -642,7 +642,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<TodaysSales> GetMerchantPerformance(Guid estateId, DateTime comparisonDate, List<Int32> merchantReportingIds, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             // First we need to get a value of todays sales
             var todaysSalesQuery = (from t in context.TodayTransactions
@@ -700,7 +700,7 @@ namespace EstateReportingAPI.BusinessLogic{
 
         public async Task<TodaysSales> GetProductPerformance(Guid estateId, DateTime comparisonDate, List<Int32> productReportingIds, CancellationToken cancellationToken)
         {
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             // First we need to get a value of todays sales
             var todaysSalesQuery = (from t in context.TodayTransactions
@@ -738,7 +738,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<TodaysSales> GetOperatorPerformance(Guid estateId, DateTime comparisonDate, List<Int32> operatorReportingIds, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             // First we need to get a value of todays sales
             var todaysSalesQuery = (from t in context.TodayTransactions
@@ -777,7 +777,7 @@ namespace EstateReportingAPI.BusinessLogic{
 
         public async Task<List<TransactionResult>> TransactionSearch(Guid estateId, TransactionSearchRequest searchRequest, PagingRequest pagingRequest, SortingRequest sortingRequest, CancellationToken cancellationToken){
             // Base query before any filtering is added
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             var mainQuery = (from txn in context.Transactions
                              join merchant in context.Merchants on txn.MerchantId equals merchant.MerchantId
@@ -875,7 +875,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
         
         public async Task<List<Merchant>> GetMerchants(Guid estateId, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             var merchants = context.Merchants
                                                     .Select(m => new
@@ -931,7 +931,7 @@ namespace EstateReportingAPI.BusinessLogic{
         }
 
         public async Task<List<Operator>> GetOperators(Guid estateId, CancellationToken cancellationToken){
-            EstateManagementGenericContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
+            EstateManagementContext? context = await this.ContextFactory.GetContext(estateId, ReportingManager.ConnectionStringIdentifier, cancellationToken);
 
             List<Operator> operators = await (from o in context.Operators
                                               select new Operator

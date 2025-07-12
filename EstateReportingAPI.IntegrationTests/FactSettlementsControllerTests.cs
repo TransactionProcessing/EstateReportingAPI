@@ -297,7 +297,7 @@ namespace EstateReportingAPI.IntegrationTests {
 
         [Fact]
         public async Task FactSettlementsController_LastSettlement_SettlementReturned() {
-            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -341,7 +341,7 @@ namespace EstateReportingAPI.IntegrationTests {
 
         [Fact]
         public async Task FactSettlementsController_LastSettlement_NoSettlementRecords_SettlementReturned() {
-            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -355,7 +355,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByOperator_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -407,7 +407,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByOperator_OperatorFilter_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -458,7 +458,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByMerchant_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -504,7 +504,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByMerchant_MerchantFilter_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -549,7 +549,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByProduct_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -609,7 +609,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByProduct_ProductFilter_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 

@@ -1305,7 +1305,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
 
         [Fact]
         public async Task FactTransactionsControllerController_TodaysFailedSales_SalesReturned() {
-            EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
             var todaysTransactions = new List<Transaction>();
             var comparisonDateTransactions = new List<Transaction>();
             DatabaseHelper helper = new DatabaseHelper(context);

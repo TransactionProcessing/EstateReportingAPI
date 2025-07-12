@@ -277,7 +277,7 @@ public class DimensionsControllerTests : ControllerTestsBase
 
     public void Dispose()
     {
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+        EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
         Console.WriteLine($"About to delete database EstateReportingReadModel{TestId.ToString()}");
         bool result = context.Database.EnsureDeleted();

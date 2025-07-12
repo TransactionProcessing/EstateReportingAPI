@@ -38,23 +38,11 @@ namespace EstateReportingAPI.Common
             databaseName = $"{connectionStringIdentifier}{externalIdentifier}";
             connectionString = ConfigurationReader.GetConnectionString(connectionStringIdentifier);
 
-            DbConnectionStringBuilder builder = null;
-
-            if (databaseEngine == "MySql")
+            DbConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString)
             {
-                builder = new MySqlConnectionStringBuilder(connectionString)
-                {
-                    Database = databaseName
-                };
-            }
-            else
-            {
-                // Default to SQL Server
-                builder = new SqlConnectionStringBuilder(connectionString)
-                {
-                    InitialCatalog = databaseName
-                };
-            }
+                InitialCatalog = databaseName
+            };
+        
 
             return builder.ToString();
         }
