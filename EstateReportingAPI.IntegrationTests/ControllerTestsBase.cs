@@ -42,7 +42,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         this.Client = this.factory.CreateClient();
         this.ApiClient = new EstateReportingApiClient((s) => "http://localhost", this.Client);
 
-        this.context = new EstateManagementSqlServerContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        this.context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
         this.helper = new DatabaseHelper(context);
         await this.helper.CreateStoredProcedures(CancellationToken.None);
@@ -53,7 +53,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     {
     }
 
-    protected EstateManagementGenericContext context;
+    protected EstateManagementContext context;
 
     protected abstract Task ClearStandingData();
     protected abstract Task SetupStandingData();
@@ -126,7 +126,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 
     public void Dispose()
     {
-        EstateManagementGenericContext context = new EstateManagementSqlServerContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        EstateManagementContext context = new EstateManagementContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
 
         Console.WriteLine($"About to delete database EstateReportingReadModel{this.TestId.ToString()}");
         Boolean result = context.Database.EnsureDeleted();

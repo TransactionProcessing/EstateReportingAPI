@@ -38,10 +38,10 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
     {
         builder.ConfigureServices(containerBuilder =>
         {
-            var context = new EstateManagementSqlServerContext(DatabaseConnectionString);
-            Func<string, EstateManagementGenericContext> f = connectionString => context;
+            var context = new EstateManagementContext(DatabaseConnectionString);
+            Func<string, EstateManagementContext> f = connectionString => context;
 
-            IDbContextFactory<EstateManagementGenericContext> factory = new DbContextFactory<EstateManagementGenericContext>(new TestConnectionStringConfigurationRepository(DatabaseConnectionString), f);
+            IDbContextFactory<EstateManagementContext> factory = new DbContextFactory<EstateManagementContext>(new TestConnectionStringConfigurationRepository(DatabaseConnectionString), f);
 
             IReportingManager manager = new ReportingManager(factory);
 

@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using EstateReportingAPI.Bootstrapper;
 using HealthChecks.UI.Client;
 using Lamar;
@@ -7,10 +6,13 @@ using NLog.Extensions.Logging;
 using Shared.Extensions;
 using Shared.General;
 using Shared.Logger;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EstateReportingAPI
 {
     using BusinessLogic;
+    using Shared.Middleware;
+
     [ExcludeFromCodeCoverage]
     public class Startup
     {
@@ -62,28 +64,18 @@ namespace EstateReportingAPI
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
-            string nlogConfigFilename = "nlog.config";
-
             if (env.IsDevelopment())
             {
-                var developmentNlogConfigFilename = "nlog.development.config";
-                if (File.Exists(Path.Combine(env.ContentRootPath, developmentNlogConfigFilename)))
-                {
-                    nlogConfigFilename = developmentNlogConfigFilename;
-                }
                 app.UseDeveloperExceptionPage();
             }
-
-            loggerFactory.ConfigureNLog(Path.Combine(env.ContentRootPath, nlogConfigFilename));
-            loggerFactory.AddNLog();
-
+            
             Microsoft.Extensions.Logging.ILogger logger = loggerFactory.CreateLogger("EstateManagement");
 
             Logger.Initialise(logger);
             Configuration.LogConfiguration(Logger.LogWarning);
 
             ConfigurationReader.Initialise(Configuration);
-
+            app.UseMiddleware<TenantMiddleware>();
             app.AddRequestLogging();
             app.AddResponseLogging();
             app.AddExceptionHandler();

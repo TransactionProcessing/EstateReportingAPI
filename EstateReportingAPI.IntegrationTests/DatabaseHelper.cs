@@ -18,9 +18,9 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 
 public class DatabaseHelper{
-    private readonly EstateManagementGenericContext Context;
+    private readonly EstateManagementContext Context;
 
-    public DatabaseHelper(EstateManagementGenericContext context){
+    public DatabaseHelper(EstateManagementContext context){
         this.Context = context;
     }
 
