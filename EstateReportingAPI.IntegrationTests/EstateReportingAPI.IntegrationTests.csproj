@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="TransactionProcessor.Database" Version="2025.7.2-build188" />
+	  <PackageReference Include="TransactionProcessor.Database" Version="2025.7.2-build189" />
 	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.5" />
 	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.7" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
@@ -21,13 +21,13 @@
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
     <PackageReference Include="Shouldly" Version="4.3.0" />
-	  <PackageReference Include="Shared" Version="2025.7.9" />
-	  <PackageReference Include="Shared.Logger" Version="2025.7.9" />
-    <PackageReference Include="Shared.IntegrationTesting" Version="2025.7.9" />
+	  <PackageReference Include="Shared" Version="2025.7.10" />
+	  <PackageReference Include="Shared.Logger" Version="2025.7.10" />
+    <PackageReference Include="Shared.IntegrationTesting" Version="2025.7.10" />
     <PackageReference Include="Ductus.FluentDocker" Version="2.10.59" />
 	  <PackageReference Include="NLog" Version="5.5.0" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.5.0" />
-    <PackageReference Include="SecurityService.Client" Version="2025.5.1" />
+    <PackageReference Include="SecurityService.Client" Version="2025.7.2-build89" />
 	  <PackageReference Include="Lamar" Version="15.0.0" />
 	  <PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.0" />
 

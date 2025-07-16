@@ -9,8 +9,8 @@
   <ItemGroup>
     <PackageReference Include="MediatR" Version="12.5.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="9.6.5" />
-    <PackageReference Include="Shared" Version="2025.7.9" />
-    <PackageReference Include="TransactionProcessor.Database" Version="2025.7.2-build188" />
+    <PackageReference Include="Shared" Version="2025.7.10" />
+    <PackageReference Include="TransactionProcessor.Database" Version="2025.7.2-build189" />
   </ItemGroup>
 
   <ItemGroup>
