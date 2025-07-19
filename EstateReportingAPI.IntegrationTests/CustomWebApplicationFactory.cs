@@ -53,11 +53,9 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
             var context = new EstateManagementContext(DatabaseConnectionString);
             Func<string, EstateManagementContext> f = connectionString => context;
 
-            //this.DbContextFactory = new Mock<IDbContextResolver<EstateManagementContext>>();
             containerBuilder.AddTransient<EstateManagementContext>(_ => context);
             var serviceProvider = containerBuilder.BuildServiceProvider();
-            //var scope = serviceProvider.CreateScope();
-
+            
             var inMemorySettings = new Dictionary<string, string>
             {
                 { "ConnectionStrings:TransactionProcessorReadModel", DatabaseConnectionString }
@@ -68,8 +66,6 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
                 .Build();
 
             IDbContextResolver<EstateManagementContext> resolver = new DbContextResolver<EstateManagementContext>(serviceProvider, configuration);
-            //IDbContextFactory<EstateManagementContext> factory = new DbContextFactory<EstateManagementContext>(new TestConnectionStringConfigurationRepository(DatabaseConnectionString), f);
-
             IReportingManager manager = new ReportingManager(resolver);
 
             containerBuilder.AddSingleton(manager);
@@ -84,33 +80,6 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
 
     }
 
-}
-
-public class TestConnectionStringConfigurationRepository : IConnectionStringConfigurationRepository
-{
-    private readonly string DbConnectionString;
-
-    public TestConnectionStringConfigurationRepository(String dbConnectionString)
-    {
-        DbConnectionString = dbConnectionString;
-    }
-    public Task DeleteConnectionStringConfiguration(string externalIdentifier, string connectionStringIdentifier,
-        CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<string> GetConnectionString(string externalIdentifier, string connectionStringIdentifier,
-        CancellationToken cancellationToken)
-    {
-        return DbConnectionString;
-    }
-
-    public Task CreateConnectionString(string externalIdentifier, string connectionStringIdentifier, string connectionString,
-        CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 }
 
 public class TestAuthHandlerOptions : AuthenticationSchemeOptions
