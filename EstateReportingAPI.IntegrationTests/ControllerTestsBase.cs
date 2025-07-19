@@ -36,13 +36,13 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 
         await this.StartSqlContainer();
 
-        String dbConnString = GetLocalConnectionString($"EstateReportingReadModel{this.TestId}");
+        String dbConnString = GetLocalConnectionString($"TransactionProcessorReadModel-{this.TestId}");
 
         this.factory = new CustomWebApplicationFactory<Startup>(dbConnString);
         this.Client = this.factory.CreateClient();
         this.ApiClient = new EstateReportingApiClient((s) => "http://localhost", this.Client);
 
-        this.context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        this.context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{this.TestId.ToString()}"));
 
         this.helper = new DatabaseHelper(context);
         await this.helper.CreateStoredProcedures(CancellationToken.None);

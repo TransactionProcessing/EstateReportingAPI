@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using Shared.Repositories;
 using TransactionProcessor.Database.Contexts;
 
@@ -24,7 +26,7 @@ using Microsoft.AspNetCore.TestHost;
 
 public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup> where TStartup : class
 {
-    private readonly string DatabaseConnectionString;
+    private string DatabaseConnectionString;
 
     public CustomWebApplicationFactory(string databaseConnectionString)
     {
@@ -38,12 +40,37 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
     {
         builder.ConfigureServices(containerBuilder =>
         {
+            var createcontext = new EstateManagementContext(DatabaseConnectionString);
+            bool b = createcontext.Database.EnsureCreated();
+            b.ShouldBeTrue();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DatabaseConnectionString)
+            {
+                InitialCatalog = "TransactionProcessorReadModel",
+            };
+            this.DatabaseConnectionString = builder.ToString();
+
             var context = new EstateManagementContext(DatabaseConnectionString);
             Func<string, EstateManagementContext> f = connectionString => context;
 
-            IDbContextFactory<EstateManagementContext> factory = new DbContextFactory<EstateManagementContext>(new TestConnectionStringConfigurationRepository(DatabaseConnectionString), f);
+            //this.DbContextFactory = new Mock<IDbContextResolver<EstateManagementContext>>();
+            containerBuilder.AddTransient<EstateManagementContext>(_ => context);
+            var serviceProvider = containerBuilder.BuildServiceProvider();
+            //var scope = serviceProvider.CreateScope();
 
-            IReportingManager manager = new ReportingManager(factory);
+            var inMemorySettings = new Dictionary<string, string>
+            {
+                { "ConnectionStrings:TransactionProcessorReadModel", DatabaseConnectionString }
+            };
+
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings)
+                .Build();
+
+            IDbContextResolver<EstateManagementContext> resolver = new DbContextResolver<EstateManagementContext>(serviceProvider, configuration);
+            //IDbContextFactory<EstateManagementContext> factory = new DbContextFactory<EstateManagementContext>(new TestConnectionStringConfigurationRepository(DatabaseConnectionString), f);
+
+            IReportingManager manager = new ReportingManager(resolver);
 
             containerBuilder.AddSingleton(manager);
 
@@ -52,9 +79,7 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
             containerBuilder.AddAuthentication(TestAuthHandler.AuthenticationScheme)
                             .AddScheme<TestAuthHandlerOptions, TestAuthHandler>(TestAuthHandler.AuthenticationScheme, options => { });
             
-            bool b = context.Database.EnsureCreated();
             
-            b.ShouldBeTrue();
         });
 
     }

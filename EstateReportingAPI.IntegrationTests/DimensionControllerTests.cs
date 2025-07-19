@@ -20,7 +20,7 @@ public class DimensionsControllerTests : ControllerTestsBase
     [Fact]
     public async Task DimensionsController_GetCalendarYears_NoDataInDatabase()
     {
-        var yearsResult = await ApiClient.GetCalendarYears(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        var yearsResult = await ApiClient.GetCalendarYears(string.Empty, this.TestId, CancellationToken.None);
         yearsResult.IsFailed.ShouldBeTrue();
     }
 
@@ -40,7 +40,7 @@ public class DimensionsControllerTests : ControllerTestsBase
             await helper.AddCalendarYear(year);
         }
 
-        var result = await ApiClient.GetCalendarYears(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        var result = await ApiClient.GetCalendarYears(string.Empty, this.TestId, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         var years = result.Data;
         years.ShouldNotBeNull();
@@ -53,7 +53,7 @@ public class DimensionsControllerTests : ControllerTestsBase
         List<DateTime> datesInYear = helper.GetDatesForYear(DateTime.Now.Year);
         await helper.AddCalendarDates(datesInYear);
 
-        Result<List<ComparisonDate>> result = await ApiClient.GetComparisonDates(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        Result<List<ComparisonDate>> result = await ApiClient.GetComparisonDates(string.Empty, this.TestId, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         List<ComparisonDate> dates = result.Data;
         List <DateTime> expectedDates = datesInYear.Where(d => d <= DateTime.Now.Date.AddDays(-1)).ToList();
@@ -73,7 +73,7 @@ public class DimensionsControllerTests : ControllerTestsBase
     [Fact]
     public async Task DimensionsController_GetCalendarComparisonDates_NoDataInDatabase()
     {
-        var result= await ApiClient.GetComparisonDates(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        var result= await ApiClient.GetComparisonDates(string.Empty, this.TestId, CancellationToken.None);
         result.IsFailed.ShouldBeTrue();;
     }
 
@@ -83,7 +83,7 @@ public class DimensionsControllerTests : ControllerTestsBase
         List<DateTime> datesInYear = helper.GetDatesForYear(2023);
         await helper.AddCalendarDates(datesInYear);
 
-        var datesResult = await ApiClient.GetCalendarDates(string.Empty, Guid.NewGuid(), 2023, CancellationToken.None);
+        var datesResult = await ApiClient.GetCalendarDates(string.Empty, this.TestId, 2023, CancellationToken.None);
 
         datesResult.IsSuccess.ShouldBeTrue();
         var dates = datesResult.Data;
@@ -100,13 +100,13 @@ public class DimensionsControllerTests : ControllerTestsBase
     [Fact]
     public async Task DimensionsController_GetCalendarDates_NoDataInDatabase()
     {
-        var datesResult = await ApiClient.GetCalendarDates(string.Empty, Guid.NewGuid(), 2023, CancellationToken.None);
+        var datesResult = await ApiClient.GetCalendarDates(string.Empty, this.TestId, 2023, CancellationToken.None);
         datesResult.IsFailed.ShouldBeTrue();
     }
 
     [Fact]
     public async Task DimensionsController_GetMerchants_NoData_NoMerchantsReturned() {
-        var result = await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        var result = await ApiClient.GetMerchants(string.Empty, this.TestId, CancellationToken.None);
         result.IsFailed.ShouldBeTrue();
     }
 
@@ -120,7 +120,7 @@ public class DimensionsControllerTests : ControllerTestsBase
             await helper.AddMerchant("Test Estate", $"Test Merchant {i}", DateTime.Now);
         }
 
-        var result = await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        var result = await ApiClient.GetMerchants(string.Empty, this.TestId, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         var merchants = result.Data;
 
@@ -150,7 +150,7 @@ public class DimensionsControllerTests : ControllerTestsBase
             await helper.AddMerchant("Test Estate", $"Test Merchant {i}", DateTime.Now, addressList);
         }
 
-        var result = await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        var result = await ApiClient.GetMerchants(string.Empty, this.TestId, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         var merchants = result.Data;
 
@@ -181,7 +181,7 @@ public class DimensionsControllerTests : ControllerTestsBase
             await helper.AddMerchant("Test Estate", $"Test Merchant {i}", DateTime.Now, addressList);
         }
 
-        var result = await ApiClient.GetMerchants(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        var result = await ApiClient.GetMerchants(string.Empty, this.TestId, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         var merchants = result.Data;
 
@@ -200,7 +200,7 @@ public class DimensionsControllerTests : ControllerTestsBase
     [Fact]
     public async Task DimensionsController_GetOperators_NoData_NoOperatorsReturned()
     {
-        Result<List<Operator>> result = await ApiClient.GetOperators(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        Result<List<Operator>> result = await ApiClient.GetOperators(string.Empty, this.TestId, CancellationToken.None);
         result.IsFailed.ShouldBeTrue();
     }
 
@@ -213,7 +213,7 @@ public class DimensionsControllerTests : ControllerTestsBase
         Int32 operator2ReportingId = await this.helper.AddOperator("Test Estate", "Operator2");
         Int32 operator3ReportingId = await this.helper.AddOperator("Test Estate", "Operator3");
         
-        var result = await ApiClient.GetOperators(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        var result = await ApiClient.GetOperators(string.Empty, this.TestId, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         
         var operators = result.Data;
@@ -244,7 +244,7 @@ public class DimensionsControllerTests : ControllerTestsBase
         await helper.AddResponseCode(1002, "Unknown Merchant");
         await helper.AddResponseCode(1003, "No Devices Configured");
 
-        var result = await ApiClient.GetResponseCodes(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        var result = await ApiClient.GetResponseCodes(string.Empty, this.TestId, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
 
         var responseCodes = result.Data;
@@ -261,7 +261,7 @@ public class DimensionsControllerTests : ControllerTestsBase
     [Fact]
     public async Task DimensionsController_GetResponseCodes_NoData_NoResponseCodesReturned()
     {
-        var result = await ApiClient.GetResponseCodes(string.Empty, Guid.NewGuid(), CancellationToken.None);
+        var result = await ApiClient.GetResponseCodes(string.Empty, this.TestId, CancellationToken.None);
         result.IsFailed.ShouldBeTrue();
     }
 

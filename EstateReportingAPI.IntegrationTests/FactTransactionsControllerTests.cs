@@ -180,7 +180,7 @@ public class FactTransactionsControllerTests_OperatorsTests : FactTransactionsCo
 
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        var result = await ApiClient.GetTopBottomOperatorData(string.Empty, Guid.NewGuid(), DataTransferObjects.TopBottom.Bottom, 3, CancellationToken.None);
+        var result = await ApiClient.GetTopBottomOperatorData(string.Empty, this.TestId, DataTransferObjects.TopBottom.Bottom, 3, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         List<TopBottomOperatorData>? topBottomOperatorData = result.Data;
         topBottomOperatorData.ShouldNotBeNull();
@@ -227,7 +227,7 @@ public class FactTransactionsControllerTests_OperatorsTests : FactTransactionsCo
 
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        var result = await ApiClient.GetTopBottomOperatorData(string.Empty, Guid.NewGuid(), DataTransferObjects.TopBottom.Top, 3, CancellationToken.None);
+        var result = await ApiClient.GetTopBottomOperatorData(string.Empty, this.TestId, DataTransferObjects.TopBottom.Top, 3, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         List<TopBottomOperatorData>? topBottomOperatorData = result.Data;
         topBottomOperatorData[0].OperatorName.ShouldBe("Safaricom");
@@ -291,7 +291,7 @@ public class FactTransactionsControllerTests_OperatorsTests : FactTransactionsCo
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        var result = await ApiClient.GetOperatorPerformance(string.Empty, Guid.NewGuid(), comparisonDate, operatorFilterList, CancellationToken.None);
+        var result = await ApiClient.GetOperatorPerformance(string.Empty, this.TestId, comparisonDate, operatorFilterList, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         DataTransferObjects.TodaysSales? todaysSales = result.Data;
         todaysSales.ShouldNotBeNull();
@@ -355,7 +355,7 @@ public class FactTransactionsControllerTests_OperatorsTests : FactTransactionsCo
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        var result = await ApiClient.GetOperatorPerformance(string.Empty, Guid.NewGuid(), comparisonDate, operatorFilterList, CancellationToken.None);
+        var result = await ApiClient.GetOperatorPerformance(string.Empty, this.TestId, comparisonDate, operatorFilterList, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         DataTransferObjects.TodaysSales? todaysSales = result.Data;
         todaysSales.ShouldNotBeNull();
@@ -414,7 +414,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
         await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-        var result = await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, new List<Int32>(), CancellationToken.None);
+        var result = await ApiClient.GetProductPerformance(string.Empty, this.TestId, comparisonDate, new List<Int32>(), CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         DataTransferObjects.TodaysSales? todaysSales = result.Data;
         todaysSales.ShouldNotBeNull();
@@ -475,7 +475,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
 
                 string serializedArray = string.Join(",", productFilterList);
 
-                var result = await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, productFilterList, CancellationToken.None);
+                var result = await ApiClient.GetProductPerformance(string.Empty, this.TestId, comparisonDate, productFilterList, CancellationToken.None);
                 result.IsSuccess.ShouldBeTrue();
                 DataTransferObjects.TodaysSales? todaysSales = result.Data;
                 todaysSales.ShouldNotBeNull();
@@ -533,7 +533,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
                     await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
                     await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-                    var result = await ApiClient.GetProductPerformance(string.Empty, Guid.NewGuid(), comparisonDate, productFilterList, CancellationToken.None);
+                    var result = await ApiClient.GetProductPerformance(string.Empty, this.TestId, comparisonDate, productFilterList, CancellationToken.None);
                     result.IsSuccess.ShouldBeTrue();
                     DataTransferObjects.TodaysSales? todaysSales = result.Data;
                     todaysSales.ShouldNotBeNull();
@@ -575,7 +575,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
 
                     await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-                    var result = await ApiClient.GetTopBottomProductData(string.Empty, Guid.NewGuid(), DataTransferObjects.TopBottom.Bottom, 3, CancellationToken.None);
+                    var result = await ApiClient.GetTopBottomProductData(string.Empty, this.TestId, DataTransferObjects.TopBottom.Bottom, 3, CancellationToken.None);
                     result.IsSuccess.ShouldBeTrue();
                     List<TopBottomProductData>? topBottomProductData = result.Data;
 
@@ -621,7 +621,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
 
                         await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-                        var result = await ApiClient.GetTopBottomProductData(string.Empty, Guid.NewGuid(), DataTransferObjects.TopBottom.Top, 3, CancellationToken.None);
+                        var result = await ApiClient.GetTopBottomProductData(string.Empty, this.TestId, DataTransferObjects.TopBottom.Top, 3, CancellationToken.None);
                         result.IsSuccess.ShouldBeTrue();
                         List<TopBottomProductData>? topBottomProductData = result.Data;
                         topBottomProductData[0].ProductName.ShouldBe("200 KES Topup");
@@ -677,7 +677,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             // Test 1 - sale in last hour
             startDate = DateTime.Now.AddHours(-1);
             endDate = DateTime.Now;
-            var result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate, endDate, CancellationToken.None);
+            var result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, this.TestId, startDate, endDate, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var searchResult = result.Data;
             searchResult.ShouldNotBeNull();
@@ -690,7 +690,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             // Test 2 - sale in last day but over an hour ago
             startDate = DateTime.Now.Date.AddDays(-1);
             endDate = DateTime.Now.AddHours(-1);
-            result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate, endDate, CancellationToken.None);
+            result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, this.TestId, startDate, endDate, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.ShouldNotBeNull();
@@ -705,7 +705,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             // Test 3 - sale in last  7 days but non yesterday
             startDate = DateTime.Now.Date.AddDays(-7);
             endDate = DateTime.Now.Date.AddDays(-1);
-            result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate, endDate, CancellationToken.None);
+            result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, this.TestId, startDate, endDate, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.ShouldNotBeNull();
@@ -717,7 +717,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             // Test 4 - sale more than 7 days ago 
             startDate = DateTime.Now.Date.AddYears(-1);
             endDate = DateTime.Now.Date.AddDays(-7);
-            result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, Guid.NewGuid(), startDate, endDate, CancellationToken.None);
+            result = await this.ApiClient.GetMerchantsByLastSaleDate(String.Empty, this.TestId, startDate, endDate, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.ShouldNotBeNull();
@@ -759,7 +759,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             await helper.AddMerchant("Test Estate", "Merchant 17", todaysDateTime.AddDays(-10));
             await helper.AddMerchant("Test Estate", "Merchant 18", todaysDateTime.AddDays(-10));
 
-            var result = await ApiClient.GetMerchantKpi(string.Empty, Guid.NewGuid(), CancellationToken.None);
+            var result = await ApiClient.GetMerchantKpi(string.Empty, this.TestId, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             DataTransferObjects.MerchantKpi? merchantKpi = result.Data;
             merchantKpi.ShouldNotBeNull();
@@ -793,7 +793,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
 
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-            var result = await ApiClient.GetTopBottomMerchantData(string.Empty, Guid.NewGuid(), DataTransferObjects.TopBottom.Bottom, 3, CancellationToken.None);
+            var result = await ApiClient.GetTopBottomMerchantData(string.Empty, this.TestId, DataTransferObjects.TopBottom.Bottom, 3, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             List<TopBottomMerchantData>? topBottomMerchantData = result.Data;
             topBottomMerchantData.ShouldNotBeNull();
@@ -829,7 +829,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             await this.helper.AddTransactionsX(transactionsDictionary.Values.SelectMany(t => t).ToList());
 
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
-            var result = await ApiClient.GetTopBottomMerchantData(string.Empty, Guid.NewGuid(), DataTransferObjects.TopBottom.Top, 3, CancellationToken.None);
+            var result = await ApiClient.GetTopBottomMerchantData(string.Empty, this.TestId, DataTransferObjects.TopBottom.Top, 3, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             List<TopBottomMerchantData>? topBottomMerchantData = result.Data;
             topBottomMerchantData.ShouldNotBeNull();
@@ -890,7 +890,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-            var result = await ApiClient.GetMerchantPerformance(string.Empty, Guid.NewGuid(), comparisonDate, new List<Int32>(), CancellationToken.None);
+            var result = await ApiClient.GetMerchantPerformance(string.Empty, this.TestId, comparisonDate, new List<Int32>(), CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             DataTransferObjects.TodaysSales? todaysSales = result.Data;
             todaysSales.ShouldNotBeNull();
@@ -956,7 +956,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-            var result = await ApiClient.GetMerchantPerformance(string.Empty, Guid.NewGuid(), comparisonDate, merchantFilterList, CancellationToken.None);
+            var result = await ApiClient.GetMerchantPerformance(string.Empty, this.TestId, comparisonDate, merchantFilterList, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             DataTransferObjects.TodaysSales? todaysSales = result.Data;
             todaysSales.ShouldNotBeNull();
@@ -1022,7 +1022,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-            var result = await ApiClient.GetTodaysSales(string.Empty, Guid.NewGuid(), 0, 0, comparisonDate, CancellationToken.None);
+            var result = await ApiClient.GetTodaysSales(string.Empty, this.TestId, 0, 0, comparisonDate, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var todaysSales = result.Data;
 
@@ -1080,7 +1080,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-            var result = await ApiClient.GetTodaysSales(string.Empty, Guid.NewGuid(), 0, 1, comparisonDate, CancellationToken.None);
+            var result = await ApiClient.GetTodaysSales(string.Empty, this.TestId, 0, 1, comparisonDate, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var todaysSales = result.Data;
 
@@ -1140,7 +1140,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-            var result = await ApiClient.GetTodaysSales(string.Empty, Guid.NewGuid(), 1, 0, comparisonDate, CancellationToken.None);
+            var result = await ApiClient.GetTodaysSales(string.Empty, this.TestId, 1, 0, comparisonDate, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var todaysSales = result.Data;
 
@@ -1226,7 +1226,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             this.TestOutputHelper.WriteLine($"Setup Summaries {sw.ElapsedMilliseconds}ms");
             sw.Restart();
 
-            var result = await ApiClient.GetTodaysSalesCountByHour(string.Empty, Guid.NewGuid(), 0, 0, comparisonDate, CancellationToken.None);
+            var result = await ApiClient.GetTodaysSalesCountByHour(string.Empty, this.TestId, 0, 0, comparisonDate, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var todaysSalesCountByHour = result.Data;
 
@@ -1289,7 +1289,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-            var result = await ApiClient.GetTodaysSalesValueByHour(string.Empty, Guid.NewGuid(), 0, 0, comparisonDate, CancellationToken.None);
+            var result = await ApiClient.GetTodaysSalesValueByHour(string.Empty, this.TestId, 0, 0, comparisonDate, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             List<DataTransferObjects.TodaysSalesValueByHour>? todaysSalesValueByHour = result.Data;
             foreach (DataTransferObjects.TodaysSalesValueByHour salesValueByHour in todaysSalesValueByHour) {
@@ -1305,13 +1305,14 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
 
         [Fact]
         public async Task FactTransactionsControllerController_TodaysFailedSales_SalesReturned() {
-            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
-            var todaysTransactions = new List<Transaction>();
+
+        EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{TestId.ToString()}"));
+        var todaysTransactions = new List<Transaction>();
             var comparisonDateTransactions = new List<Transaction>();
-            DatabaseHelper helper = new DatabaseHelper(context);
+            DatabaseHelper helper1 = new DatabaseHelper(context);
             // TODO: make counts dynamic
-            DateTime todaysDateTime = DateTime.Now.Date;
-            todaysDateTime = todaysDateTime.AddHours(12).AddMinutes(30);
+            DateTime todaysDateTime = DateTime.Now;
+            //todaysDateTime = todaysDateTime.AddHours(12).AddMinutes(30);
 
             Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 3 }, { "Test Merchant 2", 6 }, { "Test Merchant 3", 2 }, { "Test Merchant 4", 0 } };
 
@@ -1323,14 +1324,14 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
                     foreach ((Guid productId, String productName, Decimal? productValue) product in productList) {
                         var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
                         for (int i = 0; i < transactionCount; i++) {
-                            Transaction transaction = await helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
+                            Transaction transaction = await helper1.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
                             todaysTransactions.Add(transaction);
                         }
                     }
                 }
             }
 
-            await this.helper.AddTransactionsX(todaysTransactions);
+            await helper1.AddTransactionsX(todaysTransactions);
 
             // Comparison Date sales
             foreach (var merchant in merchantsList) {
@@ -1339,21 +1340,21 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
                     foreach ((Guid productId, String productName, Decimal? productValue) product in productList) {
                         var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
                         for (int i = 0; i < transactionCount; i++) {
-                            Transaction transaction = await helper.BuildTransactionX(comparisonDate.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
+                            Transaction transaction = await helper1.BuildTransactionX(comparisonDate.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
                             comparisonDateTransactions.Add(transaction);
                         }
                     }
                 }
             }
 
-            await this.helper.AddTransactionsX(comparisonDateTransactions);
+            await helper1.AddTransactionsX(comparisonDateTransactions);
 
 
-            await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
-            await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
-            await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+            await helper1.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+            await helper1.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+            await helper1.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
-            var result = await ApiClient.GetTodaysFailedSales(string.Empty, Guid.NewGuid(), 1, 1, "1009", comparisonDate, CancellationToken.None);
+            var result = await ApiClient.GetTodaysFailedSales(string.Empty, this.TestId, 1, 1, "1009", comparisonDate.Date, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             DataTransferObjects.TodaysSales? todaysSales = result.Data;
 
@@ -1392,7 +1393,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             DataTransferObjects.TransactionSearchRequest searchRequest = new() { QueryDate = transactionDate };
 
             // No Paging or Sorting
-            var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+            var result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var searchResult = result.Data;
             searchResult.Count.ShouldBe(10);
@@ -1408,7 +1409,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult.Any(s => s.TransactionReportingId == 10).ShouldBeTrue();
 
 
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 5, null, null, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, 1, 5, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(5);
@@ -1418,7 +1419,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult.Any(s => s.TransactionReportingId == 4).ShouldBeTrue();
             searchResult.Any(s => s.TransactionReportingId == 5).ShouldBeTrue();
 
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 5, null, null, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, 2, 5, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(5);
@@ -1456,7 +1457,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             DataTransferObjects.TransactionSearchRequest searchRequest = new() { QueryDate = transactionDate, ValueRange = new() { StartValue = 100, EndValue = 200 } };
 
             // No Paging
-            var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+            var result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             List<DataTransferObjects.TransactionResult> searchResult = result.Data;
             searchResult.Count.ShouldBe(7);
@@ -1468,7 +1469,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult.Any(s => s.TransactionReportingId == 7).ShouldBeTrue();
             searchResult.Any(s => s.TransactionReportingId == 10).ShouldBeTrue();
 
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 3, null, null, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, 1, 3, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(3);
@@ -1476,7 +1477,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult.Any(s => s.TransactionReportingId == 3).ShouldBeTrue();
             searchResult.Any(s => s.TransactionReportingId == 4).ShouldBeTrue();
 
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 3, null, null, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, 2, 3, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(3);
@@ -1511,7 +1512,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             DataTransferObjects.TransactionSearchRequest searchRequest = new() { QueryDate = transactionDate, AuthCode = "AUTH1235" };
 
             // No Paging
-            var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+            var result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             List<DataTransferObjects.TransactionResult> searchResult = result.Data;
             searchResult.Count.ShouldBe(1);
@@ -1545,7 +1546,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             DataTransferObjects.TransactionSearchRequest searchRequest = new() { QueryDate = transactionDate, TransactionNumber = "0004" };
 
             // No Paging
-            var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+            var result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             List<DataTransferObjects.TransactionResult> searchResult = result.Data;
 
@@ -1578,7 +1579,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             DataTransferObjects.TransactionSearchRequest searchRequest = new() { QueryDate = transactionDate, ResponseCode = "0001" };
 
             // No Paging
-            var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+            var result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             List<DataTransferObjects.TransactionResult> searchResult = result.Data;
             searchResult.Count.ShouldBe(5);
@@ -1588,7 +1589,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult.Any(s => s.TransactionReportingId == 8).ShouldBeTrue();
             searchResult.Any(s => s.TransactionReportingId == 10).ShouldBeTrue();
 
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 3, null, null, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, 1, 3, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(3);
@@ -1596,7 +1597,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult.Any(s => s.TransactionReportingId == 4).ShouldBeTrue();
             searchResult.Any(s => s.TransactionReportingId == 6).ShouldBeTrue();
 
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 3, null, null, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, 2, 3, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(2);
@@ -1653,7 +1654,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             DataTransferObjects.TransactionSearchRequest searchRequest = new() { QueryDate = transactionDate, Merchants = new List<int>() { 2, 3 } };
 
             // No Paging
-            var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+            var result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             List<DataTransferObjects.TransactionResult> searchResult = result.Data;
 
@@ -1671,7 +1672,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult.Count(s => s.MerchantName == "Test Merchant 2").ShouldBe(5);
             searchResult.Count(s => s.MerchantName == "Test Merchant 3").ShouldBe(5);
 
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 5, null, null, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, 1, 5, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
 
@@ -1684,7 +1685,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult.Count(s => s.MerchantName == "Test Merchant 2").ShouldBe(5);
             searchResult.Count(s => s.MerchantName == "Test Merchant 3").ShouldBe(0);
 
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 5, null, null, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, 2, 5, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
 
@@ -1741,7 +1742,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             DataTransferObjects.TransactionSearchRequest searchRequest = new() { QueryDate = transactionDate, Operators = new List<int>() { 2, 4 } };
 
             // No Paging
-            var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+            var result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             List<DataTransferObjects.TransactionResult> searchResult = result.Data;
             searchResult.Count.ShouldBe(4);
@@ -1752,7 +1753,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult.Count(s => s.OperatorName == "Voucher").ShouldBe(2);
             searchResult.Count(s => s.OperatorName == "PataPawa PrePay").ShouldBe(2);
 
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 1, 2, null, null, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, 1, 2, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(2);
@@ -1761,7 +1762,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult.Count(s => s.OperatorName == "Voucher").ShouldBe(2);
             searchResult.Count(s => s.OperatorName == "PataPawa PrePay").ShouldBe(0);
 
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, 2, 2, null, null, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, 2, 2, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(2);
@@ -1806,7 +1807,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
 
             DataTransferObjects.TransactionSearchRequest searchRequest = new() { QueryDate = transactionDate };
             // Default Sort
-            var result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, null, null, CancellationToken.None);
+            var result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, null, null, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var searchResult = result.Data;
             searchResult.Count.ShouldBe(3);
@@ -1815,7 +1816,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult[2].TransactionAmount.ShouldBe(300);
 
             // Sort By merchant Name ascending
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, DataTransferObjects.SortField.MerchantName, SortDirection.Ascending, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, DataTransferObjects.SortField.MerchantName, SortDirection.Ascending, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(3);
@@ -1824,7 +1825,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult[2].MerchantName.ShouldBe("Test Merchant 3");
 
             // Sort By merchant Name descending
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, DataTransferObjects.SortField.MerchantName, SortDirection.Descending, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, DataTransferObjects.SortField.MerchantName, SortDirection.Descending, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(3);
@@ -1833,7 +1834,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult[2].MerchantName.ShouldBe("Test Merchant 1");
 
             // Sort By operator Name ascending
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, DataTransferObjects.SortField.OperatorName, SortDirection.Ascending, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, DataTransferObjects.SortField.OperatorName, SortDirection.Ascending, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
 
@@ -1843,7 +1844,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult[2].OperatorName.ShouldBe("Voucher");
 
             // Sort By operator Name descending
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, DataTransferObjects.SortField.OperatorName, SortDirection.Descending, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, DataTransferObjects.SortField.OperatorName, SortDirection.Descending, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(3);
@@ -1852,7 +1853,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult[2].OperatorName.ShouldBe("PataPawa PostPay");
 
             // Sort By transaction amount ascending
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, DataTransferObjects.SortField.TransactionAmount, SortDirection.Ascending, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, DataTransferObjects.SortField.TransactionAmount, SortDirection.Ascending, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(3);
@@ -1861,7 +1862,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult[2].TransactionAmount.ShouldBe(300);
 
             // Sort By transaction amount descending
-            result = await ApiClient.TransactionSearch(string.Empty, Guid.NewGuid(), searchRequest, null, null, DataTransferObjects.SortField.TransactionAmount, SortDirection.Descending, CancellationToken.None);
+            result = await ApiClient.TransactionSearch(string.Empty, this.TestId, searchRequest, null, null, DataTransferObjects.SortField.TransactionAmount, SortDirection.Descending, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             searchResult = result.Data;
             searchResult.Count.ShouldBe(3);
