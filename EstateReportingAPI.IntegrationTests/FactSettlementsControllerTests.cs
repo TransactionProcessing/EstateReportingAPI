@@ -107,7 +107,7 @@ namespace EstateReportingAPI.IntegrationTests {
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDate.Date.AddDays(-1));
             await helper.RunSettlementSummaryProcessing(comparisonDate.Date);
 
-            var result = await ApiClient.GetTodaysSettlement(string.Empty, Guid.NewGuid(), 0, 0, DateTime.Now.AddDays(-1), CancellationToken.None);
+            var result = await ApiClient.GetTodaysSettlement(string.Empty, this.TestId, 0, 0, DateTime.Now.AddDays(-1), CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var todaysSettlement = result.Data;
             todaysSettlement.ShouldNotBeNull();
@@ -192,7 +192,7 @@ namespace EstateReportingAPI.IntegrationTests {
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDate.Date.AddDays(-1));
             await helper.RunSettlementSummaryProcessing(comparisonDate.Date);
 
-            var result = await ApiClient.GetTodaysSettlement(string.Empty, Guid.NewGuid(), 1, 0, DateTime.Now.AddDays(-1), CancellationToken.None);
+            var result = await ApiClient.GetTodaysSettlement(string.Empty, this.TestId, 1, 0, DateTime.Now.AddDays(-1), CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var todaysSettlement = result.Data;
             todaysSettlement.ShouldNotBeNull();
@@ -280,7 +280,7 @@ namespace EstateReportingAPI.IntegrationTests {
             await helper.RunTodaysTransactionsSummaryProcessing(todaysDate.Date.AddDays(-1));
             await helper.RunSettlementSummaryProcessing(comparisonDate.Date);
 
-            var result = await ApiClient.GetTodaysSettlement(string.Empty, Guid.NewGuid(), 0, 1, DateTime.Now.AddDays(-1), CancellationToken.None);
+            var result = await ApiClient.GetTodaysSettlement(string.Empty, this.TestId, 0, 1, DateTime.Now.AddDays(-1), CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var todaysSettlement = result.Data;
             todaysSettlement.ShouldNotBeNull();
@@ -297,7 +297,7 @@ namespace EstateReportingAPI.IntegrationTests {
 
         [Fact]
         public async Task FactSettlementsController_LastSettlement_SettlementReturned() {
-            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -329,7 +329,7 @@ namespace EstateReportingAPI.IntegrationTests {
 
             await helper.RunSettlementSummaryProcessing(DateTime.Now.AddDays(-1));
 
-            var result = await ApiClient.GetLastSettlement(string.Empty, Guid.NewGuid(), CancellationToken.None);
+            var result = await ApiClient.GetLastSettlement(string.Empty, this.TestId, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var lastSettlement = result.Data;
 
@@ -341,13 +341,13 @@ namespace EstateReportingAPI.IntegrationTests {
 
         [Fact]
         public async Task FactSettlementsController_LastSettlement_NoSettlementRecords_SettlementReturned() {
-            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
             await helper.RunSettlementSummaryProcessing(DateTime.Now.AddDays(-1));
 
-            var result = await ApiClient.GetLastSettlement(string.Empty, Guid.NewGuid(), CancellationToken.None);
+            var result = await ApiClient.GetLastSettlement(string.Empty, this.TestId, CancellationToken.None);
             result.IsFailed.ShouldBeTrue();
         }
 
@@ -355,7 +355,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByOperator_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -382,7 +382,7 @@ namespace EstateReportingAPI.IntegrationTests {
             DateTime startDate = dates.Min();
             DateTime endDate = dates.Max();
 
-            var result = await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, null, GroupByOption.Operator, CancellationToken.None);
+            var result = await ApiClient.GetUnsettledFees(string.Empty, this.TestId, startDate, endDate, null, null, null, GroupByOption.Operator, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var unsettledFees = result.Data;
 
@@ -407,7 +407,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByOperator_OperatorFilter_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -434,7 +434,7 @@ namespace EstateReportingAPI.IntegrationTests {
             DateTime startDate = dates.Min();
             DateTime endDate = dates.Max();
 
-            var result = await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, [1], null, GroupByOption.Operator, CancellationToken.None);
+            var result = await ApiClient.GetUnsettledFees(string.Empty, this.TestId, startDate, endDate, null, [1], null, GroupByOption.Operator, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var unsettledFees = result.Data;
 
@@ -458,7 +458,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByMerchant_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -484,7 +484,7 @@ namespace EstateReportingAPI.IntegrationTests {
             DateTime startDate = dates.Min();
             DateTime endDate = dates.Max();
 
-            var result = await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, null, GroupByOption.Merchant, CancellationToken.None);
+            var result = await ApiClient.GetUnsettledFees(string.Empty, this.TestId, startDate, endDate, null, null, null, GroupByOption.Merchant, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var unsettledFees = result.Data;
             unsettledFees.ShouldNotBeNull();
@@ -504,7 +504,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByMerchant_MerchantFilter_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -530,7 +530,7 @@ namespace EstateReportingAPI.IntegrationTests {
             DateTime startDate = dates.Min();
             DateTime endDate = dates.Max();
 
-            var result = await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, [1], null, null, GroupByOption.Merchant, CancellationToken.None);
+            var result = await ApiClient.GetUnsettledFees(string.Empty, this.TestId, startDate, endDate, [1], null, null, GroupByOption.Merchant, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var unsettledFees = result.Data;
             unsettledFees.ShouldNotBeNull();
@@ -549,7 +549,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByProduct_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -575,7 +575,7 @@ namespace EstateReportingAPI.IntegrationTests {
             DateTime startDate = dates.Min();
             DateTime endDate = dates.Max();
 
-            var result = await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, null, GroupByOption.Product, CancellationToken.None);
+            var result = await ApiClient.GetUnsettledFees(string.Empty, this.TestId, startDate, endDate, null, null, null, GroupByOption.Product, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var unsettledFees = result.Data;
 
@@ -609,7 +609,7 @@ namespace EstateReportingAPI.IntegrationTests {
         [Fact]
         public async Task FactSettlementsController_UnsettledFees_ByProduct_ProductFilter_SettlementReturned() {
             // Add some fees over a date range for multiple operators
-            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+            EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{TestId.ToString()}"));
 
             DatabaseHelper helper = new DatabaseHelper(context);
 
@@ -635,7 +635,7 @@ namespace EstateReportingAPI.IntegrationTests {
             DateTime startDate = dates.Min();
             DateTime endDate = dates.Max();
 
-            var result = await ApiClient.GetUnsettledFees(string.Empty, Guid.NewGuid(), startDate, endDate, null, null, [1], GroupByOption.Product, CancellationToken.None);
+            var result = await ApiClient.GetUnsettledFees(string.Empty, this.TestId, startDate, endDate, null, null, [1], GroupByOption.Product, CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var unsettledFees = result.Data;
 

@@ -5,6 +5,7 @@ namespace EstateReportingAPI.Bootstrapper;
 using BusinessLogic;
 using Common;
 using Lamar;
+using Microsoft.EntityFrameworkCore;
 using Shared.EntityFramework;
 using Shared.EntityFramework.ConnectionStringConfiguration;
 using Shared.General;
@@ -14,31 +15,21 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public class RepositoryRegistry : ServiceRegistry{
     public RepositoryRegistry(){
-
-        Boolean useConnectionStringConfig = bool.Parse(ConfigurationReader.GetValue("AppSettings", "UseConnectionStringConfig"));
-
-        if (useConnectionStringConfig)
-        {
-            String connectionStringConfigurationConnString = ConfigurationReader.GetConnectionString("ConnectionStringConfiguration");
-            this.AddSingleton<IConnectionStringConfigurationRepository, ConnectionStringConfigurationRepository>();
-            this.AddTransient(c => { return new ConnectionStringConfigurationContext(connectionStringConfigurationConnString); });
-
-            // TODO: Read this from a the database and set
-        }
-        else
-        {
-            this.AddSingleton<IConnectionStringConfigurationRepository, ConfigurationReaderConnectionStringRepository>();
-        }
-
         String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
-        if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) != 0){
+        if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) != 0)
+        {
             this.AddSingleton<IReportingManager, ReportingManager>();
         }
 
-        this.AddSingleton<IDbContextFactory<EstateManagementContext>, DbContextFactory<EstateManagementContext>>();
-
-        this.AddSingleton<Func<String, EstateManagementContext>>(cont => connectionString => {
-            return new EstateManagementContext(connectionString);
-        });
+        this.AddSingleton(typeof(IDbContextResolver<>), typeof(DbContextResolver<>));
+        if (Startup.WebHostEnvironment.IsEnvironment("IntegrationTest") || Startup.Configuration.GetValue<Boolean>("ServiceOptions:UseInMemoryDatabase") == true)
+        {
+            this.AddDbContext<EstateManagementContext>(builder => builder.UseInMemoryDatabase("TransactionProcessorReadModel"));
+        }
+        else
+        {
+            this.AddDbContext<EstateManagementContext>(options =>
+                options.UseSqlServer(ConfigurationReader.GetConnectionString("TransactionProcessorReadModel")));
+        }
     }
 }
