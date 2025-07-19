@@ -43,24 +43,30 @@ namespace EstateReportingAPI
             services.IncludeRegistry<RepositoryRegistry>();
             services.IncludeRegistry<MediatorRegistry>();
 
+            //String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
+            //if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0)
+            //{
+            //    services.AddSingleton<IReportingManager, ReportingManager>();
+            //}
+
             Container = new Container(services);
         }
 
-        public void ConfigureServices(IServiceCollection services){
-            //    ConfigurationReader.Initialise(Configuration);
-            //    ServiceRegistry registry = new ServiceRegistry(services);
-            //    registry.IncludeRegistry<MiddlewareRegistry>();
-            //    registry.IncludeRegistry<RepositoryRegistry>();
+        //public void ConfigureServices(IServiceCollection services){
+        //    //    ConfigurationReader.Initialise(Configuration);
+        //    //    ServiceRegistry registry = new ServiceRegistry(services);
+        //    //    registry.IncludeRegistry<MiddlewareRegistry>();
+        //    //    registry.IncludeRegistry<RepositoryRegistry>();
 
-            //    Container = new Container(registry);
-            String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
-            if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0)
-            {
-                services.AddSingleton<IReportingManager, ReportingManager>();
-            }
+        //    //    Container = new Container(registry);
+        //    String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
+        //    if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) == 0)
+        //    {
+        //        services.AddSingleton<IReportingManager, ReportingManager>();
+        //    }
 
             
-        }
+        //}
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
