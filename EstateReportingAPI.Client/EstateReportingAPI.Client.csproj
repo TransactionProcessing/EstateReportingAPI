@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ClientProxyBase" Version="2025.7.10" />
+    <PackageReference Include="ClientProxyBase" Version="2025.7.13" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Shared.Results" Version="2025.7.10" />
+    <PackageReference Include="Shared.Results" Version="2025.7.13" />
   </ItemGroup>
 
   <ItemGroup>
