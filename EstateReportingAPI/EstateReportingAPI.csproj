@@ -12,8 +12,8 @@
 	  
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
-    <PackageReference Include="Shared.Results" Version="2025.7.10" />
-    <PackageReference Include="Shared.Results.Web" Version="2025.7.10" />
+    <PackageReference Include="Shared.Results" Version="2025.7.13" />
+    <PackageReference Include="Shared.Results.Web" Version="2025.7.13" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
@@ -21,7 +21,7 @@
 		<PackageReference Include="Lamar" Version="15.0.0" />
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.0" />
 		<PackageReference Include="NLog.Extensions.Logging" Version="5.5.0" />
-		<PackageReference Include="Shared" Version="2025.7.10" />
+		<PackageReference Include="Shared" Version="2025.7.13" />
 		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
@@ -36,7 +36,7 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.4" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.5" />
-		<PackageReference Include="TransactionProcessor.Database" Version="2025.7.2-build189" />
+		<PackageReference Include="TransactionProcessor.Database" Version="2025.7.2" />
 	</ItemGroup>
 
 	<ItemGroup>
