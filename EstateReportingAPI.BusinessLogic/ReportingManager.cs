@@ -889,41 +889,31 @@ namespace EstateReportingAPI.BusinessLogic{
 
             return results;
         }
-        
-        public async Task<List<Merchant>> GetMerchants(Guid estateId, CancellationToken cancellationToken){
+
+        public async Task<List<Merchant>> GetMerchants(Guid estateId,
+                                                       CancellationToken cancellationToken) {
             using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
             await using EstateManagementContext context = resolvedContext.Context;
 
-            var merchants = context.Merchants
-                                                    .Select(m => new
-                                                    {
-                                                        MerchantReportingId = m.MerchantReportingId,
-                                                        Name = m.Name,
-                                                        LastSaleDateTime = m.LastSaleDateTime,
-                                                        LastSale = m.LastSaleDate,
-                                                        CreatedDateTime = m.CreatedDateTime,
-                                                        LastStatement = m.LastStatementGenerated,
-                                                        MerchantId = m.MerchantId,
-                                                        Reference = m.Reference,
-                                                        AddressInfo = context.MerchantAddresses
-                                                                                          .Where(ma => ma.MerchantId == m.MerchantId)
-                                                                                          .OrderByDescending(ma => ma.CreatedDateTime)
-                                                                                          .Select(ma => new
-                                                                                          {
-                                                                                              PostCode = ma.PostalCode,
-                                                                                              Region = ma.Region,
-                                                                                              Town = ma.Town,
-                                                                                              // Add more properties as needed
-                                                                                          })
-                                                                                          .FirstOrDefault(), // Get the first matching MerchantAddress or null
-                                                        EstateReportingId = context.Estates.Single(e => e.EstateId == m.EstateId).EstateReportingId
-                                                    });
+            var merchants = context.Merchants.Select(m => new {
+                MerchantReportingId = m.MerchantReportingId,
+                Name = m.Name,
+                LastSaleDateTime = m.LastSaleDateTime,
+                LastSale = m.LastSaleDate,
+                CreatedDateTime = m.CreatedDateTime,
+                LastStatement = m.LastStatementGenerated,
+                MerchantId = m.MerchantId,
+                Reference = m.Reference,
+                AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId).OrderByDescending(ma => ma.CreatedDateTime).Select(ma => new {
+                    PostCode = ma.PostalCode, Region = ma.Region, Town = ma.Town,
+                    // Add more properties as needed
+                }).FirstOrDefault(), // Get the first matching MerchantAddress or null
+                EstateReportingId = context.Estates.Single(e => e.EstateId == m.EstateId).EstateReportingId
+            });
 
             List<Merchant> merchantList = new List<Merchant>();
-            foreach (var result in merchants)
-            {
-                var model = new Merchant
-                {
+            foreach (var result in merchants) {
+                var model = new Merchant {
                     MerchantId = result.MerchantId,
                     Name = result.Name,
                     Reference = result.Reference,
@@ -935,12 +925,12 @@ namespace EstateReportingAPI.BusinessLogic{
                     LastStatement = result.LastStatement
                 };
 
-                if (result.AddressInfo != null)
-                {
+                if (result.AddressInfo != null) {
                     model.PostCode = result.AddressInfo.PostCode;
                     model.Town = result.AddressInfo.Town;
                     model.Region = result.AddressInfo.Region;
                 }
+
                 merchantList.Add(model);
             }
 
