@@ -28,7 +28,7 @@ namespace EstateReportingAPI.Controllers
         /// <summary>
         /// The controller name
         /// </summary>
-        public const String ControllerName = "settlements";
+        private const String ControllerName = "settlements";
 
         /// <summary>
         /// The controller route
@@ -142,7 +142,7 @@ namespace EstateReportingAPI.Controllers
                                                                      FeesCount = unsettledFee.FeesCount,
                                                                      FeesValue = unsettledFee.FeesValue
                                                                  });
-            };
+            }
 
             return Result.Success(response).ToActionResultX();
         }

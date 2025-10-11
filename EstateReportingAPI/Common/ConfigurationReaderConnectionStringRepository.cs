@@ -32,9 +32,7 @@ namespace EstateReportingAPI.Common
         {
             String connectionString = string.Empty;
             String databaseName = string.Empty;
-
-            String databaseEngine = ConfigurationReader.GetValue("AppSettings", "DatabaseEngine");
-
+            
             databaseName = $"{connectionStringIdentifier}{externalIdentifier}";
             connectionString = ConfigurationReader.GetConnectionString(connectionStringIdentifier);
 

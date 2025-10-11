@@ -30,7 +30,7 @@ namespace EstateReportingAPI.Controllers
         /// <summary>
         /// The controller name
         /// </summary>
-        public const String ControllerName = "dimensions";
+        private const String ControllerName = "dimensions";
 
         /// <summary>
         /// The controller route
