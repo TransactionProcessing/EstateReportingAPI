@@ -481,11 +481,11 @@ namespace EstateReportingAPI.BusinessLogic{
             return response;
         }
 
-        private async Task<IQueryable<MerchantSettlementFee>> GetSettlementDataForDate(EstateManagementContext context, Int32 merchantReportingId, Int32 operatorReportingId, DateTime queryDate, CancellationToken cancellationToken)
+        private IQueryable<MerchantSettlementFee> GetSettlementDataForDate(EstateManagementContext context, Int32 merchantReportingId, Int32 operatorReportingId, DateTime queryDate)
         {
             if (queryDate.Date == DateTime.Today.Date)
             {
-                return await this.GetTodaysSettlement(context, merchantReportingId, operatorReportingId, cancellationToken);
+                return this.GetTodaysSettlement(context, merchantReportingId, operatorReportingId);
             }
             
             var settlementData = (from s in context.Settlements
@@ -533,7 +533,7 @@ namespace EstateReportingAPI.BusinessLogic{
             await using EstateManagementContext context = resolvedContext.Context;
 
             IQueryable<MerchantSettlementFee> todaySettlementData = GetTodaysSettlement(context, merchantReportingId, operatorReportingId);
-            IQueryable<MerchantSettlementFee> comparisonSettlementData = await GetSettlementDataForDate(context, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
+            IQueryable<MerchantSettlementFee> comparisonSettlementData = GetSettlementDataForDate(context, merchantReportingId, operatorReportingId, comparisonDate);
 
             var todaySettlement = await (from f in todaySettlementData
                                          group f by f.IsSettled into grouped
