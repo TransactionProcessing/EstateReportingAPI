@@ -339,8 +339,8 @@ namespace EstateReportingAPI.BusinessLogic{
             return response;
         }
 
-        private async Task<IQueryable<TodayTransaction>> GetTodaysSales(EstateManagementContext context,
-                                                                        Int32 merchantReportingId, Int32 operatorReportingId, CancellationToken cancellationToken){
+        private IQueryable<TodayTransaction> GetTodaysSales(EstateManagementContext context,
+                                                                        Int32 merchantReportingId, Int32 operatorReportingId){
                 var salesForDate = (from t in context.TodayTransactions
                                     where t.IsAuthorised && t.TransactionType == "Sale"
                                                          && t.TransactionDate == DateTime.Now.Date
@@ -359,10 +359,9 @@ namespace EstateReportingAPI.BusinessLogic{
             return salesForDate;
         }
 
-        private async Task<IQueryable<TransactionHistory>> GetSalesForDate(EstateManagementContext context,
+        private IQueryable<TransactionHistory> GetSalesForDate(EstateManagementContext context,
                                                                            DateTime queryDate,
-                                                                           Int32 merchantReportingId, Int32 operatorReportingId,
-                                                                           CancellationToken cancellationToken)
+                                                                           Int32 merchantReportingId, Int32 operatorReportingId)
         {
             var salesForDate = (from t in context.TransactionHistory
                                 where t.IsAuthorised && t.TransactionType == "Sale"
@@ -387,8 +386,8 @@ namespace EstateReportingAPI.BusinessLogic{
             using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
             await using EstateManagementContext context = resolvedContext.Context;
 
-            IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantReportingId, operatorReportingId, cancellationToken);
-            IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId, cancellationToken);
+            IQueryable<TodayTransaction> todaysSales = GetTodaysSales(context, merchantReportingId, operatorReportingId);
+            IQueryable<TransactionHistory> comparisonSales = GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId);
 
             var todaysSalesValue = await todaysSales.SumAsync(t => t.TransactionAmount, cancellationToken);
             var todaysSalesCount = await todaysSales.CountAsync(cancellationToken);
@@ -410,8 +409,8 @@ namespace EstateReportingAPI.BusinessLogic{
             using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
             await using EstateManagementContext context = resolvedContext.Context;
 
-            IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantReportingId, operatorReportingId, cancellationToken);
-            IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId, cancellationToken);
+            IQueryable<TodayTransaction> todaysSales = GetTodaysSales(context, merchantReportingId, operatorReportingId);
+            IQueryable<TransactionHistory> comparisonSales = GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId);
 
             // First we need to get a value of todays sales
             var todaysSalesByHour = await (from t in todaysSales
@@ -447,8 +446,8 @@ namespace EstateReportingAPI.BusinessLogic{
             using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
             await using EstateManagementContext context = resolvedContext.Context;
 
-            IQueryable<TodayTransaction> todaysSales = await GetTodaysSales(context, merchantReportingId, operatorReportingId, cancellationToken);
-            IQueryable<TransactionHistory> comparisonSales = await GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId, cancellationToken);
+            IQueryable<TodayTransaction> todaysSales =  GetTodaysSales(context, merchantReportingId, operatorReportingId);
+            IQueryable<TransactionHistory> comparisonSales = GetSalesForDate(context, comparisonDate, merchantReportingId, operatorReportingId);
 
             // First we need to get a value of todays sales
             var todaysSalesByHour = await (from t in todaysSales
@@ -482,11 +481,11 @@ namespace EstateReportingAPI.BusinessLogic{
             return response;
         }
 
-        private async Task<IQueryable<MerchantSettlementFee>> GetSettlementDataForDate(EstateManagementContext context, Int32 merchantReportingId, Int32 operatorReportingId, DateTime queryDate, CancellationToken cancellationToken)
+        private IQueryable<MerchantSettlementFee> GetSettlementDataForDate(EstateManagementContext context, Int32 merchantReportingId, Int32 operatorReportingId, DateTime queryDate)
         {
             if (queryDate.Date == DateTime.Today.Date)
             {
-                return await this.GetTodaysSettlement(context, merchantReportingId, operatorReportingId, cancellationToken);
+                return this.GetTodaysSettlement(context, merchantReportingId, operatorReportingId);
             }
             
             var settlementData = (from s in context.Settlements
@@ -508,7 +507,7 @@ namespace EstateReportingAPI.BusinessLogic{
             return settlementData.AsQueryable().Select(s => s.Fees);
         }
 
-        private async Task<IQueryable<MerchantSettlementFee>> GetTodaysSettlement(EstateManagementContext? context, Int32 merchantReportingId, Int32 operatorReportingId, CancellationToken cancellationToken)
+        private IQueryable<MerchantSettlementFee> GetTodaysSettlement(EstateManagementContext? context, Int32 merchantReportingId, Int32 operatorReportingId)
         {
             var settlementData = (from s in context.Settlements
                                   join f in context.MerchantSettlementFees on s.SettlementId equals f.SettlementId
@@ -533,8 +532,8 @@ namespace EstateReportingAPI.BusinessLogic{
             using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
             await using EstateManagementContext context = resolvedContext.Context;
 
-            IQueryable<MerchantSettlementFee> todaySettlementData = await GetTodaysSettlement(context, merchantReportingId, operatorReportingId, cancellationToken);
-            IQueryable<MerchantSettlementFee> comparisonSettlementData = await GetSettlementDataForDate(context, merchantReportingId, operatorReportingId, comparisonDate, cancellationToken);
+            IQueryable<MerchantSettlementFee> todaySettlementData = GetTodaysSettlement(context, merchantReportingId, operatorReportingId);
+            IQueryable<MerchantSettlementFee> comparisonSettlementData = GetSettlementDataForDate(context, merchantReportingId, operatorReportingId, comparisonDate);
 
             var todaySettlement = await (from f in todaySettlementData
                                          group f by f.IsSettled into grouped
