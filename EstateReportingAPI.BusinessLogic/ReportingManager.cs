@@ -6,11 +6,109 @@ namespace EstateReportingAPI.BusinessLogic{
     using Microsoft.EntityFrameworkCore;
     using Models;
     using Shared.EntityFramework;
+    using System;
     using System.Linq;
     using System.Threading;
     using Calendar = Models.Calendar;
     using Merchant = Models.Merchant;
     using Operator = Models.Operator;
+
+    public class FeeTransactionProjection
+    {
+        public MerchantSettlementFee Fee { get; set; }
+        public Transaction Txn { get; set; }
+    }
+
+    public static class ReportingManagerExtensions{
+        public static IQueryable<FeeTransactionProjection> ApplyMerchantFilter(
+            this IQueryable<FeeTransactionProjection> query,
+            EstateManagementContext context,
+            List<int> merchantIds)
+        {
+            if (merchantIds == null || merchantIds.Count == 0)
+                return query;
+
+            return from q in query
+                join m in context.Merchants
+                    on q.Txn.MerchantId equals m.MerchantId
+                where merchantIds.Contains(m.MerchantReportingId)
+                select q;
+        }
+
+        public static IQueryable<FeeTransactionProjection> ApplyOperatorFilter(
+            this IQueryable<FeeTransactionProjection> query,
+            EstateManagementContext context,
+            List<int> operatorIds)
+        {
+            if (operatorIds == null || operatorIds.Count == 0)
+                return query;
+
+            return from q in query
+                join o in context.Operators
+                    on q.Txn.OperatorId equals o.OperatorId
+                where operatorIds.Contains(o.OperatorReportingId)
+                select q;
+        }
+
+        public static IQueryable<FeeTransactionProjection> ApplyProductFilter(
+            this IQueryable<FeeTransactionProjection> query,
+            EstateManagementContext context,
+            List<int> productIds)
+        {
+            if (productIds == null || productIds.Count == 0)
+                return query;
+
+            return from q in query
+                join cp in context.ContractProducts
+                    on q.Txn.ContractProductId equals cp.ContractProductId
+                where productIds.Contains(cp.ContractProductReportingId)
+                select q;
+        }
+
+        public static IQueryable<UnsettledFee> ApplyProductGrouping(this IQueryable<FeeTransactionProjection> fees,
+                                                                    EstateManagementContext context)
+        {
+            return from f in fees
+                join cp in context.ContractProducts on f.Txn.ContractProductId equals cp.ContractProductId
+                join c in context.Contracts on cp.ContractId equals c.ContractId
+                join op in context.Operators on c.OperatorId equals op.OperatorId
+                group f by new { op.Name, cp.ProductName } into g
+                select new UnsettledFee
+                {
+                    DimensionName = $"{g.Key.Name} - {g.Key.ProductName}",
+                    FeesValue = g.Sum(x => x.Fee.CalculatedValue),
+                    FeesCount = g.Count()
+                };
+        }
+
+        public static IQueryable<UnsettledFee> ApplyMerchantGrouping(this IQueryable<FeeTransactionProjection> fees,
+                                                                     EstateManagementContext context)
+        {
+            return from f in fees
+                join merchant in context.Merchants on f.Fee.MerchantId equals merchant.MerchantId
+                group f by merchant.Name into g
+                select new UnsettledFee
+                {
+                    DimensionName = g.Key,
+                    FeesValue = g.Sum(x => x.Fee.CalculatedValue),
+                    FeesCount = g.Count()
+                };
+        }
+
+        public static IQueryable<UnsettledFee> ApplyOperatorGrouping(this IQueryable<FeeTransactionProjection> fees,
+                                                                     EstateManagementContext context)
+        {
+            return from f in fees
+                join op in context.Operators on f.Txn.OperatorId equals op.OperatorId
+                group f by op.Name into g
+                select new UnsettledFee
+                {
+                    DimensionName = g.Key,
+                    FeesValue = g.Sum(x => x.Fee.CalculatedValue),
+                    FeesCount = g.Count()
+                };
+        }
+    }
 
     public class ReportingManager : IReportingManager{
         private readonly IDbContextResolver<EstateManagementContext> Resolver;
@@ -28,106 +126,39 @@ namespace EstateReportingAPI.BusinessLogic{
 
         #region Methods
 
+
+        private IQueryable<FeeTransactionProjection> BuildUnsettledFeesQuery(
+            EstateManagementContext context,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            return from merchantSettlementFee in context.MerchantSettlementFees
+                join transaction in context.Transactions
+                    on merchantSettlementFee.TransactionId equals transaction.TransactionId
+                where merchantSettlementFee.FeeCalculatedDateTime.Date >= startDate &&
+                      merchantSettlementFee.FeeCalculatedDateTime.Date <= endDate
+                select new FeeTransactionProjection { Fee = merchantSettlementFee, Txn = transaction };
+        }
+
         public async Task<List<UnsettledFee>> GetUnsettledFees(Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption? groupByOption, CancellationToken cancellationToken){
 
             using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
             await using EstateManagementContext context = resolvedContext.Context;
 
-            var fees = (from merchantSettlementFee in context.MerchantSettlementFees
-                        join transaction in context.Transactions
-                            on merchantSettlementFee.TransactionId equals transaction.TransactionId
-                        where merchantSettlementFee.FeeCalculatedDateTime.Date >= startDate &&
-                              merchantSettlementFee.FeeCalculatedDateTime.Date <= endDate
-                        select new
-                        {
-                            fee = merchantSettlementFee,
-                            txn = transaction
-                        }).AsQueryable();
+            IQueryable<FeeTransactionProjection> query = BuildUnsettledFeesQuery(context, startDate, endDate)
+                .ApplyMerchantFilter(context, merchantIds)
+                .ApplyOperatorFilter(context, operatorIds)
+                .ApplyProductFilter(context, productIds);
 
-            if (merchantIds.Any())
+            // Perform grouping
+            IQueryable<UnsettledFee> groupedQuery = groupByOption switch
             {
-                // Get a list of the merchant guid's
-                List<Guid> merchantGuids = await context.Merchants.Where(m => merchantIds.Contains(m.MerchantReportingId)).Select(m => m.MerchantId).ToListAsync(cancellationToken);
-                // Filter the fees now
-                fees = fees.Where(f => merchantGuids.Contains(f.txn.MerchantId));
-            }
-            if (operatorIds.Any())
-            {
-                // Get a list of the operator guid's
-                List<Guid> operatorGuids = await context.Operators.Where(m => operatorIds.Contains(m.OperatorReportingId)).Select(m => m.OperatorId).ToListAsync(cancellationToken);
-                // Filter the fees now
-                fees = fees.Where(f => operatorGuids.Contains(f.txn.OperatorId));
-            }
-            if (productIds.Any())
-            {
-                // Get a list of the operator guid's
-                List<Guid> productGuids = await context.ContractProducts.Where(m => productIds.Contains(m.ContractProductReportingId)).Select(m => m.ContractProductId).ToListAsync(cancellationToken);
-                // Filter the fees now
-                fees = fees.Where(f => productGuids.Contains(f.txn.ContractProductId));
-            }
-
-            List<UnsettledFee> unsettledFees = new();
-
-            switch (groupByOption)
-            {
-                case GroupByOption.Merchant:
-                    unsettledFees = await (from f in fees
-                                           join merchant in context.Merchants
-                                               on f.fee.MerchantId equals merchant.MerchantId
-                                           group new
-                                           {
-                                               f.fee.MerchantId,
-                                               CalculatedValue = f.fee.CalculatedValue,
-                                           } by merchant.Name
-                                     into grouped
-                                           select new UnsettledFee
-                                           {
-                                               DimensionName = grouped.Key,
-                                               FeesValue = grouped.Sum(item => item.CalculatedValue),
-                                               FeesCount = grouped.Count()
-                                           }).ToListAsync(cancellationToken);
-                    break;
-                case GroupByOption.Operator:
-                    unsettledFees = await (from f in fees
-                                           join @operator in context.Operators on f.txn.OperatorId equals @operator.OperatorId
-                                           group new
-                                           {
-                                               @operator.OperatorId,
-                                               CalculatedValue = f.fee.CalculatedValue,
-                                           } by @operator.Name
-                                           into grouped
-                                           select new UnsettledFee
-                                           {
-                                               DimensionName = grouped.Key,
-                                               FeesValue = grouped.Sum(item => item.CalculatedValue),
-                                               FeesCount = grouped.Count()
-                                           }).ToListAsync(cancellationToken);
-                    break;
-                case GroupByOption.Product:
-                    unsettledFees = await (from f in fees
-                                           join contractProduct in context.ContractProducts
-                                               on f.txn.ContractProductId equals contractProduct.ContractProductId
-                                           join contract in context.Contracts
-                                               on contractProduct.ContractId equals contract.ContractId
-                                           join @operator in context.Operators
-                                               on contract.OperatorId equals @operator.OperatorId
-                                           group new
-                                           {
-                                               contractProduct.ContractProductId,
-                                               CalculatedValue = f.fee.CalculatedValue,
-                                           } by new { @operator.Name, contractProduct.ProductName }
-                                           into grouped
-                                           select new UnsettledFee
-                                           {
-                                               DimensionName = $"{grouped.Key.Name} - {grouped.Key.ProductName}",
-                                               FeesValue = grouped.Sum(item => item.CalculatedValue),
-                                               FeesCount = grouped.Count()
-                                           }).ToListAsync(cancellationToken);
-
-                    break;
-            }
-
-            return unsettledFees;
+                GroupByOption.Merchant => query.ApplyMerchantGrouping(context),
+                GroupByOption.Operator => query.ApplyOperatorGrouping(context),
+                GroupByOption.Product => query.ApplyProductGrouping(context),
+            };
+            return await groupedQuery.ToListAsync(cancellationToken);
+            
         }
 
         public async Task<List<Calendar>> GetCalendarComparisonDates(Guid estateId, CancellationToken cancellationToken){
