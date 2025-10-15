@@ -90,31 +90,79 @@ public static class ReportingManagerExtensions{
             };
     }
 
+    public static IQueryable<DatabaseProjections.TransactionSearchProjection> ApplyOperatorFilters(this IQueryable<DatabaseProjections.TransactionSearchProjection> transactions,
+                                                                                                   List<Int32> operators) {
+
+        if (operators != null && operators.Any()) {
+            return transactions.Where(m => operators.Contains(m.Operator.OperatorReportingId));
+        }
+        return transactions;
+    }
+
+    public static IQueryable<DatabaseProjections.TransactionSearchProjection> ApplyMerchantFilters(this IQueryable<DatabaseProjections.TransactionSearchProjection> transactions,
+                                                                                                   List<Int32> merchants)
+    {
+
+        if (merchants != null && merchants.Any())
+        {
+            return transactions.Where(m => merchants.Contains(m.Merchant.MerchantReportingId));
+        }
+        return transactions;
+    }
+
+    public static IQueryable<DatabaseProjections.TransactionSearchProjection> ApplyValueRangeFilters(this IQueryable<DatabaseProjections.TransactionSearchProjection> transactions,
+                                                                                                   ValueRange valueRange)
+    {
+
+        if (valueRange != null) {
+            return transactions.Where(m => m.Transaction.TransactionAmount >= valueRange.StartValue && m.Transaction.TransactionAmount <= valueRange.EndValue);
+        }
+
+        return transactions;
+    }
+
+    public static IQueryable<DatabaseProjections.TransactionSearchProjection> ApplyAuthCodeFilters(this IQueryable<DatabaseProjections.TransactionSearchProjection> transactions,
+                                                                                                     String authCode)
+    {
+
+        if (String.IsNullOrEmpty(authCode) == false)
+        {
+            transactions = transactions.Where(m => m.Transaction.AuthorisationCode == authCode);
+        }
+
+        return transactions;
+    }
+
+    public static IQueryable<DatabaseProjections.TransactionSearchProjection> ApplyResponseCodeFilters(this IQueryable<DatabaseProjections.TransactionSearchProjection> transactions,
+                                                                                                   String responseCode)
+    {
+        if (String.IsNullOrEmpty(responseCode) == false) {
+            return transactions.Where(m => m.Transaction.ResponseCode == responseCode);
+        }
+
+        return transactions;
+    }
+
+    public static IQueryable<DatabaseProjections.TransactionSearchProjection> ApplyTransactionNumberFilters(this IQueryable<DatabaseProjections.TransactionSearchProjection> transactions,
+                                                                                                       String transactionNumber)
+    {
+        if (String.IsNullOrEmpty(transactionNumber) == false) {
+            return transactions.Where(m => m.Transaction.TransactionNumber == transactionNumber);
+        }
+
+        return transactions;
+    }
+
+
     public static IQueryable<DatabaseProjections.TransactionSearchProjection> ApplyFilters(this IQueryable<DatabaseProjections.TransactionSearchProjection> transactions,
                                                                                            TransactionSearchRequest searchRequest) {
-        if (searchRequest.Operators != null && searchRequest.Operators.Any()) {
-            transactions = transactions.Where(m => searchRequest.Operators.Contains(m.Operator.OperatorReportingId));
-        }
 
-        if (searchRequest.Merchants != null && searchRequest.Merchants.Any()) {
-            transactions = transactions.Where(m => searchRequest.Merchants.Contains(m.Merchant.MerchantReportingId));
-        }
-
-        if (searchRequest.ValueRange != null) {
-            transactions = transactions.Where(m => m.Transaction.TransactionAmount >= searchRequest.ValueRange.StartValue && m.Transaction.TransactionAmount <= searchRequest.ValueRange.EndValue);
-        }
-
-        if (String.IsNullOrEmpty(searchRequest.AuthCode) == false) {
-            transactions = transactions.Where(m => m.Transaction.AuthorisationCode == searchRequest.AuthCode);
-        }
-
-        if (String.IsNullOrEmpty(searchRequest.ResponseCode) == false) {
-            transactions = transactions.Where(m => m.Transaction.ResponseCode == searchRequest.ResponseCode);
-        }
-
-        if (String.IsNullOrEmpty(searchRequest.TransactionNumber) == false) {
-            transactions = transactions.Where(m => m.Transaction.TransactionNumber == searchRequest.TransactionNumber);
-        }
+        transactions = transactions.ApplyOperatorFilters(searchRequest.Operators);
+        transactions = transactions.ApplyMerchantFilters(searchRequest.Merchants);
+        transactions = transactions.ApplyValueRangeFilters(searchRequest.ValueRange);
+        transactions = transactions.ApplyAuthCodeFilters(searchRequest.AuthCode);
+        transactions = transactions.ApplyResponseCodeFilters(searchRequest.ResponseCode);
+        transactions = transactions.ApplyTransactionNumberFilters(searchRequest.TransactionNumber);
 
         return transactions;
     }

@@ -97,7 +97,7 @@ namespace EstateReportingAPI.BusinessLogic
                     TransactionDateTime = qr.Transaction.TransactionDateTime,
                     TransactionId = qr.Transaction.TransactionId,
                     TransactionReportingId = qr.Transaction.TransactionReportingId,
-                    TransactionSource = qr.Transaction.TransactionSource.ToString(), // TODO: Name for this
+                    TransactionSource = qr.Transaction.TransactionSource.ToString(),
                     TransactionAmount = qr.Transaction.TransactionAmount
                 });
             });
