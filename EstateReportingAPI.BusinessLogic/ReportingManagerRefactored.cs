@@ -142,6 +142,33 @@ namespace EstateReportingAPI.BusinessLogic
             return response;
         }
 
+        public async Task<TodaysSales> GetProductPerformance(Guid estateId, DateTime comparisonDate, List<Int32> productReportingIds, CancellationToken cancellationToken)
+        {
+            using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+            await using EstateManagementContext context = resolvedContext.Context;
+
+            // First we need to get a value of todays sales
+            IQueryable<TodayTransaction> todaysSalesQuery = BuildTodaySalesQuery(context);
+            IQueryable<TransactionHistory> comparisonSalesQuery = BuildComparisonSalesQuery(context, comparisonDate);
+
+            todaysSalesQuery = todaysSalesQuery.ApplyProductFilter(productReportingIds);
+            comparisonSalesQuery = comparisonSalesQuery.ApplyProductFilter(productReportingIds);
+
+            TodaysSales response = new TodaysSales
+            {
+                ComparisonSalesCount = await comparisonSalesQuery.CountAsync(cancellationToken),
+                ComparisonSalesValue = await comparisonSalesQuery.SumAsync(t => t.TransactionAmount, cancellationToken),
+                TodaysSalesCount = await todaysSalesQuery.CountAsync(cancellationToken),
+                TodaysSalesValue = await todaysSalesQuery.SumAsync(t => t.TransactionAmount, cancellationToken),
+            };
+            response.ComparisonAverageSalesValue =
+                SafeDivide(response.ComparisonSalesValue, response.ComparisonSalesCount);
+            response.TodaysAverageSalesValue =
+                SafeDivide(response.TodaysSalesValue, response.TodaysSalesCount);
+
+            return response;
+        }
+
     }
 
     public class DatabaseProjections {
