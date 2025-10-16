@@ -552,44 +552,6 @@ namespace EstateReportingAPI.BusinessLogic{
             return await queryable.Take(resultCount).ToListAsync(cancellationToken);
         }
 
-        public async Task<TodaysSales> GetMerchantPerformance(Guid estateId, DateTime comparisonDate, List<Int32> merchantReportingIds, CancellationToken cancellationToken){
-            using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-            await using EstateManagementContext context = resolvedContext.Context;
-
-            // First we need to get a value of todays sales
-            var todaysSalesQuery = (from t in context.TodayTransactions
-                                        where t.IsAuthorised && t.TransactionType == "Sale"
-                                                             && t.TransactionDate == DateTime.Now.Date
-                                                             && t.TransactionTime <= DateTime.Now.TimeOfDay
-                                        select t);
-
-            var comparisonSalesQuery = (from t in context.TransactionHistory
-                                             where t.IsAuthorised && t.TransactionType == "Sale"
-                                                                  && t.TransactionDate == comparisonDate
-                                                                  && t.TransactionTime <= DateTime.Now.TimeOfDay
-                                             select t);
-
-
-            if (merchantReportingIds.Any()){
-                todaysSalesQuery = todaysSalesQuery.Where(t => merchantReportingIds.Contains(t.MerchantReportingId));
-                comparisonSalesQuery = comparisonSalesQuery.Where(t => merchantReportingIds.Contains(t.MerchantReportingId));
-            }
-
-            TodaysSales response = new TodaysSales
-            {
-                ComparisonSalesCount = comparisonSalesQuery.Count(),
-                ComparisonSalesValue = comparisonSalesQuery.Sum(t => t.TransactionAmount),
-                TodaysSalesCount = todaysSalesQuery.Count(),
-                TodaysSalesValue = todaysSalesQuery.Sum(t => t.TransactionAmount),
-            };
-            response.ComparisonAverageSalesValue =
-                SafeDivide(response.ComparisonSalesValue, response.ComparisonSalesCount);
-            response.TodaysAverageSalesValue =
-                SafeDivide(response.TodaysSalesValue, response.TodaysSalesCount);
-
-            return response;
-        }
-
         private Int32 SafeDivide(Int32 number, Int32 divisor)
         {
             if (divisor == 0)

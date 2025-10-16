@@ -1,9 +1,27 @@
 ﻿using EstateReportingAPI.Models;
 using TransactionProcessor.Database.Contexts;
+using TransactionProcessor.Database.Entities.Summary;
 
 namespace EstateReportingAPI.BusinessLogic;
 
 public static class ReportingManagerExtensions{
+    public static IQueryable<TodayTransaction> ApplyMerchantFilter(this IQueryable<TodayTransaction> query, List<int> merchantReportingIds)
+    {
+        if (merchantReportingIds == null || merchantReportingIds.Count == 0)
+            return query;
+
+        return query.Where(t => merchantReportingIds.Contains(t.MerchantReportingId)).AsQueryable();
+    }
+
+    public static IQueryable<TransactionHistory> ApplyMerchantFilter(this IQueryable<TransactionHistory> query, List<int> merchantReportingIds)
+    {
+        if (merchantReportingIds == null || merchantReportingIds.Count == 0)
+            return query;
+
+        return query.Where(t => merchantReportingIds.Contains(t.MerchantReportingId)).AsQueryable();
+    }
+
+
     public static IQueryable<DatabaseProjections.FeeTransactionProjection> ApplyMerchantFilter(this IQueryable<DatabaseProjections.FeeTransactionProjection> query,
                                                                                                EstateManagementContext context,
                                                                                                List<int> merchantIds)

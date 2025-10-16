@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
+using TransactionProcessor.Database.Entities.Summary;
 using Merchant = TransactionProcessor.Database.Entities.Merchant;
 using Operator = TransactionProcessor.Database.Entities.Operator;
 
@@ -40,6 +41,14 @@ namespace EstateReportingAPI.BusinessLogic
                     Operator = @operator, 
                     Product = product
                 };
+        }
+
+        private IQueryable<TodayTransaction> BuildTodaySalesQuery(EstateManagementContext context) {
+            return from t in context.TodayTransactions where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == DateTime.Now.Date && t.TransactionTime <= DateTime.Now.TimeOfDay select t;
+        }
+
+        private IQueryable<TransactionHistory> BuildComparisonSalesQuery(EstateManagementContext context, DateTime comparisonDate) {
+            return from t in context.TransactionHistory where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == comparisonDate && t.TransactionTime <= DateTime.Now.TimeOfDay select t;
         }
 
         public async Task<List<UnsettledFee>> GetUnsettledFees(Guid estateId, DateTime startDate, DateTime endDate, List<Int32> merchantIds, List<Int32> operatorIds, List<Int32> productIds, GroupByOption? groupByOption, CancellationToken cancellationToken)
@@ -103,6 +112,34 @@ namespace EstateReportingAPI.BusinessLogic
             });
 
             return results;
+        }
+
+        public async Task<TodaysSales> GetMerchantPerformance(Guid estateId, DateTime comparisonDate, List<Int32> merchantReportingIds, CancellationToken cancellationToken)
+        {
+            using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+            await using EstateManagementContext context = resolvedContext.Context;
+
+            // First we need to get a value of todays sales
+            IQueryable<TodayTransaction> todaysSalesQuery = BuildTodaySalesQuery(context);
+            IQueryable<TransactionHistory> comparisonSalesQuery = BuildComparisonSalesQuery(context, comparisonDate);
+
+            todaysSalesQuery = todaysSalesQuery.ApplyMerchantFilter(merchantReportingIds);
+            comparisonSalesQuery = comparisonSalesQuery.ApplyMerchantFilter(merchantReportingIds);
+
+            // Build the response
+            TodaysSales response = new TodaysSales
+            {
+                ComparisonSalesCount = await comparisonSalesQuery.CountAsync(cancellationToken),
+                ComparisonSalesValue = await comparisonSalesQuery.SumAsync(t => t.TransactionAmount, cancellationToken),
+                TodaysSalesCount = await todaysSalesQuery.CountAsync(cancellationToken),
+                TodaysSalesValue = await todaysSalesQuery.SumAsync(t => t.TransactionAmount, cancellationToken),
+            };
+            response.ComparisonAverageSalesValue =
+                SafeDivide(response.ComparisonSalesValue, response.ComparisonSalesCount);
+            response.TodaysAverageSalesValue =
+                SafeDivide(response.TodaysSalesValue, response.TodaysSalesCount);
+
+            return response;
         }
 
     }
