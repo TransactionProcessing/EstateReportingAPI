@@ -21,6 +21,37 @@ public static class ReportingManagerExtensions{
         return query.Where(t => merchantReportingIds.Contains(t.MerchantReportingId)).AsQueryable();
     }
 
+    public static IQueryable<TodayTransaction> ApplyProductFilter(this IQueryable<TodayTransaction> query, List<int> productReportingIds)
+    {
+        if (productReportingIds == null || productReportingIds.Count == 0)
+            return query;
+
+        return query.Where(t => productReportingIds.Contains(t.ContractProductReportingId)).AsQueryable();
+    }
+
+    public static IQueryable<TransactionHistory> ApplyProductFilter(this IQueryable<TransactionHistory> query, List<int> productReportingIds)
+    {
+        if (productReportingIds == null || productReportingIds.Count == 0)
+            return query;
+
+        return query.Where(t => productReportingIds.Contains(t.ContractProductReportingId)).AsQueryable();
+    }
+
+    public static IQueryable<TodayTransaction> ApplyOperatorFilter(this IQueryable<TodayTransaction> query, List<int> operatorReportingIds)
+    {
+        if (operatorReportingIds == null || operatorReportingIds.Count == 0)
+            return query;
+
+        return query.Where(t => operatorReportingIds.Contains(t.OperatorReportingId)).AsQueryable();
+    }
+
+    public static IQueryable<TransactionHistory> ApplyOperatorFilter(this IQueryable<TransactionHistory> query, List<int> operatorReportingIds)
+    {
+        if (operatorReportingIds == null || operatorReportingIds.Count == 0)
+            return query;
+
+        return query.Where(t => operatorReportingIds.Contains(t.OperatorReportingId)).AsQueryable();
+    }
 
     public static IQueryable<DatabaseProjections.FeeTransactionProjection> ApplyMerchantFilter(this IQueryable<DatabaseProjections.FeeTransactionProjection> query,
                                                                                                EstateManagementContext context,
