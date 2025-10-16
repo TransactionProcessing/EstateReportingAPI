@@ -196,6 +196,31 @@ namespace EstateReportingAPI.BusinessLogic
             return response;
         }
 
+        public async Task<List<TopBottomData>> GetTopBottomData(Guid estateId,
+                                                                TopBottom direction,
+                                                                Int32 resultCount,
+                                                                Dimension dimension,
+                                                                CancellationToken cancellationToken) {
+            using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+            await using EstateManagementContext context = resolvedContext.Context;
+
+            IQueryable<TodayTransaction> mainQuery = BuildTodaySalesQuery(context);
+
+            IQueryable<TopBottomData> topBottomData = dimension switch
+            {
+                Dimension.Merchant => mainQuery.ApplyMerchantGrouping(context),
+                Dimension.Operator => mainQuery.ApplyOperatorGrouping(context),
+                Dimension.Product => mainQuery.ApplyProductGrouping(context),
+            };
+
+            topBottomData = direction switch {
+                TopBottom.Top => topBottomData.OrderByDescending(g => g.SalesValue),
+                _ => topBottomData.OrderBy(g => g.SalesValue)
+            };
+
+            return await topBottomData.Take(resultCount).ToListAsync(cancellationToken);
+        }
+
     }
 
     public class DatabaseProjections {
@@ -210,6 +235,12 @@ namespace EstateReportingAPI.BusinessLogic
             public Operator Operator { get; set; }
             public Merchant Merchant { get; set; }
             public ContractProduct Product { get; set; }
+        }
+
+        public class TopBottomData
+        {
+            public String DimensionName { get; set; }
+            public Decimal SalesValue { get; set; }
         }
     }
 }

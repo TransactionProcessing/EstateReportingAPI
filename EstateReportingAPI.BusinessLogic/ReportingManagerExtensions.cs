@@ -111,6 +111,64 @@ public static class ReportingManagerExtensions{
             };
     }
 
+    public static IQueryable<TopBottomData> ApplyMerchantGrouping(this IQueryable<TodayTransaction> transactions,
+                                                                 EstateManagementContext context)
+    {
+        return transactions.Join(context.Merchants,
+                t => t.MerchantReportingId,
+                merchant => merchant.MerchantReportingId,
+                (t, merchant) => new
+                {
+                    Transaction = t,
+                    Merchant = merchant
+                })
+            .GroupBy(joined => joined.Merchant.Name)
+            .Select(g => new TopBottomData
+            {
+                DimensionName = g.Key,
+                SalesValue = g.Sum(t => t.Transaction.TransactionAmount)
+            });
+    }
+
+    public static IQueryable<TopBottomData> ApplyOperatorGrouping(this IQueryable<TodayTransaction> transactions,
+                                                                     EstateManagementContext context)
+    {
+        return transactions.Join(context.Operators,
+                t => t.OperatorReportingId,
+                o => o.OperatorReportingId,
+                (t, o) => new
+                {
+                    Transaction = t,
+                    Operator = o
+                })
+            .GroupBy(joined => joined.Operator.Name)
+            .Select(g => new TopBottomData
+            {
+                DimensionName = g.Key,
+                SalesValue = g.Sum(t => t.Transaction.TransactionAmount)
+            });
+    }
+
+    public static IQueryable<TopBottomData> ApplyProductGrouping(this IQueryable<TodayTransaction> transactions,
+                                                                    EstateManagementContext context)
+    {
+        return transactions
+            .Join(context.ContractProducts,
+                t => t.ContractProductReportingId,
+                contractProduct => contractProduct.ContractProductReportingId,
+                (t, contractProduct) => new
+                {
+                    Transaction = t,
+                    ContractProduct = contractProduct
+                })
+            .GroupBy(joined => joined.ContractProduct.ProductName)
+            .Select(g => new TopBottomData
+            {
+                DimensionName = g.Key,
+                SalesValue = g.Sum(t => t.Transaction.TransactionAmount)
+            });
+    }
+
     public static IQueryable<UnsettledFee> ApplyMerchantGrouping(this IQueryable<DatabaseProjections.FeeTransactionProjection> fees,
                                                                  EstateManagementContext context)
     {
