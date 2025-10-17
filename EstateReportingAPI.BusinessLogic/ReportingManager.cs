@@ -539,23 +539,87 @@ public partial class ReportingManager : IReportingManager {
         todaySettlementData = todaySettlementData.ApplyMerchantFilter(merchantReportingId).ApplyOperatorFilter(operatorReportingId);
         comparisonSettlementData = comparisonSettlementData.ApplyMerchantFilter(merchantReportingId).ApplyOperatorFilter(operatorReportingId);
 
-        var todaySettlement = await (from f in todaySettlementData group f by f.Fee.IsSettled into grouped select new { IsSettled = grouped.Key, CalculatedValueSum = grouped.Sum(item => item.Fee.CalculatedValue), CalculatedValueCount = grouped.Count() }).ToListAsync(cancellationToken);
-
-        var comparisonSettlement = await (from f in comparisonSettlementData group f by f.Fee.IsSettled into grouped select new { IsSettled = grouped.Key, CalculatedValueSum = grouped.Sum(item => item.Fee.CalculatedValue), CalculatedValueCount = grouped.Count() }).ToListAsync(cancellationToken);
-
+        DatabaseProjections.SettlementGroupProjection todaySettlement = await this.GetSettlementSummary(todaySettlementData, cancellationToken);
+        DatabaseProjections.SettlementGroupProjection comparisonSettlement = await this.GetSettlementSummary(comparisonSettlementData, cancellationToken);
 
         TodaysSettlement response = new() {
-            ComparisonSettlementCount = comparisonSettlement.FirstOrDefault(x => x.IsSettled)?.CalculatedValueCount ?? 0,
-            ComparisonSettlementValue = comparisonSettlement.FirstOrDefault(x => x.IsSettled)?.CalculatedValueSum ?? 0,
-            ComparisonPendingSettlementCount = comparisonSettlement.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueCount ?? 0,
-            ComparisonPendingSettlementValue = comparisonSettlement.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueSum ?? 0,
-            TodaysSettlementCount = todaySettlement.FirstOrDefault(x => x.IsSettled)?.CalculatedValueCount ?? 0,
-            TodaysSettlementValue = todaySettlement.FirstOrDefault(x => x.IsSettled)?.CalculatedValueSum ?? 0,
-            TodaysPendingSettlementCount = todaySettlement.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueCount ?? 0,
-            TodaysPendingSettlementValue = todaySettlement.FirstOrDefault(x => x.IsSettled == false)?.CalculatedValueSum ?? 0
+            ComparisonSettlementCount = comparisonSettlement.SettledCount,
+            ComparisonSettlementValue = comparisonSettlement.SettledValue,
+            ComparisonPendingSettlementCount = comparisonSettlement.UnSettledCount,
+            ComparisonPendingSettlementValue = comparisonSettlement.UnSettledValue,
+            TodaysSettlementCount = todaySettlement.SettledCount,
+            TodaysSettlementValue = todaySettlement.SettledValue,
+            TodaysPendingSettlementCount = todaySettlement.UnSettledCount,
+            TodaysPendingSettlementValue = todaySettlement.UnSettledValue
         };
 
         return response;
+    }
+
+    private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(
+        IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
+        CancellationToken cancellationToken)
+    {
+        // Get the settleed fees summary
+        var settledFees = await (from f in query
+            where f.Fee.IsSettled
+            group f by f.Fee.IsSettled
+            into grouped
+            select new
+            {
+                Value = grouped.Sum(g => g.Fee.CalculatedValue),
+                Count = grouped.Count()
+            }).SingleOrDefaultAsync(cancellationToken);
+
+        var unSettledFees = await (from f in query
+            where f.Fee.IsSettled
+            group f by f.Fee.IsSettled == false
+            into grouped
+            select new
+            {
+                Value = grouped.Sum(g => g.Fee.CalculatedValue),
+                Count = grouped.Count()
+            }).SingleOrDefaultAsync(cancellationToken);
+
+        return new DatabaseProjections.SettlementGroupProjection
+        {
+            SettledCount = settledFees?.Count ?? 0,
+            SettledValue = settledFees?.Value ?? 0,
+            UnSettledCount = unSettledFees? .Count ?? 0,
+            UnSettledValue = unSettledFees?.Value ?? 0
+        };
+    }
+
+    private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(
+        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> query,
+        CancellationToken cancellationToken) {
+
+        // Get the settleed fees summary
+        var settledFees = await (from f in query
+                                 where f.Fee.IsSettled
+                                 group f by f.Fee.IsSettled
+                                 into grouped
+                                 select new {
+                Value = grouped.Sum(g => g.Fee.CalculatedValue),
+                Count= grouped.Count()
+            }).SingleOrDefaultAsync(cancellationToken);
+
+        var unSettledFees = await (from f in query
+            where f.Fee.IsSettled
+            group f by f.Fee.IsSettled == false
+            into grouped
+            select new
+            {
+                Value = grouped.Sum(g => g.Fee.CalculatedValue),
+                Count = grouped.Count()
+            }).SingleOrDefaultAsync(cancellationToken);
+
+        return new DatabaseProjections.SettlementGroupProjection {
+            SettledCount = settledFees.Count, 
+            SettledValue = settledFees.Value, 
+            UnSettledCount = unSettledFees.Count, 
+            UnSettledValue = unSettledFees.Value
+       };
     }
 
     public async Task<List<Operator>> GetOperators(Guid estateId,

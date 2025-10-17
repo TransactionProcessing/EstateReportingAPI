@@ -16,6 +16,18 @@ namespace EstateReportingAPI.BusinessLogic
 {
 
     public class DatabaseProjections {
+        public class SettlementGroupProjection
+        {
+            public decimal SettledValue { get; set; }
+            public int SettledCount { get; set; }
+
+            public decimal UnSettledValue { get; set; }
+            public int UnSettledCount { get; set; }
+        }
+
+        
+
+
         public class FeeTransactionProjection
         {
             public MerchantSettlementFee Fee { get; set; }
