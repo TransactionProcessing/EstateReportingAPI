@@ -169,8 +169,8 @@ public static class ReportingManagerExtensions{
             };
     }
 
-    public static IQueryable<TopBottomData> ApplyMerchantGrouping(this IQueryable<TodayTransaction> transactions,
-                                                                 EstateManagementContext context)
+    public static IQueryable<DatabaseProjections.TopBottomData> ApplyMerchantGrouping(this IQueryable<TodayTransaction> transactions,
+                                                                                      EstateManagementContext context)
     {
         return transactions.Join(context.Merchants,
                 t => t.MerchantReportingId,
@@ -181,15 +181,15 @@ public static class ReportingManagerExtensions{
                     Merchant = merchant
                 })
             .GroupBy(joined => joined.Merchant.Name)
-            .Select(g => new TopBottomData
+            .Select(g => new DatabaseProjections.TopBottomData
             {
                 DimensionName = g.Key,
                 SalesValue = g.Sum(t => t.Transaction.TransactionAmount)
             });
     }
 
-    public static IQueryable<TopBottomData> ApplyOperatorGrouping(this IQueryable<TodayTransaction> transactions,
-                                                                     EstateManagementContext context)
+    public static IQueryable<DatabaseProjections.TopBottomData> ApplyOperatorGrouping(this IQueryable<TodayTransaction> transactions,
+                                                                                      EstateManagementContext context)
     {
         return transactions.Join(context.Operators,
                 t => t.OperatorReportingId,
@@ -200,15 +200,15 @@ public static class ReportingManagerExtensions{
                     Operator = o
                 })
             .GroupBy(joined => joined.Operator.Name)
-            .Select(g => new TopBottomData
+            .Select(g => new DatabaseProjections.TopBottomData
             {
                 DimensionName = g.Key,
                 SalesValue = g.Sum(t => t.Transaction.TransactionAmount)
             });
     }
 
-    public static IQueryable<TopBottomData> ApplyProductGrouping(this IQueryable<TodayTransaction> transactions,
-                                                                    EstateManagementContext context)
+    public static IQueryable<DatabaseProjections.TopBottomData> ApplyProductGrouping(this IQueryable<TodayTransaction> transactions,
+                                                                                     EstateManagementContext context)
     {
         return transactions
             .Join(context.ContractProducts,
@@ -220,7 +220,7 @@ public static class ReportingManagerExtensions{
                     ContractProduct = contractProduct
                 })
             .GroupBy(joined => joined.ContractProduct.ProductName)
-            .Select(g => new TopBottomData
+            .Select(g => new DatabaseProjections.TopBottomData
             {
                 DimensionName = g.Key,
                 SalesValue = g.Sum(t => t.Transaction.TransactionAmount)

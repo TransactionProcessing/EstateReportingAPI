@@ -10,6 +10,7 @@ using Shared.EntityFramework;
 using System;
 using System.Linq;
 using System.Threading;
+using static EstateReportingAPI.BusinessLogic.DatabaseProjections;
 using Calendar = Models.Calendar;
 using Merchant = Models.Merchant;
 using Operator = Models.Operator;
@@ -501,17 +502,17 @@ public partial class ReportingManager : IReportingManager {
         return response;
     }
 
-    public async Task<List<TopBottomData>> GetTopBottomData(Guid estateId,
-                                                            TopBottom direction,
-                                                            Int32 resultCount,
-                                                            Dimension dimension,
-                                                            CancellationToken cancellationToken) {
+    public async Task<List<Models.TopBottomData>> GetTopBottomData(Guid estateId,
+                                                                                TopBottom direction,
+                                                                                Int32 resultCount,
+                                                                                Dimension dimension,
+                                                                                CancellationToken cancellationToken) {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
         IQueryable<TodayTransaction> mainQuery = this.BuildTodaySalesQuery(context);
 
-        IQueryable<TopBottomData> topBottomData = dimension switch {
+        IQueryable<DatabaseProjections.TopBottomData> topBottomData = dimension switch {
             Dimension.Merchant => mainQuery.ApplyMerchantGrouping(context),
             Dimension.Operator => mainQuery.ApplyOperatorGrouping(context),
             Dimension.Product => mainQuery.ApplyProductGrouping(context)
@@ -522,7 +523,11 @@ public partial class ReportingManager : IReportingManager {
             _ => topBottomData.OrderBy(g => g.SalesValue)
         };
 
-        return await topBottomData.Take(resultCount).ToListAsync(cancellationToken);
+        List<DatabaseProjections.TopBottomData> queryResult = await topBottomData.Take(resultCount).ToListAsync(cancellationToken);
+
+        List<Models.TopBottomData> results = new();
+        queryResult.ForEach(qr => results.Add(new Models.TopBottomData { DimensionName = qr.DimensionName, SalesValue = qr.SalesValue }));
+        return results;
     }
 
     public async Task<TodaysSettlement> GetTodaysSettlement(Guid estateId,
@@ -565,21 +570,26 @@ public partial class ReportingManager : IReportingManager {
         return new DatabaseProjections.SettlementGroupProjection { SettledCount = summary?.SettledCount ?? 0, SettledValue = summary?.SettledValue ?? 0, UnSettledCount = summary?.UnSettledCount ?? 0, UnSettledValue = summary?.UnSettledValue ?? 0 };
     }
 
-    private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(
-        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> query,
-        CancellationToken cancellationToken) {
-
-        // Get the settleed fees summary
-        var summary = await query
-            .GroupBy(_ => 1) // group everything together
-            .Select(g => new
+    private static IQueryable<SettlementGroupProjection> BuildSettlementSummaryQuery(
+        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> query)
+    {
+        return query
+            .GroupBy(_ => 1)
+            .Select(g => new SettlementGroupProjection
             {
                 SettledCount = g.Count(x => x.Fee.IsSettled),
                 SettledValue = g.Where(x => x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue),
                 UnSettledCount = g.Count(x => !x.Fee.IsSettled),
                 UnSettledValue = g.Where(x => !x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue)
-            })
-            .SingleOrDefaultAsync(cancellationToken);
+            });
+    }
+
+    private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(
+        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> query,
+        CancellationToken cancellationToken) {
+
+        // Get the settleed fees summary
+        SettlementGroupProjection? summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
 
         return new DatabaseProjections.SettlementGroupProjection {
             SettledCount = summary?.SettledCount ?? 0,

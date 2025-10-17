@@ -20,7 +20,7 @@ public interface IReportingManager{
     Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken);
     Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken);
     Task<TodaysSettlement> GetTodaysSettlement(Guid estateId, Int32 merchantReportingId, Int32 operatorReportingId, DateTime comparisonDate, CancellationToken cancellationToken);
-    Task<List<TopBottomData>> GetTopBottomData(Guid estateId, TopBottom direction, Int32 resultCount, Dimension dimension, CancellationToken cancellationToken);
+    Task<List<Models.TopBottomData>> GetTopBottomData(Guid estateId, TopBottom direction, Int32 resultCount, Dimension dimension, CancellationToken cancellationToken);
 
     Task<TodaysSales> GetMerchantPerformance(Guid estateId, DateTime comparisonDate, List<Int32> merchantReportingIds, CancellationToken cancellationToken);
     Task<TodaysSales> GetProductPerformance(Guid estateId, DateTime comparisonDate, List<Int32> productReportingIds, CancellationToken cancellationToken);
