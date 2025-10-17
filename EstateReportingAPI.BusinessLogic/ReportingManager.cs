@@ -572,8 +572,8 @@ public partial class ReportingManager : IReportingManager {
             }).SingleOrDefaultAsync(cancellationToken);
 
         var unSettledFees = await (from f in query
-            where f.Fee.IsSettled
-            group f by f.Fee.IsSettled == false
+            where f.Fee.IsSettled == false
+                                   group f by f.Fee.IsSettled 
             into grouped
             select new
             {
@@ -581,7 +581,7 @@ public partial class ReportingManager : IReportingManager {
                 Count = grouped.Count()
             }).SingleOrDefaultAsync(cancellationToken);
 
-        return new DatabaseProjections.SettlementGroupProjection
+        return new DatabaseProjections.SettlementGroupProjection()
         {
             SettledCount = settledFees?.Count ?? 0,
             SettledValue = settledFees?.Value ?? 0,
@@ -605,8 +605,8 @@ public partial class ReportingManager : IReportingManager {
             }).SingleOrDefaultAsync(cancellationToken);
 
         var unSettledFees = await (from f in query
-            where f.Fee.IsSettled
-            group f by f.Fee.IsSettled == false
+            where f.Fee.IsSettled == false
+                                   group f by f.Fee.IsSettled 
             into grouped
             select new
             {
