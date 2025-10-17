@@ -13,6 +13,49 @@ public static class ReportingManagerExtensions{
         return query.Where(t => merchantReportingIds.Contains(t.MerchantReportingId)).AsQueryable();
     }
 
+    public static IQueryable<TodayTransaction> ApplyMerchantFilter(this IQueryable<TodayTransaction> query, int merchantReportingId) {
+        if (merchantReportingId == 0)
+            return query;
+        List<Int32> merchantReportingIds = [merchantReportingId];
+        return query.ApplyMerchantFilter(merchantReportingIds);
+    }
+
+    public static IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> ApplyMerchantFilter(this IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> query, int merchantReportingId)
+    {
+        if (merchantReportingId == 0)
+            return query;
+        return query.Where(q => q.Txn.MerchantReportingId == merchantReportingId).AsQueryable();
+    }
+
+    public static IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> ApplyOperatorFilter(this IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> query, int operatorReportingId)
+    {
+        if (operatorReportingId == 0)
+            return query;
+        return query.Where(q => q.Txn.OperatorReportingId == operatorReportingId).AsQueryable();
+    }
+
+    public static IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> ApplyMerchantFilter(this IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query, int merchantReportingId)
+    {
+        if (merchantReportingId == 0)
+            return query;
+        return query.Where(q => q.Txn.MerchantReportingId == merchantReportingId).AsQueryable();
+    }
+
+    public static IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> ApplyOperatorFilter(this IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query, int operatorReportingId)
+    {
+        if (operatorReportingId == 0)
+            return query;
+        return query.Where(q => q.Txn.OperatorReportingId == operatorReportingId).AsQueryable();
+    }
+
+    public static IQueryable<TransactionHistory> ApplyMerchantFilter(this IQueryable<TransactionHistory> query, int merchantReportingId)
+    {
+        if (merchantReportingId == 0)
+            return query;
+        List<Int32> merchantReportingIds = [merchantReportingId];
+        return query.ApplyMerchantFilter(merchantReportingIds);
+    }
+
     public static IQueryable<TransactionHistory> ApplyMerchantFilter(this IQueryable<TransactionHistory> query, List<int> merchantReportingIds)
     {
         if (merchantReportingIds == null || merchantReportingIds.Count == 0)
@@ -49,9 +92,24 @@ public static class ReportingManagerExtensions{
     {
         if (operatorReportingIds == null || operatorReportingIds.Count == 0)
             return query;
-
         return query.Where(t => operatorReportingIds.Contains(t.OperatorReportingId)).AsQueryable();
     }
+
+    public static IQueryable<TodayTransaction> ApplyOperatorFilter(this IQueryable<TodayTransaction> query, int operatorReportingId) {
+        if (operatorReportingId == 0)
+            return query;
+        List<int> operatorReportingIds = [operatorReportingId];
+        return query.ApplyOperatorFilter(operatorReportingIds);
+    }
+
+    public static IQueryable<TransactionHistory> ApplyOperatorFilter(this IQueryable<TransactionHistory> query, int operatorReportingId)
+    {
+        if (operatorReportingId == 0)
+            return query;
+        List<int> operatorReportingIds = [operatorReportingId];
+        return query.ApplyOperatorFilter(operatorReportingIds);
+    }
+
 
     public static IQueryable<DatabaseProjections.FeeTransactionProjection> ApplyMerchantFilter(this IQueryable<DatabaseProjections.FeeTransactionProjection> query,
                                                                                                EstateManagementContext context,
@@ -111,8 +169,8 @@ public static class ReportingManagerExtensions{
             };
     }
 
-    public static IQueryable<TopBottomData> ApplyMerchantGrouping(this IQueryable<TodayTransaction> transactions,
-                                                                 EstateManagementContext context)
+    public static IQueryable<DatabaseProjections.TopBottomData> ApplyMerchantGrouping(this IQueryable<TodayTransaction> transactions,
+                                                                                      EstateManagementContext context)
     {
         return transactions.Join(context.Merchants,
                 t => t.MerchantReportingId,
@@ -123,15 +181,15 @@ public static class ReportingManagerExtensions{
                     Merchant = merchant
                 })
             .GroupBy(joined => joined.Merchant.Name)
-            .Select(g => new TopBottomData
+            .Select(g => new DatabaseProjections.TopBottomData
             {
                 DimensionName = g.Key,
                 SalesValue = g.Sum(t => t.Transaction.TransactionAmount)
             });
     }
 
-    public static IQueryable<TopBottomData> ApplyOperatorGrouping(this IQueryable<TodayTransaction> transactions,
-                                                                     EstateManagementContext context)
+    public static IQueryable<DatabaseProjections.TopBottomData> ApplyOperatorGrouping(this IQueryable<TodayTransaction> transactions,
+                                                                                      EstateManagementContext context)
     {
         return transactions.Join(context.Operators,
                 t => t.OperatorReportingId,
@@ -142,15 +200,15 @@ public static class ReportingManagerExtensions{
                     Operator = o
                 })
             .GroupBy(joined => joined.Operator.Name)
-            .Select(g => new TopBottomData
+            .Select(g => new DatabaseProjections.TopBottomData
             {
                 DimensionName = g.Key,
                 SalesValue = g.Sum(t => t.Transaction.TransactionAmount)
             });
     }
 
-    public static IQueryable<TopBottomData> ApplyProductGrouping(this IQueryable<TodayTransaction> transactions,
-                                                                    EstateManagementContext context)
+    public static IQueryable<DatabaseProjections.TopBottomData> ApplyProductGrouping(this IQueryable<TodayTransaction> transactions,
+                                                                                     EstateManagementContext context)
     {
         return transactions
             .Join(context.ContractProducts,
@@ -162,7 +220,7 @@ public static class ReportingManagerExtensions{
                     ContractProduct = contractProduct
                 })
             .GroupBy(joined => joined.ContractProduct.ProductName)
-            .Select(g => new TopBottomData
+            .Select(g => new DatabaseProjections.TopBottomData
             {
                 DimensionName = g.Key,
                 SalesValue = g.Sum(t => t.Transaction.TransactionAmount)
