@@ -564,10 +564,23 @@ public partial class ReportingManager : IReportingManager {
     private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
                                                                                            CancellationToken cancellationToken) {
         // Get the settleed fees summary
-        var summary = await query.GroupBy(_ => 1) // group everything together
-            .Select(g => new { SettledCount = g.Count(x => x.Fee.IsSettled), SettledValue = g.Where(x => x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue), UnSettledCount = g.Count(x => !x.Fee.IsSettled), UnSettledValue = g.Where(x => !x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue) }).SingleOrDefaultAsync(cancellationToken);
+        SettlementGroupProjection? summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
 
         return new DatabaseProjections.SettlementGroupProjection { SettledCount = summary?.SettledCount ?? 0, SettledValue = summary?.SettledValue ?? 0, UnSettledCount = summary?.UnSettledCount ?? 0, UnSettledValue = summary?.UnSettledValue ?? 0 };
+    }
+
+    private static IQueryable<SettlementGroupProjection> BuildSettlementSummaryQuery(
+        IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query)
+    {
+        return query
+            .GroupBy(_ => 1)
+            .Select(g => new SettlementGroupProjection
+            {
+                SettledCount = g.Count(x => x.Fee.IsSettled),
+                SettledValue = g.Where(x => x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue),
+                UnSettledCount = g.Count(x => !x.Fee.IsSettled),
+                UnSettledValue = g.Where(x => !x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue)
+            });
     }
 
     private static IQueryable<SettlementGroupProjection> BuildSettlementSummaryQuery(
