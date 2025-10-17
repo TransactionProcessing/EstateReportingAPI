@@ -564,9 +564,12 @@ public partial class ReportingManager : IReportingManager {
     private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
                                                                                            CancellationToken cancellationToken) {
         // Get the settleed fees summary
-        SettlementGroupProjection? summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
+        SettlementGroupProjection summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
 
-        return new DatabaseProjections.SettlementGroupProjection { SettledCount = summary?.SettledCount ?? 0, SettledValue = summary?.SettledValue ?? 0, UnSettledCount = summary?.UnSettledCount ?? 0, UnSettledValue = summary?.UnSettledValue ?? 0 };
+        return new DatabaseProjections.SettlementGroupProjection { SettledCount = summary.SettledCount,
+            SettledValue = summary.SettledValue,
+            UnSettledCount = summary.UnSettledCount,
+            UnSettledValue = summary.UnSettledValue };
     }
 
     private static IQueryable<SettlementGroupProjection> BuildSettlementSummaryQuery(
@@ -602,13 +605,13 @@ public partial class ReportingManager : IReportingManager {
         CancellationToken cancellationToken) {
 
         // Get the settleed fees summary
-        SettlementGroupProjection? summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
+        SettlementGroupProjection summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
 
         return new DatabaseProjections.SettlementGroupProjection {
-            SettledCount = summary?.SettledCount ?? 0,
-            SettledValue = summary?.SettledValue ?? 0,
-            UnSettledCount = summary?.UnSettledCount ?? 0,
-            UnSettledValue = summary?.UnSettledValue ?? 0
+            SettledCount = summary.SettledCount,
+            SettledValue = summary.SettledValue,
+            UnSettledCount = summary.UnSettledCount,
+            UnSettledValue = summary.UnSettledValue
         };
     }
 
