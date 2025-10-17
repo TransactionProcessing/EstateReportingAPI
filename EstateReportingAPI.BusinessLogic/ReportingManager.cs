@@ -556,38 +556,13 @@ public partial class ReportingManager : IReportingManager {
         return response;
     }
 
-    private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(
-        IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
-        CancellationToken cancellationToken)
-    {
+    private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
+                                                                                           CancellationToken cancellationToken) {
         // Get the settleed fees summary
-        var settledFees = await (from f in query
-            where f.Fee.IsSettled
-            group f by f.Fee.IsSettled
-            into grouped
-            select new
-            {
-                Value = grouped.Sum(g => g.Fee.CalculatedValue),
-                Count = grouped.Count()
-            }).SingleOrDefaultAsync(cancellationToken);
+        var summary = await query.GroupBy(_ => 1) // group everything together
+            .Select(g => new { SettledCount = g.Count(x => x.Fee.IsSettled), SettledValue = g.Where(x => x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue), UnSettledCount = g.Count(x => !x.Fee.IsSettled), UnSettledValue = g.Where(x => !x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue) }).SingleOrDefaultAsync(cancellationToken);
 
-        var unSettledFees = await (from f in query
-            where f.Fee.IsSettled == false
-                                   group f by f.Fee.IsSettled 
-            into grouped
-            select new
-            {
-                Value = grouped.Sum(g => g.Fee.CalculatedValue),
-                Count = grouped.Count()
-            }).SingleOrDefaultAsync(cancellationToken);
-
-        return new DatabaseProjections.SettlementGroupProjection()
-        {
-            SettledCount = settledFees?.Count ?? 0,
-            SettledValue = settledFees?.Value ?? 0,
-            UnSettledCount = unSettledFees? .Count ?? 0,
-            UnSettledValue = unSettledFees?.Value ?? 0
-        };
+        return new DatabaseProjections.SettlementGroupProjection { SettledCount = summary?.SettledCount ?? 0, SettledValue = summary?.SettledValue ?? 0, UnSettledCount = summary?.UnSettledCount ?? 0, UnSettledValue = summary?.UnSettledValue ?? 0 };
     }
 
     private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(
@@ -595,31 +570,23 @@ public partial class ReportingManager : IReportingManager {
         CancellationToken cancellationToken) {
 
         // Get the settleed fees summary
-        var settledFees = await (from f in query
-                                 where f.Fee.IsSettled
-                                 group f by f.Fee.IsSettled
-                                 into grouped
-                                 select new {
-                Value = grouped.Sum(g => g.Fee.CalculatedValue),
-                Count= grouped.Count()
-            }).SingleOrDefaultAsync(cancellationToken);
-
-        var unSettledFees = await (from f in query
-            where f.Fee.IsSettled == false
-                                   group f by f.Fee.IsSettled 
-            into grouped
-            select new
+        var summary = await query
+            .GroupBy(_ => 1) // group everything together
+            .Select(g => new
             {
-                Value = grouped.Sum(g => g.Fee.CalculatedValue),
-                Count = grouped.Count()
-            }).SingleOrDefaultAsync(cancellationToken);
+                SettledCount = g.Count(x => x.Fee.IsSettled),
+                SettledValue = g.Where(x => x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue),
+                UnSettledCount = g.Count(x => !x.Fee.IsSettled),
+                UnSettledValue = g.Where(x => !x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue)
+            })
+            .SingleOrDefaultAsync(cancellationToken);
 
         return new DatabaseProjections.SettlementGroupProjection {
-            SettledCount = settledFees.Count, 
-            SettledValue = settledFees.Value, 
-            UnSettledCount = unSettledFees.Count, 
-            UnSettledValue = unSettledFees.Value
-       };
+            SettledCount = summary?.SettledCount ?? 0,
+            SettledValue = summary?.SettledValue ?? 0,
+            UnSettledCount = summary?.UnSettledCount ?? 0,
+            UnSettledValue = summary?.UnSettledValue ?? 0
+        };
     }
 
     public async Task<List<Operator>> GetOperators(Guid estateId,
