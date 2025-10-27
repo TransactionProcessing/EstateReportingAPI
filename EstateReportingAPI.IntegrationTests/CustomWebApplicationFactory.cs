@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using Shared.Repositories;
 using TransactionProcessor.Database.Contexts;
 
 namespace EstateReportingAPI.IntegrationTests;
