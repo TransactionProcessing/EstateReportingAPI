@@ -31,7 +31,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetCalendarDates_DatesReturned() {
-            var resultData = Result.Success(TestData.CalendarDateList);
+            var resultData = TestData.CalendarDateList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -43,8 +43,6 @@ namespace EstateReportingAPI.Tests {
         [Fact]
         public async Task EstateReportingApiClient_GetCalendarDates_SendAsyncReturnsFailureResponse_ResultFailed()
         {
-            var resultData = Result.Success(TestData.CalendarDateList);
-
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.BadRequest });
 
             var result = await this.EstateReportingApiClient.GetCalendarDates("", Guid.NewGuid(), 2024, CancellationToken.None);
@@ -61,7 +59,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetCalendarYears_YearsReturned() {
-            var resultData = Result.Success(TestData.CalendarYearList);
+            var resultData = TestData.CalendarYearList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -80,7 +78,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetComparisonDates_DatesReturned() {
-            var resultData = Result.Success(TestData.ComparisonDateList);
+            var resultData = TestData.ComparisonDateList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -99,7 +97,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetLastSettlement_LastSettlementReturned() {
-            var resultData = Result.Success(TestData.LastSettlement);
+            var resultData = TestData.LastSettlement;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -121,7 +119,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetResponseCodes_ResponseCodesReturned() {
-            var resultData = Result.Success(TestData.ResponseCodeList);
+            var resultData = TestData.ResponseCodeList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -140,7 +138,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetMerchantPerformance_PerformanceReturned() {
-            var resultData = Result.Success(TestData.TodaysSales);
+            var resultData = TestData.TodaysSales;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -164,7 +162,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetProductPerformance_PerformanceReturned() {
-            var resultData = Result.Success(TestData.TodaysSales);
+            var resultData = TestData.TodaysSales;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -188,7 +186,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetMerchantsByLastSaleDate_MerchantsReturned() {
-            var resultData = Result.Success(TestData.MerchantList);
+            var resultData = TestData.MerchantList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -207,7 +205,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetOperatorPerformance_PerformanceReturned() {
-            var resultData = Result.Success(TestData.TodaysSales);
+            var resultData = TestData.TodaysSales;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -231,7 +229,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_TransactionSearch_TransactionsReturned() {
-            var resultData = Result.Success(TestData.TransactionResultList);
+            var resultData = TestData.TransactionResultList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -243,7 +241,7 @@ namespace EstateReportingAPI.Tests {
         [Fact]
         public async Task EstateReportingApiClient_TransactionSearch_WithPageNumber_TransactionsReturned()
         {
-            var resultData = Result.Success(TestData.TransactionResultList);
+            var resultData = TestData.TransactionResultList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -255,7 +253,7 @@ namespace EstateReportingAPI.Tests {
         [Fact]
         public async Task EstateReportingApiClient_TransactionSearch_WithPageSize_TransactionsReturned()
         {
-            var resultData = Result.Success(TestData.TransactionResultList);
+            var resultData = TestData.TransactionResultList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -267,7 +265,7 @@ namespace EstateReportingAPI.Tests {
         [Fact]
         public async Task EstateReportingApiClient_TransactionSearch_WithSort_TransactionsReturned()
         {
-            var resultData = Result.Success(TestData.TransactionResultList);
+            var resultData = TestData.TransactionResultList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -286,7 +284,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetUnsettledFees_FeesReturned() {
-            var resultData = Result.Success(TestData.UnsettledFeeList);
+            var resultData = TestData.UnsettledFeeList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -305,7 +303,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetMerchantKpi_KpiReturned() {
-            var resultData = Result.Success(TestData.MerchantKpi);
+            var resultData = TestData.MerchantKpi;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -326,7 +324,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetMerchants_MerchantsReturned() {
-            var resultData = Result.Success(TestData.MerchantList);
+            var resultData = TestData.MerchantList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -345,7 +343,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetOperators_OperatorsReturned() {
-            var resultData = Result.Success(TestData.OperatorList);
+            var resultData = TestData.OperatorList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -364,7 +362,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetTodaysFailedSales_FailedSalesReturned() {
-            var resultData = Result.Success(TestData.TodaysSales);
+            var resultData = TestData.TodaysSales;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -388,7 +386,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetTodaysSales_SalesReturned() {
-            var resultData = Result.Success(TestData.TodaysSales);
+            var resultData = TestData.TodaysSales;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -412,7 +410,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetTodaysSalesCountByHour_CountsReturned() {
-            var resultData = Result.Success(TestData.TodaysSalesCountByHourList);
+            var resultData = TestData.TodaysSalesCountByHourList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -431,7 +429,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetTodaysSalesValueByHour_ValuesReturned() {
-            var resultData = Result.Success(TestData.TodaysSalesValueByHourList);
+            var resultData = TestData.TodaysSalesValueByHourList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -450,7 +448,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetTodaysSettlement_SettlementReturned() {
-            var resultData = Result.Success(TestData.TodaysSettlement);
+            var resultData = TestData.TodaysSettlement;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -476,7 +474,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetTopBottomMerchantData_DataReturned() {
-            var resultData = Result.Success(TestData.TopBottomMerchantDataList);
+            var resultData = TestData.TopBottomMerchantDataList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -495,7 +493,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetTopBottomOperatorData_DataReturned() {
-            var resultData = Result.Success(TestData.TopBottomOperatorDataList);
+            var resultData = TestData.TopBottomOperatorDataList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 
@@ -514,7 +512,7 @@ namespace EstateReportingAPI.Tests {
 
         [Fact]
         public async Task EstateReportingApiClient_GetTopBottomProductData_DataReturned() {
-            var resultData = Result.Success(TestData.TopBottomProductDataList);
+            var resultData = TestData.TopBottomProductDataList;
 
             this.HttpMessageHandler.Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK, Content = new StringContent(JsonConvert.SerializeObject(resultData)) });
 

@@ -108,6 +108,12 @@ namespace EstateReportingAPI.Bootstrapper{
                 new RequestResponseMiddlewareLoggingConfig(middlewareLogLevel, logRequests, logResponses);
 
             this.AddSingleton(config);
+
+            this.ConfigureHttpJsonOptions(options =>
+            {
+                options.SerializerOptions.PropertyNamingPolicy = new SnakeCaseNamingPolicy();
+                options.SerializerOptions.PropertyNameCaseInsensitive = true; // optional, but safer
+            });
         }
 
         private HttpClientHandler ApiEndpointHttpHandler(IServiceProvider serviceProvider){
