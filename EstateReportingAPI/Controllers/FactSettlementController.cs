@@ -90,31 +90,25 @@ namespace EstateReportingAPI.Controllers
                                                        [FromQuery] GroupByOption? groupByOption, CancellationToken cancellationToken)
         {
             List<Int32> merchantIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(merchantIds) == false)
-            {
+            if (String.IsNullOrEmpty(merchantIds) == false) {
                 List<String> merchantListStrings = merchantIds.Split(',').ToList();
-                foreach (String merchantListString in merchantListStrings)
-                {
+                foreach (String merchantListString in merchantListStrings) {
                     merchantIdFilter.Add(Int32.Parse(merchantListString));
                 }
             }
 
             List<Int32> operatorIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(operatorIds) == false)
-            {
+            if (String.IsNullOrEmpty(operatorIds) == false) {
                 List<String> operatorListStrings = operatorIds.Split(',').ToList();
-                foreach (String operatorListString in operatorListStrings)
-                {
+                foreach (String operatorListString in operatorListStrings) {
                     operatorIdFilter.Add(Int32.Parse(operatorListString));
                 }
             }
 
             List<Int32> productIdFilter = new List<Int32>();
-            if (String.IsNullOrEmpty(productIds) == false)
-            {
+            if (String.IsNullOrEmpty(productIds) == false) {
                 List<String> productListStrings = productIds.Split(',').ToList();
-                foreach (String productListString in productListStrings)
-                {
+                foreach (String productListString in productListStrings) {
                     productIdFilter.Add(Int32.Parse(productListString));
                 }
             }
@@ -125,17 +119,15 @@ namespace EstateReportingAPI.Controllers
 
             return ResponseFactory.FromResult(result, (r) => {
                 List<EstateReportingAPI.DataTransferObjects.UnsettledFee> response = new();
-
                 foreach (UnsettledFee unsettledFee in result.Data)
                 {
-                    response.Add(new DataTransferObjects.UnsettledFee
+                    response.Add(new DataTransferObjects.UnsettledFee 
                     {
                         DimensionName = unsettledFee.DimensionName,
                         FeesCount = unsettledFee.FeesCount,
                         FeesValue = unsettledFee.FeesValue
                     });
                 }
-
                 return response;
             });
         }
