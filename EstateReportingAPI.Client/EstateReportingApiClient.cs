@@ -285,10 +285,8 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-
-                StringContent content = new StringContent(JsonConvert.SerializeObject(searchRequest), Encoding.UTF8, "application/json");
-
-                Result<List<TransactionResult>>? result = await this.SendGetRequest<List<TransactionResult>>(requestUri, accessToken, additionalHeaders,content, cancellationToken);
+                
+                Result<List<TransactionResult>>? result = await this.SendPostRequest<TransactionSearchRequest, List<TransactionResult>>(requestUri, accessToken, searchRequest, cancellationToken, additionalHeaders);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);

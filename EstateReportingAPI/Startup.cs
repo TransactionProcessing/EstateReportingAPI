@@ -7,6 +7,7 @@ using Shared.Extensions;
 using Shared.General;
 using Shared.Logger;
 using System.Diagnostics.CodeAnalysis;
+using EstateReportingAPI.Endpoints;
 
 namespace EstateReportingAPI
 {
@@ -71,7 +72,11 @@ namespace EstateReportingAPI
 
             app.UseEndpoints(endpoints =>
                              {
-                                 endpoints.MapControllers();
+                                 endpoints.MapDimensionsEndpoints();
+                                 endpoints.MapFactSettlementsEndpoints();
+                                 endpoints.MapFactTransactionEndpoints();
+
+                                 //endpoints.MapControllers();
                                  endpoints.MapHealthChecks("health", new HealthCheckOptions()
                                  {
                                      Predicate = _ => true,
