@@ -41,150 +41,141 @@ namespace EstateReportingAPI.Controllers
 
         [HttpGet]
         [Route("calendar/years")]
-        public async Task<IActionResult> GetCalendarYears([FromHeader] Guid estateId, CancellationToken cancellationToken){
+        public async Task<IResult> GetCalendarYears([FromHeader] Guid estateId,
+                                                    CancellationToken cancellationToken) {
 
-           CalendarQueries.GetYearsQuery query = new(estateId);
-           Result<List<Int32>> result = await this.Mediator.Send(query, cancellationToken);
+            CalendarQueries.GetYearsQuery query = new(estateId);
+            Result<List<Int32>> result = await this.Mediator.Send(query, cancellationToken);
 
-           if (result.IsFailed)
-               return result.ToActionResultX();
+            return ResponseFactory.FromResult(result, (r) => {
+                List<CalendarYear> response = new List<CalendarYear>();
 
-            List<CalendarYear> response = new List<CalendarYear>();
+                r.ForEach(y => response.Add(new CalendarYear { Year = y }));
 
-            result.Data.ForEach(y => response.Add(new CalendarYear{
-                                                                Year = y
-                                                            }));
-
-            return Result.Success(response).ToActionResultX();
+                return response;
+            });
         }
+
 
         [HttpGet]
         [Route("calendar/{year}/dates")]
-        public async Task<IActionResult> GetCalendarDates([FromHeader] Guid estateId, [FromRoute] Int32 year, CancellationToken cancellationToken){
+        public async Task<IResult> GetCalendarDates([FromHeader] Guid estateId, [FromRoute] Int32 year, CancellationToken cancellationToken){
             CalendarQueries.GetAllDatesQuery query = new(estateId);
             Result<List<Calendar>> result = await this.Mediator.Send(query, cancellationToken);
-            if (result.IsFailed)
-                return result.ToActionResultX();
 
-            List<CalendarDate> response = new List<CalendarDate>();
+            return ResponseFactory.FromResult(result, (r) => {
+                List<CalendarDate> response = new List<CalendarDate>();
 
-            result.Data.ForEach(d => response.Add(new CalendarDate{
-                                                                Year = d.Year,
-                                                                Date = d.Date,
-                                                                DayOfWeek = d.DayOfWeek,
-                                                                DayOfWeekNumber = d.DayOfWeekNumber,
-                                                                DayOfWeekShort = d.DayOfWeekShort,
-                                                                MonthName = d.MonthNameLong,
-                                                                MonthNameShort = d.MonthNameShort,
-                                                                MonthNumber = d.MonthNumber,
-                                                                WeekNumber = d.WeekNumber ?? 0,
-                                                                WeekNumberString = d.WeekNumberString,
-                                                                YearWeekNumber = d.YearWeekNumber,
-                                                            }));
+                r.ForEach(d => response.Add(new CalendarDate
+                {
+                    Year = d.Year,
+                    Date = d.Date,
+                    DayOfWeek = d.DayOfWeek,
+                    DayOfWeekNumber = d.DayOfWeekNumber,
+                    DayOfWeekShort = d.DayOfWeekShort,
+                    MonthName = d.MonthNameLong,
+                    MonthNameShort = d.MonthNameShort,
+                    MonthNumber = d.MonthNumber,
+                    WeekNumber = d.WeekNumber ?? 0,
+                    WeekNumberString = d.WeekNumberString,
+                    YearWeekNumber = d.YearWeekNumber,
+                }));
 
-            return Result.Success(response).ToActionResultX();
+                return response;
+            });
         }
 
         [HttpGet]
         [Route("calendar/comparisondates")]
-        public async Task<IActionResult> GetCalendarComparisonDates([FromHeader] Guid estateId, CancellationToken cancellationToken){
+        public async Task<IResult> GetCalendarComparisonDates([FromHeader] Guid estateId, CancellationToken cancellationToken){
             CalendarQueries.GetComparisonDatesQuery query = new(estateId);
             Result<List<Calendar>> result = await this.Mediator.Send(query, cancellationToken);
-            if (result.IsFailed)
-                return result.ToActionResultX();
-            
-            List<ComparisonDate> response = new List<ComparisonDate>();
 
-            response.Add(new ComparisonDate{
-                                               Date = DateTime.Now.Date.AddDays(-1),
-                                               Description = "Yesterday",
-                                               OrderValue = 0
-                                           });
+            return ResponseFactory.FromResult(result, (r) => {
+                List<ComparisonDate> response = [
+                    new ComparisonDate { Date = DateTime.Now.Date.AddDays(-1), Description = "Yesterday", OrderValue = 0 },
 
-            response.Add(new ComparisonDate{
-                                               Date = DateTime.Now.Date.AddDays(-7),
-                                               Description = "Last Week",
-                                               OrderValue = 1
-                                           });
-            response.Add(new ComparisonDate{
-                                               Date = DateTime.Now.Date.AddMonths(-1),
-                                               Description = "Last Month",
-                                               OrderValue = 2
-                                           });
-            Int32 orderValue = 3;
-            result.Data.ForEach(d => {
-                              response.Add(new ComparisonDate{
-                                                                 Date = d.Date,
-                                                                 Description = d.Date.ToString("yyyy-MM-dd"),
-                                                                 OrderValue = orderValue
-                                                             });
-                              orderValue++;
-                          });
+                    new ComparisonDate { Date = DateTime.Now.Date.AddDays(-7), Description = "Last Week", OrderValue = 1 },
 
-            return Result.Success(response.OrderBy(d => d.OrderValue)).ToActionResultX();
+                    new ComparisonDate { Date = DateTime.Now.Date.AddMonths(-1), Description = "Last Month", OrderValue = 2 }
+
+                ];
+
+                Int32 orderValue = 3;
+                r.ForEach(d =>
+                {
+                    response.Add(new ComparisonDate
+                    {
+                        Date = d.Date,
+                        Description = d.Date.ToString("yyyy-MM-dd"),
+                        OrderValue = orderValue
+                    });
+                    orderValue++;
+                });
+
+                return response.OrderBy(d => d.OrderValue);
+            });
         }
         
         [HttpGet]
         [Route("merchants")]
-        public async Task<IActionResult> GetMerchants([FromHeader] Guid estateId, CancellationToken cancellationToken) {
+        public async Task<IResult> GetMerchants([FromHeader] Guid estateId, CancellationToken cancellationToken) {
             MerchantQueries.GetMerchantsQuery query = new(estateId);
             Result<List<Models.Merchant>> result = await this.Mediator.Send(query, cancellationToken);
-            
-            List<Merchant> response = new List<Merchant>();
 
-            result.Data.ForEach(m => response.Add(new Merchant{
-                                                                MerchantReportingId = m.MerchantReportingId,
-                                                                MerchantId = m.MerchantId,
-                                                                EstateReportingId = m.EstateReportingId,
-                                                                Name = m.Name,
-                                                                LastSaleDateTime = m.LastSaleDateTime,
-                                                                CreatedDateTime = m.CreatedDateTime,
-                                                                LastSale = m.LastSale,
-                                                                LastStatement = m.LastStatement,
-                                                                PostCode = m.PostCode,
-                                                                Reference = m.Reference,
-                                                                Region = m.Region,
-                                                                Town = m.Town,
-                                                            }));
+            return ResponseFactory.FromResult(result, (r) => {
+                List<Merchant> response = new List<Merchant>();
 
-            return Result.Success(response.OrderBy(m=> m.Name)).ToActionResultX();
+                r.ForEach(m => response.Add(new Merchant {
+                    MerchantReportingId = m.MerchantReportingId,
+                    MerchantId = m.MerchantId,
+                    EstateReportingId = m.EstateReportingId,
+                    Name = m.Name,
+                    LastSaleDateTime = m.LastSaleDateTime,
+                    CreatedDateTime = m.CreatedDateTime,
+                    LastSale = m.LastSale,
+                    LastStatement = m.LastStatement,
+                    PostCode = m.PostCode,
+                    Reference = m.Reference,
+                    Region = m.Region,
+                    Town = m.Town,
+                }));
+
+                return response.OrderBy(m => m.Name);
+            });
         }
 
         [HttpGet]
         [Route("operators")]
-        public async Task<IActionResult> GetOperators([FromHeader] Guid estateId, CancellationToken cancellationToken)
+        public async Task<IResult> GetOperators([FromHeader] Guid estateId, CancellationToken cancellationToken)
         {
             OperatorQueries.GetOperatorsQuery query = new(estateId);
             Result<List<Models.Operator>> result = await this.Mediator.Send(query, cancellationToken);
 
-            List<Operator> response = new List<Operator>();
+            return ResponseFactory.FromResult(result, (r) => {
+                List<Operator> response = new List<Operator>();
 
-            result.Data.ForEach(o => response.Add(new Operator
-                                                {
-                                                    EstateReportingId = o.EstateReportingId,
-                                                    Name = o.Name,
-                                                    OperatorId = o.OperatorId,
-                                                    OperatorReportingId = o.OperatorReportingId
-                                                }));
+                r.ForEach(o => response.Add(new Operator { EstateReportingId = o.EstateReportingId, Name = o.Name, OperatorId = o.OperatorId, OperatorReportingId = o.OperatorReportingId }));
 
-            return Result.Success(response.OrderBy(o => o.Name)).ToActionResultX();
+                return response.OrderBy(o => o.Name);
+            });
         }
 
         [HttpGet]
         [Route("responsecodes")]
-        public async Task<IActionResult> GetResponseCodes([FromHeader] Guid estateId, CancellationToken cancellationToken)
+        public async Task<IResult> GetResponseCodes([FromHeader] Guid estateId, CancellationToken cancellationToken)
         {
 
             ResponseCodeQueries.GetResponseCodesQuery query = new(estateId);
             var result = await this.Mediator.Send(query, cancellationToken);
-            List<ResponseCode> response = new List<ResponseCode>();
 
-            result.Data.ForEach(o => response.Add(new ResponseCode{
-                                                                        Code = o.Code,
-                                                                        Description = o.Description
-                                                                    }));
+            return ResponseFactory.FromResult(result, (r) => {
+                List<ResponseCode> response = new List<ResponseCode>();
 
-            return Result.Success(response.OrderBy(r => r.Code)).ToActionResultX();
+                r.ForEach(o => response.Add(new ResponseCode { Code = o.Code, Description = o.Description }));
+
+                return response.OrderBy(r => r.Code);
+            });
         }
     }
 

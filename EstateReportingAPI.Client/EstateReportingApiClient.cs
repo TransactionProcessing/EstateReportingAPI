@@ -40,25 +40,18 @@ namespace EstateReportingAPI.Client{
 
         public async Task<Result<List<CalendarDate>>> GetCalendarDates(String accessToken, Guid estateId, Int32 year, CancellationToken cancellationToken){
             String requestUri = this.BuildRequestUrl($"/api/dimensions/calendar/{year}/dates");
-
+            
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
 
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-                
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                Result<List<CalendarDate>> result = await this.SendGetRequest<List<CalendarDate>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<CalendarDate>> responseData = this.HandleResponseContent<List<CalendarDate>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -73,23 +66,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl("/api/dimensions/calendar/years");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<CalendarYear>> result = await this.SendGetRequest<List<CalendarYear>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<CalendarYear>> responseData = this.HandleResponseContent<List<CalendarYear>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -103,23 +88,16 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl("/api/dimensions/calendar/comparisondates");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
 
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                Result<List<ComparisonDate>> result = await this.SendGetRequest<List<ComparisonDate>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<ComparisonDate>> responseData = this.HandleResponseContent<List<ComparisonDate>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -130,28 +108,18 @@ namespace EstateReportingAPI.Client{
         }
 
         public async Task<Result<LastSettlement>> GetLastSettlement(String accessToken, Guid estateId, CancellationToken cancellationToken){
-            LastSettlement response = null;
-
             String requestUri = this.BuildRequestUrl("/api/facts/settlements/lastsettlement");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<LastSettlement> result = await this.SendGetRequest<LastSettlement>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<LastSettlement> responseData = this.HandleResponseContent<LastSettlement>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -159,32 +127,22 @@ namespace EstateReportingAPI.Client{
 
                 return Result.Failure(exception.Message);
             }
-
-            return response;
         }
-
+        
         public async Task<Result<List<ResponseCode>>> GetResponseCodes(String accessToken, Guid estateId, CancellationToken cancellationToken){
             String requestUri = this.BuildRequestUrl("/api/dimensions/responsecodes");
 
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<ResponseCode>> result = await this.SendGetRequest<List<ResponseCode>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<ResponseCode>> responseData = this.HandleResponseContent<List<ResponseCode>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch (Exception ex)
             {
@@ -204,23 +162,15 @@ namespace EstateReportingAPI.Client{
 
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<TodaysSales> result = await this.SendGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<TodaysSales> responseData = this.HandleResponseContent<TodaysSales>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch (Exception ex)
             {
@@ -239,24 +189,15 @@ namespace EstateReportingAPI.Client{
 
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<TodaysSales> result = await this.SendGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<TodaysSales> responseData = this.HandleResponseContent<TodaysSales>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch (Exception ex)
             {
@@ -273,24 +214,15 @@ namespace EstateReportingAPI.Client{
 
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<Merchant>>? result = await this.SendGetRequest<List<Merchant>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<Merchant>> responseData = this.HandleResponseContent<List<Merchant>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch (Exception ex)
             {
@@ -309,24 +241,15 @@ namespace EstateReportingAPI.Client{
 
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<TodaysSales>? result = await this.SendGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<TodaysSales> responseData = this.HandleResponseContent<TodaysSales>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch (Exception ex)
             {
@@ -359,25 +282,18 @@ namespace EstateReportingAPI.Client{
 
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
 
-                request.Content = new StringContent(JsonConvert.SerializeObject(searchRequest), Encoding.UTF8, "application/json");
+                StringContent content = new StringContent(JsonConvert.SerializeObject(searchRequest), Encoding.UTF8, "application/json");
 
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                Result<List<TransactionResult>>? result = await this.SendGetRequest<List<TransactionResult>>(requestUri, accessToken, additionalHeaders,content, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<TransactionResult>> responseData = this.HandleResponseContent<List<TransactionResult>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch (Exception ex)
             {
@@ -415,24 +331,15 @@ namespace EstateReportingAPI.Client{
 
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-                
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<UnsettledFee>>? result = await this.SendGetRequest<List<UnsettledFee>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<UnsettledFee>> responseData = this.HandleResponseContent<List<UnsettledFee>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch (Exception ex)
             {
@@ -448,23 +355,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl("/api/facts/transactions/merchantkpis");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<MerchantKpi>? result = await this.SendGetRequest<MerchantKpi>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<MerchantKpi> responseData = this.HandleResponseContent<MerchantKpi>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -479,24 +378,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl("/api/dimensions/merchants");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<Merchant>>? result = await this.SendGetRequest<List<Merchant>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<Merchant>> responseData = this.HandleResponseContent<List<Merchant>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -511,23 +401,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl("/api/dimensions/operators");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<Operator>>? result = await this.SendGetRequest<List<Operator>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<Operator>> responseData = this.HandleResponseContent<List<Operator>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -547,23 +429,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todaysfailedsales?{builder.BuildQueryString()}");
 
             try {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<TodaysSales>? result = await this.SendGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<TodaysSales> responseData = this.HandleResponseContent<TodaysSales>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch (Exception ex) {
                 // An exception has occurred, add some additional information to the message
@@ -582,23 +456,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales?{builder.BuildQueryString()}");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<TodaysSales>? result = await this.SendGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<TodaysSales> responseData = this.HandleResponseContent<TodaysSales>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -617,23 +483,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales/countbyhour?{builder.BuildQueryString()}");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<TodaysSalesCountByHour>>? result = await this.SendGetRequest<List<TodaysSalesCountByHour>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<TodaysSalesCountByHour>> responseData = this.HandleResponseContent<List<TodaysSalesCountByHour>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -652,23 +510,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/todayssales/valuebyhour?{builder.BuildQueryString()}");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<TodaysSalesValueByHour>>? result = await this.SendGetRequest<List<TodaysSalesValueByHour>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<TodaysSalesValueByHour>> responseData = this.HandleResponseContent<List<TodaysSalesValueByHour>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -687,23 +537,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl($"/api/facts/settlements/todayssettlement?{builder.BuildQueryString()}");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<TodaysSettlement>? result = await this.SendGetRequest<TodaysSettlement>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<TodaysSettlement> responseData = this.HandleResponseContent<TodaysSettlement>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -717,23 +559,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/merchants/topbottombyvalue?topOrBottom={(Int32)topBottom}&count={resultCount}");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<TopBottomMerchantData>>? result = await this.SendGetRequest<List<TopBottomMerchantData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<TopBottomMerchantData>> responseData = this.HandleResponseContent<List<TopBottomMerchantData>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -747,23 +581,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/operators/topbottombyvalue?topOrBottom={(Int32)topBottom}&count={resultCount}");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<TopBottomOperatorData>>? result = await this.SendGetRequest<List<TopBottomOperatorData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<TopBottomOperatorData>> responseData = this.HandleResponseContent<List<TopBottomOperatorData>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message
@@ -777,23 +603,15 @@ namespace EstateReportingAPI.Client{
             String requestUri = this.BuildRequestUrl($"/api/facts/transactions/products/topbottombyvalue?topOrBottom={(Int32)topBottom}&count={resultCount}");
 
             try{
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Add("EstateId", estateId.ToString());
-
-                // Make the Http Call here
-                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(request, cancellationToken);
-
-                // Process the response
-                Result<String> result = await this.HandleResponseX(httpResponse, cancellationToken);
+                List<(String headerName, String headerValue)> additionalHeaders = [
+                    ("EstateId", estateId.ToString())
+                ];
+                Result<List<TopBottomProductData>>? result = await this.SendGetRequest<List<TopBottomProductData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
 
-                // call was successful so now deserialise the body to the response object
-                ResponseData<List<TopBottomProductData>> responseData = this.HandleResponseContent<List<TopBottomProductData>>(result.Data);
-
-                return Result.Success(responseData.Data);
+                return result;
             }
             catch(Exception ex){
                 // An exception has occurred, add some additional information to the message

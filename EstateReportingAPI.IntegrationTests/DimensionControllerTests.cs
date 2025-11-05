@@ -216,7 +216,7 @@ public class DimensionsControllerTests : ControllerTestsBase
         var result = await ApiClient.GetOperators(string.Empty, this.TestId, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
         
-        var operators = result.Data;
+        List<Operator> operators = result.Data;
         operators.ShouldNotBeNull();
         operators.Count.ShouldBe(3);
         var operator1 = operators.SingleOrDefault(o => o.Name == "Operator1");

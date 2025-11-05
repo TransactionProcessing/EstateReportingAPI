@@ -37,60 +37,52 @@ namespace EstateReportingAPI.Controllers
 
         #endregion
 
-        private readonly IReportingManager ReportingManager;
         private readonly IMediator Mediator;
 
-        public FactSettlementsController(IReportingManager reportingManager, IMediator mediator) {
-            this.ReportingManager = reportingManager;
+        public FactSettlementsController(IMediator mediator) {
             this.Mediator = mediator;
         }
         
         [HttpGet]
         [Route("todayssettlement")]
-        public async Task<IActionResult> TodaysSettlement([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
+        public async Task<IResult> TodaysSettlement([FromHeader] Guid estateId, [FromQuery] Int32 merchantReportingId, [FromQuery] Int32 operatorReportingId, [FromQuery] DateTime comparisonDate, CancellationToken cancellationToken){
             SettlementQueries.GetTodaysSettlementQuery query = new(estateId, merchantReportingId, operatorReportingId, comparisonDate);
-            var result = await this.Mediator.Send(query, cancellationToken);
-            if (result.IsFailed)
-                return result.ToActionResultX();
+            Result<Models.TodaysSettlement> result = await this.Mediator.Send(query, cancellationToken);
+            
+            return ResponseFactory.FromResult(result, (r) => new TodaysSettlement
+            {
+                ComparisonSettlementCount = r.ComparisonSettlementCount,
+                ComparisonSettlementValue = r.ComparisonSettlementValue,
+                ComparisonPendingSettlementCount = r.ComparisonPendingSettlementCount,
+                ComparisonPendingSettlementValue = r.ComparisonPendingSettlementValue,
 
-            TodaysSettlement response = new TodaysSettlement{
-                                                                ComparisonSettlementCount = result.Data.ComparisonSettlementCount,
-                                                                ComparisonSettlementValue = result.Data.ComparisonSettlementValue,
-                                                                ComparisonPendingSettlementCount = result.Data.ComparisonPendingSettlementCount,
-                                                                ComparisonPendingSettlementValue = result.Data.ComparisonPendingSettlementValue,
-                                                                
-                                                                TodaysSettlementCount = result.Data.TodaysSettlementCount,
-                                                                TodaysSettlementValue = result.Data.TodaysSettlementValue,
-                                                                TodaysPendingSettlementCount = result.Data.TodaysPendingSettlementCount,
-                                                                TodaysPendingSettlementValue = result.Data.TodaysPendingSettlementValue
-                                                            };
-
-            return Result.Success(response).ToActionResultX();
+                TodaysSettlementCount = r.TodaysSettlementCount,
+                TodaysSettlementValue = r.TodaysSettlementValue,
+                TodaysPendingSettlementCount = r.TodaysPendingSettlementCount,
+                TodaysPendingSettlementValue = r.TodaysPendingSettlementValue
+            });
         }
 
         [HttpGet]
         [Route("lastsettlement")]
-        public async Task<IActionResult> LastSettlement([FromHeader] Guid estateId,
+        public async Task<IResult> LastSettlement([FromHeader] Guid estateId,
                                                         CancellationToken cancellationToken) {
             SettlementQueries.GetLastSettlementQuery query = new(estateId);
 
-            var result = await this.Mediator.Send(query, cancellationToken);
-            if (result.IsFailed)
-                return result.ToActionResultX();
+            Result<LastSettlement> result = await this.Mediator.Send(query, cancellationToken);
             
-            LastSettlement response = new LastSettlement() {
-                SalesCount = result.Data.SalesCount,
-                FeesValue = result.Data.FeesValue,
-                SalesValue = result.Data.SalesValue,
-                SettlementDate = result.Data.SettlementDate,
-            };
-
-            return Result.Success(response).ToActionResultX();
+            return ResponseFactory.FromResult(result, (r) => new LastSettlement()
+            {
+                SalesCount = r.SalesCount,
+                FeesValue = r.FeesValue,
+                SalesValue = r.SalesValue,
+                SettlementDate = r.SettlementDate,
+            });
         }
 
         [HttpGet]
         [Route("unsettledfees")]
-        public async Task<IActionResult> GetUnsettledFees([FromHeader] Guid estateId,
+        public async Task<IResult> GetUnsettledFees([FromHeader] Guid estateId,
                                                           [FromQuery] DateTime startDate,
                                                           [FromQuery] DateTime endDate,
                                                           [FromQuery] string? merchantIds, [FromQuery] string? operatorIds, 
@@ -129,22 +121,23 @@ namespace EstateReportingAPI.Controllers
 
             Models.GroupByOption groupByOptionConverted = ConvertGroupByOption(groupByOption.GetValueOrDefault());
             SettlementQueries.GetUnsettledFeesQuery query = new(estateId, startDate, endDate,merchantIdFilter, operatorIdFilter, productIdFilter, groupByOptionConverted);
-            var result = await this.Mediator.Send(query, cancellationToken);
-            if (result.IsFailed)
-                return result.ToActionResultX();
-            
-            List<EstateReportingAPI.DataTransferObjects.UnsettledFee> response = new();
-            
-            foreach (UnsettledFee unsettledFee in result.Data)
-            {
-                response.Add(new DataTransferObjects.UnsettledFee{
-                                                                     DimensionName = unsettledFee.DimensionName,
-                                                                     FeesCount = unsettledFee.FeesCount,
-                                                                     FeesValue = unsettledFee.FeesValue
-                                                                 });
-            }
+            Result<List<UnsettledFee>> result = await this.Mediator.Send(query, cancellationToken);
 
-            return Result.Success(response).ToActionResultX();
+            return ResponseFactory.FromResult(result, (r) => {
+                List<EstateReportingAPI.DataTransferObjects.UnsettledFee> response = new();
+
+                foreach (UnsettledFee unsettledFee in result.Data)
+                {
+                    response.Add(new DataTransferObjects.UnsettledFee
+                    {
+                        DimensionName = unsettledFee.DimensionName,
+                        FeesCount = unsettledFee.FeesCount,
+                        FeesValue = unsettledFee.FeesValue
+                    });
+                }
+
+                return response;
+            });
         }
 
         private static Models.GroupByOption ConvertGroupByOption(GroupByOption groupByOption){
