@@ -1,8 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using DotNet.Testcontainers.Containers;
+using DotNet.Testcontainers.Networks;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Shared.IntegrationTesting.TestContainers;
 using SimpleResults;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
@@ -30,19 +35,27 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     protected Dictionary<Guid, List<(Guid productId, String productName, Decimal? productValue)>> contractProducts;
     protected DatabaseHelper helper;
     protected ITestOutputHelper TestOutputHelper;
+    protected DockerHelper DockerHelper;
     public virtual async Task InitializeAsync()
     {
         this.TestId = Guid.NewGuid();
+        String scenarioName = this.TestId.ToString();
+        NlogLogger logger = new NlogLogger();
+        logger.Initialise(LogManager.GetLogger(scenarioName), scenarioName);
+        LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
 
-        await this.StartSqlContainer();
-
+        this.DockerHelper = new TestDockerHelper();
+        this.DockerHelper.Logger = logger;
+        
+        await this.DockerHelper.StartContainersForScenarioRun(scenarioName, DockerServices.SqlServer);
+        
         String dbConnString = GetLocalConnectionString($"TransactionProcessorReadModel-{this.TestId}");
 
         this.factory = new CustomWebApplicationFactory<Startup>(dbConnString);
         this.Client = this.factory.CreateClient();
         this.ApiClient = new EstateReportingApiClient((s) => "http://localhost", this.Client);
 
-        this.context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{this.TestId.ToString()}"));
+        this.context = new EstateManagementContext(dbConnString);
 
         this.helper = new DatabaseHelper(context);
         await this.helper.CreateStoredProcedures(CancellationToken.None);
@@ -51,6 +64,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 
     public virtual async Task DisposeAsync()
     {
+        await this.DockerHelper.StopContainersForScenarioRun(DockerServices.None);
     }
 
     protected EstateManagementContext context;
@@ -96,39 +110,39 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         return null;
     }
     
-    public static IContainerService DatabaseServerContainer;
-    public static INetworkService DatabaseServerNetwork;
+    //public static IContainer DatabaseServerContainer;
+    //public static INetwork DatabaseServerNetwork;
     public static (String usename, String password) SqlCredentials = ("sa", "thisisalongpassword123!");
 
-    public static String GetLocalConnectionString(String databaseName)
-    {
-        Int32 databaseHostPort = DatabaseServerContainer.ToHostExposedEndpoint("1433/tcp").Port;
+    public String GetLocalConnectionString(String databaseName) {
+        var dockerHelper = this.DockerHelper as TestDockerHelper;
+        Int32? databaseHostPort = dockerHelper.GetSqlPort();
 
         return $"server=localhost,{databaseHostPort};database={databaseName};user id={SqlCredentials.usename};password={SqlCredentials.password};Encrypt=false";
     }
 
-    internal async Task StartSqlContainer(){
-        DockerHelper dockerHelper = new TestDockerHelper();
+    //internal async Task StartSqlContainer(){
+    //    DockerHelper dockerHelper = new TestDockerHelper();
 
-        NlogLogger logger = new NlogLogger();
-        logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
-        LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
-        dockerHelper.Logger = logger;
-        dockerHelper.SqlCredentials = SqlCredentials;
-        dockerHelper.SqlServerContainerName = "sharedsqlserver";
-        dockerHelper.RequiredDockerServices = DockerServices.SqlServer;
+    //    NlogLogger logger = new NlogLogger();
+    //    logger.Initialise(LogManager.GetLogger("Specflow"), "Specflow");
+    //    LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
+    //    dockerHelper.Logger = logger;
+    //    dockerHelper.SqlCredentials = SqlCredentials;
+    //    dockerHelper.SqlServerContainerName = "sharedsqlserver";
+    //    dockerHelper.RequiredDockerServices = DockerServices.SqlServer;
 
-        DatabaseServerNetwork = dockerHelper.SetupTestNetwork("sharednetwork", true);
-        await Retry.For(async () => {
-                      DatabaseServerContainer = await dockerHelper.SetupSqlServerContainer(DatabaseServerNetwork);
-                  });
-    }
+    //    DatabaseServerNetwork = await dockerHelper.SetupTestNetwork("sharednetwork", true);
+    //    await Retry.For(async () => {
+    //                  DatabaseServerContainer = await dockerHelper.StartContainersForScenarioRun().SetupSqlServerContainer(DatabaseServerNetwork);
+    //              });
+    //}
 
     public void Dispose()
     {
-        EstateManagementContext context = new EstateManagementContext(ControllerTestsBase.GetLocalConnectionString($"EstateReportingReadModel{this.TestId.ToString()}"));
+        EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{this.TestId}"));
 
-        Console.WriteLine($"About to delete database EstateReportingReadModel{this.TestId.ToString()}");
+        Console.WriteLine($"About to delete database TransactionProcessorReadModel-{this.TestId}");
         Boolean result = context.Database.EnsureDeleted();
         Console.WriteLine($"Delete result is {result}");
         result.ShouldBeTrue();
@@ -155,5 +169,14 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 public class TestDockerHelper : DockerHelper{
     public override async Task CreateSubscriptions(){
         // Nothing here
+    }
+
+    public Int32? GetSqlPort() {
+        var sqlContainer = this.Containers.SingleOrDefault(c => c.Item1 == DockerServices.SqlServer);
+        if (sqlContainer == default) {
+            return null;
+        }
+
+        return sqlContainer.Item2.GetMappedPublicPort(1433);
     }
 }
