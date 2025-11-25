@@ -46,7 +46,7 @@ namespace EstateReportingAPI.Client{
                     ("EstateId", estateId.ToString())
                 ];
 
-                Result<List<CalendarDate>> result = await this.SendGetRequest<List<CalendarDate>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<CalendarDate>> result = await this.SendHttpGetRequest<List<CalendarDate>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -69,7 +69,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<CalendarYear>> result = await this.SendGetRequest<List<CalendarYear>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<CalendarYear>> result = await this.SendHttpGetRequest<List<CalendarYear>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -92,7 +92,7 @@ namespace EstateReportingAPI.Client{
                     ("EstateId", estateId.ToString())
                 ];
 
-                Result<List<ComparisonDate>> result = await this.SendGetRequest<List<ComparisonDate>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<ComparisonDate>> result = await this.SendHttpGetRequest<List<ComparisonDate>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -114,7 +114,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<LastSettlement> result = await this.SendGetRequest<LastSettlement>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<LastSettlement> result = await this.SendHttpGetRequest<LastSettlement>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -137,7 +137,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<ResponseCode>> result = await this.SendGetRequest<List<ResponseCode>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<ResponseCode>> result = await this.SendHttpGetRequest<List<ResponseCode>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -165,7 +165,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<TodaysSales> result = await this.SendGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<TodaysSales> result = await this.SendHttpGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -192,7 +192,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<TodaysSales> result = await this.SendGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<TodaysSales> result = await this.SendHttpGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -217,7 +217,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<Merchant>>? result = await this.SendGetRequest<List<Merchant>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<Merchant>>? result = await this.SendHttpGetRequest<List<Merchant>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -244,7 +244,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<TodaysSales>? result = await this.SendGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<TodaysSales>? result = await this.SendHttpGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -286,7 +286,7 @@ namespace EstateReportingAPI.Client{
                     ("EstateId", estateId.ToString())
                 ];
                 
-                Result<List<TransactionResult>>? result = await this.SendPostRequest<TransactionSearchRequest, List<TransactionResult>>(requestUri, accessToken, searchRequest, cancellationToken, additionalHeaders);
+                Result<List<TransactionResult>>? result = await this.SendHttpPostRequest<TransactionSearchRequest, List<TransactionResult>>(requestUri, searchRequest, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -332,7 +332,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<UnsettledFee>>? result = await this.SendGetRequest<List<UnsettledFee>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<UnsettledFee>>? result = await this.SendHttpGetRequest<List<UnsettledFee>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -356,7 +356,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<MerchantKpi>? result = await this.SendGetRequest<MerchantKpi>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<MerchantKpi>? result = await this.SendHttpGetRequest<MerchantKpi>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -379,7 +379,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<Merchant>>? result = await this.SendGetRequest<List<Merchant>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<Merchant>>? result = await this.SendHttpGetRequest<List<Merchant>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -402,7 +402,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<Operator>>? result = await this.SendGetRequest<List<Operator>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<Operator>>? result = await this.SendHttpGetRequest<List<Operator>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -430,7 +430,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<TodaysSales>? result = await this.SendGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<TodaysSales>? result = await this.SendHttpGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -457,7 +457,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<TodaysSales>? result = await this.SendGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<TodaysSales>? result = await this.SendHttpGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -484,7 +484,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<TodaysSalesCountByHour>>? result = await this.SendGetRequest<List<TodaysSalesCountByHour>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<TodaysSalesCountByHour>>? result = await this.SendHttpGetRequest<List<TodaysSalesCountByHour>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -511,7 +511,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<TodaysSalesValueByHour>>? result = await this.SendGetRequest<List<TodaysSalesValueByHour>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<TodaysSalesValueByHour>>? result = await this.SendHttpGetRequest<List<TodaysSalesValueByHour>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -538,7 +538,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<TodaysSettlement>? result = await this.SendGetRequest<TodaysSettlement>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<TodaysSettlement>? result = await this.SendHttpGetRequest<TodaysSettlement>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -560,7 +560,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<TopBottomMerchantData>>? result = await this.SendGetRequest<List<TopBottomMerchantData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<TopBottomMerchantData>>? result = await this.SendHttpGetRequest<List<TopBottomMerchantData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -582,7 +582,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<TopBottomOperatorData>>? result = await this.SendGetRequest<List<TopBottomOperatorData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<TopBottomOperatorData>>? result = await this.SendHttpGetRequest<List<TopBottomOperatorData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);
@@ -604,7 +604,7 @@ namespace EstateReportingAPI.Client{
                 List<(String headerName, String headerValue)> additionalHeaders = [
                     ("EstateId", estateId.ToString())
                 ];
-                Result<List<TopBottomProductData>>? result = await this.SendGetRequest<List<TopBottomProductData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
+                Result<List<TopBottomProductData>>? result = await this.SendHttpGetRequest<List<TopBottomProductData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
                 if (result.IsFailed)
                     return ResultHelpers.CreateFailure(result);

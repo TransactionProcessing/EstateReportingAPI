@@ -277,12 +277,12 @@ public class DimensionsControllerTests : ControllerTestsBase
 
     public void Dispose()
     {
-        EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
+        //EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"EstateReportingReadModel{TestId.ToString()}"));
 
-        Console.WriteLine($"About to delete database EstateReportingReadModel{TestId.ToString()}");
-        bool result = context.Database.EnsureDeleted();
-        Console.WriteLine($"Delete result is {result}");
-        result.ShouldBeTrue();
+        //Console.WriteLine($"About to delete database EstateReportingReadModel{TestId.ToString()}");
+        //bool result = context.Database.EnsureDeleted();
+        //Console.WriteLine($"Delete result is {result}");
+        //result.ShouldBeTrue();
     }
 }
 

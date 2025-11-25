@@ -12,8 +12,8 @@
 	  
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
-    <PackageReference Include="Shared.Results" Version="2025.11.5" />
-    <PackageReference Include="Shared.Results.Web" Version="2025.11.5" />
+    <PackageReference Include="Shared.Results" Version="2025.11.11" />
+    <PackageReference Include="Shared.Results.Web" Version="2025.11.11" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
@@ -21,7 +21,7 @@
 		<PackageReference Include="Lamar" Version="15.0.1" />
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.1" />
 		<PackageReference Include="NLog.Extensions.Logging" Version="6.0.5" />
-		<PackageReference Include="Shared" Version="2025.11.5" />
+		<PackageReference Include="Shared" Version="2025.11.11" />
 		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
