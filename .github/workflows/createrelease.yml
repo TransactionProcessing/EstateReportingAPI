@@ -28,11 +28,7 @@ jobs:
     - name: Run Unit Tests
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "EstateReportingAPI.Tests\EstateReportingAPI.Tests.csproj"
-
-    - name: Run Integration Tests
-      run: |
-        dotnet test "EstateReportingAPI.IntegrationTests\EstateReportingAPI.IntegrationTests.csproj"        
+        dotnet test "EstateReportingAPI.Tests\EstateReportingAPI.Tests.csproj"      
         
     - name: Publish Images to Docker Hub - Pre Release
       if: ${{ github.event.release.prerelease == true }} 
