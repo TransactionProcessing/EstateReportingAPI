@@ -2,7 +2,6 @@ using EstateReportingAPI.Bootstrapper;
 using HealthChecks.UI.Client;
 using Lamar;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using NLog.Extensions.Logging;
 using Shared.Extensions;
 using Shared.General;
 using Shared.Logger;
