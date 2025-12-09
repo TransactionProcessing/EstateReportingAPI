@@ -19,6 +19,7 @@ namespace EstateReportingAPI
         public static IWebHostEnvironment WebHostEnvironment { get; set; }
         public static IServiceProvider ServiceProvider { get; set; }
         public static Container Container;
+
         public Startup(IWebHostEnvironment webHostEnvironment)
         {
             IConfigurationBuilder builder = new ConfigurationBuilder().SetBasePath(webHostEnvironment.ContentRootPath)
