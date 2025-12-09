@@ -18,7 +18,6 @@ namespace EstateReportingAPI
         public static IConfigurationRoot Configuration { get; set; }
         public static IWebHostEnvironment WebHostEnvironment { get; set; }
         public static IServiceProvider ServiceProvider { get; set; }
-
         public static Container Container;
         public Startup(IWebHostEnvironment webHostEnvironment)
         {
