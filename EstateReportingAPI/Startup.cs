@@ -85,6 +85,7 @@ namespace EstateReportingAPI
                                  });
                              });
             app.UseSwagger();
+
             app.UseSwaggerUI();
         }
     }
