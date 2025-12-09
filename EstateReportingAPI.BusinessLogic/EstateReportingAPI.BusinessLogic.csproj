@@ -1,15 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="13.1.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="9.6.9" />
-    <PackageReference Include="Shared" Version="2025.11.11" />
+    <PackageReference Include="MediatR" Version="14.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="10.7.1" />
+    <PackageReference Include="Shared" Version="2025.12.1" />
     <PackageReference Include="TransactionProcessor.Database" Version="2025.10.1" />
   </ItemGroup>
 
