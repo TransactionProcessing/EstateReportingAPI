@@ -1,9 +1,10 @@
-﻿namespace EstateReportingAPI.Common
+﻿using Microsoft.OpenApi;
+
+namespace EstateReportingAPI.Common
 {
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using Microsoft.AspNetCore.Mvc.ApiExplorer;
-    using Microsoft.OpenApi.Models;
     using Swashbuckle.AspNetCore.SwaggerGen;
 
     /// <summary>

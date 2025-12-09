@@ -17,7 +17,6 @@ using System.Linq;
 using DataTrasferObjects;
 using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.Models;
-using Microsoft.OpenApi.Services;
 using Newtonsoft.Json;
 using Shouldly;
 using Xunit;

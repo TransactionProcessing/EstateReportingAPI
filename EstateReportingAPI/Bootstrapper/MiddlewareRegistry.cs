@@ -1,4 +1,5 @@
-﻿using Shared.Middleware;
+﻿using Microsoft.OpenApi;
+using Shared.Middleware;
 
 namespace EstateReportingAPI.Bootstrapper{
     using System.Diagnostics.CodeAnalysis;
@@ -9,7 +10,6 @@ namespace EstateReportingAPI.Bootstrapper{
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.Extensions.Diagnostics.HealthChecks;
     using Microsoft.IdentityModel.Tokens;
-    using Microsoft.OpenApi.Models;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
     using Shared.General;
