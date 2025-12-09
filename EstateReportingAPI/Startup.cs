@@ -10,7 +10,6 @@ using EstateReportingAPI.Endpoints;
 
 namespace EstateReportingAPI
 {
-    using BusinessLogic;
     using Shared.Middleware;
 
     [ExcludeFromCodeCoverage]
