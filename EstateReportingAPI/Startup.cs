@@ -49,11 +49,10 @@ namespace EstateReportingAPI
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
-            if (env.IsDevelopment())
-            {
+            if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
             }
-            
+
             Microsoft.Extensions.Logging.ILogger logger = loggerFactory.CreateLogger("EstateManagement");
 
             Logger.Initialise(logger);
