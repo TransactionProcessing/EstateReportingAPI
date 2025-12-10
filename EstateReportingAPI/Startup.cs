@@ -2,7 +2,6 @@ using EstateReportingAPI.Bootstrapper;
 using HealthChecks.UI.Client;
 using Lamar;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using NLog.Extensions.Logging;
 using Shared.Extensions;
 using Shared.General;
 using Shared.Logger;
@@ -11,7 +10,6 @@ using EstateReportingAPI.Endpoints;
 
 namespace EstateReportingAPI
 {
-    using BusinessLogic;
     using Shared.Middleware;
 
     [ExcludeFromCodeCoverage]
@@ -19,10 +17,9 @@ namespace EstateReportingAPI
     {
         public static IConfigurationRoot Configuration { get; set; }
         public static IWebHostEnvironment WebHostEnvironment { get; set; }
-
         public static IServiceProvider ServiceProvider { get; set; }
-
         public static Container Container;
+
         public Startup(IWebHostEnvironment webHostEnvironment)
         {
             IConfigurationBuilder builder = new ConfigurationBuilder().SetBasePath(webHostEnvironment.ContentRootPath)
@@ -49,11 +46,10 @@ namespace EstateReportingAPI
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
-            if (env.IsDevelopment())
-            {
+            if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
             }
-            
+
             Microsoft.Extensions.Logging.ILogger logger = loggerFactory.CreateLogger("EstateManagement");
 
             Logger.Initialise(logger);
