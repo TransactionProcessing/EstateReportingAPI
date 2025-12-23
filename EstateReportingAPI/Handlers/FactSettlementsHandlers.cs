@@ -22,44 +22,58 @@ public static class FactSettlementsHandlers
         public static ValueTask<GetUnsettledFeesRequest?> BindAsync(HttpContext context)
         {
             var q = context.Request.Query;
-            var req = new GetUnsettledFeesRequest();
+            var req = new GetUnsettledFeesRequest(){
+                StartDate = ParseDate(q, "startDate", nameof(StartDate)),
+                EndDate = ParseDate(q, "endDate", nameof(EndDate)),
+                MerchantIds = GetStringValue(q, "merchantIds", nameof(MerchantIds)),
+                OperatorIds = GetStringValue(q, "operatorIds", nameof(OperatorIds)),
+                ProductIds = GetStringValue(q, "productIds", nameof(ProductIds)),
+                GroupByOption = ParseEnum<GroupByOption>(q, "groupByOption", nameof(GroupByOption))
+            };
 
-            if (q.TryGetValue("startDate", out var s) || q.TryGetValue(nameof(StartDate), out s))
-            {
-                DateTime.TryParse(s, out var d);
-                req.StartDate = d;
-            }
+            return ValueTask.FromResult<GetUnsettledFeesRequest?>(req);
+        }
 
-            if (q.TryGetValue("endDate", out var e) || q.TryGetValue(nameof(EndDate), out e))
+        // Extracted helpers to reduce cyclomatic complexity in BindAsync
+        private static DateTime ParseDate(IQueryCollection q, params string[] keys)
+        {
+            foreach (var key in keys)
             {
-                DateTime.TryParse(e, out var d);
-                req.EndDate = d;
-            }
-
-            if (q.TryGetValue("merchantIds", out var m) || q.TryGetValue(nameof(MerchantIds), out m))
-            {
-                req.MerchantIds = m.ToString();
-            }
-
-            if (q.TryGetValue("operatorIds", out var o) || q.TryGetValue(nameof(OperatorIds), out o))
-            {
-                req.OperatorIds = o.ToString();
-            }
-
-            if (q.TryGetValue("productIds", out var p) || q.TryGetValue(nameof(ProductIds), out p))
-            {
-                req.ProductIds = p.ToString();
-            }
-
-            if (q.TryGetValue("groupByOption", out var g) || q.TryGetValue(nameof(GroupByOption), out g))
-            {
-                if (Enum.TryParse<GroupByOption>(g.ToString(), true, out var gv))
+                if (q.TryGetValue(key, out var values) && DateTime.TryParse(values.ToString(), out var dt))
                 {
-                    req.GroupByOption = gv;
+                    return dt;
                 }
             }
 
-            return ValueTask.FromResult<GetUnsettledFeesRequest?>(req);
+            return default;
+        }
+
+        private static string? GetStringValue(IQueryCollection q, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (q.TryGetValue(key, out var values))
+                {
+                    var s = values.ToString();
+                    if (!string.IsNullOrWhiteSpace(s))
+                        return s;
+                }
+            }
+
+            return null;
+        }
+
+        private static TEnum? ParseEnum<TEnum>(IQueryCollection q, params string[] keys) where TEnum : struct, Enum
+        {
+            foreach (var key in keys)
+            {
+                if (q.TryGetValue(key, out var values) && Enum.TryParse<TEnum>(values.ToString(), true, out var parsed))
+                {
+                    return parsed;
+                }
+            }
+
+            return null;
         }
     }
 
