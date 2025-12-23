@@ -8,6 +8,75 @@ namespace EstateReportingAPI.Handlers;
 
 public static class FactSettlementsHandlers
 {
+
+    public class GetUnsettledFeesRequest
+    {
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public string? MerchantIds { get; set; }
+        public string? OperatorIds { get; set; }
+        public string? ProductIds { get; set; }
+        public GroupByOption? GroupByOption { get; set; }
+
+        // Minimal API binder: called by RequestDelegateFactory when binding complex parameter
+        public static ValueTask<GetUnsettledFeesRequest?> BindAsync(HttpContext context)
+        {
+            var q = context.Request.Query;
+            var req = new GetUnsettledFeesRequest(){
+                StartDate = ParseDate(q, "startDate", nameof(StartDate)),
+                EndDate = ParseDate(q, "endDate", nameof(EndDate)),
+                MerchantIds = GetStringValue(q, "merchantIds", nameof(MerchantIds)),
+                OperatorIds = GetStringValue(q, "operatorIds", nameof(OperatorIds)),
+                ProductIds = GetStringValue(q, "productIds", nameof(ProductIds)),
+                GroupByOption = ParseEnum<GroupByOption>(q, "groupByOption", nameof(GroupByOption))
+            };
+
+            return ValueTask.FromResult<GetUnsettledFeesRequest?>(req);
+        }
+
+        // Extracted helpers to reduce cyclomatic complexity in BindAsync
+        private static DateTime ParseDate(IQueryCollection q, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (q.TryGetValue(key, out var values) && DateTime.TryParse(values.ToString(), out var dt))
+                {
+                    return dt;
+                }
+            }
+
+            return default;
+        }
+
+        private static string? GetStringValue(IQueryCollection q, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (q.TryGetValue(key, out var values))
+                {
+                    var s = values.ToString();
+                    if (!string.IsNullOrWhiteSpace(s))
+                        return s;
+                }
+            }
+
+            return null;
+        }
+
+        private static TEnum? ParseEnum<TEnum>(IQueryCollection q, params string[] keys) where TEnum : struct, Enum
+        {
+            foreach (var key in keys)
+            {
+                if (q.TryGetValue(key, out var values) && Enum.TryParse<TEnum>(values.ToString(), true, out var parsed))
+                {
+                    return parsed;
+                }
+            }
+
+            return null;
+        }
+    }
+
     public static async Task<IResult> TodaysSettlement([FromHeader] Guid estateId,
                                                        [FromQuery] int? merchantReportingId,
                                                        [FromQuery] int? operatorReportingId,
@@ -50,25 +119,20 @@ public static class FactSettlementsHandlers
     }
 
     public static async Task<IResult> GetUnsettledFees([FromHeader] Guid estateId,
-                                                       [FromQuery] DateTime startDate,
-                                                       [FromQuery] DateTime endDate,
-                                                       [FromQuery] string? merchantIds,
-                                                       [FromQuery] string? operatorIds,
-                                                       [FromQuery] string? productIds,
-                                                       [FromQuery] GroupByOption? groupByOption,
+                                                       GetUnsettledFeesRequest request,
                                                        IMediator mediator,
                                                        CancellationToken cancellationToken)
     {
-        var merchantIdFilter = ParseIds(merchantIds);
-        var operatorIdFilter = ParseIds(operatorIds);
-        var productIdFilter = ParseIds(productIds);
+        var merchantIdFilter = ParseIds(request.MerchantIds);
+        var operatorIdFilter = ParseIds(request.OperatorIds);
+        var productIdFilter = ParseIds(request.ProductIds);
 
-        var groupByOptionConverted = ConvertGroupByOption(groupByOption.GetValueOrDefault());
+        var groupByOptionConverted = ConvertGroupByOption(request.GroupByOption.GetValueOrDefault());
 
         var query = new SettlementQueries.GetUnsettledFeesQuery(
             estateId,
-            startDate,
-            endDate,
+            request.StartDate,
+            request.EndDate,
             merchantIdFilter,
             operatorIdFilter,
             productIdFilter,
