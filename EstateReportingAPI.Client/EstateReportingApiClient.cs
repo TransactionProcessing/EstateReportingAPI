@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Shared.Results;
+﻿using Shared.Results;
 using SimpleResults;
 
 namespace EstateReportingAPI.Client{
@@ -37,13 +34,13 @@ namespace EstateReportingAPI.Client{
         #endregion
 
         #region Methods
-
+        private const String EstateIdHeaderName = "EstateId";
         public async Task<Result<List<CalendarDate>>> GetCalendarDates(String accessToken, Guid estateId, Int32 year, CancellationToken cancellationToken){
             String requestUri = this.BuildRequestUrl($"/api/dimensions/calendar/{year}/dates");
             
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
 
                 Result<List<CalendarDate>> result = await this.SendHttpGetRequest<List<CalendarDate>>(requestUri, accessToken, additionalHeaders, cancellationToken);
@@ -67,7 +64,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<CalendarYear>> result = await this.SendHttpGetRequest<List<CalendarYear>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -89,7 +86,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
 
                 Result<List<ComparisonDate>> result = await this.SendHttpGetRequest<List<ComparisonDate>>(requestUri, accessToken, additionalHeaders, cancellationToken);
@@ -112,7 +109,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<LastSettlement> result = await this.SendHttpGetRequest<LastSettlement>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -135,7 +132,7 @@ namespace EstateReportingAPI.Client{
             try
             {
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<ResponseCode>> result = await this.SendHttpGetRequest<List<ResponseCode>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -163,7 +160,7 @@ namespace EstateReportingAPI.Client{
             try
             {
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<TodaysSales> result = await this.SendHttpGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -190,7 +187,7 @@ namespace EstateReportingAPI.Client{
             try
             {
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<TodaysSales> result = await this.SendHttpGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -215,7 +212,7 @@ namespace EstateReportingAPI.Client{
             try
             {
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<Merchant>>? result = await this.SendHttpGetRequest<List<Merchant>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -242,7 +239,7 @@ namespace EstateReportingAPI.Client{
             try
             {
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<TodaysSales>? result = await this.SendHttpGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -283,7 +280,7 @@ namespace EstateReportingAPI.Client{
             try
             {
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 
                 Result<List<TransactionResult>>? result = await this.SendHttpPostRequest<TransactionSearchRequest, List<TransactionResult>>(requestUri, searchRequest, accessToken, additionalHeaders, cancellationToken);
@@ -330,7 +327,7 @@ namespace EstateReportingAPI.Client{
             try
             {
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<UnsettledFee>>? result = await this.SendHttpGetRequest<List<UnsettledFee>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -354,7 +351,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<MerchantKpi>? result = await this.SendHttpGetRequest<MerchantKpi>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -377,7 +374,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<Merchant>>? result = await this.SendHttpGetRequest<List<Merchant>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -400,7 +397,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<Operator>>? result = await this.SendHttpGetRequest<List<Operator>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -428,7 +425,7 @@ namespace EstateReportingAPI.Client{
 
             try {
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<TodaysSales>? result = await this.SendHttpGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -455,7 +452,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<TodaysSales>? result = await this.SendHttpGetRequest<TodaysSales>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -482,7 +479,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<TodaysSalesCountByHour>>? result = await this.SendHttpGetRequest<List<TodaysSalesCountByHour>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -509,7 +506,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<TodaysSalesValueByHour>>? result = await this.SendHttpGetRequest<List<TodaysSalesValueByHour>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -536,7 +533,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<TodaysSettlement>? result = await this.SendHttpGetRequest<TodaysSettlement>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -558,7 +555,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<TopBottomMerchantData>>? result = await this.SendHttpGetRequest<List<TopBottomMerchantData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -580,7 +577,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<TopBottomOperatorData>>? result = await this.SendHttpGetRequest<List<TopBottomOperatorData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -602,7 +599,7 @@ namespace EstateReportingAPI.Client{
 
             try{
                 List<(String headerName, String headerValue)> additionalHeaders = [
-                    ("EstateId", estateId.ToString())
+                    (EstateIdHeaderName, estateId.ToString())
                 ];
                 Result<List<TopBottomProductData>>? result = await this.SendHttpGetRequest<List<TopBottomProductData>>(requestUri, accessToken, additionalHeaders, cancellationToken);
 
@@ -628,78 +625,5 @@ namespace EstateReportingAPI.Client{
         }
 
         #endregion
-    }
-}
-
-public class QueryStringBuilder
-{
-    private Dictionary<string, (object value, Boolean alwaysInclude)> parameters = new Dictionary<String, (Object value, Boolean alwaysInclude)>();
-
-    public QueryStringBuilder AddParameter(string key, object value, Boolean alwaysInclude=false)
-    {
-        this.parameters.Add(key, (value, alwaysInclude));
-        return this;
-    }
-
-    static Dictionary<string, object> FilterDictionary(Dictionary<string, (object value, Boolean alwaysInclude)> inputDictionary)
-    {
-        Dictionary<string, object> result = new Dictionary<string, object>();
-
-        foreach (KeyValuePair<String, (object value, Boolean alwaysInclude)> entry in inputDictionary)
-        {
-            if (entry.Value.value != null && !IsDefaultValue(entry.Value.value, entry.Value.alwaysInclude))
-            {
-                result.Add(entry.Key, entry.Value.value);
-            }
-        }
-
-        return result;
-    }
-
-    static bool IsDefaultValue<T>(T value, Boolean alwaysInclude){
-        if (alwaysInclude)
-            return false;
-
-        Object? defaultValue = GetDefault(value.GetType());
-
-        if (defaultValue == null && value.GetType() == typeof(String))
-        {
-            defaultValue = String.Empty;
-        }
-        return defaultValue.Equals(value);
-    }
-
-    public static object GetDefault(Type t)
-    {
-        Func<object> f = GetDefault<object>;
-        return f.Method.GetGenericMethodDefinition().MakeGenericMethod(t).Invoke(null, null);
-    }
-
-    private static T GetDefault<T>()
-    {
-        return default(T);
-    }
-
-    public string BuildQueryString(){
-        Dictionary<String, Object> filtered = FilterDictionary(this.parameters);
-
-        if (filtered.Count == 0)
-        {
-            return string.Empty;
-        }
-
-        StringBuilder queryString = new StringBuilder();
-        
-        foreach (KeyValuePair<String, Object> kvp in filtered)
-        {
-            if (queryString.Length > 0)
-            {
-                queryString.Append("&");
-            }
-
-            queryString.Append($"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value.ToString())}");
-        }
-
-        return queryString.ToString();
     }
 }
