@@ -8,6 +8,61 @@ namespace EstateReportingAPI.Handlers;
 
 public static class FactSettlementsHandlers
 {
+
+    public class GetUnsettledFeesRequest
+    {
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public string? MerchantIds { get; set; }
+        public string? OperatorIds { get; set; }
+        public string? ProductIds { get; set; }
+        public GroupByOption? GroupByOption { get; set; }
+
+        // Minimal API binder: called by RequestDelegateFactory when binding complex parameter
+        public static ValueTask<GetUnsettledFeesRequest?> BindAsync(HttpContext context)
+        {
+            var q = context.Request.Query;
+            var req = new GetUnsettledFeesRequest();
+
+            if (q.TryGetValue("startDate", out var s) || q.TryGetValue(nameof(StartDate), out s))
+            {
+                DateTime.TryParse(s, out var d);
+                req.StartDate = d;
+            }
+
+            if (q.TryGetValue("endDate", out var e) || q.TryGetValue(nameof(EndDate), out e))
+            {
+                DateTime.TryParse(e, out var d);
+                req.EndDate = d;
+            }
+
+            if (q.TryGetValue("merchantIds", out var m) || q.TryGetValue(nameof(MerchantIds), out m))
+            {
+                req.MerchantIds = m.ToString();
+            }
+
+            if (q.TryGetValue("operatorIds", out var o) || q.TryGetValue(nameof(OperatorIds), out o))
+            {
+                req.OperatorIds = o.ToString();
+            }
+
+            if (q.TryGetValue("productIds", out var p) || q.TryGetValue(nameof(ProductIds), out p))
+            {
+                req.ProductIds = p.ToString();
+            }
+
+            if (q.TryGetValue("groupByOption", out var g) || q.TryGetValue(nameof(GroupByOption), out g))
+            {
+                if (Enum.TryParse<GroupByOption>(g.ToString(), true, out var gv))
+                {
+                    req.GroupByOption = gv;
+                }
+            }
+
+            return ValueTask.FromResult<GetUnsettledFeesRequest?>(req);
+        }
+    }
+
     public static async Task<IResult> TodaysSettlement([FromHeader] Guid estateId,
                                                        [FromQuery] int? merchantReportingId,
                                                        [FromQuery] int? operatorReportingId,
@@ -50,25 +105,20 @@ public static class FactSettlementsHandlers
     }
 
     public static async Task<IResult> GetUnsettledFees([FromHeader] Guid estateId,
-                                                       [FromQuery] DateTime startDate,
-                                                       [FromQuery] DateTime endDate,
-                                                       [FromQuery] string? merchantIds,
-                                                       [FromQuery] string? operatorIds,
-                                                       [FromQuery] string? productIds,
-                                                       [FromQuery] GroupByOption? groupByOption,
+                                                       GetUnsettledFeesRequest request,
                                                        IMediator mediator,
                                                        CancellationToken cancellationToken)
     {
-        var merchantIdFilter = ParseIds(merchantIds);
-        var operatorIdFilter = ParseIds(operatorIds);
-        var productIdFilter = ParseIds(productIds);
+        var merchantIdFilter = ParseIds(request.MerchantIds);
+        var operatorIdFilter = ParseIds(request.OperatorIds);
+        var productIdFilter = ParseIds(request.ProductIds);
 
-        var groupByOptionConverted = ConvertGroupByOption(groupByOption.GetValueOrDefault());
+        var groupByOptionConverted = ConvertGroupByOption(request.GroupByOption.GetValueOrDefault());
 
         var query = new SettlementQueries.GetUnsettledFeesQuery(
             estateId,
-            startDate,
-            endDate,
+            request.StartDate,
+            request.EndDate,
             merchantIdFilter,
             operatorIdFilter,
             productIdFilter,
