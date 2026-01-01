@@ -10,7 +10,6 @@ namespace EstateReportingAPI.IntegrationTests;
 
 using BusinessLogic;
 using EstateReportingAPI.Common;
-using k8s.KubeConfigModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
