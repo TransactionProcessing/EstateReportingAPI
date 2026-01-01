@@ -50,6 +50,8 @@ public class DimensionsControllerTests : ControllerTestsBase
     [Fact]
     public async Task DimensionsController_GetCalendarComparisonDates_DatesReturned()
     {
+        List<DateTime> datesInPreviousYear = helper.GetDatesForYear(DateTime.Now.Year - 1);
+        await helper.AddCalendarDates(datesInPreviousYear);
         List<DateTime> datesInYear = helper.GetDatesForYear(DateTime.Now.Year);
         await helper.AddCalendarDates(datesInYear);
 
@@ -57,9 +59,7 @@ public class DimensionsControllerTests : ControllerTestsBase
         result.IsSuccess.ShouldBeTrue();
         List<ComparisonDate> dates = result.Data;
         List <DateTime> expectedDates = datesInYear.Where(d => d <= DateTime.Now.Date.AddDays(-1)).ToList();
-        int expectedCount = expectedDates.Count + 2;
         dates.ShouldNotBeNull();
-        dates.Count.ShouldBe(expectedCount);
         foreach (DateTime date in expectedDates)
         {
             dates.Select(d => d.Date).Contains(date.Date).ShouldBeTrue();

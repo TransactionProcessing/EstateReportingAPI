@@ -37,9 +37,20 @@ public partial class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        DateTime startOfYear = new(DateTime.Now.Year, 1, 1);
+        //DateTime startOfYear = new(DateTime.Now.Year, 1, 1);
 
-        List<TransactionProcessor.Database.Entities.Calendar> entities = context.Calendar.Where(c => c.Date >= startOfYear && c.Date < DateTime.Now.Date.AddDays(-1)).OrderByDescending(d => d.Date).ToList();
+        //List<TransactionProcessor.Database.Entities.Calendar> entities = context.Calendar.Where(c => c.Date >= startOfYear && c.Date < DateTime.Now.Date.AddDays(-1)).OrderByDescending(d => d.Date).ToList();
+
+        DateTime today = DateTime.Today;
+        DateTime startDate = today.AddYears(-1);
+        DateTime endDate = today.AddDays(-1); // yesterday
+
+        List<TransactionProcessor.Database.Entities.Calendar> entities =
+            context.Calendar
+                .Where(c => c.Date >= startDate &&
+                            c.Date < endDate)
+                .OrderByDescending(c => c.Date)
+                .ToList();
 
         List<Calendar> result = new();
         foreach (TransactionProcessor.Database.Entities.Calendar calendar in entities)
