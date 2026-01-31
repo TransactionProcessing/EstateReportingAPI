@@ -11,11 +11,11 @@ namespace EstateReportingAPI.IntegrationTests;
 using EstateReportingAPI.DataTrasferObjects;
 using Shouldly;
 using Xunit;
-using Merchant = DataTrasferObjects.Merchant;
-using Operator = DataTrasferObjects.Operator;
+using Merchant = DataTransferObjects.Merchant;
+using Operator = DataTransferObjects.Operator;
 using ResponseCode = DataTrasferObjects.ResponseCode;
 
-public class DimensionsControllerTests : ControllerTestsBase
+/*public class DimensionsControllerTests : ControllerTestsBase
 {
     [Fact]
     public async Task DimensionsController_GetCalendarYears_NoDataInDatabase()
@@ -284,10 +284,4 @@ public class DimensionsControllerTests : ControllerTestsBase
         //Console.WriteLine($"Delete result is {result}");
         //result.ShouldBeTrue();
     }
-}
-
-public enum ClientType
-{
-    Api,
-    Direct
-}
+}*/

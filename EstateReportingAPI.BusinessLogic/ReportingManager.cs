@@ -1,4 +1,7 @@
-﻿using TransactionProcessor.Database.Contexts;
+﻿using System.Linq.Expressions;
+using EstateReportingAPI.BusinessLogic.Queries;
+using SimpleResults;
+using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
 using TransactionProcessor.Database.Entities.Summary;
 
@@ -10,15 +13,40 @@ using Shared.EntityFramework;
 using System;
 using System.Linq;
 using System.Threading;
-using static EstateReportingAPI.BusinessLogic.DatabaseProjections;
 using Calendar = Models.Calendar;
 using Merchant = Models.Merchant;
-using Operator = Models.Operator;
 
-public partial class ReportingManager : IReportingManager {
+public interface IReportingManager
+{
+    #region Methods
+    Task<List<Calendar>> GetCalendarComparisonDates(CalendarQueries.GetComparisonDatesQuery request, CancellationToken cancellationToken);
+    Task<List<Calendar>> GetCalendarDates(CalendarQueries.GetAllDatesQuery request, CancellationToken cancellationToken);
+    Task<List<Int32>> GetCalendarYears(CalendarQueries.GetYearsQuery request, CancellationToken cancellationToken);
+    Task<List<Merchant>> GetRecentMerchants(MerchantQueries.GetRecentMerchantsQuery request, CancellationToken cancellationToken);
+    Task<List<Contract>> GetRecentContracts(ContractQueries.GetRecentContractsQuery request, CancellationToken cancellationToken);
+    Task<List<Contract>> GetContracts(ContractQueries.GetContractsQuery request, CancellationToken cancellationToken);
+    Task<Contract> GetContract(ContractQueries.GetContractQuery request, CancellationToken cancellationToken);
+    Task<TodaysSales> GetTodaysFailedSales(TransactionQueries.TodaysFailedSales request, CancellationToken cancellationToken);
+    Task<TodaysSales> GetTodaysSales(TransactionQueries.TodaysSalesQuery request, CancellationToken cancellationToken);
+
+    Task<Estate> GetEstate(EstateQueries.GetEstateQuery request, CancellationToken cancellationToken);
+    Task<List<EstateOperator>> GetEstateOperators(EstateQueries.GetEstateOperatorsQuery request, CancellationToken cancellationToken);
+    Task<MerchantKpi> GetMerchantsTransactionKpis(MerchantQueries.GetTransactionKpisQuery request, CancellationToken cancellationToken);
+    Task<List<Operator>> GetOperators(OperatorQueries.GetOperatorsQuery request, CancellationToken cancellationToken);
+    Task<List<Merchant>> GetMerchants(MerchantQueries.GetMerchantsQuery request, CancellationToken cancellationToken);
+    Task<Merchant> GetMerchant(MerchantQueries.GetMerchantQuery request, CancellationToken cancellationToken);
+    Task<List<MerchantOperator>> GetMerchantOperators(MerchantQueries.GetMerchantOperatorsQuery request, CancellationToken cancellationToken);
+    Task<List<MerchantContract>> GetMerchantContracts(MerchantQueries.GetMerchantContractsQuery request, CancellationToken cancellationToken);
+    Task<List<MerchantDevice>> GetMerchantDevices(MerchantQueries.GetMerchantDevicesQuery request, CancellationToken cancellationToken);
+
+    Task<Operator> GetOperator(OperatorQueries.GetOperatorQuery request, CancellationToken cancellationToken);
+
+    #endregion
+}
+
+public class ReportingManager : IReportingManager {
     private readonly IDbContextResolver<EstateManagementContext> Resolver;
-
-
+    
     private Guid Id;
     private static readonly String EstateManagementDatabaseName = "TransactionProcessorReadModel";
 
@@ -32,9 +60,9 @@ public partial class ReportingManager : IReportingManager {
 
     #region Methods
 
-    public async Task<List<Calendar>> GetCalendarComparisonDates(Guid estateId,
+    public async Task<List<Calendar>> GetCalendarComparisonDates(CalendarQueries.GetComparisonDatesQuery request,
                                                                  CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
         //DateTime startOfYear = new(DateTime.Now.Year, 1, 1);
@@ -71,9 +99,9 @@ public partial class ReportingManager : IReportingManager {
         return result;
     }
 
-    public async Task<List<Calendar>> GetCalendarDates(Guid estateId,
+    public async Task<List<Calendar>> GetCalendarDates(CalendarQueries.GetAllDatesQuery request,
                                                        CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
         List<TransactionProcessor.Database.Entities.Calendar> entities = context.Calendar.Where(c => c.Date <= DateTime.Now.Date).ToList();
@@ -97,9 +125,9 @@ public partial class ReportingManager : IReportingManager {
         return result;
     }
 
-    public async Task<List<Int32>> GetCalendarYears(Guid estateId,
+    public async Task<List<Int32>> GetCalendarYears(CalendarQueries.GetYearsQuery request,
                                                     CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
         List<Int32> years = context.Calendar.Where(c => c.Date <= DateTime.Now.Date).GroupBy(c => c.Year).Select(y => y.Key).ToList();
@@ -107,100 +135,206 @@ public partial class ReportingManager : IReportingManager {
         return years;
     }
 
-    public async Task<LastSettlement> GetLastSettlement(Guid estateId,
+    public async Task<List<Contract>> GetContracts(ContractQueries.GetContractsQuery request,
+                                                   CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+        
+        // Step 1: load contracts with operator name via a left-join (translatable)
+        var baseContracts = await (from c in context.Contracts
+                                   join o in context.Operators on c.OperatorId equals o.OperatorId into ops
+                                   from o in ops.DefaultIfEmpty()
+                                   select new
+                                   {
+                                       c.ContractId,
+                                       c.ContractReportingId,
+                                       c.Description,
+                                       c.EstateId,
+                                       c.OperatorId,
+                                       OperatorName = o != null ? o.Name : null
+                                   })
+                                  .OrderByDescending(x => x.Description)
+                                  .ToListAsync(cancellationToken);
+
+        if (!baseContracts.Any())
+            return new List<Contract>();
+
+        var contractIds = baseContracts.Select(b => b.ContractId).ToList();
+
+        // Step 2: load related products for all contracts in one query
+        var products = await context.ContractProducts
+                                    .Where(cp => contractIds.Contains(cp.ContractId))
+                                    .Select(cp => new
+                                    {
+                                        cp.ContractProductId,
+                                        cp.ContractId,
+                                        cp.DisplayText,
+                                        cp.ProductName,
+                                        cp.ProductType,
+                                        cp.Value
+                                    })
+                                    .ToListAsync(cancellationToken);
+
+        var productIds = products.Select(p => p.ContractProductId).ToList();
+
+        // Step 3: load fees for those products in one query
+        var fees = await context.ContractProductTransactionFees
+                                .Where(tf => productIds.Contains(tf.ContractProductId))
+                                .Select(tf => new
+                                {
+                                    tf.CalculationType,
+                                    tf.ContractProductTransactionFeeId,
+                                    tf.FeeType,
+                                    tf.Value,
+                                    tf.ContractProductId,
+                                    tf.Description,
+                                    tf.IsEnabled
+                                })
+                                .ToListAsync(cancellationToken);
+
+        // Assemble the model in memory
+        List<Contract> result = baseContracts.Select(b => new Contract
+        {
+            ContractId = b.ContractId,
+            ContractReportingId = b.ContractReportingId,
+            Description = b.Description,
+            EstateId = b.EstateId,
+            OperatorName = b.OperatorName,
+            OperatorId = b.OperatorId,
+            Products = products
+                .Where(p => p.ContractId == b.ContractId)
+                .Select(p => new Models.ContractProduct
+                {
+                    ContractId = p.ContractId,
+                    ProductId = p.ContractProductId,
+                    DisplayText = p.DisplayText,
+                    ProductName = p.ProductName,
+                    ProductType = p.ProductType,
+                    Value = p.Value,
+                    TransactionFees = fees
+                        .Where(f => f.ContractProductId == p.ContractProductId && f.IsEnabled)
+                        .Select(f => new ContractProductTransactionFee { Description = f.Description,Value = f.Value, CalculationType = f.CalculationType, FeeType = f.FeeType, TransactionFeeId = f.ContractProductTransactionFeeId})
+                        .ToList()
+                })
+                .ToList()
+        }).ToList();
+
+        return result;
+    }
+
+    public async Task<Contract> GetContract(ContractQueries.GetContractQuery request,
+                                                   CancellationToken cancellationToken)
+    {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        // Step 1: load contracts with operator name via a left-join (translatable)
+        var baseContract = await (from c in context.Contracts
+                                   join o in context.Operators on c.OperatorId equals o.OperatorId into ops
+                                   from o in ops.DefaultIfEmpty()
+                                   where c.ContractId == request.ContractId
+                                   select new
+                                   {
+                                       c.ContractId,
+                                       c.ContractReportingId,
+                                       c.Description,
+                                       c.EstateId,
+                                       c.OperatorId,
+                                       OperatorName = o != null ? o.Name : null
+                                   })
+                                  .OrderByDescending(x => x.Description)
+                                  .SingleOrDefaultAsync(cancellationToken);
+
+        if (baseContract == null)
+            return null;
+
+        // Step 2: load related products for all contracts in one query
+        var products = await context.ContractProducts
+                                    .Where(cp => cp.ContractId ==  baseContract.ContractId)
+                                    .Select(cp => new
+                                    {
+                                        cp.ContractProductId,
+                                        cp.ContractId,
+                                        cp.DisplayText,
+                                        cp.ProductName,
+                                        cp.ProductType,
+                                        cp.Value
+                                    })
+                                    .ToListAsync(cancellationToken);
+
+        var productIds = products.Select(p => p.ContractProductId).ToList();
+
+        // Step 3: load fees for those products in one query
+        var fees = await context.ContractProductTransactionFees
+                                .Where(tf => productIds.Contains(tf.ContractProductId))
+                                .Select(tf => new
+                                {
+                                    tf.CalculationType,
+                                    tf.ContractProductTransactionFeeId,
+                                    tf.FeeType,
+                                    tf.Value,
+                                    tf.ContractProductId,
+                                    tf.Description
+                                })
+                                .ToListAsync(cancellationToken);
+
+        // Assemble the model in memory
+        Contract result = new Contract
+        {
+            ContractId = baseContract.ContractId,
+            ContractReportingId = baseContract.ContractReportingId,
+            Description = baseContract.Description,
+            EstateId = baseContract.EstateId,
+            OperatorName = baseContract.OperatorName,
+            OperatorId = baseContract.OperatorId,
+            Products = products
+                .Where(p => p.ContractId == baseContract.ContractId)
+                .Select(p => new Models.ContractProduct
+                {
+                    ContractId = p.ContractId,
+                    ProductId = p.ContractProductId,
+                    DisplayText = p.DisplayText,
+                    ProductName = p.ProductName,
+                    ProductType = p.ProductType,
+                    Value = p.Value,
+                    TransactionFees = fees
+                        .Where(f => f.ContractProductId == p.ContractProductId)
+                        .Select(f => new ContractProductTransactionFee { Description = f.Description, Value = f.Value, CalculationType = f.CalculationType, FeeType = f.FeeType, TransactionFeeId = f.ContractProductTransactionFeeId })
+                        .ToList()
+                })
+                .ToList()
+        };
+
+        return result;
+    }
+
+    public async Task<List<Contract>> GetRecentContracts(ContractQueries.GetRecentContractsQuery request,
+                                                         CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        var contracts = context.Contracts.Select(c => new Contract(){
+            ContractId = c.ContractId,
+            ContractReportingId = c.ContractReportingId,
+            Description = c.Description,
+            EstateId = c.EstateId,
+            OperatorName = context.Operators.Where(o => o.OperatorId == c.OperatorId).Select(o => o.Name).FirstOrDefault(),
+            OperatorId = c.OperatorId,
+        }).OrderByDescending(c => c.Description).Take(3);
+
+        return await contracts.ToListAsync(cancellationToken);
+    }
+
+    
+
+    public async Task<TodaysSales> GetTodaysFailedSales(TransactionQueries.TodaysFailedSales request,
                                                         CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        DateTime settlementDate = await context.SettlementSummary.Where(s => s.IsCompleted).OrderByDescending(s => s.SettlementDate).Select(s => s.SettlementDate).FirstOrDefaultAsync(cancellationToken);
+        List<Decimal> todaysSales = await (from t in context.TodayTransactions where t.IsAuthorised == false && t.TransactionType == "Sale" && t.ResponseCode == request.ResponseCode select t.TransactionAmount).ToListAsync(cancellationToken);
 
-        IQueryable<LastSettlement> settlements = from settlement in context.SettlementSummary where settlement.SettlementDate == settlementDate group new { settlement.SettlementDate, FeeValue = settlement.FeeValue.GetValueOrDefault(), SalesValue = settlement.SalesValue.GetValueOrDefault(), SalesCount = settlement.SalesCount.GetValueOrDefault() } by settlement.SettlementDate into grouped select new LastSettlement { FeesValue = grouped.Sum(g => g.FeeValue), SalesCount = grouped.Sum(g => g.SalesCount), SalesValue = grouped.Sum(g => g.SalesValue), SettlementDate = grouped.Key };
-
-        return await settlements.SingleOrDefaultAsync(cancellationToken);
-    }
-
-    public async Task<MerchantKpi> GetMerchantsTransactionKpis(Guid estateId,
-                                                               CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        Int32 merchantsWithSaleInLastHour = (from m in context.Merchants where m.LastSaleDate == DateTime.Now.Date && m.LastSaleDateTime >= DateTime.Now.AddHours(-1) select m.MerchantReportingId).Count();
-
-        Int32 merchantsWithNoSaleToday = (from m in context.Merchants where m.LastSaleDate == DateTime.Now.Date.AddDays(-1) select m.MerchantReportingId).Count();
-
-        Int32 merchantsWithNoSaleInLast7Days = (from m in context.Merchants where m.LastSaleDate <= DateTime.Now.Date.AddDays(-7) select m.MerchantReportingId).Count();
-
-        MerchantKpi response = new() { MerchantsWithSaleInLastHour = merchantsWithSaleInLastHour, MerchantsWithNoSaleToday = merchantsWithNoSaleToday, MerchantsWithNoSaleInLast7Days = merchantsWithNoSaleInLast7Days };
-
-        return response;
-    }
-
-    public async Task<List<Merchant>> GetMerchantsByLastSale(Guid estateId,
-                                                             DateTime startDateTime,
-                                                             DateTime endDateTime,
-                                                             CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        List<Merchant> response = new();
-
-        var merchants = await context.Merchants.Where(m => m.LastSaleDateTime >= startDateTime && m.LastSaleDateTime <= endDateTime).Select(m => new {
-            MerchantReportingId = m.MerchantReportingId,
-            EstateReportingId = context.Estates.Single(e => e.EstateId == m.EstateId).EstateReportingId,
-            Name = m.Name,
-            LastSaleDateTime = m.LastSaleDateTime,
-            LastSale = m.LastSaleDate,
-            CreatedDateTime = m.CreatedDateTime,
-            LastStatement = m.LastStatementGenerated,
-            MerchantId = m.MerchantId,
-            Reference = m.Reference,
-            AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId).OrderByDescending(ma => ma.CreatedDateTime).Select(ma => new {
-                PostCode = ma.PostalCode, Region = ma.Region, Town = ma.Town
-                // Add more properties as needed
-            }).FirstOrDefault() // Get the first matching MerchantAddress or null
-        }).ToListAsync(cancellationToken);
-
-        merchants.ForEach(m => response.Add(new Merchant {
-            LastSaleDateTime = m.LastSaleDateTime,
-            CreatedDateTime = m.CreatedDateTime,
-            EstateReportingId = m.EstateReportingId,
-            LastSale = m.LastSale,
-            LastStatement = m.LastStatement,
-            MerchantId = m.MerchantId,
-            MerchantReportingId = m.MerchantReportingId,
-            Name = m.Name,
-            Reference = m.Reference,
-            PostCode = m.AddressInfo?.PostCode,
-            Region = m.AddressInfo?.Region,
-            Town = m.AddressInfo?.Town
-        }));
-
-        return response;
-    }
-
-    public async Task<List<ResponseCode>> GetResponseCodes(Guid estateId,
-                                                           CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-        List<ResponseCode> response = new();
-
-        List<ResponseCodes> responseCodes = await context.ResponseCodes.ToListAsync(cancellationToken);
-
-        responseCodes.ForEach(r => response.Add(new ResponseCode { Code = r.ResponseCode, Description = r.Description }));
-
-        return response;
-    }
-
-    public async Task<TodaysSales> GetTodaysFailedSales(Guid estateId,
-                                                        DateTime comparisonDate,
-                                                        String responseCode,
-                                                        CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        List<Decimal> todaysSales = await (from t in context.TodayTransactions where t.IsAuthorised == false && t.TransactionType == "Sale" && t.ResponseCode == responseCode select t.TransactionAmount).ToListAsync(cancellationToken);
-
-        List<Decimal> comparisonSales = await (from t in context.TransactionHistory where t.IsAuthorised == false && t.TransactionType == "Sale" && t.TransactionDate == comparisonDate && t.TransactionTime <= DateTime.Now.TimeOfDay && t.ResponseCode == responseCode select t.TransactionAmount).ToListAsync(cancellationToken);
+        List<Decimal> comparisonSales = await (from t in context.TransactionHistory where t.IsAuthorised == false && t.TransactionType == "Sale" && t.TransactionDate == request.ComparisonDate && t.TransactionTime <= DateTime.Now.TimeOfDay && t.ResponseCode == request.ResponseCode select t.TransactionAmount).ToListAsync(cancellationToken);
 
         TodaysSales response = new() {
             ComparisonSalesCount = comparisonSales.Count,
@@ -213,19 +347,16 @@ public partial class ReportingManager : IReportingManager {
         return response;
     }
 
-    public async Task<TodaysSales> GetTodaysSales(Guid estateId,
-                                                  Int32 merchantReportingId,
-                                                  Int32 operatorReportingId,
-                                                  DateTime comparisonDate,
+    public async Task<TodaysSales> GetTodaysSales(TransactionQueries.TodaysSalesQuery request,
                                                   CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
         IQueryable<TodayTransaction> todaysSales = this.BuildTodaySalesQuery(context);
-        IQueryable<TransactionHistory> comparisonSales = this.BuildComparisonSalesQuery(context, comparisonDate);
+        IQueryable<TransactionHistory> comparisonSales = this.BuildComparisonSalesQuery(context, request.ComparisonDate);
 
-        todaysSales = todaysSales.ApplyMerchantFilter(merchantReportingId).ApplyOperatorFilter(operatorReportingId);
-        comparisonSales = comparisonSales.ApplyMerchantFilter(merchantReportingId).ApplyOperatorFilter(operatorReportingId);
+        todaysSales = todaysSales.ApplyMerchantFilter(request.MerchantReportingId).ApplyOperatorFilter(request.OperatorReportingId);
+        comparisonSales = comparisonSales.ApplyMerchantFilter(request.MerchantReportingId).ApplyOperatorFilter(request.OperatorReportingId);
 
         Decimal todaysSalesValue = await todaysSales.SumAsync(t => t.TransactionAmount, cancellationToken);
         Int32 todaysSalesCount = await todaysSales.CountAsync(cancellationToken);
@@ -237,59 +368,92 @@ public partial class ReportingManager : IReportingManager {
             ComparisonSalesValue = comparisonSalesValue,
             TodaysSalesCount = todaysSalesCount,
             TodaysSalesValue = todaysSalesValue,
-            TodaysAverageSalesValue = todaysSalesValue / todaysSalesCount,
-            ComparisonAverageSalesValue = comparisonSalesValue / comparisonSalesCount
+            TodaysAverageSalesValue = SafeDivide(todaysSalesValue, todaysSalesCount),
+            ComparisonAverageSalesValue = SafeDivide(comparisonSalesValue,comparisonSalesCount)
         };
         return response;
     }
 
-    public async Task<List<TodaysSalesCountByHour>> GetTodaysSalesCountByHour(Guid estateId,
-                                                                              Int32 merchantReportingId,
-                                                                              Int32 operatorReportingId,
-                                                                              DateTime comparisonDate,
-                                                                              CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+    public async Task<List<EstateOperator>> GetEstateOperators(EstateQueries.GetEstateOperatorsQuery request,
+                                                               CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        IQueryable<TodayTransaction> todaysSales = this.BuildTodaySalesQuery(context);
-        IQueryable<TransactionHistory> comparisonSales = this.BuildComparisonSalesQuery(context, comparisonDate);
+        //var operatorEntities = context.EstateOperators.Where(e => e.EstateId == estateId).AsQueryable();
+        //var x = operatorEntities.Join()
+        var operatorEntities = await context.EstateOperators
+            .Join(
+                context.Operators,
+                eo => new { eo.OperatorId, eo.EstateId },
+                op => new { op.OperatorId, op.EstateId },
+                (eo, op) => new
+                {
+                    EstateOperator = eo,
+                    Operator = op
+                })
+            .Where(e => e.EstateOperator.EstateId == request.EstateId && (e.EstateOperator.IsDeleted ?? false) == false)
+            .ToListAsync(cancellationToken);
 
-        todaysSales = todaysSales.ApplyMerchantFilter(merchantReportingId).ApplyOperatorFilter(operatorReportingId);
-        comparisonSales = comparisonSales.ApplyMerchantFilter(merchantReportingId).ApplyOperatorFilter(operatorReportingId);
+        List<EstateOperator> operators = new();
 
-        // First we need to get a value of todays sales
-        var todaysSalesByHour = await (from t in todaysSales group t.TransactionAmount by t.Hour into g select new { Hour = g.Key, TotalSalesCount = g.Count() }).ToListAsync(cancellationToken);
+        foreach (var operatorEntity in operatorEntities) {
+            operators.Add(new EstateOperator() {
+                Name = operatorEntity.Operator.Name,
+                OperatorId = operatorEntity.EstateOperator.OperatorId
+            });
+        }
 
-        var comparisonSalesByHour = await (from t in comparisonSales group t.TransactionAmount by t.Hour into g select new { Hour = g.Key, TotalSalesCount = g.Count() }).ToListAsync(cancellationToken);
-
-        List<TodaysSalesCountByHour> response = (from today in todaysSalesByHour join comparison in comparisonSalesByHour on today.Hour equals comparison.Hour select new TodaysSalesCountByHour { Hour = today.Hour.Value, TodaysSalesCount = today.TotalSalesCount, ComparisonSalesCount = comparison.TotalSalesCount }).ToList();
-
-        return response;
+        return operators;
     }
 
-    public async Task<List<TodaysSalesValueByHour>> GetTodaysSalesValueByHour(Guid estateId,
-                                                                              Int32 merchantReportingId,
-                                                                              Int32 operatorReportingId,
-                                                                              DateTime comparisonDate,
-                                                                              CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+    public async Task<Estate> GetEstate(EstateQueries.GetEstateQuery request,
+                                        CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        IQueryable<TodayTransaction> todaysSales = this.BuildTodaySalesQuery(context);
-        IQueryable<TransactionHistory> comparisonSales = this.BuildComparisonSalesQuery(context, comparisonDate);
+        var estate = await context.Estates.Where(e => e.EstateId == request.EstateId).SingleOrDefaultAsync(cancellationToken);
 
-        todaysSales = todaysSales.ApplyMerchantFilter(merchantReportingId).ApplyOperatorFilter(operatorReportingId);
-        comparisonSales = comparisonSales.ApplyMerchantFilter(merchantReportingId).ApplyOperatorFilter(operatorReportingId);
+        // Operators
+        var operators = await context.Operators.Where(e => e.EstateId == request.EstateId).ToListAsync(cancellationToken);
+        // Users
+        var users = await context.EstateSecurityUsers.Where(e => e.EstateId == request.EstateId).ToListAsync(cancellationToken);
+        // Merchants
+        var merchants = await context.Merchants.Where(e => e.EstateId == request.EstateId).ToListAsync(cancellationToken);
+        // Contracts
+        var contracts = await context.Contracts.Where(e => e.EstateId == request.EstateId).ToListAsync(cancellationToken);
 
-        // First we need to get a value of todays sales
-        var todaysSalesByHour = await (from t in todaysSales group t.TransactionAmount by t.Hour into g select new { Hour = g.Key, TotalSalesValue = g.Sum() }).ToListAsync(cancellationToken);
+        Estate result = new()
+        {
+            EstateId = estate.EstateId,
+            EstateName = estate.Name,
+            Reference = estate.Reference,
+            Operators = operators.Select(o => new Models.EstateOperator
+            {
+                OperatorId = o.OperatorId,
+                Name = o.Name,
+            }).ToList(),
+            Users = users.Select(u => new Models.EstateUser
+            {
+                UserId = u.SecurityUserId,
+                EmailAddress= u.EmailAddress,
+                CreatedDateTime = u.CreatedDateTime
+            }).ToList(),
+            Merchants = merchants.Select(m => new Models.EstateMerchant
+            {
+                MerchantId = m.MerchantId,
+                Name = m.Name,
+                Reference = m.Reference
+            }).ToList(),
+            Contracts = contracts.Select(c => new Models.EstateContract
+            {
+                ContractId = c.ContractId,
+                Name = c.Description,
+            }).ToList()
+        };
 
-        var comparisonSalesByHour = await (from t in comparisonSales group t.TransactionAmount by t.Hour into g select new { Hour = g.Key, TotalSalesValue = g.Sum() }).ToListAsync(cancellationToken);
-
-        List<TodaysSalesValueByHour> response = (from today in todaysSalesByHour join comparison in comparisonSalesByHour on today.Hour equals comparison.Hour select new TodaysSalesValueByHour { Hour = today.Hour.Value, TodaysSalesValue = today.TotalSalesValue, ComparisonSalesValue = comparison.TotalSalesValue }).ToList();
-
-        return response;
+        return result;
     }
+
 
     private Int32 SafeDivide(Int32 number,
                              Int32 divisor) {
@@ -305,9 +469,12 @@ public partial class ReportingManager : IReportingManager {
         return number / divisor;
     }
 
-    public async Task<List<Merchant>> GetMerchants(Guid estateId,
-                                                   CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
+    
+
+    public async Task<List<Merchant>> GetRecentMerchants(MerchantQueries.GetRecentMerchantsQuery request,
+                                                         CancellationToken cancellationToken)
+    {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
         var merchants = context.Merchants.Select(m => new {
@@ -320,30 +487,47 @@ public partial class ReportingManager : IReportingManager {
             MerchantId = m.MerchantId,
             Reference = m.Reference,
             AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId).OrderByDescending(ma => ma.CreatedDateTime).Select(ma => new {
-                PostCode = ma.PostalCode, Region = ma.Region, Town = ma.Town
+                ma.AddressLine1, 
+                ma.AddressLine2,
+                ma.Country,
+                ma.PostalCode,
+                ma.Region,
+                ma.Town
                 // Add more properties as needed
             }).FirstOrDefault(), // Get the first matching MerchantAddress or null
+            ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId).OrderByDescending(mc => mc.CreatedDateTime).Select(mc => new {
+                mc.Name,
+                mc.EmailAddress,
+                mc.PhoneNumber
+            }).FirstOrDefault(), // Get the first matching MerchantContact or null
             EstateReportingId = context.Estates.Single(e => e.EstateId == m.EstateId).EstateReportingId
-        });
+        }).OrderByDescending(m => m.CreatedDateTime).Take(3);
 
         List<Merchant> merchantList = new();
-        foreach (var result in merchants) {
-            Merchant model = new() {
+        foreach (var result in merchants)
+        {
+            Merchant model = new()
+            {
                 MerchantId = result.MerchantId,
                 Name = result.Name,
                 Reference = result.Reference,
                 MerchantReportingId = result.MerchantReportingId,
                 CreatedDateTime = result.CreatedDateTime,
-                EstateReportingId = result.EstateReportingId,
-                LastSale = result.LastSale,
-                LastSaleDateTime = result.LastSaleDateTime,
-                LastStatement = result.LastStatement
             };
 
             if (result.AddressInfo != null) {
-                model.PostCode = result.AddressInfo.PostCode;
+                model.AddressLine1 = result.AddressInfo.AddressLine1;
+                model.AddressLine2 = result.AddressInfo.AddressLine2;
+                model.Country = result.AddressInfo.Country;
+                model.PostCode = result.AddressInfo.PostalCode;
                 model.Town = result.AddressInfo.Town;
                 model.Region = result.AddressInfo.Region;
+            }
+
+            if (result.ContactInfo != null) {
+                model.ContactName = result.ContactInfo.Name;
+                model.ContactEmail = result.ContactInfo.EmailAddress;
+                model.ContactPhone = result.ContactInfo.PhoneNumber;
             }
 
             merchantList.Add(model);
@@ -352,15 +536,294 @@ public partial class ReportingManager : IReportingManager {
         return merchantList;
     }
 
-    private IQueryable<DatabaseProjections.FeeTransactionProjection> BuildUnsettledFeesQuery(EstateManagementContext context,
-                                                                                             DateTime startDate,
-                                                                                             DateTime endDate) {
-        return from merchantSettlementFee in context.MerchantSettlementFees join transaction in context.Transactions on merchantSettlementFee.TransactionId equals transaction.TransactionId where merchantSettlementFee.FeeCalculatedDateTime.Date >= startDate && merchantSettlementFee.FeeCalculatedDateTime.Date <= endDate select new DatabaseProjections.FeeTransactionProjection { Fee = merchantSettlementFee, Txn = transaction };
+    public async Task<MerchantKpi> GetMerchantsTransactionKpis(MerchantQueries.GetTransactionKpisQuery request,
+                                                               CancellationToken cancellationToken)
+    {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+        var merchants = await context.Merchants.Select(m => new { m.Name, m.LastSaleDate, m.LastSaleDateTime }).ToListAsync();
+        Int32 merchantsWithSaleInLastHour = (from m in context.Merchants where m.LastSaleDate == DateTime.Now.Date && m.LastSaleDateTime >= DateTime.Now.AddHours(-1) select m.MerchantReportingId).Count();
+
+        Int32 merchantsWithNoSaleToday = (from m in context.Merchants where m.LastSaleDate >= DateTime.Now.Date.AddDays(-7) && m.LastSaleDate <= DateTime.Now.Date.AddDays(-1) select m.MerchantReportingId).Count();
+
+        Int32 merchantsWithNoSaleInLast7Days = (from m in context.Merchants where m.LastSaleDate <= DateTime.Now.Date.AddDays(-7) select m.MerchantReportingId).Count();
+
+        MerchantKpi response = new() { MerchantsWithSaleInLastHour = merchantsWithSaleInLastHour, MerchantsWithNoSaleToday = merchantsWithNoSaleToday, MerchantsWithNoSaleInLast7Days = merchantsWithNoSaleInLast7Days };
+
+        return response;
     }
 
-    private IQueryable<DatabaseProjections.TransactionSearchProjection> BuildTransactionSearchQuery(EstateManagementContext context,
-                                                                                                    DateTime queryDate) {
-        return from txn in context.Transactions join merchant in context.Merchants on txn.MerchantId equals merchant.MerchantId join @operator in context.Operators on txn.OperatorId equals @operator.OperatorId join product in context.ContractProducts on txn.ContractProductId equals product.ContractProductId where txn.TransactionDate == queryDate select new DatabaseProjections.TransactionSearchProjection { Transaction = txn, Merchant = merchant, Operator = @operator, Product = product };
+    public async Task<List<Operator>> GetOperators(OperatorQueries.GetOperatorsQuery request,
+                                                   CancellationToken cancellationToken)
+    {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        List<Operator> operators = await (from o in context.Operators
+            select new Operator
+            {
+                Name = o.Name,
+                EstateReportingId = context.Estates.Single(e => e.EstateId == o.EstateId).EstateReportingId,
+                OperatorId = o.OperatorId,
+                OperatorReportingId = o.OperatorReportingId,
+                RequireCustomMerchantNumber = o.RequireCustomMerchantNumber,
+                RequireCustomTerminalNumber = o.RequireCustomTerminalNumber
+            }).ToListAsync(cancellationToken);
+
+        return operators;
+    }
+
+    public async Task<Operator> GetOperator(OperatorQueries.GetOperatorQuery request,
+                                                   CancellationToken cancellationToken)
+    {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        Operator @operator = await (from o in context.Operators
+                                          where o.OperatorId == request.OperatorId
+                                          select new Operator {
+                                              Name = o.Name, 
+                                              EstateReportingId = context.Estates.Single(e => e.EstateId == o.EstateId).EstateReportingId, 
+                                              OperatorId = o.OperatorId, 
+                                              OperatorReportingId = o.OperatorReportingId,
+                                              RequireCustomMerchantNumber = o.RequireCustomMerchantNumber,
+                                              RequireCustomTerminalNumber = o.RequireCustomTerminalNumber
+                                          }).SingleOrDefaultAsync(cancellationToken);
+
+        return @operator;
+    }
+
+    public async Task<List<Merchant>> GetMerchants(MerchantQueries.GetMerchantsQuery request,
+                                                   CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+        
+
+        var merchantWithAddresses = context.Merchants
+         .Where(m => m.EstateId == request.EstateId)
+         .GroupJoin(
+             context.MerchantAddresses,
+             m => m.MerchantId,
+             a => a.MerchantId,
+             (m, addresses) => new
+             {
+                 Merchant = m,
+                 Address = addresses.First()
+             })
+         .AsQueryable();
+
+        // Now apply the other filters from request.QueryOptions
+        if (String.IsNullOrEmpty(request.QueryOptions.Name) == false) {
+            merchantWithAddresses = merchantWithAddresses.Where(m => m.Merchant.Name.Contains(request.QueryOptions.Name)).AsQueryable();
+        }
+
+        if (String.IsNullOrEmpty(request.QueryOptions.Reference) == false)
+        {
+            merchantWithAddresses = merchantWithAddresses.Where(m => m.Merchant.Reference == request.QueryOptions.Reference).AsQueryable();
+        }
+
+        if (request.QueryOptions.SettlementSchedule > 0)
+        {
+            merchantWithAddresses = merchantWithAddresses.Where(m => m.Merchant.SettlementSchedule == request.QueryOptions.SettlementSchedule).AsQueryable();
+        }
+
+        if (String.IsNullOrEmpty(request.QueryOptions.Region) == false)
+        {
+            merchantWithAddresses = merchantWithAddresses.Where(m => m.Address.Region.Contains(request.QueryOptions.Region)).AsQueryable();
+        }
+
+        if (String.IsNullOrEmpty(request.QueryOptions.PostCode) == false)
+        {
+            merchantWithAddresses = merchantWithAddresses.Where(m => m.Address.PostalCode == request.QueryOptions.PostCode).AsQueryable();
+        }
+
+        // Ok now enumerate the results
+        var queryResults = await merchantWithAddresses.ToListAsync(cancellationToken);
+        List<Merchant> merchants = new();
+        foreach (var queryResult in queryResults) {
+            merchants.Add(new Merchant {
+                Balance = 0,
+                CreatedDateTime = queryResult.Merchant.CreatedDateTime,
+                Name = queryResult.Merchant.Name,
+                Region = queryResult.Address.Region,
+                Reference = queryResult.Merchant.Reference,
+                PostCode = queryResult.Address.PostalCode,
+                SettlementSchedule = queryResult.Merchant.SettlementSchedule,
+                MerchantId = queryResult.Merchant.MerchantId,
+                AddressId = queryResult.Address.AddressId,
+                AddressLine1 = queryResult.Address.AddressLine1,
+                AddressLine2 = queryResult.Address.AddressLine2,
+                Town = queryResult.Address.Town,
+                Country = queryResult.Address.Country
+            });
+        }
+
+        return merchants;
+    }
+
+    public async Task<Merchant> GetMerchant(MerchantQueries.GetMerchantQuery request,
+                                                  CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+
+        var merchant = await context.Merchants.Select(m => new {
+            MerchantReportingId = m.MerchantReportingId,
+            Name = m.Name,
+            LastSaleDateTime = m.LastSaleDateTime,
+            LastSale = m.LastSaleDate,
+            CreatedDateTime = m.CreatedDateTime,
+            LastStatement = m.LastStatementGenerated,
+            MerchantId = m.MerchantId,
+            Reference = m.Reference,
+            m.SettlementSchedule,
+            AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId).OrderByDescending(ma => ma.CreatedDateTime).Select(ma => new {
+                ma.AddressId,
+                ma.AddressLine1,
+                ma.AddressLine2,
+                ma.Country,
+                ma.PostalCode,
+                ma.Region,
+                ma.Town
+                // Add more properties as needed
+            }).FirstOrDefault(), // Get the first matching MerchantAddress or null
+            ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId).OrderByDescending(mc => mc.CreatedDateTime).Select(mc => new {
+                mc.ContactId,
+                mc.Name,
+                mc.EmailAddress,
+                mc.PhoneNumber
+            }).FirstOrDefault(), // Get the first matching MerchantContact or null
+            EstateReportingId = context.Estates.Single(e => e.EstateId == m.EstateId).EstateReportingId
+        }).Where(m => m.MerchantId == request.MerchantId).SingleOrDefaultAsync(cancellationToken);
+
+        if (merchant == null)
+            return null;
+
+        // Ok now enumerate the results
+        Merchant result = new Merchant
+            {
+                Balance = 0,
+                CreatedDateTime = merchant.CreatedDateTime,
+                Name = merchant.Name,
+                Reference = merchant.Reference,
+                MerchantId = merchant.MerchantId,
+                MerchantReportingId = merchant.MerchantReportingId,
+                SettlementSchedule = merchant.SettlementSchedule,
+                AddressId = merchant.AddressInfo.AddressId,
+                AddressLine1 = merchant.AddressInfo.AddressLine1,
+                AddressLine2 = merchant.AddressInfo.AddressLine2,
+                Town = merchant.AddressInfo.Town,
+                Region = merchant.AddressInfo.Region,
+                PostCode = merchant.AddressInfo.PostalCode,
+                Country = merchant.AddressInfo.Country,
+                ContactId = merchant.ContactInfo.ContactId,
+                ContactName = merchant.ContactInfo.Name,
+                ContactEmail = merchant.ContactInfo.EmailAddress,
+                ContactPhone = merchant.ContactInfo.PhoneNumber
+            };
+        
+        return result;
+    }
+
+    public async Task<List<MerchantOperator>> GetMerchantOperators(MerchantQueries.GetMerchantOperatorsQuery request,
+                                                                   CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        List<TransactionProcessor.Database.Entities.MerchantOperator> merchantOperators = await context.MerchantOperators.Where(mo => mo.MerchantId == request.MerchantId && mo.IsDeleted == false)
+            .ToListAsync(cancellationToken);
+
+        List<MerchantOperator> result = new();
+        foreach (TransactionProcessor.Database.Entities.MerchantOperator merchantOperator in merchantOperators) {
+            result.Add(new MerchantOperator {
+                OperatorId = merchantOperator.OperatorId,
+                IsDeleted = merchantOperator.IsDeleted,
+                MerchantId = merchantOperator.MerchantId,
+                MerchantNumber = merchantOperator.MerchantNumber,
+                OperatorName = merchantOperator.Name,
+                TerminalNumber = merchantOperator.TerminalNumber
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<List<MerchantContract>> GetMerchantContracts(MerchantQueries.GetMerchantContractsQuery request,
+                                                                   CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        var merchantContracts = await context.MerchantContracts.Where(mo => mo.MerchantId == request.MerchantId && mo.IsDeleted == false)
+            .Select(mc => new {
+                mc.ContractId,
+                mc.IsDeleted,
+                mc.MerchantId,
+                    ContractInfo = context.Contracts.Where(c => c.ContractId == mc.ContractId).Select(ma => new {
+                    ma.Description,
+                    OperatorName = context.Operators.Where(o => o.OperatorId == ma.OperatorId).Select(p => p.Name).Single(),
+                            Products = context.ContractProducts.Where(cp => cp.ContractId == mc.ContractId).Select(cp => new {
+                            cp.DisplayText,
+                            cp.ProductName,
+                            cp.ContractProductId,
+                            cp.ProductType,
+                            cp.Value
+                    }).ToList()
+                    // Add more properties as needed
+                }).SingleOrDefault()
+            })
+            .ToListAsync(cancellationToken);
+
+        List<MerchantContract> result = new();
+        foreach (var merchantContract in merchantContracts)
+        {
+            var c = new MerchantContract
+            {
+                ContractId = merchantContract.ContractId,
+                ContractName = merchantContract.ContractInfo.Description,
+                IsDeleted = merchantContract.IsDeleted,
+                MerchantId = merchantContract.MerchantId,
+                OperatorName = merchantContract.ContractInfo.OperatorName,
+                ContractProducts = new List<MerchantContractProduct>()
+            };
+
+            foreach (var product in merchantContract.ContractInfo.Products) {
+                c.ContractProducts.Add(new MerchantContractProduct {
+                    ContractId = merchantContract.ContractId,
+                    DisplayText = product.DisplayText,
+                    MerchantId = merchantContract.MerchantId,
+                    ProductName = product.ProductName,
+                    ProductId = product.ContractProductId,
+                    ProductType = product.ProductType,
+                    Value = product.Value
+                });
+            }
+
+            result.Add(c);
+        }
+
+        return result;
+    }
+
+    public async Task<List<MerchantDevice>> GetMerchantDevices(MerchantQueries.GetMerchantDevicesQuery request,
+                                                               CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        List<TransactionProcessor.Database.Entities.MerchantDevice> merchantDevices = await context.MerchantDevices.Where(mo => mo.MerchantId == request.MerchantId).ToListAsync(cancellationToken);
+
+        List<MerchantDevice> result = new();
+        foreach (TransactionProcessor.Database.Entities.MerchantDevice merchantDevice in merchantDevices)
+        {
+            result.Add(new MerchantDevice
+            {
+                DeviceId = merchantDevice.DeviceId,
+                DeviceIdentifier = merchantDevice.DeviceIdentifier,
+                IsDeleted = false,
+                MerchantId = merchantDevice.MerchantId
+            });
+        }
+
+        return result;
     }
 
     private IQueryable<TodayTransaction> BuildTodaySalesQuery(EstateManagementContext context) {
@@ -372,275 +835,12 @@ public partial class ReportingManager : IReportingManager {
         return from t in context.TransactionHistory where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == comparisonDate && t.TransactionTime <= DateTime.Now.TimeOfDay select t;
     }
 
-    private IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> BuildTodaySettlementQuery(EstateManagementContext context,
-                                                                                                           DateTime settlementDate) {
-        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> settlementData = from s in context.Settlements join f in context.MerchantSettlementFees on s.SettlementId equals f.SettlementId join t in context.TodayTransactions on f.TransactionId equals t.TransactionId where s.SettlementDate == settlementDate select new DatabaseProjections.TodaySettlementTransactionProjection { Fee = f, Txn = t };
-        return settlementData;
-    }
-
-    private IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> BuildComparisonSettlementQuery(EstateManagementContext context,
-                                                                                                                     DateTime settlementDate) {
-        IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> settlementData = from s in context.Settlements join f in context.MerchantSettlementFees on s.SettlementId equals f.SettlementId join t in context.TransactionHistory on f.TransactionId equals t.TransactionId where s.SettlementDate == settlementDate.Date select new DatabaseProjections.ComparisonSettlementTransactionProjection { Fee = f, Txn = t };
-        return settlementData;
-    }
+    
 
 
-    public async Task<List<UnsettledFee>> GetUnsettledFees(Guid estateId,
-                                                           DateTime startDate,
-                                                           DateTime endDate,
-                                                           List<Int32> merchantIds,
-                                                           List<Int32> operatorIds,
-                                                           List<Int32> productIds,
-                                                           GroupByOption? groupByOption,
-                                                           CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        IQueryable<DatabaseProjections.FeeTransactionProjection> query = this.BuildUnsettledFeesQuery(context, startDate, endDate).ApplyMerchantFilter(context, merchantIds).ApplyOperatorFilter(context, operatorIds).ApplyProductFilter(context, productIds);
-
-        // Perform grouping
-        IQueryable<UnsettledFee> groupedQuery = groupByOption switch {
-            GroupByOption.Merchant => query.ApplyMerchantGrouping(context),
-            GroupByOption.Operator => query.ApplyOperatorGrouping(context),
-            GroupByOption.Product => query.ApplyProductGrouping(context)
-        };
-        return await groupedQuery.ToListAsync(cancellationToken);
-    }
-
-    public async Task<List<TransactionResult>> TransactionSearch(Guid estateId,
-                                                                 TransactionSearchRequest searchRequest,
-                                                                 PagingRequest pagingRequest,
-                                                                 SortingRequest sortingRequest,
-                                                                 CancellationToken cancellationToken) {
-        // Base query before any filtering is added
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        IQueryable<DatabaseProjections.TransactionSearchProjection> mainQuery = this.BuildTransactionSearchQuery(context, searchRequest.QueryDate);
-
-        mainQuery = mainQuery.ApplyFilters(searchRequest);
-        mainQuery = mainQuery.ApplySorting(sortingRequest);
-        mainQuery = mainQuery.ApplyPagination(pagingRequest);
-
-        // Now build the results
-        List<DatabaseProjections.TransactionSearchProjection> queryResults = await mainQuery.ToListAsync(cancellationToken);
-
-        List<TransactionResult> results = new();
-
-        queryResults.ForEach(qr => {
-            results.Add(new TransactionResult {
-                MerchantReportingId = qr.Merchant.MerchantReportingId,
-                ResponseCode = qr.Transaction.ResponseCode,
-                IsAuthorised = qr.Transaction.IsAuthorised,
-                MerchantName = qr.Merchant.Name,
-                OperatorName = qr.Operator.Name,
-                OperatorReportingId = qr.Operator.OperatorReportingId,
-                Product = qr.Product.ProductName,
-                ProductReportingId = qr.Product.ContractProductReportingId,
-                ResponseMessage = qr.Transaction.ResponseMessage,
-                TransactionDateTime = qr.Transaction.TransactionDateTime,
-                TransactionId = qr.Transaction.TransactionId,
-                TransactionReportingId = qr.Transaction.TransactionReportingId,
-                TransactionSource = qr.Transaction.TransactionSource.ToString(),
-                TransactionAmount = qr.Transaction.TransactionAmount
-            });
-        });
-
-        return results;
-    }
-
-    public async Task<TodaysSales> GetMerchantPerformance(Guid estateId,
-                                                          DateTime comparisonDate,
-                                                          List<Int32> merchantReportingIds,
-                                                          CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        // First we need to get a value of todays sales
-        IQueryable<TodayTransaction> todaysSalesQuery = this.BuildTodaySalesQuery(context);
-        IQueryable<TransactionHistory> comparisonSalesQuery = this.BuildComparisonSalesQuery(context, comparisonDate);
-
-        todaysSalesQuery = todaysSalesQuery.ApplyMerchantFilter(merchantReportingIds);
-        comparisonSalesQuery = comparisonSalesQuery.ApplyMerchantFilter(merchantReportingIds);
-
-        // Build the response
-        TodaysSales response = new() { ComparisonSalesCount = await comparisonSalesQuery.CountAsync(cancellationToken), ComparisonSalesValue = await comparisonSalesQuery.SumAsync(t => t.TransactionAmount, cancellationToken), TodaysSalesCount = await todaysSalesQuery.CountAsync(cancellationToken), TodaysSalesValue = await todaysSalesQuery.SumAsync(t => t.TransactionAmount, cancellationToken) };
-        response.ComparisonAverageSalesValue = this.SafeDivide(response.ComparisonSalesValue, response.ComparisonSalesCount);
-        response.TodaysAverageSalesValue = this.SafeDivide(response.TodaysSalesValue, response.TodaysSalesCount);
-
-        return response;
-    }
-
-    public async Task<TodaysSales> GetProductPerformance(Guid estateId,
-                                                         DateTime comparisonDate,
-                                                         List<Int32> productReportingIds,
-                                                         CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        // First we need to get a value of todays sales
-        IQueryable<TodayTransaction> todaysSalesQuery = this.BuildTodaySalesQuery(context);
-        IQueryable<TransactionHistory> comparisonSalesQuery = this.BuildComparisonSalesQuery(context, comparisonDate);
-
-        todaysSalesQuery = todaysSalesQuery.ApplyProductFilter(productReportingIds);
-        comparisonSalesQuery = comparisonSalesQuery.ApplyProductFilter(productReportingIds);
-
-        TodaysSales response = new() { ComparisonSalesCount = await comparisonSalesQuery.CountAsync(cancellationToken), ComparisonSalesValue = await comparisonSalesQuery.SumAsync(t => t.TransactionAmount, cancellationToken), TodaysSalesCount = await todaysSalesQuery.CountAsync(cancellationToken), TodaysSalesValue = await todaysSalesQuery.SumAsync(t => t.TransactionAmount, cancellationToken) };
-        response.ComparisonAverageSalesValue = this.SafeDivide(response.ComparisonSalesValue, response.ComparisonSalesCount);
-        response.TodaysAverageSalesValue = this.SafeDivide(response.TodaysSalesValue, response.TodaysSalesCount);
-
-        return response;
-    }
-
-    public async Task<TodaysSales> GetOperatorPerformance(Guid estateId,
-                                                          DateTime comparisonDate,
-                                                          List<Int32> operatorReportingIds,
-                                                          CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        // First we need to get a value of todays sales
-        IQueryable<TodayTransaction> todaysSalesQuery = this.BuildTodaySalesQuery(context);
-        IQueryable<TransactionHistory> comparisonSalesQuery = this.BuildComparisonSalesQuery(context, comparisonDate);
-
-        todaysSalesQuery = todaysSalesQuery.ApplyOperatorFilter(operatorReportingIds);
-        comparisonSalesQuery = comparisonSalesQuery.ApplyOperatorFilter(operatorReportingIds);
-
-        TodaysSales response = new() { ComparisonSalesCount = await comparisonSalesQuery.CountAsync(cancellationToken), ComparisonSalesValue = await comparisonSalesQuery.SumAsync(t => t.TransactionAmount, cancellationToken), TodaysSalesCount = await todaysSalesQuery.CountAsync(cancellationToken), TodaysSalesValue = await todaysSalesQuery.SumAsync(t => t.TransactionAmount, cancellationToken) };
-        response.ComparisonAverageSalesValue = this.SafeDivide(response.ComparisonSalesValue, response.ComparisonSalesCount);
-        response.TodaysAverageSalesValue = this.SafeDivide(response.TodaysSalesValue, response.TodaysSalesCount);
-
-        return response;
-    }
-
-    public async Task<List<Models.TopBottomData>> GetTopBottomData(Guid estateId,
-                                                                                TopBottom direction,
-                                                                                Int32 resultCount,
-                                                                                Dimension dimension,
-                                                                                CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        IQueryable<TodayTransaction> mainQuery = this.BuildTodaySalesQuery(context);
-
-        IQueryable<DatabaseProjections.TopBottomData> topBottomData = dimension switch {
-            Dimension.Merchant => mainQuery.ApplyMerchantGrouping(context),
-            Dimension.Operator => mainQuery.ApplyOperatorGrouping(context),
-            Dimension.Product => mainQuery.ApplyProductGrouping(context)
-        };
-
-        topBottomData = direction switch {
-            TopBottom.Top => topBottomData.OrderByDescending(g => g.SalesValue),
-            _ => topBottomData.OrderBy(g => g.SalesValue)
-        };
-
-        List<DatabaseProjections.TopBottomData> queryResult = await topBottomData.Take(resultCount).ToListAsync(cancellationToken);
-
-        List<Models.TopBottomData> results = new();
-        queryResult.ForEach(qr => results.Add(new Models.TopBottomData { DimensionName = qr.DimensionName, SalesValue = qr.SalesValue }));
-        return results;
-    }
-
-    public async Task<TodaysSettlement> GetTodaysSettlement(Guid estateId,
-                                                            Int32 merchantReportingId,
-                                                            Int32 operatorReportingId,
-                                                            DateTime comparisonDate,
-                                                            CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> todaySettlementData = this.BuildTodaySettlementQuery(context, DateTime.Now);
-        IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> comparisonSettlementData = this.BuildComparisonSettlementQuery(context, comparisonDate);
-
-        todaySettlementData = todaySettlementData.ApplyMerchantFilter(merchantReportingId).ApplyOperatorFilter(operatorReportingId);
-        comparisonSettlementData = comparisonSettlementData.ApplyMerchantFilter(merchantReportingId).ApplyOperatorFilter(operatorReportingId);
-
-        DatabaseProjections.SettlementGroupProjection todaySettlement = await this.GetSettlementSummary(todaySettlementData, cancellationToken);
-        DatabaseProjections.SettlementGroupProjection comparisonSettlement = await this.GetSettlementSummary(comparisonSettlementData, cancellationToken);
-
-        TodaysSettlement response = new() {
-            ComparisonSettlementCount = comparisonSettlement.SettledCount,
-            ComparisonSettlementValue = comparisonSettlement.SettledValue,
-            ComparisonPendingSettlementCount = comparisonSettlement.UnSettledCount,
-            ComparisonPendingSettlementValue = comparisonSettlement.UnSettledValue,
-            TodaysSettlementCount = todaySettlement.SettledCount,
-            TodaysSettlementValue = todaySettlement.SettledValue,
-            TodaysPendingSettlementCount = todaySettlement.UnSettledCount,
-            TodaysPendingSettlementValue = todaySettlement.UnSettledValue
-        };
-
-        return response;
-    }
-
-    private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
-                                                                                           CancellationToken cancellationToken) {
-        // Get the settleed fees summary
-        SettlementGroupProjection summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
-
-        return new DatabaseProjections.SettlementGroupProjection { SettledCount = summary.SettledCount,
-            SettledValue = summary.SettledValue,
-            UnSettledCount = summary.UnSettledCount,
-            UnSettledValue = summary.UnSettledValue };
-    }
-
-    private static IQueryable<SettlementGroupProjection> BuildSettlementSummaryQuery(
-        IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query)
-    {
-        return query
-            .GroupBy(_ => 1)
-            .Select(g => new SettlementGroupProjection
-            {
-                SettledCount = g.Count(x => x.Fee.IsSettled),
-                SettledValue = g.Where(x => x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue),
-                UnSettledCount = g.Count(x => !x.Fee.IsSettled),
-                UnSettledValue = g.Where(x => !x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue)
-            });
-    }
-
-    private static IQueryable<SettlementGroupProjection> BuildSettlementSummaryQuery(
-        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> query)
-    {
-        return query
-            .GroupBy(_ => 1)
-            .Select(g => new SettlementGroupProjection
-            {
-                SettledCount = g.Count(x => x.Fee.IsSettled),
-                SettledValue = g.Where(x => x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue),
-                UnSettledCount = g.Count(x => !x.Fee.IsSettled),
-                UnSettledValue = g.Where(x => !x.Fee.IsSettled).Sum(x => x.Fee.CalculatedValue)
-            });
-    }
-
-    private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(
-        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> query,
-        CancellationToken cancellationToken) {
-
-        // Get the settleed fees summary
-        SettlementGroupProjection summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
-
-        return new DatabaseProjections.SettlementGroupProjection {
-            SettledCount = summary.SettledCount,
-            SettledValue = summary.SettledValue,
-            UnSettledCount = summary.UnSettledCount,
-            UnSettledValue = summary.UnSettledValue
-        };
-    }
-
-    public async Task<List<Operator>> GetOperators(Guid estateId,
-                                                   CancellationToken cancellationToken) {
-        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, estateId.ToString());
-        await using EstateManagementContext context = resolvedContext.Context;
-
-        List<Operator> operators = await (from o in context.Operators select new Operator { Name = o.Name, EstateReportingId = context.Estates.Single(e => e.EstateId == o.EstateId).EstateReportingId, OperatorId = o.OperatorId, OperatorReportingId = o.OperatorReportingId }).ToListAsync(cancellationToken);
-
-        return operators;
-    }
-
-    #endregion
-
-    #region Others
-
-    private const String ConnectionStringIdentifier = "EstateReportingReadModel";
+    
+    
+   
 
     #endregion
 }

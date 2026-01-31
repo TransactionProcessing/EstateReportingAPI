@@ -20,9 +20,10 @@ using EstateReportingAPI.Models;
 using Newtonsoft.Json;
 using Shouldly;
 using Xunit;
-using Merchant = DataTrasferObjects.Merchant;
+using Merchant = DataTransferObjects.Merchant;
 using SortDirection = DataTransferObjects.SortDirection;
 
+/*
 public class FactTransactionsControllerTestsBase : ControllerTestsBase {
     
     protected override async Task ClearStandingData()
@@ -1869,4 +1870,4 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             searchResult[1].TransactionAmount.ShouldBe(200);
             searchResult[2].TransactionAmount.ShouldBe(100);
         }
-    }
+    }*/

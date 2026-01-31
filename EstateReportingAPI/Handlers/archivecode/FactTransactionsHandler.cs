@@ -7,9 +7,9 @@ using Shared.Results.Web;
 using SimpleResults;
 using GroupByOption = EstateReportingAPI.DataTransferObjects.GroupByOption;
 using LastSettlement = EstateReportingAPI.DataTransferObjects.LastSettlement;
-using Merchant = EstateReportingAPI.DataTrasferObjects.Merchant;
+using Merchant = EstateReportingAPI.DataTransferObjects.Merchant;
 using MerchantKpi = EstateReportingAPI.DataTransferObjects.MerchantKpi;
-using Operator = EstateReportingAPI.DataTrasferObjects.Operator;
+using Operator = EstateReportingAPI.DataTransferObjects.Operator;
 using ResponseCode = EstateReportingAPI.DataTrasferObjects.ResponseCode;
 using SortDirection = EstateReportingAPI.DataTransferObjects.SortDirection;
 using SortField = EstateReportingAPI.DataTransferObjects.SortField;
@@ -21,7 +21,7 @@ using TopBottom = EstateReportingAPI.DataTransferObjects.TopBottom;
 using TransactionResult = EstateReportingAPI.DataTransferObjects.TransactionResult;
 using TransactionSearchRequest = EstateReportingAPI.DataTransferObjects.TransactionSearchRequest;
 
-namespace EstateReportingAPI.Handlers
+/*namespace EstateReportingAPI.Handlers
 {
     public static class FactTransactionsHandler {
         public static async Task<IResult> TodaysSales([FromHeader] Guid estateId,
@@ -332,3 +332,4 @@ namespace EstateReportingAPI.Handlers
     }
 
 }
+*/

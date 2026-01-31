@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace EstateReportingAPI.DataTrasferObjects{
+namespace EstateReportingAPI.DataTransferObjects{
     using System;
 
     public class Operator{
@@ -12,5 +12,9 @@ namespace EstateReportingAPI.DataTrasferObjects{
         public String Name { get; set; }
         [JsonProperty("operator_reporting_id")]
         public Int32 OperatorReportingId { get; set; }
+        [JsonProperty("require_custom_merchant_number")]
+        public Boolean RequireCustomMerchantNumber { get; set; }
+        [JsonProperty("require_custom_terminal_number")]
+        public Boolean RequireCustomTerminalNumber { get; set; }
     }
 }

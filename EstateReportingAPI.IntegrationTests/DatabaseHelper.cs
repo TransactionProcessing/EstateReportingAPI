@@ -19,9 +19,11 @@ using Microsoft.EntityFrameworkCore;
 
 public class DatabaseHelper{
     private readonly EstateManagementContext Context;
+    private readonly Guid EstateId;
 
-    public DatabaseHelper(EstateManagementContext context){
+    public DatabaseHelper(EstateManagementContext context, Guid estateId) {
         this.Context = context;
+        this.EstateId = estateId;
     }
 
     public async Task DeleteAllMerchants(){
@@ -272,7 +274,7 @@ public class DatabaseHelper{
     public async Task<Int32> AddEstate(String estateName, String reference){
         Estate estate = new(){
                                  CreatedDateTime = DateTime.Now,
-                                 EstateId = Guid.NewGuid(),
+                                 EstateId = this.EstateId,
                                  Name = estateName,
                                  Reference = reference
                              };
@@ -280,6 +282,33 @@ public class DatabaseHelper{
         await this.Context.SaveChangesAsync(CancellationToken.None);
 
         return estate.EstateReportingId;
+    }
+
+    public async Task AddEstateOperators(String estateName, List<String> operators)
+    {
+        Estate? estate = await this.Context.Estates.SingleOrDefaultAsync(e => e.Name == estateName);
+
+        if (estate == null)
+        {
+            throw new Exception($"No estate found with name {estateName}");
+        }
+
+        foreach (String operatorName in operators) {
+            var @operator = await this.Context.Operators.SingleOrDefaultAsync(o => o.Name == operatorName);
+            if (@operator == null){
+                throw new Exception($"No operator found with name {operatorName}");
+            }
+
+            EstateOperator estateOperator = new EstateOperator()
+            {
+                EstateId = estate.EstateId,
+                OperatorId = @operator.OperatorId
+            };
+
+            await this.Context.EstateOperators.AddAsync(estateOperator);
+        }
+
+        await this.Context.SaveChangesAsync(CancellationToken.None);
     }
 
     public async Task AddOperators(String estateName, List<String> operators)
@@ -306,7 +335,7 @@ public class DatabaseHelper{
         await this.Context.SaveChangesAsync(CancellationToken.None);
     }
 
-    public async Task<Int32> AddOperator(String estateName, String operatorName)
+    public async Task<Guid> AddOperator(String estateName, String operatorName)
     {
         Estate? estate = await this.Context.Estates.SingleOrDefaultAsync(e => e.Name == estateName);
 
@@ -327,48 +356,100 @@ public class DatabaseHelper{
         await this.Context.Operators.AddAsync(@operator);
         await this.Context.SaveChangesAsync(CancellationToken.None);
 
-        return @operator.OperatorReportingId;
+        return @operator.OperatorId;
     }
-    
-    public async Task<Int32> AddMerchant(String estateName, String merchantName, DateTime lastSaleDateTime, 
-                                         List<(String addressLine1, String town, String postCode, String region)> addressList=null){
+
+    public async Task<Guid> AddMerchant(String estateName,
+                                        String merchantName,
+                                        DateTime createDateTime,
+                                        DateTime lastSaleDateTime,
+                                        (String addressLine1, String town, String postCode, String region) address,
+                                        (String contactName, String contactEmail, String contactPhone) contact,
+                                        List<String> operators = null,
+                                        List<String> contracts = null,
+                                        List<String> devices = null) {
         Estate? estate = await this.Context.Estates.SingleOrDefaultAsync(e => e.Name == estateName);
 
-        if (estate == null){
+        if (estate == null) {
             throw new Exception($"No estate found with name {estateName}");
         }
 
-        Merchant merchant = new Merchant{
-                                            EstateId = estate.EstateId,
-                                            MerchantId = Guid.NewGuid(),
-                                            Name = merchantName,
-                                            LastSaleDate = lastSaleDateTime.Date,
-                                            LastSaleDateTime = lastSaleDateTime
-                                        };
+        Merchant merchant = new Merchant {
+            EstateId = estate.EstateId,
+            MerchantId = Guid.NewGuid(),
+            Name = merchantName,
+            LastSaleDate = lastSaleDateTime.Date,
+            LastSaleDateTime = lastSaleDateTime
+        };
 
         await this.Context.Merchants.AddAsync(merchant);
         await this.Context.SaveChangesAsync(CancellationToken.None);
 
-        if (addressList != null){
-            var savedMerchant = await this.Context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchant.MerchantId);
+        var savedMerchant = await this.Context.Merchants.SingleOrDefaultAsync(m => m.MerchantId == merchant.MerchantId);
 
-            if (savedMerchant == null){
-                throw new Exception($"Error saving merchant {merchant.Name}");
-            }
+        if (savedMerchant == null) {
+            throw new Exception($"Error saving merchant {merchant.Name}");
+        }
 
-            foreach ((String addressLine1, String town, String postCode, String region) address in addressList){
-                await this.Context.MerchantAddresses.AddAsync(new MerchantAddress{
-                                                                                     AddressId = Guid.NewGuid(),
-                                                                                     AddressLine1 = address.addressLine1,
-                                                                                     Region = address.region,
-                                                                                     Town = address.town,
-                                                                                     PostalCode = address.postCode,
-                                                                                     MerchantId = savedMerchant.MerchantId
-                                                                                 });
+        if (address != default) {
+
+            await this.Context.MerchantAddresses.AddAsync(new MerchantAddress {
+                AddressId = Guid.NewGuid(),
+                AddressLine1 = address.addressLine1,
+                Region = address.region,
+                Town = address.town,
+                PostalCode = address.postCode,
+                MerchantId = savedMerchant.MerchantId
+            });
+        }
+
+        if (contact != default) {
+            await this.Context.MerchantContacts.AddAsync(new MerchantContact {
+                MerchantId = savedMerchant.MerchantId,
+                ContactId = Guid.NewGuid(),
+                EmailAddress = contact.contactEmail,
+                Name = contact.contactName,
+                PhoneNumber = contact.contactPhone
+            });
+        }
+
+        if (operators != null && operators.Any()) {
+            foreach (String @operator in operators) {
+                var @op = await this.Context.Operators.SingleOrDefaultAsync(o => o.Name == @operator);
+                if (@op == null) {
+                    throw new Exception($"No operator found with name {@operator}");
+                }
+                await this.Context.MerchantOperators.AddAsync(new MerchantOperator {
+                    MerchantId = savedMerchant.MerchantId,
+                    OperatorId = @op.OperatorId,
+                    Name = @op.Name,
+                    IsDeleted = false
+                });
             }
         }
 
-        return merchant.MerchantReportingId;
+        if (contracts != null && contracts.Any()) {
+            foreach (String contract in contracts) {
+                var cr = await this.Context.Contracts.SingleOrDefaultAsync(c => c.Description == contract);
+                if (cr == null) {
+                    throw new Exception($"No contract found with name {contract}");
+                }
+                await this.Context.MerchantContracts.AddAsync(new MerchantContract {
+                    MerchantId = savedMerchant.MerchantId,
+                    ContractId = cr.ContractId
+                });
+            }
+        }
+
+        if (devices != null && devices.Any()) {
+            foreach (String device in devices) {
+                await this.Context.MerchantDevices.AddAsync(new MerchantDevice { CreatedDateTime = DateTime.Now, MerchantId = savedMerchant.MerchantId, DeviceIdentifier = device, DeviceId = Guid.NewGuid() });
+            }
+        }
+
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+
+        return merchant.MerchantId;
     }
 
     public async Task AddMerchants(String estateName,
@@ -407,7 +488,7 @@ public class DatabaseHelper{
         }
     }
 
-    public async Task<Int32> AddContract(String estateName, String contractName, String operatorName){
+    public async Task<Guid> AddContract(String estateName, String contractName, String operatorName){
         Estate? estate = await this.Context.Estates.SingleOrDefaultAsync(e => e.Name == estateName);
 
         if (estate == null){
@@ -431,15 +512,18 @@ public class DatabaseHelper{
         await this.Context.Contracts.AddAsync(contract);
         await this.Context.SaveChangesAsync(CancellationToken.None);
 
-        return contract.ContractReportingId;
+        return contract.ContractId;
     }
 
-    public async Task AddContractWithProducts(String estateName, String contractName, String operatorName, List<(String productName, Int32 productType, Decimal? value)> products){
-        await this.AddContract(estateName, contractName, operatorName);
+    public async Task<Guid> AddContractWithProducts(String estateName, String contractName, String operatorName, List<(String productName, Int32 productType, Decimal? value)> products)
+    {
+        var contractId = await this.AddContract(estateName, contractName, operatorName);
 
         foreach ((String productName, Int32 productType, Decimal? value) product in products){
             await this.AddContractProduct(contractName, product.productName, product.productType, product.value);
         }
+
+        return contractId;
     }
 
     public async Task AddContractProduct(String contractName, String productName, Int32 productType, Decimal? value){

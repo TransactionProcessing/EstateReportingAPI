@@ -68,9 +68,16 @@ namespace EstateReportingAPI
 
             app.UseEndpoints(endpoints =>
                              {
-                                 endpoints.MapDimensionsEndpoints();
-                                 endpoints.MapFactSettlementsEndpoints();
-                                 endpoints.MapFactTransactionEndpoints();
+                                 endpoints.MapCalendarEndpoints();
+                                 endpoints.MapEstateEndpoints();
+                                 endpoints.MapOperatorEndpoints();
+                                 endpoints.MapMerchantEndpoints();
+                                 endpoints.MapContractEndpoints();
+                                 endpoints.MapTransactionEndpoints();
+
+                                 // Old Endpoints
+                                 //endpoints.MapFactSettlementsEndpoints();
+                                 //endpoints.MapFactTransactionEndpoints();
 
                                  //endpoints.MapControllers();
                                  endpoints.MapHealthChecks("health", new HealthCheckOptions()
