@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Results.Web;
 
 namespace EstateReportingAPI.Handlers;
-
+/*
 public static class DimensionsHandlers
 {
     public static async Task<IResult> GetCalendarYears(
@@ -148,4 +148,4 @@ public static class DimensionsHandlers
                 .ToList()
         );
     }
-}
+}*/

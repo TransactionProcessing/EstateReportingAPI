@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Shared.IntegrationTesting.TestContainers;
 using SimpleResults;
 using TransactionProcessor.Database.Contexts;
@@ -13,11 +14,6 @@ namespace EstateReportingAPI.IntegrationTests;
 
 using System.Net.Http.Headers;
 using System.Text;
-using Azure;
-using Client;
-using Common;
-using Ductus.FluentDocker.Services;
-using Ductus.FluentDocker.Services.Extensions;
 using NLog;
 using Shared.IntegrationTesting;
 using Shared.Logger;
@@ -50,11 +46,10 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 
         this.factory = new CustomWebApplicationFactory<Startup>(dbConnString);
         this.Client = this.factory.CreateClient();
-        this.ApiClient = new EstateReportingApiClient((s) => "http://localhost", this.Client);
-
+        
         this.context = new EstateManagementContext(dbConnString);
 
-        this.helper = new DatabaseHelper(context);
+        this.helper = new DatabaseHelper(context, this.TestId);
         await this.helper.CreateStoredProcedures(CancellationToken.None);
         await this.SetupStandingData();
     }
@@ -72,8 +67,6 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     protected HttpClient Client;
     protected CustomWebApplicationFactory<Startup> factory;
 
-    protected EstateReportingApiClient ApiClient;
-
     protected Guid TestId;
 
     internal async Task<Result<T?>> CreateAndSendHttpRequestMessage<T>(String url, CancellationToken cancellationToken)
@@ -87,7 +80,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         String content = await result.Content.ReadAsStringAsync(cancellationToken);
         content.ShouldNotBeNull();
 
-        return null;
+        return Result.Success(JsonConvert.DeserializeObject<T>(content));
     }
 
     internal async Task<Result<T?>> CreateAndSendHttpRequestMessage<T>(String url, String payload, CancellationToken cancellationToken)
@@ -104,7 +97,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         String content = await result.Content.ReadAsStringAsync(cancellationToken);
         content.ShouldNotBeNull();
 
-        return null;
+        return Result.Success(JsonConvert.DeserializeObject<T>(content));
     }
     
     //public static IContainer DatabaseServerContainer;

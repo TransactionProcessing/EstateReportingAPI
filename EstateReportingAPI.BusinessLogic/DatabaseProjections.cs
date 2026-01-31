@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
 using TransactionProcessor.Database.Entities.Summary;
+using ContractProduct = TransactionProcessor.Database.Entities.ContractProduct;
 using Merchant = TransactionProcessor.Database.Entities.Merchant;
 using Operator = TransactionProcessor.Database.Entities.Operator;
 

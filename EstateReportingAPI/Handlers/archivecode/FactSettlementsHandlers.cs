@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Results.Web;
 
 namespace EstateReportingAPI.Handlers;
-
+/*
 public static class FactSettlementsHandlers
 {
 
@@ -173,4 +173,4 @@ public static class FactSettlementsHandlers
             GroupByOption.Product => Models.GroupByOption.Product,
             _ => Models.GroupByOption.Operator
         };
-}
+}*/
