@@ -6,7 +6,8 @@ using SimpleResults;
 namespace EstateReportingAPI.BusinessLogic.RequestHandlers;
 
 public class TransactionRequestHandler : IRequestHandler<TransactionQueries.TodaysFailedSales, Result<TodaysSales>>,
-    IRequestHandler<TransactionQueries.TodaysSalesQuery, Result<TodaysSales>>{
+    IRequestHandler<TransactionQueries.TodaysSalesQuery, Result<TodaysSales>>,
+IRequestHandler<TransactionQueries.TransactionDetailReportQuery, Result<TransactionDetailReportResponse>> {
     private readonly IReportingManager Manager;
 
     public TransactionRequestHandler(IReportingManager manager) {
@@ -22,6 +23,12 @@ public class TransactionRequestHandler : IRequestHandler<TransactionQueries.Toda
     public async Task<Result<TodaysSales>> Handle(TransactionQueries.TodaysSalesQuery request,
                                                   CancellationToken cancellationToken) {
         var result = await this.Manager.GetTodaysSales(request, cancellationToken);
+        return Result.Success(result);
+    }
+
+    public async Task<Result<TransactionDetailReportResponse>> Handle(TransactionQueries.TransactionDetailReportQuery request,
+                                                                      CancellationToken cancellationToken) {
+        var result = await this.Manager.GetTransactionDetailReport(request, cancellationToken);
         return Result.Success(result);
     }
 }

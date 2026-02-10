@@ -22,5 +22,7 @@ public static class TransactionEndpoints
             .WithStandardProduces<TodaysSales>();
         group.MapGet("todaysfailedsales", TransactionHandler.TodaysFailedSales)
             .WithStandardProduces<TodaysSales>();
+        group.MapPost("transactionDetailReport", TransactionHandler.TransactionDetailReport)
+            .WithStandardProduces<TransactionDetailReportResponse>();
     }
 }
