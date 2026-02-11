@@ -81,7 +81,6 @@ public static class TransactionHandler {
                     .ToList()
             };
 
-        var g = SuccessFactory(result.Data);
         return ResponseFactory.FromResult(result, SuccessFactory);
     }
 }
