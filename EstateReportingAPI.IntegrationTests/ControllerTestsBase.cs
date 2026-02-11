@@ -24,8 +24,9 @@ using Xunit.Abstractions;
 public abstract class ControllerTestsBase : IAsyncLifetime
 {
     protected List<Merchant> merchantsList;
+    protected List<Operator> operatorsList;
     protected List<(Guid contractId, String contractName, Guid operatorId, String operatorName)> contractList;
-    protected Dictionary<Guid, List<(Guid productId, String productName, Decimal? productValue)>> contractProducts;
+    protected Dictionary<Guid, List<(Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId)>> contractProducts;
     protected DatabaseHelper helper;
     protected ITestOutputHelper TestOutputHelper;
     protected DockerHelper DockerHelper;
@@ -85,7 +86,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 
     internal async Task<Result<T?>> CreateAndSendHttpRequestMessage<T>(String url, String payload, CancellationToken cancellationToken)
     {
-        HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
+        HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
         requestMessage.Headers.Add("estateId", this.TestId.ToString());
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Test");
         if (String.IsNullOrEmpty(payload) == false){

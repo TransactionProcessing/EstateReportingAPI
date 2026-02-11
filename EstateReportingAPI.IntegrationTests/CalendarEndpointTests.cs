@@ -12,6 +12,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
 using Xunit;
@@ -26,6 +27,8 @@ using MerchantKpi = EstateReportingAPI.DataTransferObjects.MerchantKpi;
 using MerchantOperator = EstateReportingAPI.DataTransferObjects.MerchantOperator;
 using Operator = EstateReportingAPI.DataTransferObjects.Operator;
 using TodaysSales = EstateReportingAPI.DataTransferObjects.TodaysSales;
+using TransactionDetailReportRequest = EstateReportingAPI.DataTransferObjects.TransactionDetailReportRequest;
+using TransactionDetailReportResponse = EstateReportingAPI.DataTransferObjects.TransactionDetailReportResponse;
 
 namespace EstateReportingAPI.IntegrationTests {
     public class CalendarEndpointTests : ControllerTestsBase {
@@ -448,7 +451,7 @@ namespace EstateReportingAPI.IntegrationTests {
 
 
         protected override async Task ClearStandingData() {
-            throw new NotImplementedException();
+
         }
 
         protected override async Task SetupStandingData() {
@@ -460,7 +463,7 @@ namespace EstateReportingAPI.IntegrationTests {
             sw.Stop();
             this.TestOutputHelper.WriteLine($"Setup Estate {sw.ElapsedMilliseconds}ms");
             sw.Restart();
-            
+
             // Operators
             await this.helper.AddOperator("Test Estate", "Safaricom");
             await this.helper.AddOperator("Test Estate", "Voucher");
@@ -480,28 +483,16 @@ namespace EstateReportingAPI.IntegrationTests {
             sw.Restart();
 
             // Contracts & Products
-            List<(string productName, int productType, decimal? value)> safaricomProductList = new(){
-                                                                                                      ("200 KES Topup", 0, 200.00m),
-                                                                                                      ("100 KES Topup", 0, 100.00m),
-                                                                                                      ("50 KES Topup", 0, 50.00m),
-                                                                                                      ("Custom", 0, null)
-                                                                                                  };
+            List<(string productName, int productType, decimal? value)> safaricomProductList = new() { ("200 KES Topup", 0, 200.00m), ("100 KES Topup", 0, 100.00m), ("50 KES Topup", 0, 50.00m), ("Custom", 0, null) };
             await helper.AddContractWithProducts("Test Estate", "Safaricom Contract", "Safaricom", safaricomProductList);
 
-            List<(string productName, int productType, decimal? value)> voucherProductList = new(){
-                                                                                                    ("10 KES Voucher", 0, 10.00m),
-                                                                                                    ("Custom", 0, null)
-                                                                                                };
+            List<(string productName, int productType, decimal? value)> voucherProductList = new() { ("10 KES Voucher", 0, 10.00m), ("Custom", 0, null) };
             await helper.AddContractWithProducts("Test Estate", "Healthcare Centre 1 Contract", "Voucher", voucherProductList);
 
-            List<(string productName, int productType, decimal? value)> postPayProductList = new(){
-                                                                                                    ("Post Pay Bill Pay", 0, null)
-                                                                                                };
+            List<(string productName, int productType, decimal? value)> postPayProductList = new() { ("Post Pay Bill Pay", 0, null) };
             await helper.AddContractWithProducts("Test Estate", "PataPawa PostPay Contract", "PataPawa PostPay", postPayProductList);
 
-            List<(string productName, int productType, decimal? value)> prePayProductList = new(){
-                                                                                                   ("Pre Pay Bill Pay", 0, null)
-                                                                                               };
+            List<(string productName, int productType, decimal? value)> prePayProductList = new() { ("Pre Pay Bill Pay", 0, null) };
             await helper.AddContractWithProducts("Test Estate", "PataPawa PrePay Contract", "PataPawa PrePay", prePayProductList);
 
             sw.Stop();
@@ -521,36 +512,15 @@ namespace EstateReportingAPI.IntegrationTests {
 
             merchantsList = context.Merchants.Select(m => m).ToList();
 
-            contractList = context.Contracts
-                .Join(
-                    context.Operators,
-                    c => c.OperatorId,
-                    o => o.OperatorId,
-                    (c, o) => new { c.ContractId, c.Description, o.OperatorId, o.Name }
-                )
-                .ToList().Select(x => (x.ContractId, x.Description, x.OperatorId, x.Name))
-                .ToList();
+            contractList = context.Contracts.Join(context.Operators, c => c.OperatorId, o => o.OperatorId, (c,
+                                                                                                            o) => new { c.ContractId, c.Description, o.OperatorId, o.Name }).ToList().Select(x => (x.ContractId, x.Description, x.OperatorId, x.Name)).ToList();
 
-            var query1 = context.Contracts
-                .GroupJoin(
-                    context.ContractProducts,
-                    c => c.ContractId,
-                    cp => cp.ContractId,
-                    (c, productGroup) => new
-                    {
-                        c.ContractId,
-                        Products = productGroup.Select(p => new { p.ContractProductId, p.ProductName, p.Value })
-                            .OrderBy(p => p.ContractProductId)
-                            .Select(p => new { p.ContractProductId, p.ProductName, p.Value })
-                            .ToList()
-                    })
-                .ToList();
+            var query1 = context.Contracts.GroupJoin(context.ContractProducts, c => c.ContractId, cp => cp.ContractId, (c,
+                                                                                                                        productGroup) => new { c.ContractId, Products = productGroup.Select(p => new { p.ContractProductReportingId, p.ContractProductId, p.ProductName, p.Value }).OrderBy(p => p.ContractProductId).Select(p => new { p.ContractProductId, p.ProductName, p.Value, p.ContractProductReportingId }).ToList() }).ToList();
 
-            contractProducts = query1.ToDictionary(
-                item => item.ContractId,
-                item => item.Products.Select(i => (i.ContractProductId, i.ProductName, i.Value)).ToList()
-            );
+            contractProducts = query1.ToDictionary(item => item.ContractId, item => item.Products.Select(i => (i.ContractProductId, i.ProductName, i.Value, i.ContractProductReportingId)).ToList());
 
+            this.operatorsList = this.context.Operators.ToList();
 
             sw.Stop();
             this.TestOutputHelper.WriteLine($"Data Caching {sw.ElapsedMilliseconds}ms");
@@ -558,8 +528,7 @@ namespace EstateReportingAPI.IntegrationTests {
         }
 
         [Fact]
-        public async Task FactTransactionsControllerController_TodaysSales_SalesReturned()
-        {
+        public async Task TransactionsEndpoint_TodaysSales_SalesReturned() {
             List<Transaction>? todaysTransactions = new List<Transaction>();
             List<Transaction> comparisonDateTransactions = new List<Transaction>();
 
@@ -568,16 +537,12 @@ namespace EstateReportingAPI.IntegrationTests {
 
             Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 15 }, { "Test Merchant 2", 18 }, { "Test Merchant 3", 9 }, { "Test Merchant 4", 0 } };
 
-            foreach (var merchant in merchantsList)
-            {
-                foreach (var contract in contractList)
-                {
+            foreach (var merchant in merchantsList) {
+                foreach (var contract in contractList) {
                     var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
-                    foreach ((Guid productId, String productName, Decimal? productValue) product in productList)
-                    {
+                    foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
                         var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
-                        for (int i = 0; i < transactionCount; i++)
-                        {
+                        for (int i = 0; i < transactionCount; i++) {
                             Transaction transaction = await helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
                             todaysTransactions.Add(transaction);
                         }
@@ -588,16 +553,12 @@ namespace EstateReportingAPI.IntegrationTests {
             await this.helper.AddTransactionsX(todaysTransactions);
 
             // Comparison Date sales
-            foreach (var merchant in merchantsList)
-            {
-                foreach (var contract in contractList)
-                {
+            foreach (var merchant in merchantsList) {
+                foreach (var contract in contractList) {
                     var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
-                    foreach ((Guid productId, String productName, Decimal? productValue) product in productList)
-                    {
+                    foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
                         var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
-                        for (int i = 0; i < transactionCount; i++)
-                        {
+                        for (int i = 0; i < transactionCount; i++) {
                             Transaction transaction = await helper.BuildTransactionX(comparisonDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
                             comparisonDateTransactions.Add(transaction);
                         }
@@ -623,64 +584,55 @@ namespace EstateReportingAPI.IntegrationTests {
             todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
         }
 
-        
+
         [Fact]
-        public async Task FactTransactionsControllerController_TodaysSales_OperatorFilter_SalesReturned()
-        {
+        public async Task TransactionsEndpoint_TodaysSales_OperatorFilter_SalesReturned() {
             List<Transaction>? todaysTransactions = new List<Transaction>();
-           List<Transaction> comparisonDateTransactions = new List<Transaction>();
-           
-           DateTime todaysDateTime = DateTime.Now;
-           DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
-           
-           Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 15 }, { "Test Merchant 2", 18 }, { "Test Merchant 3", 9 }, { "Test Merchant 4", 0 } };
-           
-           foreach (var merchant in merchantsList)
-           {
-               foreach (var contract in contractList)
-               {
-                   var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
-                   foreach ((Guid productId, String productName, Decimal? productValue) product in productList)
-                   {
-                       var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
-                       for (int i = 0; i < transactionCount; i++)
-                       {
-                           Transaction transaction = await helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
-                           todaysTransactions.Add(transaction);
-                       }
-                   }
-               }
-           }
-           
-           await this.helper.AddTransactionsX(todaysTransactions);
-           
-           // Comparison Date sales
-           foreach (var merchant in merchantsList)
-           {
-               foreach (var contract in contractList)
-               {
-                   var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
-                   foreach ((Guid productId, String productName, Decimal? productValue) product in productList)
-                   {
-                       var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
-                       for (int i = 0; i < transactionCount; i++)
-                       {
-                           Transaction transaction = await helper.BuildTransactionX(comparisonDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
-                           comparisonDateTransactions.Add(transaction);
-                       }
-                   }
-               }
-           }
-           
-           await this.helper.AddTransactionsX(comparisonDateTransactions);
-           
-           await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
-           await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
-           await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
-           
-           Result<TodaysSales> result = await this.CreateAndSendHttpRequestMessage<TodaysSales>($"{this.BaseRoute}/todayssales?comparisonDate={comparisonDate:yyyy-MM-dd}&operatorReportingId=1", CancellationToken.None);
-           result.IsSuccess.ShouldBeTrue();
-           var todaysSales = result.Data;
+            List<Transaction> comparisonDateTransactions = new List<Transaction>();
+
+            DateTime todaysDateTime = DateTime.Now;
+            DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
+
+            Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 15 }, { "Test Merchant 2", 18 }, { "Test Merchant 3", 9 }, { "Test Merchant 4", 0 } };
+
+            foreach (var merchant in merchantsList) {
+                foreach (var contract in contractList) {
+                    var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
+                    foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
+                        var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
+                        for (int i = 0; i < transactionCount; i++) {
+                            Transaction transaction = await helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                            todaysTransactions.Add(transaction);
+                        }
+                    }
+                }
+            }
+
+            await this.helper.AddTransactionsX(todaysTransactions);
+
+            // Comparison Date sales
+            foreach (var merchant in merchantsList) {
+                foreach (var contract in contractList) {
+                    var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
+                    foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
+                        var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
+                        for (int i = 0; i < transactionCount; i++) {
+                            Transaction transaction = await helper.BuildTransactionX(comparisonDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                            comparisonDateTransactions.Add(transaction);
+                        }
+                    }
+                }
+            }
+
+            await this.helper.AddTransactionsX(comparisonDateTransactions);
+
+            await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+            await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+            await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
+            Result<TodaysSales> result = await this.CreateAndSendHttpRequestMessage<TodaysSales>($"{this.BaseRoute}/todayssales?comparisonDate={comparisonDate:yyyy-MM-dd}&operatorReportingId=1", CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var todaysSales = result.Data;
 
             var operatorId = await this.helper.GetOperatorId(1, CancellationToken.None);
             todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => c.OperatorId == operatorId));
@@ -690,64 +642,55 @@ namespace EstateReportingAPI.IntegrationTests {
             todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => c.OperatorId == operatorId).Sum(c => c.TransactionAmount));
         }
 
-        
+
         [Fact]
-        public async Task FactTransactionsControllerController_TodaysSales_MerchantFilter_SalesReturned()
-        {
-             List<Transaction>? todaysTransactions = new List<Transaction>();
-           List<Transaction> comparisonDateTransactions = new List<Transaction>();
-           
-           DateTime todaysDateTime = DateTime.Now;
-           DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
-           
-           Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 15 }, { "Test Merchant 2", 18 }, { "Test Merchant 3", 9 }, { "Test Merchant 4", 0 } };
-           
-           foreach (var merchant in merchantsList)
-           {
-               foreach (var contract in contractList)
-               {
-                   var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
-                   foreach ((Guid productId, String productName, Decimal? productValue) product in productList)
-                   {
-                       var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
-                       for (int i = 0; i < transactionCount; i++)
-                       {
-                           Transaction transaction = await helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
-                           todaysTransactions.Add(transaction);
-                       }
-                   }
-               }
-           }
-           
-           await this.helper.AddTransactionsX(todaysTransactions);
-           
-           // Comparison Date sales
-           foreach (var merchant in merchantsList)
-           {
-               foreach (var contract in contractList)
-               {
-                   var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
-                   foreach ((Guid productId, String productName, Decimal? productValue) product in productList)
-                   {
-                       var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
-                       for (int i = 0; i < transactionCount; i++)
-                       {
-                           Transaction transaction = await helper.BuildTransactionX(comparisonDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
-                           comparisonDateTransactions.Add(transaction);
-                       }
-                   }
-               }
-           }
-           
-           await this.helper.AddTransactionsX(comparisonDateTransactions);
-           
-           await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
-           await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
-           await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
-           
-           Result<TodaysSales> result = await this.CreateAndSendHttpRequestMessage<TodaysSales>($"{this.BaseRoute}/todayssales?comparisonDate={comparisonDate:yyyy-MM-dd}&merchantReportingId=1", CancellationToken.None);
-           result.IsSuccess.ShouldBeTrue();
-           var todaysSales = result.Data;
+        public async Task TransactionsEndpoint_TodaysSales_MerchantFilter_SalesReturned() {
+            List<Transaction>? todaysTransactions = new List<Transaction>();
+            List<Transaction> comparisonDateTransactions = new List<Transaction>();
+
+            DateTime todaysDateTime = DateTime.Now;
+            DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
+
+            Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 15 }, { "Test Merchant 2", 18 }, { "Test Merchant 3", 9 }, { "Test Merchant 4", 0 } };
+
+            foreach (var merchant in merchantsList) {
+                foreach (var contract in contractList) {
+                    var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
+                    foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
+                        var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
+                        for (int i = 0; i < transactionCount; i++) {
+                            Transaction transaction = await helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                            todaysTransactions.Add(transaction);
+                        }
+                    }
+                }
+            }
+
+            await this.helper.AddTransactionsX(todaysTransactions);
+
+            // Comparison Date sales
+            foreach (var merchant in merchantsList) {
+                foreach (var contract in contractList) {
+                    var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
+                    foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
+                        var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
+                        for (int i = 0; i < transactionCount; i++) {
+                            Transaction transaction = await helper.BuildTransactionX(comparisonDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                            comparisonDateTransactions.Add(transaction);
+                        }
+                    }
+                }
+            }
+
+            await this.helper.AddTransactionsX(comparisonDateTransactions);
+
+            await helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+            await helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+            await helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
+            Result<TodaysSales> result = await this.CreateAndSendHttpRequestMessage<TodaysSales>($"{this.BaseRoute}/todayssales?comparisonDate={comparisonDate:yyyy-MM-dd}&merchantReportingId=1", CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var todaysSales = result.Data;
 
             var merchantId = await this.helper.GetMerchantId(1, CancellationToken.None);
             todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => c.MerchantId == merchantId));
@@ -758,8 +701,7 @@ namespace EstateReportingAPI.IntegrationTests {
         }
 
         [Fact]
-        public async Task FactTransactionsControllerController_TodaysFailedSales_SalesReturned()
-        {
+        public async Task TransactionsEndpoint_TodaysFailedSales_SalesReturned() {
 
             //EstateManagementContext context = new EstateManagementContext(GetLocalConnectionString($"TransactionProcessorReadModel-{TestId.ToString()}"));
             var todaysTransactions = new List<Transaction>();
@@ -773,16 +715,12 @@ namespace EstateReportingAPI.IntegrationTests {
 
             DateTime comparisonDate = todaysDateTime.AddDays(-1);
 
-            foreach (var merchant in merchantsList)
-            {
-                foreach (var contract in contractList)
-                {
+            foreach (var merchant in merchantsList) {
+                foreach (var contract in contractList) {
                     var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
-                    foreach ((Guid productId, String productName, Decimal? productValue) product in productList)
-                    {
+                    foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
                         var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
-                        for (int i = 0; i < transactionCount; i++)
-                        {
+                        for (int i = 0; i < transactionCount; i++) {
                             Transaction transaction = await helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
                             todaysTransactions.Add(transaction);
                         }
@@ -793,16 +731,12 @@ namespace EstateReportingAPI.IntegrationTests {
             await helper.AddTransactionsX(todaysTransactions);
 
             // Comparison Date sales
-            foreach (var merchant in merchantsList)
-            {
-                foreach (var contract in contractList)
-                {
+            foreach (var merchant in merchantsList) {
+                foreach (var contract in contractList) {
                     var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
-                    foreach ((Guid productId, String productName, Decimal? productValue) product in productList)
-                    {
+                    foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
                         var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
-                        for (int i = 0; i < transactionCount; i++)
-                        {
+                        for (int i = 0; i < transactionCount; i++) {
                             Transaction transaction = await helper.BuildTransactionX(comparisonDate.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
                             comparisonDateTransactions.Add(transaction);
                         }
@@ -827,6 +761,285 @@ namespace EstateReportingAPI.IntegrationTests {
 
             todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count);
             todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
+        }
+
+        [Fact]
+        public async Task TransactionsEndpoint_TransactionDetailReport_NoFilters_TransactionsReturned() {
+
+            var transactions = new List<Transaction>();
+            
+            Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 3 }, { "Test Merchant 2", 6 }, { "Test Merchant 3", 2 }, { "Test Merchant 4", 0 } };
+
+            // Get a set of dates for the transactions
+            List<DateTime> transactionDates = new() {
+                DateTime.Now.Date,
+                DateTime.Now.Date.AddDays(-1),
+                DateTime.Now.Date.AddDays(-2),
+                DateTime.Now.Date.AddDays(-3),
+                DateTime.Now.Date.AddDays(-4),
+                DateTime.Now.Date.AddDays(-5),
+            };
+
+            foreach (DateTime transactionDate in transactionDates) {
+                foreach (var merchant in merchantsList) {
+                    foreach (var contract in contractList) {
+                        var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
+                        foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
+                            var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
+                            for (int i = 0; i < transactionCount; i++) {
+                                Transaction transaction = await helper.BuildTransactionX(transactionDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                                transactions.Add(transaction);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            await helper.AddTransactionsX(transactions);
+            
+            List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
+            TransactionDetailReportRequest request = new TransactionDetailReportRequest {
+                StartDate = orderedDates.First(),
+                EndDate = orderedDates.Last(),
+                Merchants = [],
+                Operators = [],
+                Products = []
+            };
+
+            String payload = JsonConvert.SerializeObject(request);
+
+
+            Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var transactionDetailReportResponse = result.Data;
+
+            transactionDetailReportResponse.ShouldNotBeNull();
+            transactionDetailReportResponse.Summary.ShouldNotBeNull();
+            transactionDetailReportResponse.Summary.TransactionCount.ShouldBe(transactions.Count);
+            transactionDetailReportResponse.Summary.TotalValue.ShouldBe(transactions.Sum(t=> t.TransactionAmount));
+
+            foreach (Transaction transaction in transactions) {
+                var foundTxn = transactionDetailReportResponse.Transactions.SingleOrDefault(t => t.Id == transaction.TransactionId);
+                foundTxn.ShouldNotBeNull(transaction.TransactionId.ToString());
+            }
+        }
+
+        [Fact]
+        public async Task TransactionsEndpoint_TransactionDetailReport_MerchantFilter_TransactionsReturned()
+        {
+
+            var transactions = new List<Transaction>();
+
+            Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 3 }, { "Test Merchant 2", 6 }, { "Test Merchant 3", 2 }, { "Test Merchant 4", 0 } };
+
+            // Get a set of dates for the transactions
+            List<DateTime> transactionDates = new() {
+                DateTime.Now.Date,
+                DateTime.Now.Date.AddDays(-1),
+                DateTime.Now.Date.AddDays(-2),
+                DateTime.Now.Date.AddDays(-3),
+                DateTime.Now.Date.AddDays(-4),
+                DateTime.Now.Date.AddDays(-5),
+            };
+
+            foreach (DateTime transactionDate in transactionDates)
+            {
+                foreach (var merchant in merchantsList)
+                {
+                    foreach (var contract in contractList)
+                    {
+                        var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
+                        foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList)
+                        {
+                            var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
+                            for (int i = 0; i < transactionCount; i++)
+                            {
+                                Transaction transaction = await helper.BuildTransactionX(transactionDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                                transactions.Add(transaction);
+                            }
+                        }
+                    }
+                }
+            }
+
+            await helper.AddTransactionsX(transactions);
+
+            var merchantsForFilter = this.merchantsList.Where(m => m.Name == "Test Merchant 1" || m.Name == "Test Merchant 2");
+
+            List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
+            TransactionDetailReportRequest request = new TransactionDetailReportRequest
+            {
+                StartDate = orderedDates.First(),
+                EndDate = orderedDates.Last(),
+                Merchants = merchantsForFilter.Select(m=> m.MerchantReportingId).ToList(),
+                Operators = [],
+                Products = []
+            };
+
+            String payload = JsonConvert.SerializeObject(request);
+            
+            Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var transactionDetailReportResponse = result.Data;
+
+            // filter transactions for verification
+            var filteredTransactions = transactions.Where(t => merchantsForFilter.Select(m => m.MerchantId).Contains(t.MerchantId));
+
+            transactionDetailReportResponse.ShouldNotBeNull();
+            transactionDetailReportResponse.Summary.ShouldNotBeNull();
+            transactionDetailReportResponse.Summary.TransactionCount.ShouldBe(filteredTransactions.Count());
+            transactionDetailReportResponse.Summary.TotalValue.ShouldBe(filteredTransactions.Sum(t => t.TransactionAmount));
+
+            foreach (Transaction transaction in filteredTransactions)
+            {
+                var foundTxn = transactionDetailReportResponse.Transactions.SingleOrDefault(t => t.Id == transaction.TransactionId);
+                foundTxn.ShouldNotBeNull(transaction.TransactionId.ToString());
+            }
+        }
+
+        [Fact]
+        public async Task TransactionsEndpoint_TransactionDetailReport_OperatorFilter_TransactionsReturned()
+        {
+
+            var transactions = new List<Transaction>();
+
+            Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 3 }, { "Test Merchant 2", 6 }, { "Test Merchant 3", 2 }, { "Test Merchant 4", 0 } };
+
+            // Get a set of dates for the transactions
+            List<DateTime> transactionDates = new() {
+                DateTime.Now.Date,
+                DateTime.Now.Date.AddDays(-1),
+                DateTime.Now.Date.AddDays(-2),
+                DateTime.Now.Date.AddDays(-3),
+                DateTime.Now.Date.AddDays(-4),
+                DateTime.Now.Date.AddDays(-5),
+            };
+
+            foreach (DateTime transactionDate in transactionDates)
+            {
+                foreach (var merchant in merchantsList)
+                {
+                    foreach (var contract in contractList)
+                    {
+                        var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
+                        foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList)
+                        {
+                            var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
+                            for (int i = 0; i < transactionCount; i++)
+                            {
+                                Transaction transaction = await helper.BuildTransactionX(transactionDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                                transactions.Add(transaction);
+                            }
+                        }
+                    }
+                }
+            }
+
+            await helper.AddTransactionsX(transactions);
+
+            var operatorsForFilter = this.operatorsList.Where(m => m.Name == "Safaricom");
+
+            List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
+            TransactionDetailReportRequest request = new TransactionDetailReportRequest
+            {
+                StartDate = orderedDates.First(),
+                EndDate = orderedDates.Last(),
+                Merchants = [],
+                Operators = operatorsForFilter.Select(o=> o.OperatorReportingId).ToList(),
+                Products = []
+            };
+
+            String payload = JsonConvert.SerializeObject(request);
+
+            Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var transactionDetailReportResponse = result.Data;
+
+            // filter transactions for verification
+            var filteredTransactions = transactions.Where(t => operatorsForFilter.Select(m => m.OperatorId).Contains(t.OperatorId));
+
+            transactionDetailReportResponse.ShouldNotBeNull();
+            transactionDetailReportResponse.Summary.ShouldNotBeNull();
+            transactionDetailReportResponse.Summary.TransactionCount.ShouldBe(filteredTransactions.Count());
+            transactionDetailReportResponse.Summary.TotalValue.ShouldBe(filteredTransactions.Sum(t => t.TransactionAmount));
+
+            foreach (Transaction transaction in filteredTransactions)
+            {
+                var foundTxn = transactionDetailReportResponse.Transactions.SingleOrDefault(t => t.Id == transaction.TransactionId);
+                foundTxn.ShouldNotBeNull(transaction.TransactionId.ToString());
+            }
+        }
+
+        [Fact]
+        public async Task TransactionsEndpoint_TransactionDetailReport_ProductFilter_TransactionsReturned()
+        {
+            var transactions = new List<Transaction>();
+
+            Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 3 }, { "Test Merchant 2", 6 }, { "Test Merchant 3", 2 }, { "Test Merchant 4", 0 } };
+
+            // Get a set of dates for the transactions
+            List<DateTime> transactionDates = new() {
+                DateTime.Now.Date,
+                DateTime.Now.Date.AddDays(-1),
+                DateTime.Now.Date.AddDays(-2),
+                DateTime.Now.Date.AddDays(-3),
+                DateTime.Now.Date.AddDays(-4),
+                DateTime.Now.Date.AddDays(-5),
+            };
+
+            foreach (DateTime transactionDate in transactionDates)
+            {
+                foreach (var merchant in merchantsList)
+                {
+                    foreach (var contract in contractList)
+                    {
+                        var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
+                        foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList)
+                        {
+                            var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
+                            for (int i = 0; i < transactionCount; i++)
+                            {
+                                Transaction transaction = await helper.BuildTransactionX(transactionDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                                transactions.Add(transaction);
+                            }
+                        }
+                    }
+                }
+            }
+
+            await helper.AddTransactionsX(transactions);
+
+            IEnumerable<(Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId)> productsForFilter = this.contractProducts.SelectMany(cp => cp.Value).Where(p => p.productName == "100 KES Topup");
+
+            List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
+            TransactionDetailReportRequest request = new TransactionDetailReportRequest
+            {
+                StartDate = orderedDates.First(),
+                EndDate = orderedDates.Last(),
+                Merchants = [],
+                Operators = [],
+                Products = productsForFilter.Select(c => c.contractProductReportingId).ToList(),
+            };
+
+            String payload = JsonConvert.SerializeObject(request);
+
+            Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            var transactionDetailReportResponse = result.Data;
+
+            // filter transactions for verification
+            var filteredTransactions = transactions.Where(t => productsForFilter.Select(m => m.productId).Contains(t.ContractProductId));
+
+            transactionDetailReportResponse.ShouldNotBeNull();
+            transactionDetailReportResponse.Summary.ShouldNotBeNull();
+            transactionDetailReportResponse.Summary.TransactionCount.ShouldBe(filteredTransactions.Count());
+            transactionDetailReportResponse.Summary.TotalValue.ShouldBe(filteredTransactions.Sum(t => t.TransactionAmount));
+
+            foreach (Transaction transaction in filteredTransactions)
+            {
+                var foundTxn = transactionDetailReportResponse.Transactions.SingleOrDefault(t => t.Id == transaction.TransactionId);
+                foundTxn.ShouldNotBeNull(transaction.TransactionId.ToString());
+            }
         }
     }
 }

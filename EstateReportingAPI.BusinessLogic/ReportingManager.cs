@@ -28,7 +28,6 @@ public interface IReportingManager
     Task<Contract> GetContract(ContractQueries.GetContractQuery request, CancellationToken cancellationToken);
     Task<TodaysSales> GetTodaysFailedSales(TransactionQueries.TodaysFailedSales request, CancellationToken cancellationToken);
     Task<TodaysSales> GetTodaysSales(TransactionQueries.TodaysSalesQuery request, CancellationToken cancellationToken);
-
     Task<Estate> GetEstate(EstateQueries.GetEstateQuery request, CancellationToken cancellationToken);
     Task<List<EstateOperator>> GetEstateOperators(EstateQueries.GetEstateOperatorsQuery request, CancellationToken cancellationToken);
     Task<MerchantKpi> GetMerchantsTransactionKpis(MerchantQueries.GetTransactionKpisQuery request, CancellationToken cancellationToken);
@@ -38,8 +37,10 @@ public interface IReportingManager
     Task<List<MerchantOperator>> GetMerchantOperators(MerchantQueries.GetMerchantOperatorsQuery request, CancellationToken cancellationToken);
     Task<List<MerchantContract>> GetMerchantContracts(MerchantQueries.GetMerchantContractsQuery request, CancellationToken cancellationToken);
     Task<List<MerchantDevice>> GetMerchantDevices(MerchantQueries.GetMerchantDevicesQuery request, CancellationToken cancellationToken);
-
     Task<Operator> GetOperator(OperatorQueries.GetOperatorQuery request, CancellationToken cancellationToken);
+
+    Task<TransactionDetailReportResponse> GetTransactionDetailReport(TransactionQueries.TransactionDetailReportQuery request,
+                                                                    CancellationToken cancellationToken);
 
     #endregion
 }
@@ -593,6 +594,95 @@ public class ReportingManager : IReportingManager {
         return @operator;
     }
 
+    public async Task<TransactionDetailReportResponse> GetTransactionDetailReport(TransactionQueries.TransactionDetailReportQuery request,
+                                                                                  CancellationToken cancellationToken) {
+
+        TransactionDetailReportResponse response = null;
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        var query = from t in context.Transactions
+            join cp in context.ContractProducts
+                on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
+            join m in context.Merchants on t.MerchantId equals m.MerchantId
+            join o in context.Operators on t.OperatorId equals o.OperatorId
+            join msf in context.MerchantSettlementFees on t.TransactionId equals msf.TransactionId into msfJoin
+            from msf in msfJoin.DefaultIfEmpty()
+            // left join Settlements (msf may be null)
+            join s in context.Settlements on msf.SettlementId equals s.SettlementId into sJoin
+            from s in sJoin.DefaultIfEmpty()
+                    where t.TransactionType != "Logon"
+                  && t.IsAuthorised // equivalent to IsAuthorised = 1
+                  && t.TransactionDate >= request.Request.StartDate
+                  && t.TransactionDate <= request.Request.EndDate
+            select new
+            {
+                t.TransactionId,
+                t.TransactionDateTime,
+                MerchantId = m.MerchantId,
+                MerchantReportingId = m.MerchantReportingId,
+                MerchantName = m.Name,
+                OperatorId = o.OperatorId,
+                OperatorReportingId = o.OperatorReportingId,
+                OperatorName = o.Name,
+                ProductName = cp.ProductName,
+                ContractProductId = cp.ContractProductId,
+                ContractProductReportingId = cp.ContractProductReportingId,
+                TransactionType = t.TransactionType,
+                Status = t.IsAuthorised ? "Authorised" : "Declined",
+                Value = t.TransactionAmount,
+                FeeValue = msf != null ? msf.FeeValue : 0m,
+                SettlementId = s != null ? s.SettlementId : Guid.Empty,
+            };
+
+        // Now apply the filters
+        if (request.Request.Merchants != null && request.Request.Merchants.Any()) {
+            query = query.Where(q => request.Request.Merchants.Contains(q.MerchantReportingId));
+        }
+        if (request.Request.Products != null && request.Request.Products.Any())
+        {
+            query = query.Where(q => request.Request.Products.Contains(q.ContractProductReportingId));
+        }
+        if (request.Request.Operators != null && request.Request.Operators.Any())
+        {
+            query = query.Where(q => request.Request.Operators.Contains(q.OperatorReportingId));
+        }
+
+        // Ok now enumerate the results
+        var queryResults = await query.ToListAsync(cancellationToken);
+        if (queryResults.Any() == false)
+            return response;
+        
+        // Now to translate the results
+        response = new TransactionDetailReportResponse {
+            Transactions = queryResults.Select(q => new TransactionDetail {
+                Id = q.TransactionId,
+                DateTime = q.TransactionDateTime,
+                MerchantId = q.MerchantId,
+                MerchantReportingId = q.MerchantReportingId,
+                Merchant = q.MerchantName,
+                OperatorId = q.OperatorId,
+                OperatorReportingId = q.OperatorReportingId,
+                Operator = q.OperatorName,
+                Product = q.ProductName,
+                ProductId = q.ContractProductId,
+                ProductReportingId = q.ContractProductReportingId,
+                Type = q.TransactionType,
+                Status = q.Status,
+                Value = q.Value,
+                TotalFees = q.FeeValue,
+                SettlementReference = q.SettlementId.ToString()
+            }).ToList(),
+            Summary = new TransactionDetailSummary {
+                TransactionCount = queryResults.Count(),
+                TotalValue = queryResults.Sum(q => q.Value),
+                TotalFees = queryResults.Sum(q => q.FeeValue)
+            }
+        };
+
+        return response;
+    }
+
     public async Task<List<Merchant>> GetMerchants(MerchantQueries.GetMerchantsQuery request,
                                                    CancellationToken cancellationToken) {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
@@ -844,3 +934,4 @@ public class ReportingManager : IReportingManager {
 
     #endregion
 }
+

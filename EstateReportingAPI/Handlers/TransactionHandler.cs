@@ -1,8 +1,9 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
-using EstateReportingAPI.Models;
+using EstateReportingAPI.DataTransferObjects;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Results.Web;
+using TodaysSales = EstateReportingAPI.Models.TodaysSales;
 
 namespace EstateReportingAPI.Handlers;
 
@@ -46,5 +47,40 @@ public static class TransactionHandler {
             ComparisonAverageSalesValue = r.ComparisonAverageSalesValue,
             TodaysAverageSalesValue = r.TodaysAverageSalesValue,
         });
+    }
+
+    public static async Task<IResult> TransactionDetailReport([FromHeader] Guid estateId,
+                                                              [FromBody] TransactionDetailReportRequest request, 
+                                                              IMediator mediator, CancellationToken cancellationToken) {
+        Models.TransactionDetailReportRequest queryRequest = new() {
+            Merchants = request.Merchants,
+            Operators = request.Operators,
+            Products = request.Products,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate
+        };
+
+        var query = new TransactionQueries.TransactionDetailReportQuery(estateId, queryRequest);
+        var result = await mediator.Send(query, cancellationToken);
+
+        TransactionDetailReportResponse SuccessFactory (Models.TransactionDetailReportResponse r) =>
+            new TransactionDetailReportResponse {
+                Summary = new TransactionDetailSummary { TotalFees = r.Summary.TotalFees, TotalValue = r.Summary.TotalValue, TransactionCount = r.Summary.TransactionCount },
+                Transactions = r.Transactions.Select(t => new TransactionDetail {
+                        TotalFees = t.TotalFees,
+                        DateTime = t.DateTime,
+                        Id = t.Id,
+                        Merchant = t.Merchant,
+                        Operator = t.Operator,
+                        Product = t.Product,
+                        SettlementReference = t.SettlementReference,
+                        Status = t.Status,
+                        Type = t.Type,
+                        Value = t.Value
+                    })
+                    .ToList()
+            };
+
+        return ResponseFactory.FromResult(result, SuccessFactory);
     }
 }
