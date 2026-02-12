@@ -26,7 +26,6 @@ IRequestHandler<TransactionQueries.TransactionDetailReportQuery, Result<Transact
 
     public async Task<Result<TransactionDetailReportResponse>> Handle(TransactionQueries.TransactionDetailReportQuery request,
                                                                       CancellationToken cancellationToken) {
-        var result = await this.Manager.GetTransactionDetailReport(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetTransactionDetailReport(request, cancellationToken);
     }
 }
