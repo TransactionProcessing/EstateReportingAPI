@@ -18,13 +18,11 @@ public class EstateRequestHandler : IRequestHandler<EstateQueries.GetEstateQuery
     public async Task<Result<Estate>> Handle(EstateQueries.GetEstateQuery request,
                                              CancellationToken cancellationToken)
     {
-        var result = await this.Manager.GetEstate(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetEstate(request, cancellationToken);
     }
 
     public async Task<Result<List<EstateOperator>>> Handle(EstateQueries.GetEstateOperatorsQuery request,
                                                            CancellationToken cancellationToken) {
-        var result = await this.Manager.GetEstateOperators(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetEstateOperators(request, cancellationToken);
     }
 }

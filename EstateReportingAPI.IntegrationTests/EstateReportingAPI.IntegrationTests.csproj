@@ -22,9 +22,9 @@
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
     <PackageReference Include="Shouldly" Version="4.3.0" />
-	  <PackageReference Include="Shared" Version="2025.12.2" />
-	  <PackageReference Include="Shared.Logger" Version="2025.12.2" />
-    <PackageReference Include="Shared.IntegrationTesting" Version="2025.12.2" />
+	  <PackageReference Include="Shared" Version="2026.2.1" />
+	  <PackageReference Include="Shared.Logger" Version="2026.2.1" />
+    <PackageReference Include="Shared.IntegrationTesting" Version="2026.2.1" />
     <PackageReference Include="Ductus.FluentDocker" Version="2.85.0" />
 	  <PackageReference Include="NLog" Version="6.0.7" />
     <PackageReference Include="NLog.Extensions.Logging" Version="6.1.0" />

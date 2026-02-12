@@ -1,6 +1,7 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
 using EstateReportingAPI.Models;
 using MediatR;
+using Shared.Results;
 using SimpleResults;
 
 namespace EstateReportingAPI.BusinessLogic.RequestHandlers;
@@ -13,35 +14,21 @@ public class CalendarRequestHandler : IRequestHandler<CalendarQueries.GetAllDate
         }
         public async Task<Result<List<Calendar>>> Handle(CalendarQueries.GetAllDatesQuery request,
                                                          CancellationToken cancellationToken) {
-            List<Calendar> result = await this.Manager.GetCalendarDates(request, cancellationToken);
-
-            if (result.Any() == false) {
-                return Result.NotFound("No calendar dates found");
-            }
-
-            return Result.Success(result);
-
+            return await this.Manager.GetCalendarDates(request, cancellationToken);
         }
 
         public async Task<Result<List<Calendar>>> Handle(CalendarQueries.GetComparisonDatesQuery request,
                                                          CancellationToken cancellationToken) {
-            List<Calendar> result = await this.Manager.GetCalendarComparisonDates(request, cancellationToken);
-            if (result.Any() == false)
-            {
-                return Result.NotFound("No calendar comparison dates found");
-            }
+            Result<List<Calendar>> result = await this.Manager.GetCalendarComparisonDates(request, cancellationToken);
 
-            return Result.Success(result);
+            if (result.IsFailed)
+                return ResultHelpers.CreateFailure(result);
+
+            return Result.Success(result.Data);
         }
 
         public async Task<Result<List<Int32>>> Handle(CalendarQueries.GetYearsQuery request,
                                                       CancellationToken cancellationToken) {
-            List<Int32> result = await this.Manager.GetCalendarYears(request, cancellationToken);
-            if (result.Any() == false)
-            {
-                return Result.NotFound("No calendar years found");
-            }
-
-            return Result.Success(result);
+            return await this.Manager.GetCalendarYears(request, cancellationToken);
         }
     }
