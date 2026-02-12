@@ -651,7 +651,11 @@ public class ReportingManager : IReportingManager {
         // Ok now enumerate the results
         var queryResults = await query.ToListAsync(cancellationToken);
         if (queryResults.Any() == false)
-            return response;
+            return new TransactionDetailReportResponse
+            {
+                Summary = new TransactionDetailSummary(),
+                Transactions = new List<TransactionDetail>()
+            };
         
         // Now to translate the results
         response = new TransactionDetailReportResponse {
