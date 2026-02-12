@@ -763,7 +763,7 @@ public class ReportingManager : IReportingManager {
         return Result.Success(@operator);
     }
 
-    public async Task<Result<TransactionDetailReportResponse> GetTransactionDetailReport(TransactionQueries.TransactionDetailReportQuery request,
+    public async Task<Result<TransactionDetailReportResponse>> GetTransactionDetailReport(TransactionQueries.TransactionDetailReportQuery request,
                                                                                   CancellationToken cancellationToken) {
 
         TransactionDetailReportResponse response = null;
