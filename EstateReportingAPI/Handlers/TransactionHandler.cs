@@ -83,4 +83,34 @@ public static class TransactionHandler {
 
         return ResponseFactory.FromResult(result, SuccessFactory);
     }
+
+    public static async Task<IResult> TransactionSummaryByMerchantReport([FromHeader] Guid estateId,
+                                                              [FromBody] TransactionSummaryByMerchantRequest request, 
+                                                              IMediator mediator, CancellationToken cancellationToken) {
+        Models.TransactionSummaryByMerchantRequest queryRequest = new() {
+            Merchants = request.Merchants,
+            Operators = request.Operators,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate
+        };
+        var query = new TransactionQueries.TransactionSummaryByMerchantQuery(estateId, queryRequest);
+        var result = await mediator.Send(query, cancellationToken);
+        TransactionSummaryByMerchantResponse SuccessFactory (Models.TransactionSummaryByMerchantResponse r) =>
+            new TransactionSummaryByMerchantResponse {
+                Summary = new MerchantDetailSummary { TotalMerchants = r.Summary.TotalMerchants, TotalCount = r.Summary.TotalCount, TotalValue = r.Summary.TotalValue, AverageValue = r.Summary.AverageValue },
+                Merchants = r.Merchants.Select(m => new MerchantDetail {
+                        MerchantId = m.MerchantId,
+                        MerchantName = m.MerchantName,
+                        MerchantReportingId = m.MerchantReportingId,
+                        TotalCount = m.TotalCount,
+                        TotalValue = m.TotalValue,
+                        AverageValue = m.AverageValue,
+                        AuthorisedCount = m.AuthorisedCount,
+                        DeclinedCount = m.DeclinedCount,
+                        AuthorisedPercentage = m.AuthorisedPercentage
+                    })
+                    .ToList()
+            };
+        return ResponseFactory.FromResult(result, SuccessFactory);
+    }
 }

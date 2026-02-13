@@ -1,18 +1,21 @@
 ﻿using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.DataTrasferObjects;
 using EstateReportingAPI.Models;
+using Io.Cucumber.Messages.Types;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Shouldly;
 using SimpleResults;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
 using Xunit;
@@ -29,6 +32,7 @@ using Operator = EstateReportingAPI.DataTransferObjects.Operator;
 using TodaysSales = EstateReportingAPI.DataTransferObjects.TodaysSales;
 using TransactionDetailReportRequest = EstateReportingAPI.DataTransferObjects.TransactionDetailReportRequest;
 using TransactionDetailReportResponse = EstateReportingAPI.DataTransferObjects.TransactionDetailReportResponse;
+using TransactionSummaryByMerchantResponse = EstateReportingAPI.Models.TransactionSummaryByMerchantResponse;
 
 namespace EstateReportingAPI.IntegrationTests {
     public class CalendarEndpointTests : ControllerTestsBase {
@@ -1041,6 +1045,171 @@ namespace EstateReportingAPI.IntegrationTests {
                 foundTxn.ShouldNotBeNull(transaction.TransactionId.ToString());
             }
         }
+
+
+        [Fact]
+        public async Task TransactionsEndpoint_TransactionSummaryByMerchantReport_NoFilters_SummaryDataReturned()
+        {
+
+            var transactions = new List<Transaction>();
+
+            TransactionProcessor.Database.Entities.Merchant merchant1 = this.merchantsList.SingleOrDefault(m => m.Name == "Test Merchant 1");
+            var merchant2 = this.merchantsList.SingleOrDefault(m => m.Name == "Test Merchant 2");
+            var merchant3 = this.merchantsList.SingleOrDefault(m => m.Name == "Test Merchant 3");
+            var safaricomContract = this.contractList.SingleOrDefault(c => c.contractName == "Safaricom Contract");
+            var voucherContract = this.contractList.SingleOrDefault(c => c.contractName == "Healthcare Centre 1 Contract");
+            var safaricomProduct = contractProducts.Single(cp => cp.Key == safaricomContract.contractId).Value.First();
+            var voucherProduct = contractProducts.Single(cp => cp.Key == voucherContract.contractId).Value.First();
+
+
+            List<DateTime> transactionDates = [
+                DateTime.Now.Date,
+                DateTime.Now.Date.AddDays(-1),
+                DateTime.Now.Date.AddDays(-2),
+                DateTime.Now.Date.AddDays(-3)
+            ];
+
+            Dictionary<(DateTime, TransactionProcessor.Database.Entities.Merchant), Int32> salesConfig = new Dictionary<(DateTime, TransactionProcessor.Database.Entities.Merchant), Int32>();
+            salesConfig.Add((DateTime.Now.Date, merchant1), 15);
+            salesConfig.Add((DateTime.Now.Date.AddDays(-1), merchant1), 25);
+            salesConfig.Add((DateTime.Now.Date.AddDays(-2), merchant1), 24);
+            salesConfig.Add((DateTime.Now.Date.AddDays(-3), merchant1), 19);
+            salesConfig.Add((DateTime.Now.Date, merchant2), 15);
+            salesConfig.Add((DateTime.Now.Date.AddDays(-1), merchant2), 25);
+            salesConfig.Add((DateTime.Now.Date.AddDays(-2), merchant2), 24);
+            salesConfig.Add((DateTime.Now.Date.AddDays(-3), merchant2), 19);
+            salesConfig.Add((DateTime.Now.Date, merchant3), 15);
+            salesConfig.Add((DateTime.Now.Date.AddDays(-1), merchant3), 25);
+            salesConfig.Add((DateTime.Now.Date.AddDays(-2), merchant3), 24);
+            salesConfig.Add((DateTime.Now.Date.AddDays(-3), merchant3), 19);
+
+            Dictionary<TransactionProcessor.Database.Entities.Merchant, Int32> totalCountsByMerchant = new();
+            Dictionary<TransactionProcessor.Database.Entities.Merchant, Int32> authorisedCountsByMerchant = new();
+            Dictionary<TransactionProcessor.Database.Entities.Merchant, Int32> declinedCountsByMerchant = new();
+
+            foreach (DateTime transactionDate in transactionDates) {
+
+                // Build merchant 1 sales
+                KeyValuePair<(DateTime, TransactionProcessor.Database.Entities.Merchant), Int32> config = salesConfig.SingleOrDefault(c => c.Key == (transactionDate, merchant1));
+
+                for (int i = 0; i < config.Value; i++) {
+                    string responseCode = i switch {
+                        var n when n % 4 == 2 => "1009", // change value on every 4rd iteration
+                        _ => "0000"
+                    };
+                    Transaction transaction = await helper.BuildTransactionX(transactionDate, merchant1.MerchantId, safaricomContract.operatorId, safaricomContract.contractId, safaricomProduct.productId, responseCode, safaricomProduct.productValue);
+                    transactions.Add(transaction);
+
+                    if (!totalCountsByMerchant.ContainsKey(merchant1)) {
+                        totalCountsByMerchant.Add(merchant1, 0);
+                        authorisedCountsByMerchant.Add(merchant1, 0);
+                        declinedCountsByMerchant.Add(merchant1, 0);
+                    }
+                    totalCountsByMerchant[merchant1]++;
+                    if (responseCode == "0000") {
+                        authorisedCountsByMerchant[merchant1]++;
+                    }
+                    else {
+                        declinedCountsByMerchant[merchant1]++;
+                    }
+                }
+
+                config = salesConfig.SingleOrDefault(c => c.Key == (transactionDate, merchant2));
+
+                for (int i = 0; i < config.Value; i++)
+                {
+                    string responseCode = i switch
+                    {
+                        var n when n % 4 == 2 => "1009", // change value on every 4rd iteration
+                        _ => "0000"
+                    };
+                    Transaction transaction = await helper.BuildTransactionX(transactionDate, merchant2.MerchantId, safaricomContract.operatorId, safaricomContract.contractId, safaricomProduct.productId, responseCode, safaricomProduct.productValue);
+                    transactions.Add(transaction);
+
+                    if (!totalCountsByMerchant.ContainsKey(merchant2))
+                    {
+                        totalCountsByMerchant.Add(merchant2, 0);
+                        authorisedCountsByMerchant.Add(merchant2, 0);
+                        declinedCountsByMerchant.Add(merchant2, 0);
+                    }
+                    totalCountsByMerchant[merchant2]++;
+                    if (responseCode == "0000")
+                    {
+                        authorisedCountsByMerchant[merchant2]++;
+                    }
+                    else
+                    {
+                        declinedCountsByMerchant[merchant2]++;
+                    }
+                }
+
+                config = salesConfig.SingleOrDefault(c => c.Key == (transactionDate, merchant3));
+
+                for (int i = 0; i < config.Value; i++)
+                {
+                    string responseCode = i switch
+                    {
+                        var n when n % 4 == 2 => "1009", // change value on every 4rd iteration
+                        _ => "0000"
+                    };
+                    Transaction transaction = await helper.BuildTransactionX(transactionDate, merchant3.MerchantId, safaricomContract.operatorId, safaricomContract.contractId, safaricomProduct.productId, responseCode, safaricomProduct.productValue);
+                    transactions.Add(transaction);
+
+                    if (!totalCountsByMerchant.ContainsKey(merchant3))
+                    {
+                        totalCountsByMerchant.Add(merchant3, 0);
+                        authorisedCountsByMerchant.Add(merchant3, 0);
+                        declinedCountsByMerchant.Add(merchant3, 0);
+                    }
+                    totalCountsByMerchant[merchant3]++;
+                    if (responseCode == "0000")
+                    {
+                        authorisedCountsByMerchant[merchant3]++;
+                    }
+                    else
+                    {
+                        declinedCountsByMerchant[merchant3]++;
+                    }
+                }
+            }
+            await helper.AddTransactionsX(transactions);
+            
+            List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
+            TransactionDetailReportRequest request = new TransactionDetailReportRequest
+            {
+                StartDate = orderedDates.First(),
+                EndDate = orderedDates.Last(),
+                Merchants = [],
+                Operators = [],
+                Products = []
+            };
+
+            String payload = JsonConvert.SerializeObject(request);
+            
+            var result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.TransactionSummaryByMerchantResponse>($"{this.BaseRoute}/transactionsummarybymerchantreport", payload, CancellationToken.None);
+            result.IsSuccess.ShouldBeTrue();
+            DataTransferObjects.TransactionSummaryByMerchantResponse transactionSummaryByMerchantResponse = result.Data;
+
+            transactionSummaryByMerchantResponse.ShouldNotBeNull();
+            transactionSummaryByMerchantResponse.Summary.ShouldNotBeNull();
+            transactionSummaryByMerchantResponse.Summary.TotalMerchants.ShouldBe(3);
+            transactionSummaryByMerchantResponse.Summary.TotalCount.ShouldBe(transactions.Count);
+            transactionSummaryByMerchantResponse.Summary.TotalValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+
+            transactionSummaryByMerchantResponse.Merchants.Count.ShouldBe(3);
+            var merchants = new[] { merchant1, merchant2, merchant3 };
+            foreach (TransactionProcessor.Database.Entities.Merchant mr in merchants) {
+                var row = transactionSummaryByMerchantResponse.Merchants.SingleOrDefault(m => m.MerchantId == mr.MerchantId);
+                row.ShouldNotBeNull();
+                row.MerchantId.ShouldBe(mr.MerchantId);
+                row.TotalValue.ShouldBe(transactions.Where(t => t.MerchantId == mr.MerchantId).Sum(t => t.TransactionAmount));
+                row.TotalCount.ShouldBe(transactions.Count(t => t.MerchantId == mr.MerchantId));
+                row.AuthorisedCount.ShouldBe(authorisedCountsByMerchant[mr]);
+                row.DeclinedCount.ShouldBe(declinedCountsByMerchant[mr]);
+            }
+        }
+
     }
 }
+
 
