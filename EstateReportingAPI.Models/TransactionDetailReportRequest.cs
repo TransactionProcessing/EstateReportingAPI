@@ -38,3 +38,38 @@ public class TransactionDetail {
     public Decimal TotalFees { get; set; }
     public String SettlementReference { get; set; }
 }
+
+public class TransactionSummaryByMerchantRequest
+{
+    public List<Int32>? Operators { get; set; }
+    public List<Int32>? Merchants { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+}
+
+public class TransactionSummaryByMerchantResponse
+{
+    public List<MerchantDetail> Merchants { get; set; }
+    public MerchantDetailSummary Summary { get; set; }
+}
+
+public class MerchantDetail
+{
+    public Guid MerchantId { get; set; }
+    public Int32 MerchantReportingId { get; set; }
+    public string MerchantName { get; set; }
+    public Int32 TotalCount { get; set; }
+    public Decimal TotalValue { get; set; }
+    public Decimal AverageValue { get; set; }
+    public Int32 AuthorisedCount { get; set; }
+    public Int32 DeclinedCount { get; set; }
+    public Decimal AuthorisedPercentage { get; set; }
+}
+
+public class MerchantDetailSummary
+{
+    public Int32 TotalMerchants { get; set; }
+    public Int32 TotalCount { get; set; }
+    public Decimal TotalValue { get; set; }
+    public Decimal AverageValue { get; set; }
+}
