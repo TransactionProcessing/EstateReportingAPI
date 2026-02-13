@@ -21,47 +21,36 @@ public class MerchantRequestHandler : IRequestHandler<MerchantQueries.GetRecentM
         
     public async Task<Result<List<Merchant>>> Handle(MerchantQueries.GetRecentMerchantsQuery request,
                                                      CancellationToken cancellationToken) {
-        var result = await this.Manager.GetRecentMerchants(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetRecentMerchants(request, cancellationToken);
     }
     public async Task<Result<MerchantKpi>> Handle(MerchantQueries.GetTransactionKpisQuery request,
                                                   CancellationToken cancellationToken)
     {
-        var result = await this.Manager.GetMerchantsTransactionKpis(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetMerchantsTransactionKpis(request, cancellationToken);
     }
 
     public async Task<Result<List<Merchant>>> Handle(MerchantQueries.GetMerchantsQuery request,
                                                      CancellationToken cancellationToken) {
-        var result = await this.Manager.GetMerchants(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetMerchants(request, cancellationToken);
     }
 
     public async Task<Result<Merchant>> Handle(MerchantQueries.GetMerchantQuery request,
                                                CancellationToken cancellationToken) {
-        var result = await this.Manager.GetMerchant(request, cancellationToken);
-
-        if (result == null)
-            return Result.NotFound();
-
-        return Result.Success(result);
+        return await this.Manager.GetMerchant(request, cancellationToken);
     }
 
     public async Task<Result<List<MerchantContract>>> Handle(MerchantQueries.GetMerchantContractsQuery request,
                                                              CancellationToken cancellationToken) {
-        var result = await this.Manager.GetMerchantContracts(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetMerchantContracts(request, cancellationToken);
     }
 
     public async Task<Result<List<MerchantOperator>>> Handle(MerchantQueries.GetMerchantOperatorsQuery request,
                                                              CancellationToken cancellationToken) {
-        var result = await this.Manager.GetMerchantOperators(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetMerchantOperators(request, cancellationToken);
     }
 
     public async Task<Result<List<MerchantDevice>>> Handle(MerchantQueries.GetMerchantDevicesQuery request,
                                                            CancellationToken cancellationToken) {
-        var result = await this.Manager.GetMerchantDevices(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetMerchantDevices(request, cancellationToken);
     }
 }

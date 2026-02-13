@@ -17,13 +17,11 @@ public class OperatorRequestHandler : IRequestHandler<OperatorQueries.GetOperato
 
     public async Task<Result<List<Operator>>> Handle(OperatorQueries.GetOperatorsQuery request,
                                                      CancellationToken cancellationToken) {
-        List<Operator> result = await this.Manager.GetOperators(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetOperators(request, cancellationToken);
     }
 
     public async Task<Result<Operator>> Handle(OperatorQueries.GetOperatorQuery request,
                                                CancellationToken cancellationToken) {
-        Operator result = await this.Manager.GetOperator(request, cancellationToken);
-        return Result.Success(result);
+        return await this.Manager.GetOperator(request, cancellationToken);
     }
 }
