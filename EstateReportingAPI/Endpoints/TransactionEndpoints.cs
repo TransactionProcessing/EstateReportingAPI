@@ -26,5 +26,7 @@ public static class TransactionEndpoints
             .WithStandardProduces<TransactionDetailReportResponse>();
         group.MapPost("transactionsummarybymerchantreport", TransactionHandler.TransactionSummaryByMerchantReport)
             .WithStandardProduces<TransactionSummaryByMerchantResponse>();
+        group.MapPost("transactionsummarybyoperatorreport", TransactionHandler.TransactionSummaryByOperatorReport)
+            .WithStandardProduces<TransactionSummaryByOperatorResponse>();
     }
 }

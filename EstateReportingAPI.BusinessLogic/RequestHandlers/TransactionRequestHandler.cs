@@ -7,8 +7,9 @@ namespace EstateReportingAPI.BusinessLogic.RequestHandlers;
 
 public class TransactionRequestHandler : IRequestHandler<TransactionQueries.TodaysFailedSales, Result<TodaysSales>>,
     IRequestHandler<TransactionQueries.TodaysSalesQuery, Result<TodaysSales>>,
-IRequestHandler<TransactionQueries.TransactionDetailReportQuery, Result<TransactionDetailReportResponse>>,
-    IRequestHandler<TransactionQueries.TransactionSummaryByMerchantQuery, Result<TransactionSummaryByMerchantResponse>>
+    IRequestHandler<TransactionQueries.TransactionDetailReportQuery, Result<TransactionDetailReportResponse>>,
+    IRequestHandler<TransactionQueries.TransactionSummaryByMerchantQuery, Result<TransactionSummaryByMerchantResponse>>,
+    IRequestHandler<TransactionQueries.TransactionSummaryByOperatorQuery, Result<TransactionSummaryByOperatorResponse>>
 {
     private readonly IReportingManager Manager;
 
@@ -35,5 +36,11 @@ IRequestHandler<TransactionQueries.TransactionDetailReportQuery, Result<Transact
                                                                       CancellationToken cancellationToken)
     {
         return await this.Manager.GetTransactionSummaryByMerchantReport(request, cancellationToken);
+    }
+
+    public async Task<Result<TransactionSummaryByOperatorResponse>> Handle(TransactionQueries.TransactionSummaryByOperatorQuery request,
+                                                                      CancellationToken cancellationToken)
+    {
+        return await this.Manager.GetTransactionSummaryByOperatorReport(request, cancellationToken);
     }
 }

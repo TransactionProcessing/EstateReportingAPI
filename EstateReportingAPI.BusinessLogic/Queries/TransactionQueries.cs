@@ -10,7 +10,7 @@ public record TransactionQueries {
     public record TodaysSalesQuery(Guid EstateId, Int32 MerchantReportingId, Int32 OperatorReportingId, DateTime ComparisonDate) : IRequest<Result<TodaysSales>>;
     public record TodaysFailedSales(Guid EstateId, DateTime ComparisonDate, String ResponseCode) : IRequest<Result<TodaysSales>>;
     public record TransactionDetailReportQuery(Guid EstateId, TransactionDetailReportRequest Request) : IRequest<Result<TransactionDetailReportResponse>>;
-
     public record TransactionSummaryByMerchantQuery(Guid EstateId, TransactionSummaryByMerchantRequest Request) : IRequest<Result<TransactionSummaryByMerchantResponse>>;
-    
+    public record TransactionSummaryByOperatorQuery(Guid EstateId, TransactionSummaryByOperatorRequest Request) : IRequest<Result<TransactionSummaryByOperatorResponse>>;
+
 }

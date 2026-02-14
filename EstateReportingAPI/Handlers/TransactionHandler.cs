@@ -113,4 +113,38 @@ public static class TransactionHandler {
             };
         return ResponseFactory.FromResult(result, SuccessFactory);
     }
+
+    public static async Task<IResult> TransactionSummaryByOperatorReport([FromHeader] Guid estateId,
+                                                                         [FromBody] TransactionSummaryByOperatorRequest request,
+                                                                         IMediator mediator, CancellationToken cancellationToken)
+    {
+        Models.TransactionSummaryByOperatorRequest queryRequest = new()
+        {
+            Merchants = request.Merchants,
+            Operators = request.Operators,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate
+        };
+        var query = new TransactionQueries.TransactionSummaryByOperatorQuery(estateId, queryRequest);
+        var result = await mediator.Send(query, cancellationToken);
+        TransactionSummaryByOperatorResponse SuccessFactory(Models.TransactionSummaryByOperatorResponse r) =>
+            new TransactionSummaryByOperatorResponse
+            {
+                Summary = new OperatorDetailSummary { TotalOperators = r.Summary.TotalOperators, TotalCount = r.Summary.TotalCount, TotalValue = r.Summary.TotalValue, AverageValue = r.Summary.AverageValue },
+                Operators = r.Operators.Select(o => new OperatorDetail
+                    {
+                        OperatorId = o.OperatorId,
+                        OperatorName = o.OperatorName,
+                        OperatorReportingId = o.OperatorReportingId,
+                        TotalCount = o.TotalCount,
+                        TotalValue = o.TotalValue,
+                        AverageValue = o.AverageValue,
+                        AuthorisedCount = o.AuthorisedCount,
+                        DeclinedCount = o.DeclinedCount,
+                        AuthorisedPercentage = o.AuthorisedPercentage
+                    })
+                    .ToList()
+            };
+        return ResponseFactory.FromResult(result, SuccessFactory);
+    }
 }
