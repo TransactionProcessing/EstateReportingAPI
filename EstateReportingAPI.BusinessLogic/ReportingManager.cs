@@ -1041,7 +1041,9 @@ public class ReportingManager : IReportingManager {
                 AddressLine1 = queryResult.Address.AddressLine1,
                 AddressLine2 = queryResult.Address.AddressLine2,
                 Town = queryResult.Address.Town,
-                Country = queryResult.Address.Country
+                Country = queryResult.Address.Country,
+                MerchantReportingId = queryResult.Merchant.MerchantReportingId
+                
             });
         }
 
