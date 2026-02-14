@@ -46,6 +46,9 @@ public interface IReportingManager
                                                                     CancellationToken cancellationToken);
     Task<Result<TransactionSummaryByMerchantResponse>> GetTransactionSummaryByMerchantReport(TransactionQueries.TransactionSummaryByMerchantQuery request,
                                                                              CancellationToken cancellationToken);
+    
+    Task<Result<TransactionSummaryByOperatorResponse>> GetTransactionSummaryByOperatorReport(TransactionQueries.TransactionSummaryByOperatorQuery request,
+                                                                                 CancellationToken cancellationToken);
 
     #endregion
 }
@@ -974,6 +977,117 @@ public class ReportingManager : IReportingManager {
         return response;
     }
 
+    public async Task<Result<TransactionSummaryByOperatorResponse>> GetTransactionSummaryByOperatorReport(TransactionQueries.TransactionSummaryByOperatorQuery request,
+                                                                                                          CancellationToken cancellationToken) {
+        TransactionSummaryByOperatorResponse response = null;
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        var query =
+            from t in context.Transactions
+            join m in context.Merchants on t.MerchantId equals m.MerchantId
+            join o in context.Operators on t.OperatorId equals o.OperatorId
+            where t.TransactionType == "Sale"
+                  && t.TransactionDate >= request.Request.StartDate
+                  && t.TransactionDate <= request.Request.EndDate
+            group t by new
+            {
+                t.MerchantId,
+                m.MerchantReportingId,
+                MerchantName = m.Name,
+                t.OperatorId,
+                o.OperatorReportingId,
+                OperatorName = o.Name
+            }
+            into g
+            select new
+            {
+                g.Key.MerchantId,
+                g.Key.MerchantReportingId,
+                g.Key.MerchantName,
+                g.Key.OperatorId,
+                g.Key.OperatorReportingId,
+                g.Key.OperatorName,
+                TotalCount = g.Count(),
+                TotalValue = g.Sum(x => x.TransactionAmount),
+                AuthorisedCount = g.Sum(x => x.IsAuthorised ? 1 : 0),
+                DeclinedCount = g.Sum(x => x.IsAuthorised ? 0 : 1)
+            };
+
+        // Now apply the filters
+        if (request.Request.Merchants != null && request.Request.Merchants.Any())
+        {
+            query = query.Where(q => request.Request.Merchants.Contains(q.MerchantReportingId));
+        }
+        if (request.Request.Operators != null && request.Request.Operators.Any())
+        {
+            query = query.Where(q => request.Request.Operators.Contains(q.OperatorReportingId));
+        }
+
+        var finalQuery = from x in query
+                         group x by new
+                         {
+                             x.OperatorId,
+                             x.OperatorReportingId,
+                             OperatorName = x.OperatorName,
+                         }
+            into g
+                         select new
+                         {
+                             g.Key.OperatorId,
+                             g.Key.OperatorReportingId,
+                             g.Key.OperatorName,
+                             TotalCount = g.Sum(x => x.TotalCount),
+                             TotalValue = g.Sum(x => x.TotalValue),
+                             AverageValue = g.Count() > 0 ? g.Sum(x => x.TotalValue) / g.Count() : 0m,
+                             AuthorisedCount = g.Sum(x => x.AuthorisedCount),
+                             DeclinedCount = g.Sum(x => x.DeclinedCount),
+                             AuthorisedPercentage = g.Sum(x => x.TotalCount) > 0 ? (decimal)g.Sum(x => x.AuthorisedCount) / (decimal)g.Sum(x => x.TotalCount) : 0m
+                         };
+
+        var queryResult = await ExecuteQuerySafeToList(finalQuery, cancellationToken, "Error retrieving transaction summary by operator report");
+
+        if (queryResult.IsFailed)
+            return ResultHelpers.CreateFailure(queryResult);
+
+        // Ok now enumerate the results
+        var queryResults = queryResult.Data;
+
+        if (queryResults.Any() == false)
+            return new TransactionSummaryByOperatorResponse
+            {
+                Summary = new OperatorDetailSummary(),
+                Operators = new List<OperatorDetail>()
+            };
+
+        // Now to translate the results
+        response = new TransactionSummaryByOperatorResponse
+        {
+            Operators = queryResults.Select(q => new OperatorDetail
+            {
+                OperatorId = q.OperatorId,
+                OperatorReportingId = q.OperatorReportingId,
+                OperatorName = q.OperatorName,
+                AuthorisedCount = q.AuthorisedCount,
+                AuthorisedPercentage = q.AuthorisedPercentage,
+                AverageValue = q.AverageValue,
+                DeclinedCount = q.DeclinedCount,
+                TotalCount = q.TotalCount,
+                TotalValue = q.TotalValue
+            }).ToList(),
+            Summary = new OperatorDetailSummary
+            {
+                TotalCount = queryResults.Sum(q => q.TotalCount),
+                TotalValue = queryResults.Sum(q => q.TotalValue),
+                AverageValue = this.SafeDivide(queryResults.Sum(q => q.TotalValue)
+                                               , queryResults.Sum(q => q.TotalCount)),
+                TotalOperators = queryResults.Count()
+            }
+        };
+
+        return response;
+    }
+
     public async Task<Result<List<Merchant>>> GetMerchants(MerchantQueries.GetMerchantsQuery request,
                                                            CancellationToken cancellationToken) {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
@@ -1041,7 +1155,9 @@ public class ReportingManager : IReportingManager {
                 AddressLine1 = queryResult.Address.AddressLine1,
                 AddressLine2 = queryResult.Address.AddressLine2,
                 Town = queryResult.Address.Town,
-                Country = queryResult.Address.Country
+                Country = queryResult.Address.Country,
+                MerchantReportingId = queryResult.Merchant.MerchantReportingId
+                
             });
         }
 
