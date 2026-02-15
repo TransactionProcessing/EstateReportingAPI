@@ -786,7 +786,6 @@ public class ReportingManager : IReportingManager {
             join s in context.Settlements on msf.SettlementId equals s.SettlementId into sJoin
             from s in sJoin.DefaultIfEmpty()
                     where t.TransactionType != "Logon"
-                  && t.IsAuthorised // equivalent to IsAuthorised = 1
                   && t.TransactionDate >= request.Request.StartDate
                   && t.TransactionDate <= request.Request.EndDate
             select new

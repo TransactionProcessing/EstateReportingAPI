@@ -76,8 +76,15 @@ public static class TransactionHandler {
                         SettlementReference = t.SettlementReference,
                         Status = t.Status,
                         Type = t.Type,
-                        Value = t.Value
-                    })
+                        Value = t.Value,
+                        MerchantId = t.MerchantId,
+                        OperatorReportingId = t.OperatorReportingId,
+                        OperatorId = t.OperatorId,
+                        MerchantReportingId = t.MerchantReportingId,
+                        ProductId = t.ProductId,
+                        ProductReportingId = t.ProductReportingId
+
+                })
                     .ToList()
             };
 
