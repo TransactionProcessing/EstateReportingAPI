@@ -1,6 +1,7 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
 using SimpleResults;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.DynamicLinq;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
 using TransactionProcessor.Database.Entities.Summary;
@@ -46,9 +47,10 @@ public interface IReportingManager
                                                                     CancellationToken cancellationToken);
     Task<Result<TransactionSummaryByMerchantResponse>> GetTransactionSummaryByMerchantReport(TransactionQueries.TransactionSummaryByMerchantQuery request,
                                                                              CancellationToken cancellationToken);
-    
     Task<Result<TransactionSummaryByOperatorResponse>> GetTransactionSummaryByOperatorReport(TransactionQueries.TransactionSummaryByOperatorQuery request,
                                                                                  CancellationToken cancellationToken);
+    Task<Result<ProductPerformanceResponse>> GetProductPerformanceReport(TransactionQueries.ProductPerformanceQuery request,
+                                                                         CancellationToken cancellationToken);
 
     #endregion
 }
@@ -68,6 +70,20 @@ public class ReportingManager : IReportingManager {
     #endregion
 
     #region Methods
+
+    private static async Task<Result<T>> ExecuteQuerySafeSum<T>(IQueryable query, CancellationToken cancellationToken, string contextMessage = null)
+    {
+        try
+        {
+            T item = await query.SumAsync(cancellationToken);
+            return Result.Success(item);
+        }
+        catch (Exception ex)
+        {
+            string msg = contextMessage == null ? $"Error executing query: {ex.Message}" : $"{contextMessage}: {ex.Message}";
+            return Result.Failure(msg);
+        }
+    }
 
     private static async Task<Result<List<T>>> ExecuteQuerySafeToList<T>(IQueryable<T> query,CancellationToken cancellationToken,string contextMessage = null)
     {
@@ -1343,6 +1359,94 @@ public class ReportingManager : IReportingManager {
         }
 
         return Result.Success(result);
+    }
+
+    public async Task<Result<ProductPerformanceResponse>> GetProductPerformanceReport(TransactionQueries.ProductPerformanceQuery request,
+                                                                                  CancellationToken cancellationToken)
+    {
+
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+        var grandTotalAmountQuery =
+            (from t in context.Transactions
+             where t.TransactionType == "Sale"
+               && t.TransactionDate >= new DateTime(2025, 12, 21)
+               && t.TransactionDate <= new DateTime(2025, 12, 25)
+             select t.TransactionAmount);
+
+        var grandTotalAmountResult = await ExecuteQuerySafeSum<decimal>(grandTotalAmountQuery, cancellationToken);
+        if (grandTotalAmountResult.IsFailed)
+            return ResultHelpers.CreateFailure(grandTotalAmountResult);
+        var grandTotalAmount = grandTotalAmountResult.Data;
+
+        var query =
+            from t in context.Transactions
+            join cp in context.ContractProducts
+                on new { t.ContractProductId, t.ContractId }
+                equals new { cp.ContractProductId, cp.ContractId }
+            join c in context.Contracts
+                on t.ContractId equals c.ContractId
+            where t.TransactionType == "Sale"
+                  && t.TransactionDate >= request.StartDate
+                  && t.TransactionDate <= request.EndDate
+            group t by new
+            {
+                cp.ProductName,
+                cp.ContractProductId,
+                cp.ContractProductReportingId,
+                c.ContractId,
+                c.ContractReportingId
+            }
+            into g
+            select new
+            {
+                g.Key.ProductName,
+                g.Key.ContractProductId,
+                g.Key.ContractProductReportingId,
+                g.Key.ContractId,
+                g.Key.ContractReportingId,
+                TransactionCount = g.Count(),
+                TotalAmount = g.Sum(x => x.TransactionAmount),
+                PercentOfTotalAmount =
+                    grandTotalAmount == 0
+                        ? 0
+                        : 100.0m * g.Sum(x => x.TransactionAmount) / grandTotalAmount
+            };
+
+        var queryResult = await ExecuteQuerySafeToList(query, cancellationToken);
+        if (queryResult.IsFailed)
+            return ResultHelpers.CreateFailure(queryResult);
+        var queryResults = queryResult.Data;
+        if (queryResults.Any() == false)
+            return Result.Success(new ProductPerformanceResponse()
+            {
+                Summary = new ProductPerformanceSummary(),
+                ProductDetails = new List<ProductPerformanceDetail>()
+            });
+
+        ProductPerformanceResponse response = new ProductPerformanceResponse()
+        {
+            ProductDetails = queryResults.Select(q => new ProductPerformanceDetail
+            {
+                ProductName = q.ProductName,
+                ProductId = q.ContractProductId,
+                ProductReportingId = q.ContractProductReportingId,
+                ContractId = q.ContractId,
+                ContractReportingId = q.ContractReportingId,
+                TransactionCount = q.TransactionCount,
+                TransactionValue = q.TotalAmount,
+                PercentageOfTotal = q.PercentOfTotalAmount
+            }).ToList(),
+            Summary = new ProductPerformanceSummary
+            {
+                TotalCount = queryResults.Sum(q => q.TransactionCount),
+                TotalValue = queryResults.Sum(q => q.TotalAmount),
+                AveragePerProduct = this.SafeDivide(queryResults.Sum(q => q.TotalAmount), queryResults.Count),
+                TotalProducts = queryResults.Count()
+            }
+        };
+
+        return Result.Success(response);
     }
 
     private IQueryable<TodayTransaction> BuildTodaySalesQuery(EstateManagementContext context) {

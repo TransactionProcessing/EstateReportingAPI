@@ -121,6 +121,33 @@ public static class TransactionHandler {
         return ResponseFactory.FromResult(result, SuccessFactory);
     }
 
+    public static async Task<IResult> ProductPerformanceReport([FromHeader] Guid estateId,
+                                                               [FromQuery] DateTime startDate,
+                                                               [FromQuery] DateTime endDate,
+                                                               IMediator mediator,
+                                                               CancellationToken cancellationToken) {
+        var query = new TransactionQueries.ProductPerformanceQuery(estateId, startDate, endDate);
+        var result = await mediator.Send(query, cancellationToken);
+        ProductPerformanceResponse SuccessFactory(Models.ProductPerformanceResponse r) =>
+            new ProductPerformanceResponse
+            {
+                Summary = new ProductPerformanceSummary { TotalProducts = r.Summary.TotalProducts, TotalCount = r.Summary.TotalCount, TotalValue = r.Summary.TotalValue, AveragePerProduct = r.Summary.AveragePerProduct },
+                ProductDetails = r.ProductDetails.Select(p => new ProductPerformanceDetail
+                    {
+                        ProductId = p.ProductId,
+                        ProductName = p.ProductName,
+                        ProductReportingId = p.ProductReportingId,
+                        ContractId = p.ContractId,
+                        ContractReportingId = p.ContractReportingId,
+                        PercentageOfTotal = p.PercentageOfTotal,
+                        TransactionCount = p.TransactionCount,
+                        TransactionValue = p.TransactionValue,
+                    })
+                    .ToList()
+            };
+        return ResponseFactory.FromResult(result, SuccessFactory);
+    }
+
     public static async Task<IResult> TransactionSummaryByOperatorReport([FromHeader] Guid estateId,
                                                                          [FromBody] TransactionSummaryByOperatorRequest request,
                                                                          IMediator mediator, CancellationToken cancellationToken)

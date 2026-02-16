@@ -28,5 +28,8 @@ public static class TransactionEndpoints
             .WithStandardProduces<TransactionSummaryByMerchantResponse>();
         group.MapPost("transactionsummarybyoperatorreport", TransactionHandler.TransactionSummaryByOperatorReport)
             .WithStandardProduces<TransactionSummaryByOperatorResponse>();
+        group.MapGet("productperformancereport", TransactionHandler.ProductPerformanceReport)
+            .WithStandardProduces<ProductPerformanceResponse>();
+
     }
 }
