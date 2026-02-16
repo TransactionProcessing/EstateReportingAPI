@@ -12,5 +12,6 @@ public record TransactionQueries {
     public record TransactionDetailReportQuery(Guid EstateId, TransactionDetailReportRequest Request) : IRequest<Result<TransactionDetailReportResponse>>;
     public record TransactionSummaryByMerchantQuery(Guid EstateId, TransactionSummaryByMerchantRequest Request) : IRequest<Result<TransactionSummaryByMerchantResponse>>;
     public record TransactionSummaryByOperatorQuery(Guid EstateId, TransactionSummaryByOperatorRequest Request) : IRequest<Result<TransactionSummaryByOperatorResponse>>;
+    public record ProductPerformanceQuery(Guid EstateId, DateTime StartDate, DateTime EndDate) : IRequest<Result<ProductPerformanceResponse>>;
 
 }
