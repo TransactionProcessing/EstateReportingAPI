@@ -74,6 +74,7 @@ namespace EstateReportingAPI
                                  endpoints.MapMerchantEndpoints();
                                  endpoints.MapContractEndpoints();
                                  endpoints.MapTransactionEndpoints();
+                                 endpoints.MapSettlementEndpoints();
 
                                  // Old Endpoints
                                  //endpoints.MapFactSettlementsEndpoints();

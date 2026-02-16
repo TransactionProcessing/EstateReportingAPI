@@ -27,6 +27,9 @@ public class MediatorRegistry : ServiceRegistry {
         this.AddSingleton<IRequestHandler<TransactionQueries.ProductPerformanceQuery, Result<ProductPerformanceResponse>>, TransactionRequestHandler>();
         this.AddSingleton<IRequestHandler<TransactionQueries.TodaysSalesByHour, Result<List<TodaysSalesByHour>>>, TransactionRequestHandler>();
 
+        this.AddSingleton<IRequestHandler<SettlementQueries.TodaysSettlementQuery, Result<TodaysSettlement>>,SettlementRequestHandler>();
+
+
         this.AddSingleton<IRequestHandler<CalendarQueries.GetYearsQuery, Result<List<Int32>>>, CalendarRequestHandler>();
         this.AddSingleton<IRequestHandler<CalendarQueries.GetAllDatesQuery, Result<List<Calendar>>>, CalendarRequestHandler>();
         this.AddSingleton<IRequestHandler<CalendarQueries.GetComparisonDatesQuery, Result<List<Calendar>>>, CalendarRequestHandler>();
