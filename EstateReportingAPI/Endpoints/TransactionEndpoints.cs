@@ -30,6 +30,8 @@ public static class TransactionEndpoints
             .WithStandardProduces<TransactionSummaryByOperatorResponse>();
         group.MapGet("productperformancereport", TransactionHandler.ProductPerformanceReport)
             .WithStandardProduces<ProductPerformanceResponse>();
+        group.MapGet("todayssalesbyhour", TransactionHandler.TodaysSalesByHour)
+            .WithStandardProduces<List<TodaysSalesByHour>>();
 
     }
 }

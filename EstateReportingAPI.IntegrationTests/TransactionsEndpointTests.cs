@@ -939,6 +939,135 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             productPerformanceResponseDetail.TransactionCount.ShouldBe(transactions.Count(t => t.ContractProductId == product.productId));
             productPerformanceResponseDetail.TransactionValue.ShouldBe(transactions.Where(t => t.ContractProductId == product.productId).Sum(t => t.TransactionAmount));
         }
+    }
 
+    private static int RandomizeCount(int baseCount, Random rnd, double variability = 0.3)
+    {
+        if (baseCount <= 0) return 0;
+        // factor in [-variability, +variability]
+        double factor = 1.0 + (rnd.NextDouble() * 2.0 - 1.0) * variability;
+        int result = (int)Math.Round(baseCount * factor);
+        return Math.Max(0, result);
+    }
+
+    [Fact]
+    public async Task TransactionsEndpoint_TodaysSalesByHour_SummaryDataReturned()
+    {
+        Stopwatch sw = Stopwatch.StartNew();
+
+        List<Transaction> todaysTransactions = new List<Transaction>();
+        List<Transaction> comparisonDateTransactions = new List<Transaction>();
+
+        Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 3 }, { "Test Merchant 2", 6 }, { "Test Merchant 3", 2 }, { "Test Merchant 4", 0 } };
+
+        // TODO: make counts dynamic
+        DateTime todaysDateTime = DateTime.Now;
+
+        for (int hour = 0; hour < 24; hour++)
+        {
+            List<Transaction> localList = new List<Transaction>();
+            DateTime date = new DateTime(todaysDateTime.Year, todaysDateTime.Month, todaysDateTime.Day, hour, 0, 0);
+
+            // Seed per-hour RNG deterministically so test results are reproducible per-day/per-hour
+            var hourSeed = todaysDateTime.Date.GetHashCode() ^ hour;
+            var hourRnd = new Random(hourSeed);
+
+            foreach (var merchant in merchantsList)
+            {
+                foreach (var contract in contractList)
+                {
+                    var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
+                    foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList)
+                    {
+                        var baseCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
+
+                        // keep the original hour-based multipliers, but apply random variation to the final count
+                        int hourMultiplierCount = hour switch
+                        {
+                            _ when hour >= 9 && hour < 18 => baseCount * hour, // business hours
+                            _ when hour >= 18 && hour < 21 => baseCount * (24 - hour), // evening spike
+                            _ => baseCount // off hours
+                        };
+
+                        int transactionCount = RandomizeCount(hourMultiplierCount, hourRnd, variability: 0.3);
+
+                        for (int i = 0; i < transactionCount; i++)
+                        {
+                            Transaction transaction = await helper.BuildTransactionX(date, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                            todaysTransactions.Add(transaction);
+                        }
+                    }
+                }
+            }
+
+            todaysTransactions.AddRange(localList);
+        }
+
+        await this.helper.AddTransactionsX(todaysTransactions);
+
+        sw.Stop();
+        this.TestOutputHelper.WriteLine($"Setup Todays Txns {sw.ElapsedMilliseconds}ms");
+        sw.Restart();
+
+        DateTime comparisonDate = todaysDateTime.AddDays(-1);
+        for (int hour = 0; hour < 24; hour++)
+        {
+            List<Transaction> localList = new List<Transaction>();
+            DateTime date = new DateTime(comparisonDate.Year, comparisonDate.Month, comparisonDate.Day, hour, 0, 0);
+
+            // Separate deterministic seed for comparison date hour
+            var compHourSeed = comparisonDate.Date.GetHashCode() ^ hour;
+            var compHourRnd = new Random(compHourSeed);
+
+            foreach (var merchant in merchantsList)
+            {
+                foreach (var contract in contractList)
+                {
+                    var productList = contractProducts.Single(cp => cp.Key == contract.contractId).Value;
+                    foreach (var product in productList)
+                    {
+                        var baseCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
+
+                        int hourMultiplierCount = hour switch
+                        {
+                            _ when hour >= 12 && hour < 18 => baseCount * hour, // business hours
+                            _ when hour >= 18 && hour < 21 => baseCount * (24 - hour), // evening spike
+                            _ => baseCount // off hours
+                        };
+
+                        int transactionCount = RandomizeCount(hourMultiplierCount, compHourRnd, variability: 0.3);
+
+                        for (int i = 0; i < transactionCount; i++)
+                        {
+                            Transaction transaction = await helper.BuildTransactionX(date, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                            comparisonDateTransactions.Add(transaction);
+                        }
+                    }
+                }
+            }
+
+            comparisonDateTransactions.AddRange(localList);
+
+        }
+
+        await this.helper.AddTransactionsX(comparisonDateTransactions);
+
+        await this.helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
+        await this.helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
+        await this.helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
+        var result = await this.CreateAndSendHttpRequestMessage<List<DataTransferObjects.TodaysSalesByHour>>($"{this.BaseRoute}/todayssalesbyhour?comparisondate={comparisonDate:yyyy-MM-dd}", CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var todaysSalesByHour = result.Data;
+        todaysSalesByHour.ShouldNotBeNull();
+
+        foreach (var hour in todaysSalesByHour) {
+            hour.ShouldNotBeNull();
+            hour.TodaysSalesCount.ShouldBe(todaysTransactions.Count(t => t.TransactionDateTime.Hour == hour.Hour && t.TransactionTime <= DateTime.Now.TimeOfDay), hour.Hour.ToString());
+            hour.TodaysSalesValue.ShouldBe(todaysTransactions.Where(t => t.TransactionDateTime.Hour == hour.Hour && t.TransactionTime <= DateTime.Now.TimeOfDay).Sum(t => t.TransactionAmount), hour.Hour.ToString());
+            hour.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(t => t.TransactionDateTime.Hour == hour.Hour && t.TransactionTime <= DateTime.Now.TimeOfDay), hour.Hour.ToString());
+            hour.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(t => t.TransactionDateTime.Hour == hour.Hour && t.TransactionTime <= DateTime.Now.TimeOfDay).Sum(t => t.TransactionAmount), hour.Hour.ToString());
+
+        }
     }
 }

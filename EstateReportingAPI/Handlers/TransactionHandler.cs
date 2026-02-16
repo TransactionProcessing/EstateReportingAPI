@@ -181,4 +181,27 @@ public static class TransactionHandler {
             };
         return ResponseFactory.FromResult(result, SuccessFactory);
     }
+
+    public static async Task<IResult> TodaysSalesByHour([FromHeader] Guid estateId,
+                                                             [FromQuery] DateTime comparisonDate,
+                                                             IMediator mediator,
+                                                             CancellationToken cancellationToken)
+    {
+        var query = new TransactionQueries.TodaysSalesByHour(estateId, comparisonDate);
+        var result = await mediator.Send(query, cancellationToken);
+
+        List<DataTransferObjects.TodaysSalesByHour> SuccessFactory(List<Models.TodaysSalesByHour> r) =>
+            r.Select(item => new DataTransferObjects.TodaysSalesByHour
+            {
+                Hour = item.Hour,
+                ComparisonSalesCount = item.ComparisonSalesCount,
+                TodaysSalesCount = item.TodaysSalesCount,
+                ComparisonSalesValue = item.ComparisonSalesValue,
+                TodaysSalesValue = item.TodaysSalesValue
+            }).ToList();    
+
+
+        return ResponseFactory.FromResult(result, SuccessFactory);
+    }
+
 }
