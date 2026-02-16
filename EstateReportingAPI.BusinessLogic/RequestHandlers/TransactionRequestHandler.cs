@@ -10,7 +10,9 @@ public class TransactionRequestHandler : IRequestHandler<TransactionQueries.Toda
     IRequestHandler<TransactionQueries.TransactionDetailReportQuery, Result<TransactionDetailReportResponse>>,
     IRequestHandler<TransactionQueries.TransactionSummaryByMerchantQuery, Result<TransactionSummaryByMerchantResponse>>,
     IRequestHandler<TransactionQueries.TransactionSummaryByOperatorQuery, Result<TransactionSummaryByOperatorResponse>>,
-    IRequestHandler<TransactionQueries.ProductPerformanceQuery, Result<ProductPerformanceResponse>>
+    IRequestHandler<TransactionQueries.ProductPerformanceQuery, Result<ProductPerformanceResponse>>,
+    IRequestHandler<TransactionQueries.TodaysSalesByHour, Result<List<TodaysSalesByHour>>>
+
 {
     private readonly IReportingManager Manager;
 
@@ -48,5 +50,10 @@ public class TransactionRequestHandler : IRequestHandler<TransactionQueries.Toda
     public async Task<Result<ProductPerformanceResponse>> Handle(TransactionQueries.ProductPerformanceQuery request,
                                                                  CancellationToken cancellationToken) {
         return await this.Manager.GetProductPerformanceReport(request, cancellationToken);
+    }
+
+    public async Task<Result<List<TodaysSalesByHour>>> Handle(TransactionQueries.TodaysSalesByHour request,
+                                                              CancellationToken cancellationToken) {
+        return await this.Manager.GetTodaysSalesByHour(request, cancellationToken);
     }
 }

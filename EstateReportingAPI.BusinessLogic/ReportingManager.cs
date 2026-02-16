@@ -52,6 +52,8 @@ public interface IReportingManager
     Task<Result<ProductPerformanceResponse>> GetProductPerformanceReport(TransactionQueries.ProductPerformanceQuery request,
                                                                          CancellationToken cancellationToken);
 
+    Task<Result<List<TodaysSalesByHour>>> GetTodaysSalesByHour(TransactionQueries.TodaysSalesByHour request,
+                                                               CancellationToken cancellationToken);
     #endregion
 }
 
@@ -1449,21 +1451,67 @@ public class ReportingManager : IReportingManager {
         return Result.Success(response);
     }
 
+    public async Task<Result<List<TodaysSalesByHour>>> GetTodaysSalesByHour(TransactionQueries.TodaysSalesByHour request,
+                                                                            CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.estateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        IQueryable<TodayTransaction> todaysSales = this.BuildTodaySalesQuery(context);
+        IQueryable<TransactionHistory> comparisonSales = this.BuildComparisonSalesQuery(context, request.comparisonDate);
+
+        // First we need to get a value of todays sales
+        var todaysSalesByHour = await (from t in todaysSales 
+                group t.TransactionAmount by t.Hour into g select new { Hour = g.Key, TotalSalesCount = g.Count(), TotalSalesValue = g.Sum() }).ToListAsync(cancellationToken);
+
+        var comparisonSalesByHour = await (from t in comparisonSales group t.TransactionAmount by t.Hour into g select new { Hour = g.Key, TotalSalesCount = g.Count(), TotalSalesValue = g.Sum() }).ToListAsync(cancellationToken);
+
+        var response =
+            (
+                from today in todaysSalesByHour
+                join comparison in comparisonSalesByHour
+                    on today.Hour equals comparison.Hour into compGroup
+                from comparison in compGroup.DefaultIfEmpty()
+                select new TodaysSalesByHour
+                {
+                    Hour = today.Hour.Value,
+                    TodaysSalesCount = today.TotalSalesCount,
+                    TodaysSalesValue = today.TotalSalesValue,
+                    ComparisonSalesCount = comparison?.TotalSalesCount ?? 0,
+                    ComparisonSalesValue = comparison?.TotalSalesValue ?? 0
+                }
+            )
+            .Union
+            (
+                from comparison in comparisonSalesByHour
+                join today in todaysSalesByHour
+                    on comparison.Hour equals today.Hour into todayGroup
+                from today in todayGroup.DefaultIfEmpty()
+                where today == null
+                select new TodaysSalesByHour
+                {
+                    Hour = comparison.Hour.Value,
+                    TodaysSalesCount = 0,
+                    TodaysSalesValue = 0,
+                    ComparisonSalesCount = comparison.TotalSalesCount,
+                    ComparisonSalesValue = comparison.TotalSalesValue
+                }
+            )
+            .ToList();
+
+
+        return Result.Success(response);
+    }
+
     private IQueryable<TodayTransaction> BuildTodaySalesQuery(EstateManagementContext context) {
-        return from t in context.TodayTransactions where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == DateTime.Now.Date && t.TransactionTime <= DateTime.Now.TimeOfDay select t;
+        return from t in context.TodayTransactions where t.IsAuthorised && t.TransactionType == "Sale" 
+                                                                        && t.TransactionDate == DateTime.Now.Date && t.TransactionTime <= DateTime.Now.TimeOfDay
+                                                                        select t;
     }
 
     private IQueryable<TransactionHistory> BuildComparisonSalesQuery(EstateManagementContext context,
                                                                      DateTime comparisonDate) {
         return from t in context.TransactionHistory where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == comparisonDate && t.TransactionTime <= DateTime.Now.TimeOfDay select t;
     }
-
-    
-
-
-    
-    
-   
 
     #endregion
 }

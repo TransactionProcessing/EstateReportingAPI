@@ -25,6 +25,7 @@ public class MediatorRegistry : ServiceRegistry {
         this.AddSingleton<IRequestHandler<TransactionQueries.TransactionSummaryByMerchantQuery, Result<TransactionSummaryByMerchantResponse>>, TransactionRequestHandler>();
         this.AddSingleton<IRequestHandler<TransactionQueries.TransactionSummaryByOperatorQuery, Result<TransactionSummaryByOperatorResponse>>, TransactionRequestHandler>();
         this.AddSingleton<IRequestHandler<TransactionQueries.ProductPerformanceQuery, Result<ProductPerformanceResponse>>, TransactionRequestHandler>();
+        this.AddSingleton<IRequestHandler<TransactionQueries.TodaysSalesByHour, Result<List<TodaysSalesByHour>>>, TransactionRequestHandler>();
 
         this.AddSingleton<IRequestHandler<CalendarQueries.GetYearsQuery, Result<List<Int32>>>, CalendarRequestHandler>();
         this.AddSingleton<IRequestHandler<CalendarQueries.GetAllDatesQuery, Result<List<Calendar>>>, CalendarRequestHandler>();
@@ -43,4 +44,5 @@ public class MediatorRegistry : ServiceRegistry {
         this.AddSingleton<IRequestHandler<ContractQueries.GetContractQuery, Result<Contract>>, ContractRequestHandler>();
     }
 }
+
 
