@@ -7,6 +7,27 @@ using TodaysSales = EstateReportingAPI.Models.TodaysSales;
 
 namespace EstateReportingAPI.Handlers;
 
+public static class SettlementHandler {
+    public static async Task<IResult> TodaysSettlements([FromHeader] Guid estateId,
+                                                  [FromQuery] DateTime comparisonDate,
+                                                  IMediator mediator,
+                                                  CancellationToken cancellationToken) {
+        var query = new SettlementQueries.TodaysSettlementQuery(estateId, comparisonDate);
+        var result = await mediator.Send(query, cancellationToken);
+
+        return ResponseFactory.FromResult(result, r => new TodaysSettlement() {
+            ComparisonPendingSettlementCount = r.ComparisonPendingSettlementCount,
+            ComparisonPendingSettlementValue = r.ComparisonPendingSettlementValue,
+            ComparisonSettlementCount = r.ComparisonSettlementCount,
+            ComparisonSettlementValue = r.ComparisonSettlementValue,
+            TodaysPendingSettlementCount = r.TodaysPendingSettlementCount,
+            TodaysPendingSettlementValue = r.TodaysPendingSettlementValue,
+            TodaysSettlementCount = r.TodaysSettlementCount,
+            TodaysSettlementValue = r.TodaysSettlementValue
+        });
+    }
+}
+
 public static class TransactionHandler {
     public static async Task<IResult> TodaysSales([FromHeader] Guid estateId,
                                                   [FromQuery] int? merchantReportingId,

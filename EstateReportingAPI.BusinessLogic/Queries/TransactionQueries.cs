@@ -15,3 +15,8 @@ public record TransactionQueries {
     public record ProductPerformanceQuery(Guid EstateId, DateTime StartDate, DateTime EndDate) : IRequest<Result<ProductPerformanceResponse>>;
     public record TodaysSalesByHour(Guid estateId, DateTime comparisonDate) : IRequest<Result<List<Models.TodaysSalesByHour>>>;
 }
+
+[ExcludeFromCodeCoverage]
+public record SettlementQueries {
+    public record TodaysSettlementQuery(Guid EstateId, DateTime ComparisonDate) : IRequest<Result<Models.TodaysSettlement>>;
+}
