@@ -1338,16 +1338,21 @@ public class ReportingManager : IReportingManager {
             // Get the settleed fees summary
             DatabaseProjections.SettlementGroupProjection summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
 
-            return new DatabaseProjections.SettlementGroupProjection { SettledCount = summary.SettledCount, SettledValue = summary.SettledValue, UnSettledCount = summary.UnSettledCount, UnSettledValue = summary.UnSettledValue };
+            if (summary == null)
+                return new DatabaseProjections.SettlementGroupProjection();
+
+        return new DatabaseProjections.SettlementGroupProjection { SettledCount = summary.SettledCount, SettledValue = summary.SettledValue, UnSettledCount = summary.UnSettledCount, UnSettledValue = summary.UnSettledValue };
         }
 
         private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(
             IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> query,
             CancellationToken cancellationToken)
         {
-
             // Get the settleed fees summary
             DatabaseProjections.SettlementGroupProjection summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
+
+            if (summary == null)
+                return new DatabaseProjections.SettlementGroupProjection();
 
             return new DatabaseProjections.SettlementGroupProjection
             {
