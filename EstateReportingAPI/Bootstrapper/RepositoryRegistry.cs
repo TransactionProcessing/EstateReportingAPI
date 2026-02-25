@@ -1,4 +1,5 @@
-﻿using TransactionProcessor.Database.Contexts;
+﻿using Microsoft.EntityFrameworkCore.Diagnostics;
+using TransactionProcessor.Database.Contexts;
 
 namespace EstateReportingAPI.Bootstrapper;
 
@@ -6,6 +7,7 @@ using BusinessLogic;
 using Common;
 using Lamar;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Shared.EntityFramework;
 using Shared.General;
 using System.Diagnostics.CodeAnalysis;
@@ -18,16 +20,19 @@ public class RepositoryRegistry : ServiceRegistry{
         {
             this.AddSingleton<IReportingManager, ReportingManager>();
         }
-
-        this.AddSingleton(typeof(IDbContextResolver<>), typeof(DbContextResolver<>));
+        this.AddSingleton<DbCommandInterceptor, QueryTimingInterceptor>();
+        this.AddSingleton(typeof(IDbContextResolver<>), typeof(DbContextResolverX<>));
         if (Startup.WebHostEnvironment.IsEnvironment("IntegrationTest") || Startup.Configuration.GetValue<Boolean>("ServiceOptions:UseInMemoryDatabase") == true)
         {
             this.AddDbContext<EstateManagementContext>(builder => builder.UseInMemoryDatabase("TransactionProcessorReadModel"));
         }
-        else
-        {
-            this.AddDbContext<EstateManagementContext>(options =>
-                options.UseSqlServer(ConfigurationReader.GetConnectionString("TransactionProcessorReadModel")));
+        else {
+            this.AddSingleton<QueryTimingInterceptor>();
+            this.AddDbContextFactory<EstateManagementContext>((sp, options) =>
+            {
+                options.UseSqlServer(ConfigurationReader.GetConnectionString("TransactionProcessorReadModel"));
+                options.AddInterceptors(sp.GetRequiredService<QueryTimingInterceptor>());
+            });
         }
     }
 }
