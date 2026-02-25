@@ -28,7 +28,7 @@ public class RepositoryRegistry : ServiceRegistry{
         }
         else {
             this.AddSingleton<QueryTimingInterceptor>();
-            this.AddDbContextFactory<EstateManagementContext>((sp, options) =>
+            this.AddDbContext<EstateManagementContext>((sp, options) =>
             {
                 options.UseSqlServer(ConfigurationReader.GetConnectionString("TransactionProcessorReadModel"));
                 options.AddInterceptors(sp.GetRequiredService<QueryTimingInterceptor>());
