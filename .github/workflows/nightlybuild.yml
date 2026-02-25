@@ -50,7 +50,6 @@ jobs:
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         coverage-reports: ./lcov.info
-        files: ./lcov2.info
 
     - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
