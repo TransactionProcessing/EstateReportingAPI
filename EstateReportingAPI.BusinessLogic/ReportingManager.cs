@@ -516,33 +516,24 @@ public class ReportingManager : IReportingManager {
         var merchantsQuery = context.Merchants.Select(m => new {
             MerchantReportingId = m.MerchantReportingId,
             Name = m.Name,
-            LastSaleDateTime = m.LastSaleDateTime,
-            LastSale = m.LastSaleDate,
             CreatedDateTime = m.CreatedDateTime,
-            LastStatement = m.LastStatementGenerated,
             MerchantId = m.MerchantId,
             Reference = m.Reference,
-            AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId).OrderByDescending(ma => ma.CreatedDateTime).Select(ma => new {
-                ma.AddressLine1,
-                ma.AddressLine2,
-                ma.Country,
-                ma.PostalCode,
-                ma.Region,
-                ma.Town
-                // Add more properties as needed
-            }).FirstOrDefault(), // Get the first matching MerchantAddress or null
-            ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId).OrderByDescending(mc => mc.CreatedDateTime).Select(mc => new { mc.Name, mc.EmailAddress, mc.PhoneNumber }).FirstOrDefault(), // Get the first matching MerchantContact or null
-            EstateReportingId = context.Estates.Single(e => e.EstateId == m.EstateId).EstateReportingId
+            AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId)
+                .OrderByDescending(ma => ma.CreatedDateTime)
+                .Select(ma => new { ma.AddressLine1, ma.AddressLine2, ma.Country, ma.PostalCode, ma.Region, ma.Town })
+                .FirstOrDefault(),
+            ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId)
+                .OrderByDescending(mc => mc.CreatedDateTime)
+                .Select(mc => new { mc.Name, mc.EmailAddress, mc.PhoneNumber })
+                .FirstOrDefault()
         }).OrderByDescending(m => m.CreatedDateTime).Take(3);
 
         var recentMerchantsResult = await ExecuteQuerySafeToList(merchantsQuery, cancellationToken, "Error retrieving recent merchants");
         if (recentMerchantsResult.IsFailed)
             return ResultHelpers.CreateFailure(recentMerchantsResult);
 
-        var recentMerchants = recentMerchantsResult.Data;
-
-        List<Merchant> merchantList = new();
-        foreach (var merchant in recentMerchants) {
+        List<Merchant> merchantList = recentMerchantsResult.Data.Select(merchant => {
             Merchant model = new() {
                 MerchantId = merchant.MerchantId,
                 Name = merchant.Name,
@@ -550,7 +541,6 @@ public class ReportingManager : IReportingManager {
                 MerchantReportingId = merchant.MerchantReportingId,
                 CreatedDateTime = merchant.CreatedDateTime,
             };
-
             if (merchant.AddressInfo != null) {
                 model.AddressLine1 = merchant.AddressInfo.AddressLine1;
                 model.AddressLine2 = merchant.AddressInfo.AddressLine2;
@@ -559,15 +549,13 @@ public class ReportingManager : IReportingManager {
                 model.Town = merchant.AddressInfo.Town;
                 model.Region = merchant.AddressInfo.Region;
             }
-
             if (merchant.ContactInfo != null) {
                 model.ContactName = merchant.ContactInfo.Name;
                 model.ContactEmail = merchant.ContactInfo.EmailAddress;
                 model.ContactPhone = merchant.ContactInfo.PhoneNumber;
             }
-
-            merchantList.Add(model);
-        }
+            return model;
+        }).ToList();
 
         return Result.Success(merchantList);
     }
