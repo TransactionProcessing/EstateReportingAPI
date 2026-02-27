@@ -990,10 +990,7 @@ public class ReportingManager : IReportingManager {
         var merchantQuery = context.Merchants.Select(m => new {
             MerchantReportingId = m.MerchantReportingId,
             Name = m.Name,
-            LastSaleDateTime = m.LastSaleDateTime,
-            LastSale = m.LastSaleDate,
             CreatedDateTime = m.CreatedDateTime,
-            LastStatement = m.LastStatementGenerated,
             MerchantId = m.MerchantId,
             Reference = m.Reference,
             m.SettlementSchedule,
@@ -1005,10 +1002,8 @@ public class ReportingManager : IReportingManager {
                 ma.PostalCode,
                 ma.Region,
                 ma.Town
-                // Add more properties as needed
-            }).FirstOrDefault(), // Get the first matching MerchantAddress or null
-            ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId).OrderByDescending(mc => mc.CreatedDateTime).Select(mc => new { mc.ContactId, mc.Name, mc.EmailAddress, mc.PhoneNumber }).FirstOrDefault(), // Get the first matching MerchantContact or null
-            EstateReportingId = context.Estates.Single(e => e.EstateId == m.EstateId).EstateReportingId
+            }).FirstOrDefault(),
+            ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId).OrderByDescending(mc => mc.CreatedDateTime).Select(mc => new { mc.ContactId, mc.Name, mc.EmailAddress, mc.PhoneNumber }).FirstOrDefault()
         }).Where(m => m.MerchantId == request.MerchantId);
 
         var merchantQueryResult = await ExecuteQuerySafeSingleOrDefault(merchantQuery, cancellationToken, "Error getting merchant");
