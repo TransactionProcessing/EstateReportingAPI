@@ -871,11 +871,16 @@ public class ReportingManager : IReportingManager {
                 DeclinedCount = g.Sum(x => x.IsAuthorised ? 0 : 1)
             };
 
-        if (request.Request.Merchants != null && request.Request.Merchants.Any())
-            query = query.Where(q => request.Request.Merchants.Contains(q.MerchantReportingId));
+        return ApplyOperatorTransactionFilters(query, request.Request);
+    }
 
-        if (request.Request.Operators != null && request.Request.Operators.Any())
-            query = query.Where(q => request.Request.Operators.Contains(q.OperatorReportingId));
+    private static IQueryable<OperatorTransactionData> ApplyOperatorTransactionFilters(IQueryable<OperatorTransactionData> query,
+                                                                                        Models.TransactionSummaryByOperatorRequest request) {
+        if (request.Merchants != null && request.Merchants.Any())
+            query = query.Where(q => request.Merchants.Contains(q.MerchantReportingId));
+
+        if (request.Operators != null && request.Operators.Any())
+            query = query.Where(q => request.Operators.Contains(q.OperatorReportingId));
 
         return query;
     }
