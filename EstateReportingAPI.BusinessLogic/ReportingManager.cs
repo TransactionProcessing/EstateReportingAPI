@@ -653,12 +653,26 @@ public class ReportingManager : IReportingManager {
 
     public async Task<Result<TransactionDetailReportResponse>> GetTransactionDetailReport(TransactionQueries.TransactionDetailReportQuery request,
                                                                                           CancellationToken cancellationToken) {
-
-        TransactionDetailReportResponse response = null;
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        var query = from t in context.Transactions
+        var query = ApplyTransactionDetailFilters(BuildTransactionDetailBaseQuery(context, request.Request), request.Request);
+        var queryResult = await ExecuteQuerySafeToList(query, cancellationToken, "Error retrieving transaction details report");
+
+        if (queryResult.IsFailed)
+            return ResultHelpers.CreateFailure(queryResult);
+
+        var queryResults = queryResult.Data;
+
+        if (queryResults.Any() == false)
+            return new TransactionDetailReportResponse { Summary = new TransactionDetailSummary(), Transactions = new List<TransactionDetail>() };
+
+        return Result.Success(MapToTransactionDetailResponse(queryResults));
+    }
+
+    private static IQueryable<TransactionDetailQueryResult> BuildTransactionDetailBaseQuery(EstateManagementContext context,
+                                                                                             TransactionDetailReportRequest request) {
+        return from t in context.Transactions
             join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
             join m in context.Merchants on t.MerchantId equals m.MerchantId
             join o in context.Operators on t.OperatorId equals o.OperatorId
@@ -667,10 +681,10 @@ public class ReportingManager : IReportingManager {
             // left join Settlements (msf may be null)
             join s in context.Settlements on msf.SettlementId equals s.SettlementId into sJoin
             from s in sJoin.DefaultIfEmpty()
-            where t.TransactionType != "Logon" && t.TransactionDate >= request.Request.StartDate && t.TransactionDate <= request.Request.EndDate
-            select new {
-                t.TransactionId,
-                t.TransactionDateTime,
+            where t.TransactionType != "Logon" && t.TransactionDate >= request.StartDate && t.TransactionDate <= request.EndDate
+            select new TransactionDetailQueryResult {
+                TransactionId = t.TransactionId,
+                TransactionDateTime = t.TransactionDateTime,
                 MerchantId = m.MerchantId,
                 MerchantReportingId = m.MerchantReportingId,
                 MerchantName = m.Name,
@@ -686,33 +700,21 @@ public class ReportingManager : IReportingManager {
                 FeeValue = msf != null ? msf.FeeValue : 0m,
                 SettlementId = s != null ? s.SettlementId : Guid.Empty,
             };
+    }
 
-        // Now apply the filters
-        if (request.Request.Merchants != null && request.Request.Merchants.Any()) {
-            query = query.Where(q => request.Request.Merchants.Contains(q.MerchantReportingId));
-        }
+    private static IQueryable<TransactionDetailQueryResult> ApplyTransactionDetailFilters(IQueryable<TransactionDetailQueryResult> query,
+                                                                                           TransactionDetailReportRequest request) {
+        if (request.Merchants != null && request.Merchants.Any())
+            query = query.Where(q => request.Merchants.Contains(q.MerchantReportingId));
+        if (request.Products != null && request.Products.Any())
+            query = query.Where(q => request.Products.Contains(q.ContractProductReportingId));
+        if (request.Operators != null && request.Operators.Any())
+            query = query.Where(q => request.Operators.Contains(q.OperatorReportingId));
+        return query;
+    }
 
-        if (request.Request.Products != null && request.Request.Products.Any()) {
-            query = query.Where(q => request.Request.Products.Contains(q.ContractProductReportingId));
-        }
-
-        if (request.Request.Operators != null && request.Request.Operators.Any()) {
-            query = query.Where(q => request.Request.Operators.Contains(q.OperatorReportingId));
-        }
-
-        var queryResult = await ExecuteQuerySafeToList(query, cancellationToken, "Error retrieving transaction details report");
-
-        if (queryResult.IsFailed)
-            return ResultHelpers.CreateFailure(queryResult);
-
-        // Ok now enumerate the results
-        var queryResults = queryResult.Data;
-
-        if (queryResults.Any() == false)
-            return new TransactionDetailReportResponse { Summary = new TransactionDetailSummary(), Transactions = new List<TransactionDetail>() };
-
-        // Now to translate the results
-        response = new TransactionDetailReportResponse {
+    private static TransactionDetailReportResponse MapToTransactionDetailResponse(List<TransactionDetailQueryResult> queryResults) {
+        return new TransactionDetailReportResponse {
             Transactions = queryResults.Select(q => new TransactionDetail {
                 Id = q.TransactionId,
                 DateTime = q.TransactionDateTime,
@@ -733,8 +735,6 @@ public class ReportingManager : IReportingManager {
             }).ToList(),
             Summary = new TransactionDetailSummary { TransactionCount = queryResults.Count(), TotalValue = queryResults.Sum(q => q.Value), TotalFees = queryResults.Sum(q => q.FeeValue) }
         };
-
-        return Result.Success(response);
     }
 
     public async Task<Result<TransactionSummaryByMerchantResponse>> GetTransactionSummaryByMerchantReport(TransactionQueries.TransactionSummaryByMerchantQuery request,
@@ -1384,6 +1384,25 @@ public class ReportingManager : IReportingManager {
                     }).ToList()
                 }).ToList()
             }).ToList();
+        }
+
+        private sealed class TransactionDetailQueryResult {
+            public Guid TransactionId { get; init; }
+            public DateTime TransactionDateTime { get; init; }
+            public Guid MerchantId { get; init; }
+            public int MerchantReportingId { get; init; }
+            public string? MerchantName { get; init; }
+            public Guid OperatorId { get; init; }
+            public int OperatorReportingId { get; init; }
+            public string? OperatorName { get; init; }
+            public string? ProductName { get; init; }
+            public Guid ContractProductId { get; init; }
+            public int ContractProductReportingId { get; init; }
+            public string? TransactionType { get; init; }
+            public string? Status { get; init; }
+            public decimal Value { get; init; }
+            public decimal FeeValue { get; init; }
+            public Guid SettlementId { get; init; }
         }
 
         private sealed class ContractBaseData {
