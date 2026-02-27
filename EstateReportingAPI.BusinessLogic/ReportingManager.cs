@@ -516,33 +516,24 @@ public class ReportingManager : IReportingManager {
         var merchantsQuery = context.Merchants.Select(m => new {
             MerchantReportingId = m.MerchantReportingId,
             Name = m.Name,
-            LastSaleDateTime = m.LastSaleDateTime,
-            LastSale = m.LastSaleDate,
             CreatedDateTime = m.CreatedDateTime,
-            LastStatement = m.LastStatementGenerated,
             MerchantId = m.MerchantId,
             Reference = m.Reference,
-            AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId).OrderByDescending(ma => ma.CreatedDateTime).Select(ma => new {
-                ma.AddressLine1,
-                ma.AddressLine2,
-                ma.Country,
-                ma.PostalCode,
-                ma.Region,
-                ma.Town
-                // Add more properties as needed
-            }).FirstOrDefault(), // Get the first matching MerchantAddress or null
-            ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId).OrderByDescending(mc => mc.CreatedDateTime).Select(mc => new { mc.Name, mc.EmailAddress, mc.PhoneNumber }).FirstOrDefault(), // Get the first matching MerchantContact or null
-            EstateReportingId = context.Estates.Single(e => e.EstateId == m.EstateId).EstateReportingId
+            AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId)
+                .OrderByDescending(ma => ma.CreatedDateTime)
+                .Select(ma => new { ma.AddressLine1, ma.AddressLine2, ma.Country, ma.PostalCode, ma.Region, ma.Town })
+                .FirstOrDefault(),
+            ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId)
+                .OrderByDescending(mc => mc.CreatedDateTime)
+                .Select(mc => new { mc.Name, mc.EmailAddress, mc.PhoneNumber })
+                .FirstOrDefault()
         }).OrderByDescending(m => m.CreatedDateTime).Take(3);
 
         var recentMerchantsResult = await ExecuteQuerySafeToList(merchantsQuery, cancellationToken, "Error retrieving recent merchants");
         if (recentMerchantsResult.IsFailed)
             return ResultHelpers.CreateFailure(recentMerchantsResult);
 
-        var recentMerchants = recentMerchantsResult.Data;
-
-        List<Merchant> merchantList = new();
-        foreach (var merchant in recentMerchants) {
+        List<Merchant> merchantList = recentMerchantsResult.Data.Select(merchant => {
             Merchant model = new() {
                 MerchantId = merchant.MerchantId,
                 Name = merchant.Name,
@@ -550,7 +541,6 @@ public class ReportingManager : IReportingManager {
                 MerchantReportingId = merchant.MerchantReportingId,
                 CreatedDateTime = merchant.CreatedDateTime,
             };
-
             if (merchant.AddressInfo != null) {
                 model.AddressLine1 = merchant.AddressInfo.AddressLine1;
                 model.AddressLine2 = merchant.AddressInfo.AddressLine2;
@@ -559,15 +549,13 @@ public class ReportingManager : IReportingManager {
                 model.Town = merchant.AddressInfo.Town;
                 model.Region = merchant.AddressInfo.Region;
             }
-
             if (merchant.ContactInfo != null) {
                 model.ContactName = merchant.ContactInfo.Name;
                 model.ContactEmail = merchant.ContactInfo.EmailAddress;
                 model.ContactPhone = merchant.ContactInfo.PhoneNumber;
             }
-
-            merchantList.Add(model);
-        }
+            return model;
+        }).ToList();
 
         return Result.Success(merchantList);
     }
@@ -1152,36 +1140,14 @@ public class ReportingManager : IReportingManager {
 
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
-        var grandTotalAmountQuery = (from t in context.Transactions where t.TransactionType == "Sale" && t.TransactionDate >= new DateTime(2025, 12, 21) && t.TransactionDate <= new DateTime(2025, 12, 25) select t.TransactionAmount);
 
+        var grandTotalAmountQuery = (from t in context.Transactions where t.TransactionType == "Sale" && t.TransactionDate >= new DateTime(2025, 12, 21) && t.TransactionDate <= new DateTime(2025, 12, 25) select t.TransactionAmount);
         var grandTotalAmountResult = await ExecuteQuerySafeSum<decimal>(grandTotalAmountQuery, cancellationToken);
         if (grandTotalAmountResult.IsFailed)
             return ResultHelpers.CreateFailure(grandTotalAmountResult);
         var grandTotalAmount = grandTotalAmountResult.Data;
 
-        var query = from t in context.Transactions
-            join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
-            join c in context.Contracts on t.ContractId equals c.ContractId
-            where t.TransactionType == "Sale" && t.TransactionDate >= request.StartDate && t.TransactionDate <= request.EndDate
-            group t by new {
-                cp.ProductName,
-                cp.ContractProductId,
-                cp.ContractProductReportingId,
-                c.ContractId,
-                c.ContractReportingId
-            }
-            into g
-            select new {
-                g.Key.ProductName,
-                g.Key.ContractProductId,
-                g.Key.ContractProductReportingId,
-                g.Key.ContractId,
-                g.Key.ContractReportingId,
-                TransactionCount = g.Count(),
-                TotalAmount = g.Sum(x => x.TransactionAmount),
-                PercentOfTotalAmount = grandTotalAmount == 0 ? 0 : 100.0m * g.Sum(x => x.TransactionAmount) / grandTotalAmount
-            };
-
+        var query = BuildProductPerformanceQuery(context, request.StartDate, request.EndDate, grandTotalAmount);
         var queryResult = await ExecuteQuerySafeToList(query, cancellationToken);
         if (queryResult.IsFailed)
             return ResultHelpers.CreateFailure(queryResult);
@@ -1189,7 +1155,33 @@ public class ReportingManager : IReportingManager {
         if (queryResults.Any() == false)
             return Result.Success(new ProductPerformanceResponse() { Summary = new ProductPerformanceSummary(), ProductDetails = new List<ProductPerformanceDetail>() });
 
-        ProductPerformanceResponse response = new ProductPerformanceResponse() {
+        return Result.Success(BuildProductPerformanceResponse(queryResults));
+    }
+
+    private static IQueryable<ProductPerformanceItemData> BuildProductPerformanceQuery(EstateManagementContext context,
+                                                                                       DateTime startDate,
+                                                                                       DateTime endDate,
+                                                                                       decimal grandTotalAmount) {
+        return from t in context.Transactions
+            join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
+            join c in context.Contracts on t.ContractId equals c.ContractId
+            where t.TransactionType == "Sale" && t.TransactionDate >= startDate && t.TransactionDate <= endDate
+            group t by new { cp.ProductName, cp.ContractProductId, cp.ContractProductReportingId, c.ContractId, c.ContractReportingId }
+            into g
+            select new ProductPerformanceItemData {
+                ProductName = g.Key.ProductName,
+                ContractProductId = g.Key.ContractProductId,
+                ContractProductReportingId = g.Key.ContractProductReportingId,
+                ContractId = g.Key.ContractId,
+                ContractReportingId = g.Key.ContractReportingId,
+                TransactionCount = g.Count(),
+                TotalAmount = g.Sum(x => x.TransactionAmount),
+                PercentOfTotalAmount = grandTotalAmount == 0 ? 0 : 100.0m * g.Sum(x => x.TransactionAmount) / grandTotalAmount
+            };
+    }
+
+    private ProductPerformanceResponse BuildProductPerformanceResponse(List<ProductPerformanceItemData> queryResults) {
+        return new ProductPerformanceResponse {
             ProductDetails = queryResults.Select(q => new ProductPerformanceDetail {
                 ProductName = q.ProductName,
                 ProductId = q.ContractProductId,
@@ -1202,8 +1194,6 @@ public class ReportingManager : IReportingManager {
             }).ToList(),
             Summary = new ProductPerformanceSummary { TotalCount = queryResults.Sum(q => q.TransactionCount), TotalValue = queryResults.Sum(q => q.TotalAmount), AveragePerProduct = this.SafeDivide(queryResults.Sum(q => q.TotalAmount), queryResults.Count), TotalProducts = queryResults.Count() }
         };
-
-        return Result.Success(response);
     }
 
     public async Task<Result<List<TodaysSalesByHour>>> GetTodaysSalesByHour(TransactionQueries.TodaysSalesByHour request,
@@ -1441,6 +1431,17 @@ public class ReportingManager : IReportingManager {
             public int FeeType { get; init; }
             public decimal Value { get; init; }
             public bool IsEnabled { get; init; }
+        }
+
+        private sealed class ProductPerformanceItemData {
+            public string? ProductName { get; init; }
+            public Guid ContractProductId { get; init; }
+            public int ContractProductReportingId { get; init; }
+            public Guid ContractId { get; init; }
+            public int ContractReportingId { get; init; }
+            public int TransactionCount { get; init; }
+            public decimal TotalAmount { get; init; }
+            public decimal PercentOfTotalAmount { get; init; }
         }
 
         #endregion
