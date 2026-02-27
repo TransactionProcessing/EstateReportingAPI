@@ -1408,6 +1408,8 @@ public class ReportingManager : IReportingManager {
             public int AuthorisedCount { get; init; }
             public int DeclinedCount { get; init; }
             public decimal AuthorisedPercentage { get; init; }
+        }
+
         private sealed class TransactionDetailQueryResult {
             public Guid TransactionId { get; init; }
             public DateTime TransactionDateTime { get; init; }
