@@ -1,23 +1,22 @@
-name: Nightly Build
+name: Code Coverage
 
 on:
-  schedule:
-  - cron: "45 23 * * *"
-  repository_dispatch:
+  push:
+    # branches to consider in the event; optional, defaults to all
+    branches:
+      - main
+  workflow_dispatch:
 
-jobs:
-  build:
-    name: "Nightly Build"
+jobs:  
+  codecoverage:
+    name: "Code Coverage"
     env:
         ASPNETCORE_ENVIRONMENT: "Production"
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2.3.4
-
-    - name: Set Up Variables
-      run: echo "action_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> $GITHUB_ENV
+    - uses: actions/checkout@v2.3.4  
 
     - name: Restore Nuget Packages
       run: dotnet restore EstateReportingAPI.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
@@ -37,17 +36,16 @@ jobs:
       run: |
         dotnet test "EstateReportingAPI.IntegrationTests\EstateReportingAPI.IntegrationTests.csproj" /p:CollectCoverage=true /p:Exclude="[xunit*]*" /p:ExcludeByAttribute="Obsolete" /p:ExcludeByAttribute="GeneratedCodeAttribute" /p:ExcludeByAttribute="CompilerGeneratedAttribute" /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"        
 
-    - uses: actions/upload-artifact@v4
-      if: ${{ failure() }}
-      with:
-        name: tracelogs
-        path: /home/txnproc/trace/   
+    - name: Install LCOV merger
+      run: npm install -g lcov-result-merger
 
-    - uses: dacbd/create-issue-action@main
-      if: ${{ failure() }}
-      name: Create an issue on build failure
+    - name: Merge LCOV reports
+      run: |
+        mkdir -p coverage
+        lcov-result-merger "*.info" > lcov.info
+
+    - name: Upload merged coverage to Codacy
+      uses: codacy/codacy-coverage-reporter-action@v1
       with:
-        title: Investigate Nightly Build Failure
-        token: ${{secrets.GITHUB_TOKEN}}
-        labels: nightlybuild
-        body: Url is ${{env.action_url}}
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: ./lcov.info      
