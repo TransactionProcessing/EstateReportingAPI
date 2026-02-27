@@ -19,7 +19,19 @@ namespace EstateReportingAPI.Bootstrapper{
     public class MiddlewareRegistry : ServiceRegistry{
         public MiddlewareRegistry()
         {
+            this.ConfigureHealthChecks();
+            this.ConfigureSwagger();
+            this.ConfigureAuthentication();
+            this.ConfigureControllers();
+            this.ConfigureMiddlewareLogging();
+            this.ConfigureHttpJsonOptions(options =>
+            {
+                options.SerializerOptions.PropertyNamingPolicy = new SnakeCaseNamingPolicy();
+                options.SerializerOptions.PropertyNameCaseInsensitive = true; // optional, but safer
+            });
+        }
 
+        private void ConfigureHealthChecks(){
             var connectionStringSection = Startup.Configuration.GetSection("ConnectionStrings");
             if (connectionStringSection.Exists() == false)
             {
@@ -34,7 +46,9 @@ namespace EstateReportingAPI.Bootstrapper{
                     failureStatus: HealthStatus.Degraded,
                     tags: new[] { "db", "sql", "sqlserver" });
             }
+        }
 
+        private void ConfigureSwagger(){
             this.AddSwaggerGen(c => {
                                    c.SwaggerDoc("v1",
                                                 new OpenApiInfo{
@@ -61,7 +75,9 @@ namespace EstateReportingAPI.Bootstrapper{
                                });
 
             this.AddSwaggerExamplesFromAssemblyOf<SwaggerJsonConverter>();
+        }
 
+        private void ConfigureAuthentication(){
             String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
             if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) != 0){
                 this.AddAuthentication(options => {
@@ -79,16 +95,18 @@ namespace EstateReportingAPI.Bootstrapper{
                                                            options.Audience = ConfigurationReader.GetValue("SecurityConfiguration", "ApiName");
 
                                                            options.TokenValidationParameters = new TokenValidationParameters{
-                                                                                                                                ValidateAudience = false,
-                                                                                                                                ValidAudience =
-                                                                                                                                    ConfigurationReader.GetValue("SecurityConfiguration", "ApiName"),
-                                                                                                                                ValidIssuer =
-                                                                                                                                    ConfigurationReader.GetValue("SecurityConfiguration", "Authority"),
-                                                                                                                            };
+                                                                                                                               ValidateAudience = false,
+                                                                                                                               ValidAudience =
+                                                                                                                                   ConfigurationReader.GetValue("SecurityConfiguration", "ApiName"),
+                                                                                                                               ValidIssuer =
+                                                                                                                                   ConfigurationReader.GetValue("SecurityConfiguration", "Authority"),
+                                                                                                                           };
                                                            options.IncludeErrorDetails = true;
                                                        });
             }
+        }
 
+        private void ConfigureControllers(){
             this.AddControllers().AddNewtonsoftJson(options => {
                                                         options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
                                                         options.SerializerSettings.TypeNameHandling = TypeNameHandling.None;
@@ -99,7 +117,9 @@ namespace EstateReportingAPI.Bootstrapper{
 
             Assembly assembly = this.GetType().GetTypeInfo().Assembly;
             this.AddMvcCore().AddApplicationPart(assembly).AddControllersAsServices();
+        }
 
+        private void ConfigureMiddlewareLogging(){
             bool logRequests = ConfigurationReader.GetValueOrDefault<Boolean>("MiddlewareLogging", "LogRequests", true);
             bool logResponses = ConfigurationReader.GetValueOrDefault<Boolean>("MiddlewareLogging", "LogResponses", true);
             LogLevel middlewareLogLevel = ConfigurationReader.GetValueOrDefault<LogLevel>("MiddlewareLogging", "MiddlewareLogLevel", LogLevel.Warning);
@@ -108,12 +128,6 @@ namespace EstateReportingAPI.Bootstrapper{
                 new RequestResponseMiddlewareLoggingConfig(middlewareLogLevel, logRequests, logResponses);
 
             this.AddSingleton(config);
-
-            this.ConfigureHttpJsonOptions(options =>
-            {
-                options.SerializerOptions.PropertyNamingPolicy = new SnakeCaseNamingPolicy();
-                options.SerializerOptions.PropertyNameCaseInsensitive = true; // optional, but safer
-            });
         }
 
         private HttpClientHandler ApiEndpointHttpHandler(IServiceProvider serviceProvider){
