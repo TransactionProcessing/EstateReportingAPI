@@ -244,7 +244,7 @@ public class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        // Step 1: load contracts with operator name via a left-join (translatable)
+        // Step 1: load contract with operator name via a left-join (translatable)
         var baseContractQuery = (from c in context.Contracts
         join o in context.Operators on c.OperatorId equals o.OperatorId into ops
         from o in ops.DefaultIfEmpty()
@@ -265,9 +265,27 @@ public class ReportingManager : IReportingManager {
 
         var baseContract = baseContractQueryResult.Data;
 
+        // Steps 2 & 3: load products and fees, then assemble
+        var productsResult = await this.LoadProductsWithFees(context, baseContract.ContractId, cancellationToken);
 
-        // Step 2: load related products for all contracts in one query
-        var productsQuery = context.ContractProducts.Where(cp => cp.ContractId == baseContract.ContractId).Select(cp => new {
+        if (productsResult.IsFailed)
+            return ResultHelpers.CreateFailure(productsResult);
+
+        return Result.Success(new Contract {
+            ContractId = baseContract.ContractId,
+            ContractReportingId = baseContract.ContractReportingId,
+            Description = baseContract.Description,
+            EstateId = baseContract.EstateId,
+            OperatorName = baseContract.OperatorName,
+            OperatorId = baseContract.OperatorId,
+            Products = productsResult.Data
+        });
+    }
+
+    private async Task<Result<List<Models.ContractProduct>>> LoadProductsWithFees(EstateManagementContext context,
+                                                                                  Guid contractId,
+                                                                                  CancellationToken cancellationToken) {
+        var productsQuery = context.ContractProducts.Where(cp => cp.ContractId == contractId).Select(cp => new {
             cp.ContractProductId,
             cp.ContractId,
             cp.DisplayText,
@@ -284,7 +302,6 @@ public class ReportingManager : IReportingManager {
         var products = productsQueryResult.Data;
         var productIds = products.Select(p => p.ContractProductId).ToList();
 
-        // Step 3: load fees for those products in one query
         var feesQuery = context.ContractProductTransactionFees.Where(tf => productIds.Contains(tf.ContractProductId)).Select(tf => new {
             tf.CalculationType,
             tf.ContractProductTransactionFeeId,
@@ -300,33 +317,23 @@ public class ReportingManager : IReportingManager {
             return ResultHelpers.CreateFailure(feesQueryResult);
 
         var fees = feesQueryResult.Data;
+        var feesLookup = fees.ToLookup(f => f.ContractProductId);
 
-        // Assemble the model in memory
-        Contract result = new Contract {
-            ContractId = baseContract.ContractId,
-            ContractReportingId = baseContract.ContractReportingId,
-            Description = baseContract.Description,
-            EstateId = baseContract.EstateId,
-            OperatorName = baseContract.OperatorName,
-            OperatorId = baseContract.OperatorId,
-            Products = products.Where(p => p.ContractId == baseContract.ContractId).Select(p => new Models.ContractProduct {
-                ContractId = p.ContractId,
-                ProductId = p.ContractProductId,
-                DisplayText = p.DisplayText,
-                ProductName = p.ProductName,
-                ProductType = p.ProductType,
-                Value = p.Value,
-                TransactionFees = fees.Where(f => f.ContractProductId == p.ContractProductId).Select(f => new ContractProductTransactionFee {
-                    Description = f.Description,
-                    Value = f.Value,
-                    CalculationType = f.CalculationType,
-                    FeeType = f.FeeType,
-                    TransactionFeeId = f.ContractProductTransactionFeeId
-                }).ToList()
+        return Result.Success(products.Select(p => new Models.ContractProduct {
+            ContractId = p.ContractId,
+            ProductId = p.ContractProductId,
+            DisplayText = p.DisplayText,
+            ProductName = p.ProductName,
+            ProductType = p.ProductType,
+            Value = p.Value,
+            TransactionFees = feesLookup[p.ContractProductId].Select(f => new ContractProductTransactionFee {
+                Description = f.Description,
+                Value = f.Value,
+                CalculationType = f.CalculationType,
+                FeeType = f.FeeType,
+                TransactionFeeId = f.ContractProductTransactionFeeId
             }).ToList()
-        };
-
-        return Result.Success(result);
+        }).ToList());
     }
 
     public async Task<Result<List<Contract>>> GetRecentContracts(ContractQueries.GetRecentContractsQuery request,
