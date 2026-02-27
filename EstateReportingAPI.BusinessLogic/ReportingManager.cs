@@ -836,10 +836,27 @@ public class ReportingManager : IReportingManager {
 
     public async Task<Result<TransactionSummaryByOperatorResponse>> GetTransactionSummaryByOperatorReport(TransactionQueries.TransactionSummaryByOperatorQuery request,
                                                                                                           CancellationToken cancellationToken) {
-        TransactionSummaryByOperatorResponse response = null;
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
+        var baseQuery = BuildOperatorTransactionBaseQuery(context, request);
+        var finalQuery = BuildOperatorFinalSummaryQuery(baseQuery);
+
+        var queryResult = await ExecuteQuerySafeToList(finalQuery, cancellationToken, "Error retrieving transaction summary by operator report");
+
+        if (queryResult.IsFailed)
+            return ResultHelpers.CreateFailure(queryResult);
+
+        var queryResults = queryResult.Data;
+
+        if (queryResults.Any() == false)
+            return new TransactionSummaryByOperatorResponse { Summary = new OperatorDetailSummary(), Operators = new List<OperatorDetail>() };
+
+        return BuildOperatorSummaryResponse(queryResults);
+    }
+
+    private static IQueryable<OperatorTransactionData> BuildOperatorTransactionBaseQuery(EstateManagementContext context,
+                                                                                         TransactionQueries.TransactionSummaryByOperatorQuery request) {
         var query = from t in context.Transactions
             join m in context.Merchants on t.MerchantId equals m.MerchantId
             join o in context.Operators on t.OperatorId equals o.OperatorId
@@ -853,56 +870,47 @@ public class ReportingManager : IReportingManager {
                 OperatorName = o.Name
             }
             into g
-            select new {
-                g.Key.MerchantId,
-                g.Key.MerchantReportingId,
-                g.Key.MerchantName,
-                g.Key.OperatorId,
-                g.Key.OperatorReportingId,
-                g.Key.OperatorName,
+            select new OperatorTransactionData {
+                MerchantId = g.Key.MerchantId,
+                MerchantReportingId = g.Key.MerchantReportingId,
+                MerchantName = g.Key.MerchantName,
+                OperatorId = g.Key.OperatorId,
+                OperatorReportingId = g.Key.OperatorReportingId,
+                OperatorName = g.Key.OperatorName,
                 TotalCount = g.Count(),
                 TotalValue = g.Sum(x => x.TransactionAmount),
                 AuthorisedCount = g.Sum(x => x.IsAuthorised ? 1 : 0),
                 DeclinedCount = g.Sum(x => x.IsAuthorised ? 0 : 1)
             };
 
-        // Now apply the filters
-        if (request.Request.Merchants != null && request.Request.Merchants.Any()) {
+        if (request.Request.Merchants != null && request.Request.Merchants.Any())
             query = query.Where(q => request.Request.Merchants.Contains(q.MerchantReportingId));
-        }
 
-        if (request.Request.Operators != null && request.Request.Operators.Any()) {
+        if (request.Request.Operators != null && request.Request.Operators.Any())
             query = query.Where(q => request.Request.Operators.Contains(q.OperatorReportingId));
-        }
 
-        var finalQuery = from x in query
-        group x by new { x.OperatorId, x.OperatorReportingId, OperatorName = x.OperatorName, }
-        into g
-        select new {
-            g.Key.OperatorId,
-            g.Key.OperatorReportingId,
-            g.Key.OperatorName,
-            TotalCount = g.Sum(x => x.TotalCount),
-            TotalValue = g.Sum(x => x.TotalValue),
-            AverageValue = g.Count() > 0 ? g.Sum(x => x.TotalValue) / g.Count() : 0m,
-            AuthorisedCount = g.Sum(x => x.AuthorisedCount),
-            DeclinedCount = g.Sum(x => x.DeclinedCount),
-            AuthorisedPercentage = g.Sum(x => x.TotalCount) > 0 ? (decimal)g.Sum(x => x.AuthorisedCount) / (decimal)g.Sum(x => x.TotalCount) : 0m
-        };
+        return query;
+    }
 
-        var queryResult = await ExecuteQuerySafeToList(finalQuery, cancellationToken, "Error retrieving transaction summary by operator report");
+    private static IQueryable<OperatorSummaryData> BuildOperatorFinalSummaryQuery(IQueryable<OperatorTransactionData> query) {
+        return from x in query
+            group x by new { x.OperatorId, x.OperatorReportingId, x.OperatorName }
+            into g
+            select new OperatorSummaryData {
+                OperatorId = g.Key.OperatorId,
+                OperatorReportingId = g.Key.OperatorReportingId,
+                OperatorName = g.Key.OperatorName,
+                TotalCount = g.Sum(x => x.TotalCount),
+                TotalValue = g.Sum(x => x.TotalValue),
+                AverageValue = g.Count() > 0 ? g.Sum(x => x.TotalValue) / g.Count() : 0m,
+                AuthorisedCount = g.Sum(x => x.AuthorisedCount),
+                DeclinedCount = g.Sum(x => x.DeclinedCount),
+                AuthorisedPercentage = g.Sum(x => x.TotalCount) > 0 ? (decimal)g.Sum(x => x.AuthorisedCount) / (decimal)g.Sum(x => x.TotalCount) : 0m
+            };
+    }
 
-        if (queryResult.IsFailed)
-            return ResultHelpers.CreateFailure(queryResult);
-
-        // Ok now enumerate the results
-        var queryResults = queryResult.Data;
-
-        if (queryResults.Any() == false)
-            return new TransactionSummaryByOperatorResponse { Summary = new OperatorDetailSummary(), Operators = new List<OperatorDetail>() };
-
-        // Now to translate the results
-        response = new TransactionSummaryByOperatorResponse {
+    private TransactionSummaryByOperatorResponse BuildOperatorSummaryResponse(List<OperatorSummaryData> queryResults) {
+        return new TransactionSummaryByOperatorResponse {
             Operators = queryResults.Select(q => new OperatorDetail {
                 OperatorId = q.OperatorId,
                 OperatorReportingId = q.OperatorReportingId,
@@ -914,10 +922,13 @@ public class ReportingManager : IReportingManager {
                 TotalCount = q.TotalCount,
                 TotalValue = q.TotalValue
             }).ToList(),
-            Summary = new OperatorDetailSummary { TotalCount = queryResults.Sum(q => q.TotalCount), TotalValue = queryResults.Sum(q => q.TotalValue), AverageValue = this.SafeDivide(queryResults.Sum(q => q.TotalValue), queryResults.Sum(q => q.TotalCount)), TotalOperators = queryResults.Count() }
+            Summary = new OperatorDetailSummary {
+                TotalCount = queryResults.Sum(q => q.TotalCount),
+                TotalValue = queryResults.Sum(q => q.TotalValue),
+                AverageValue = this.SafeDivide(queryResults.Sum(q => q.TotalValue), queryResults.Sum(q => q.TotalCount)),
+                TotalOperators = queryResults.Count()
+            }
         };
-
-        return response;
     }
 
     public async Task<Result<List<Merchant>>> GetMerchants(MerchantQueries.GetMerchantsQuery request,
@@ -1394,6 +1405,31 @@ public class ReportingManager : IReportingManager {
                     }).ToList()
                 }).ToList()
             }).ToList();
+        }
+
+        private sealed class OperatorTransactionData {
+            public Guid MerchantId { get; init; }
+            public int MerchantReportingId { get; init; }
+            public string? MerchantName { get; init; }
+            public Guid OperatorId { get; init; }
+            public int OperatorReportingId { get; init; }
+            public string? OperatorName { get; init; }
+            public int TotalCount { get; init; }
+            public decimal TotalValue { get; init; }
+            public int AuthorisedCount { get; init; }
+            public int DeclinedCount { get; init; }
+        }
+
+        private sealed class OperatorSummaryData {
+            public Guid OperatorId { get; init; }
+            public int OperatorReportingId { get; init; }
+            public string? OperatorName { get; init; }
+            public int TotalCount { get; init; }
+            public decimal TotalValue { get; init; }
+            public decimal AverageValue { get; init; }
+            public int AuthorisedCount { get; init; }
+            public int DeclinedCount { get; init; }
+            public decimal AuthorisedPercentage { get; init; }
         }
 
         private sealed class ContractBaseData {
