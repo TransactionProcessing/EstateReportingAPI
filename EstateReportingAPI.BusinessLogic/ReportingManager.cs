@@ -739,72 +739,30 @@ public class ReportingManager : IReportingManager {
 
     public async Task<Result<TransactionSummaryByMerchantResponse>> GetTransactionSummaryByMerchantReport(TransactionQueries.TransactionSummaryByMerchantQuery request,
                                                                                                           CancellationToken cancellationToken) {
-
-        TransactionSummaryByMerchantResponse response = null;
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        var query = from t in context.Transactions
-            join m in context.Merchants on t.MerchantId equals m.MerchantId
-            join o in context.Operators on t.OperatorId equals o.OperatorId
-            where t.TransactionType == "Sale" && t.TransactionDate >= request.Request.StartDate && t.TransactionDate <= request.Request.EndDate
-            group t by new {
-                t.MerchantId,
-                m.MerchantReportingId,
-                MerchantName = m.Name,
-                t.OperatorId,
-                o.OperatorReportingId
-            }
-            into g
-            select new {
-                g.Key.MerchantId,
-                g.Key.MerchantReportingId,
-                g.Key.MerchantName,
-                g.Key.OperatorId,
-                g.Key.OperatorReportingId,
-                TotalCount = g.Count(),
-                TotalValue = g.Sum(x => x.TransactionAmount),
-                AuthorisedCount = g.Sum(x => x.IsAuthorised ? 1 : 0),
-                DeclinedCount = g.Sum(x => x.IsAuthorised ? 0 : 1)
-            };
+        var query = BuildMerchantTransactionBaseQuery(context, request.Request.StartDate, request.Request.EndDate);
 
-        // Now apply the filters
-        if (request.Request.Merchants != null && request.Request.Merchants.Any()) {
+        if (request.Request.Merchants != null && request.Request.Merchants.Any())
             query = query.Where(q => request.Request.Merchants.Contains(q.MerchantReportingId));
-        }
 
-        if (request.Request.Operators != null && request.Request.Operators.Any()) {
+        if (request.Request.Operators != null && request.Request.Operators.Any())
             query = query.Where(q => request.Request.Operators.Contains(q.OperatorReportingId));
-        }
 
-        var finalQuery = from x in query
-        group x by new { x.MerchantId, x.MerchantReportingId, MerchantName = x.MerchantName, }
-        into g
-        select new {
-            g.Key.MerchantId,
-            g.Key.MerchantReportingId,
-            g.Key.MerchantName,
-            TotalCount = g.Sum(x => x.TotalCount),
-            TotalValue = g.Sum(x => x.TotalValue),
-            AverageValue = g.Count() > 0 ? g.Sum(x => x.TotalValue) / g.Count() : 0m,
-            AuthorisedCount = g.Sum(x => x.AuthorisedCount),
-            DeclinedCount = g.Sum(x => x.DeclinedCount),
-            AuthorisedPercentage = g.Sum(x => x.TotalCount) > 0 ? (decimal)g.Sum(x => x.AuthorisedCount) / (decimal)g.Sum(x => x.TotalCount) : 0m
-        };
+        var finalQuery = BuildMerchantTransactionFinalQuery(query);
 
         var queryResult = await ExecuteQuerySafeToList(finalQuery, cancellationToken, "Error retrieving transaction summary by merchant report");
 
         if (queryResult.IsFailed)
             return ResultHelpers.CreateFailure(queryResult);
 
-        // Ok now enumerate the results
         var queryResults = queryResult.Data;
 
         if (queryResults.Any() == false)
             return new TransactionSummaryByMerchantResponse { Summary = new MerchantDetailSummary(), Merchants = new List<MerchantDetail>() };
 
-        // Now to translate the results
-        response = new TransactionSummaryByMerchantResponse {
+        return new TransactionSummaryByMerchantResponse {
             Merchants = queryResults.Select(q => new MerchantDetail {
                 MerchantId = q.MerchantId,
                 MerchantReportingId = q.MerchantReportingId,
@@ -816,10 +774,52 @@ public class ReportingManager : IReportingManager {
                 TotalCount = q.TotalCount,
                 TotalValue = q.TotalValue
             }).ToList(),
-            Summary = new MerchantDetailSummary { TotalCount = queryResults.Sum(q => q.TotalCount), TotalValue = queryResults.Sum(q => q.TotalValue), AverageValue = this.SafeDivide(queryResults.Sum(q => q.TotalValue), queryResults.Sum(q => q.TotalCount)), TotalMerchants = queryResults.Count() }
+            Summary = new MerchantDetailSummary {
+                TotalCount = queryResults.Sum(q => q.TotalCount),
+                TotalValue = queryResults.Sum(q => q.TotalValue),
+                AverageValue = this.SafeDivide(queryResults.Sum(q => q.TotalValue), queryResults.Sum(q => q.TotalCount)),
+                TotalMerchants = queryResults.Count()
+            }
         };
+    }
 
-        return response;
+    private static IQueryable<MerchantTransactionGroupProjection> BuildMerchantTransactionBaseQuery(EstateManagementContext context,
+                                                                                                    DateTime startDate,
+                                                                                                    DateTime endDate) {
+        return from t in context.Transactions
+            join m in context.Merchants on t.MerchantId equals m.MerchantId
+            join o in context.Operators on t.OperatorId equals o.OperatorId
+            where t.TransactionType == "Sale" && t.TransactionDate >= startDate && t.TransactionDate <= endDate
+            group t by new { t.MerchantId, m.MerchantReportingId, MerchantName = m.Name, t.OperatorId, o.OperatorReportingId }
+            into g
+            select new MerchantTransactionGroupProjection {
+                MerchantId = g.Key.MerchantId,
+                MerchantReportingId = g.Key.MerchantReportingId,
+                MerchantName = g.Key.MerchantName,
+                OperatorId = g.Key.OperatorId,
+                OperatorReportingId = g.Key.OperatorReportingId,
+                TotalCount = g.Count(),
+                TotalValue = g.Sum(x => x.TransactionAmount),
+                AuthorisedCount = g.Sum(x => x.IsAuthorised ? 1 : 0),
+                DeclinedCount = g.Sum(x => x.IsAuthorised ? 0 : 1)
+            };
+    }
+
+    private static IQueryable<MerchantTransactionFinalProjection> BuildMerchantTransactionFinalQuery(IQueryable<MerchantTransactionGroupProjection> query) {
+        return from x in query
+            group x by new { x.MerchantId, x.MerchantReportingId, x.MerchantName }
+            into g
+            select new MerchantTransactionFinalProjection {
+                MerchantId = g.Key.MerchantId,
+                MerchantReportingId = g.Key.MerchantReportingId,
+                MerchantName = g.Key.MerchantName,
+                TotalCount = g.Sum(x => x.TotalCount),
+                TotalValue = g.Sum(x => x.TotalValue),
+                AverageValue = g.Count() > 0 ? g.Sum(x => x.TotalValue) / g.Count() : 0m,
+                AuthorisedCount = g.Sum(x => x.AuthorisedCount),
+                DeclinedCount = g.Sum(x => x.DeclinedCount),
+                AuthorisedPercentage = g.Sum(x => x.TotalCount) > 0 ? (decimal)g.Sum(x => x.AuthorisedCount) / (decimal)g.Sum(x => x.TotalCount) : 0m
+            };
     }
 
     public async Task<Result<TransactionSummaryByOperatorResponse>> GetTransactionSummaryByOperatorReport(TransactionQueries.TransactionSummaryByOperatorQuery request,
@@ -1384,6 +1384,30 @@ public class ReportingManager : IReportingManager {
                     }).ToList()
                 }).ToList()
             }).ToList();
+        }
+
+        private sealed class MerchantTransactionGroupProjection {
+            public Guid MerchantId { get; init; }
+            public int MerchantReportingId { get; init; }
+            public string MerchantName { get; init; }
+            public Guid OperatorId { get; init; }
+            public int OperatorReportingId { get; init; }
+            public int TotalCount { get; init; }
+            public decimal TotalValue { get; init; }
+            public int AuthorisedCount { get; init; }
+            public int DeclinedCount { get; init; }
+        }
+
+        private sealed class MerchantTransactionFinalProjection {
+            public Guid MerchantId { get; init; }
+            public int MerchantReportingId { get; init; }
+            public string MerchantName { get; init; }
+            public int TotalCount { get; init; }
+            public decimal TotalValue { get; init; }
+            public decimal AverageValue { get; init; }
+            public int AuthorisedCount { get; init; }
+            public int DeclinedCount { get; init; }
+            public decimal AuthorisedPercentage { get; init; }
         }
 
         private sealed class TransactionDetailQueryResult {
