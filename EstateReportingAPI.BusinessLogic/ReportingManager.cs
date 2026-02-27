@@ -206,94 +206,37 @@ public class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        // Step 1: load contracts with operator name via a left-join (translatable)
         var baseContractsQuery = (from c in context.Contracts
-        join o in context.Operators on c.OperatorId equals o.OperatorId into ops
-        from o in ops.DefaultIfEmpty()
-        select new {
-            c.ContractId,
-            c.ContractReportingId,
-            c.Description,
-            c.EstateId,
-            c.OperatorId,
-            OperatorName = o != null ? o.Name : null
-        }).OrderByDescending(x => x.Description);
+            join o in context.Operators on c.OperatorId equals o.OperatorId into ops
+            from o in ops.DefaultIfEmpty()
+            select new ContractBaseData {
+                ContractId = c.ContractId,
+                ContractReportingId = c.ContractReportingId,
+                Description = c.Description,
+                EstateId = c.EstateId,
+                OperatorId = c.OperatorId,
+                OperatorName = o != null ? o.Name : null
+            }).OrderByDescending(x => x.Description);
 
-        var baseContractsQueryResult = await ExecuteQuerySafeToList(baseContractsQuery, cancellationToken, "Error retrieving contracts - Step 1");
+        var baseContractsResult = await ExecuteQuerySafeToList(baseContractsQuery, cancellationToken, "Error retrieving contracts - Step 1");
+        if (baseContractsResult.IsFailed)
+            return ResultHelpers.CreateFailure(baseContractsResult);
 
-        if (baseContractsQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(baseContractsQueryResult);
-
-        var baseContractEntities = baseContractsQueryResult.Data;
-
-        if (baseContractEntities.Any() == false)
+        var baseContracts = baseContractsResult.Data;
+        if (!baseContracts.Any())
             return new List<Contract>();
 
-        var contractIds = baseContractEntities.Select(b => b.ContractId).ToList();
+        var contractIds = baseContracts.Select(b => b.ContractId).ToList();
+        var productsResult = await LoadProductsAsync(context, contractIds, cancellationToken, "Error retrieving contracts - Step 2");
+        if (productsResult.IsFailed)
+            return ResultHelpers.CreateFailure(productsResult);
 
-        // Step 2: load related products for all contracts in one query
-        var productsQuery = context.ContractProducts.Where(cp => contractIds.Contains(cp.ContractId)).Select(cp => new {
-            cp.ContractProductId,
-            cp.ContractId,
-            cp.DisplayText,
-            cp.ProductName,
-            cp.ProductType,
-            cp.Value
-        });
+        var productIds = productsResult.Data.Select(p => p.ContractProductId).ToList();
+        var feesResult = await LoadFeesAsync(context, productIds, cancellationToken, "Error retrieving contracts - Step 3");
+        if (feesResult.IsFailed)
+            return ResultHelpers.CreateFailure(feesResult);
 
-        var productsQueryResult = await ExecuteQuerySafeToList(productsQuery, cancellationToken, "Error retrieving contracts - Step 2");
-
-        if (productsQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(productsQueryResult);
-
-        var productEntities = productsQueryResult.Data;
-
-        var productIds = productEntities.Select(p => p.ContractProductId).ToList();
-
-        // Step 3: load fees for those products in one query
-        var feesQuery = context.ContractProductTransactionFees.Where(tf => productIds.Contains(tf.ContractProductId)).Select(tf => new {
-            tf.CalculationType,
-            tf.ContractProductTransactionFeeId,
-            tf.FeeType,
-            tf.Value,
-            tf.ContractProductId,
-            tf.Description,
-            tf.IsEnabled
-        });
-
-        var feesQueryResult = await ExecuteQuerySafeToList(feesQuery, cancellationToken, "Error retrieving contracts - Step 3");
-
-        if (feesQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(feesQueryResult);
-
-        var feesEntities = feesQueryResult.Data;
-
-        // Assemble the model in memory
-        List<Contract> result = baseContractEntities.Select(b => new Contract {
-            ContractId = b.ContractId,
-            ContractReportingId = b.ContractReportingId,
-            Description = b.Description,
-            EstateId = b.EstateId,
-            OperatorName = b.OperatorName,
-            OperatorId = b.OperatorId,
-            Products = productEntities.Where(p => p.ContractId == b.ContractId).Select(p => new Models.ContractProduct {
-                ContractId = p.ContractId,
-                ProductId = p.ContractProductId,
-                DisplayText = p.DisplayText,
-                ProductName = p.ProductName,
-                ProductType = p.ProductType,
-                Value = p.Value,
-                TransactionFees = feesEntities.Where(f => f.ContractProductId == p.ContractProductId && f.IsEnabled).Select(f => new ContractProductTransactionFee {
-                    Description = f.Description,
-                    Value = f.Value,
-                    CalculationType = f.CalculationType,
-                    FeeType = f.FeeType,
-                    TransactionFeeId = f.ContractProductTransactionFeeId
-                }).ToList()
-            }).ToList()
-        }).ToList();
-
-        return Result.Success(result);
+        return Result.Success(BuildContracts(baseContracts, productsResult.Data, feesResult.Data));
     }
 
     public async Task<Result<Contract>> GetContract(ContractQueries.GetContractQuery request,
@@ -1397,6 +1340,93 @@ public class ReportingManager : IReportingManager {
         private IQueryable<TransactionHistory> BuildComparisonSalesQuery(EstateManagementContext context,
                                                                          DateTime comparisonDate) {
             return from t in context.TransactionHistory where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == comparisonDate && t.TransactionTime <= DateTime.Now.TimeOfDay select t;
+        }
+
+        private static async Task<Result<List<ContractProductData>>> LoadProductsAsync(EstateManagementContext context,
+                                                                                       List<Guid> contractIds,
+                                                                                       CancellationToken cancellationToken,
+                                                                                       string stepName) {
+            var query = context.ContractProducts.Where(cp => contractIds.Contains(cp.ContractId)).Select(cp => new ContractProductData {
+                ContractProductId = cp.ContractProductId,
+                ContractId = cp.ContractId,
+                DisplayText = cp.DisplayText,
+                ProductName = cp.ProductName,
+                ProductType = cp.ProductType,
+                Value = cp.Value
+            });
+            return await ExecuteQuerySafeToList(query, cancellationToken, stepName);
+        }
+
+        private static async Task<Result<List<ContractFeeData>>> LoadFeesAsync(EstateManagementContext context,
+                                                                               List<Guid> productIds,
+                                                                               CancellationToken cancellationToken,
+                                                                               string stepName) {
+            var query = context.ContractProductTransactionFees.Where(tf => productIds.Contains(tf.ContractProductId)).Select(tf => new ContractFeeData {
+                ContractProductTransactionFeeId = tf.ContractProductTransactionFeeId,
+                ContractProductId = tf.ContractProductId,
+                Description = tf.Description,
+                CalculationType = tf.CalculationType,
+                FeeType = tf.FeeType,
+                Value = tf.Value,
+                IsEnabled = tf.IsEnabled
+            });
+            return await ExecuteQuerySafeToList(query, cancellationToken, stepName);
+        }
+
+        private static List<Contract> BuildContracts(List<ContractBaseData> baseContracts,
+                                                     List<ContractProductData> products,
+                                                     List<ContractFeeData> fees) {
+            return baseContracts.Select(b => new Contract {
+                ContractId = b.ContractId,
+                ContractReportingId = b.ContractReportingId,
+                Description = b.Description,
+                EstateId = b.EstateId,
+                OperatorName = b.OperatorName,
+                OperatorId = b.OperatorId,
+                Products = products.Where(p => p.ContractId == b.ContractId).Select(p => new Models.ContractProduct {
+                    ContractId = p.ContractId,
+                    ProductId = p.ContractProductId,
+                    DisplayText = p.DisplayText,
+                    ProductName = p.ProductName,
+                    ProductType = p.ProductType,
+                    Value = p.Value,
+                    TransactionFees = fees.Where(f => f.ContractProductId == p.ContractProductId && f.IsEnabled).Select(f => new ContractProductTransactionFee {
+                        Description = f.Description,
+                        Value = f.Value,
+                        CalculationType = f.CalculationType,
+                        FeeType = f.FeeType,
+                        TransactionFeeId = f.ContractProductTransactionFeeId
+                    }).ToList()
+                }).ToList()
+            }).ToList();
+        }
+
+        private sealed class ContractBaseData {
+            public Guid ContractId { get; init; }
+            public int ContractReportingId { get; init; }
+            public string? Description { get; init; }
+            public Guid EstateId { get; init; }
+            public Guid OperatorId { get; init; }
+            public string? OperatorName { get; init; }
+        }
+
+        private sealed class ContractProductData {
+            public Guid ContractProductId { get; init; }
+            public Guid ContractId { get; init; }
+            public string? DisplayText { get; init; }
+            public string? ProductName { get; init; }
+            public int ProductType { get; init; }
+            public decimal? Value { get; init; }
+        }
+
+        private sealed class ContractFeeData {
+            public Guid ContractProductTransactionFeeId { get; init; }
+            public Guid ContractProductId { get; init; }
+            public string? Description { get; init; }
+            public int CalculationType { get; init; }
+            public int FeeType { get; init; }
+            public decimal Value { get; init; }
+            public bool IsEnabled { get; init; }
         }
 
         #endregion
