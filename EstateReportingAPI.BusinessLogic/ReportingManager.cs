@@ -1157,7 +1157,7 @@ public class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        var grandTotalAmountQuery = (from t in context.Transactions where t.TransactionType == "Sale" && t.TransactionDate >= new DateTime(2025, 12, 21) && t.TransactionDate <= new DateTime(2025, 12, 25) select t.TransactionAmount);
+        var grandTotalAmountQuery = (from t in context.Transactions where t.TransactionType == "Sale" && t.TransactionDate >= request.StartDate && t.TransactionDate <= request.EndDate select t.TransactionAmount);
         var grandTotalAmountResult = await ExecuteQuerySafeSum<decimal>(grandTotalAmountQuery, cancellationToken);
         if (grandTotalAmountResult.IsFailed)
             return ResultHelpers.CreateFailure(grandTotalAmountResult);
