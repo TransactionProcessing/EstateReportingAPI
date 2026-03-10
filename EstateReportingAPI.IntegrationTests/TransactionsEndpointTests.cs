@@ -938,6 +938,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             productPerformanceResponseDetail.ShouldNotBeNull();
             productPerformanceResponseDetail.TransactionCount.ShouldBe(transactions.Count(t => t.ContractProductId == product.productId));
             productPerformanceResponseDetail.TransactionValue.ShouldBe(transactions.Where(t => t.ContractProductId == product.productId).Sum(t => t.TransactionAmount));
+            productPerformanceResponseDetail.PercentageOfTotal.ShouldNotBe(0);
         }
     }
 
