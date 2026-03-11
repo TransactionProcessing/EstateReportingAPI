@@ -10,6 +10,7 @@ using Microsoft.Data.SqlClient;
 using Shared.Logger;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
+using TransactionProcessor.ProjectionEngine.Database.Database.Entities;
 
 namespace EstateReportingAPI.IntegrationTests;
 
@@ -361,6 +362,7 @@ public class DatabaseHelper{
 
     public async Task<Guid> AddMerchant(String estateName,
                                         String merchantName,
+                                        Decimal balance,
                                         DateTime createDateTime,
                                         DateTime lastSaleDateTime,
                                         (String addressLine1, String town, String postCode, String region) address,
@@ -446,6 +448,13 @@ public class DatabaseHelper{
                 await this.Context.MerchantDevices.AddAsync(new MerchantDevice { CreatedDateTime = DateTime.Now, MerchantId = savedMerchant.MerchantId, DeviceIdentifier = device, DeviceId = Guid.NewGuid() });
             }
         }
+
+        MerchantBalanceProjectionState state = new MerchantBalanceProjectionState {
+            Balance = balance,
+            MerchantId = savedMerchant.MerchantId,
+            MerchantName = savedMerchant.Name
+        };
+        await this.Context.MerchantBalanceProjectionState.AddAsync(state);
 
         await this.Context.SaveChangesAsync(CancellationToken.None);
 

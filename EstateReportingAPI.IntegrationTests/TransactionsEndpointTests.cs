@@ -46,10 +46,10 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         this.TestOutputHelper.WriteLine($"Setup Operators {sw.ElapsedMilliseconds}ms");
         sw.Restart();
         // Merchants
-        await this.helper.AddMerchant("Test Estate", "Test Merchant 1", DateTime.MinValue, DateTime.MinValue, default, default);
-        await this.helper.AddMerchant("Test Estate", "Test Merchant 2", DateTime.MinValue, DateTime.MinValue, default, default);
-        await this.helper.AddMerchant("Test Estate", "Test Merchant 3", DateTime.MinValue, DateTime.MinValue, default, default);
-        await this.helper.AddMerchant("Test Estate", "Test Merchant 4", DateTime.MinValue, DateTime.MinValue, default, default);
+        await this.helper.AddMerchant("Test Estate", "Test Merchant 1",100, DateTime.MinValue, DateTime.MinValue, default, default);
+        await this.helper.AddMerchant("Test Estate", "Test Merchant 2", 100, DateTime.MinValue, DateTime.MinValue, default, default);
+        await this.helper.AddMerchant("Test Estate", "Test Merchant 3", 100, DateTime.MinValue, DateTime.MinValue, default, default);
+        await this.helper.AddMerchant("Test Estate", "Test Merchant 4", 100, DateTime.MinValue, DateTime.MinValue, default, default);
         sw.Stop();
         this.TestOutputHelper.WriteLine($"Setup Merchants {sw.ElapsedMilliseconds}ms");
         sw.Restart();
@@ -1106,10 +1106,10 @@ public class SettlmentsEndpointTests : ControllerTestsBase {
         this.TestOutputHelper.WriteLine($"Setup Operators {sw.ElapsedMilliseconds}ms");
         sw.Restart();
         // Merchants
-        await this.helper.AddMerchant("Test Estate", "Test Merchant 1", DateTime.MinValue, DateTime.MinValue, default, default);
-        await this.helper.AddMerchant("Test Estate", "Test Merchant 2", DateTime.MinValue, DateTime.MinValue, default, default);
-        await this.helper.AddMerchant("Test Estate", "Test Merchant 3", DateTime.MinValue, DateTime.MinValue, default, default);
-        await this.helper.AddMerchant("Test Estate", "Test Merchant 4", DateTime.MinValue, DateTime.MinValue, default, default);
+        await this.helper.AddMerchant("Test Estate", "Test Merchant 1",100, DateTime.MinValue, DateTime.MinValue, default, default);
+        await this.helper.AddMerchant("Test Estate", "Test Merchant 2",100, DateTime.MinValue, DateTime.MinValue, default, default);
+        await this.helper.AddMerchant("Test Estate", "Test Merchant 3",100, DateTime.MinValue, DateTime.MinValue, default, default);
+        await this.helper.AddMerchant("Test Estate", "Test Merchant 4",100, DateTime.MinValue, DateTime.MinValue, default, default);
         sw.Stop();
         this.TestOutputHelper.WriteLine($"Setup Merchants {sw.ElapsedMilliseconds}ms");
         sw.Restart();
