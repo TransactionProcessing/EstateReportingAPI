@@ -104,8 +104,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         List<Transaction>? todaysTransactions = new List<Transaction>();
         List<Transaction> comparisonDateTransactions = new List<Transaction>();
 
-        DateTime todaysDateTime = DateTime.Now;
-        DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
+        DateTime todaysDateTime = DateTime.Now.Date;
+        DateTime comparisonDate = todaysDateTime.AddDays(-1);
 
         Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 15 }, { "Test Merchant 2", 18 }, { "Test Merchant 3", 9 }, { "Test Merchant 4", 0 } };
 
@@ -115,7 +115,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
                 foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
                     var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
                     for (int i = 0; i < transactionCount; i++) {
-                        Transaction transaction = await this.helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                        Transaction transaction = await this.helper.BuildTransactionX(todaysDateTime, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
                         todaysTransactions.Add(transaction);
                     }
                 }
@@ -162,8 +162,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         List<Transaction>? todaysTransactions = new List<Transaction>();
         List<Transaction> comparisonDateTransactions = new List<Transaction>();
 
-        DateTime todaysDateTime = DateTime.Now;
-        DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
+        DateTime todaysDateTime = DateTime.Now.Date;
+        DateTime comparisonDate = todaysDateTime.AddDays(-1);
 
         Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 15 }, { "Test Merchant 2", 18 }, { "Test Merchant 3", 9 }, { "Test Merchant 4", 0 } };
 
@@ -173,7 +173,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
                 foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
                     var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
                     for (int i = 0; i < transactionCount; i++) {
-                        Transaction transaction = await this.helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                        Transaction transaction = await this.helper.BuildTransactionX(todaysDateTime, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
                         todaysTransactions.Add(transaction);
                     }
                 }
@@ -220,8 +220,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         List<Transaction>? todaysTransactions = new List<Transaction>();
         List<Transaction> comparisonDateTransactions = new List<Transaction>();
 
-        DateTime todaysDateTime = DateTime.Now;
-        DateTime comparisonDate = DateTime.Now.AddDays(-1).AddHours(-1);
+        DateTime todaysDateTime = DateTime.Now.Date;
+        DateTime comparisonDate = todaysDateTime.AddDays(-1);
 
         Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 15 }, { "Test Merchant 2", 18 }, { "Test Merchant 3", 9 }, { "Test Merchant 4", 0 } };
 
@@ -231,7 +231,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
                 foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
                     var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
                     for (int i = 0; i < transactionCount; i++) {
-                        Transaction transaction = await this.helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
+                        Transaction transaction = await this.helper.BuildTransactionX(todaysDateTime, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
                         todaysTransactions.Add(transaction);
                     }
                 }
