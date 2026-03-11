@@ -960,12 +960,20 @@ public class ReportingManager : IReportingManager {
             return ResultHelpers.CreateFailure(queryResults);
 
         var merchants = queryResults.Data;
+        
+        var merchantBalancesQuery  = context.MerchantBalanceProjectionState.Where(mb => merchants.Select(m => m.Merchant.MerchantId).Contains(mb.MerchantId));
+
+        var balanceQueryResults = await ExecuteQuerySafeToList(merchantBalancesQuery, cancellationToken, "Error retrieving merchant balances");
+
+        if (balanceQueryResults.IsFailed)
+            return ResultHelpers.CreateFailure(balanceQueryResults);
 
         // Ok now enumerate the results
         List<Merchant> response = new();
         foreach (var queryResult in merchants) {
-            response.Add(new Merchant {
-                Balance = 0,
+            response.Add(new Merchant
+            {
+                Balance = balanceQueryResults.Data.Single(b => b.MerchantId == queryResult.Merchant.MerchantId).Balance,
                 CreatedDateTime = queryResult.Merchant.CreatedDateTime,
                 Name = queryResult.Merchant.Name,
                 Region = queryResult.Address.Region,
@@ -1017,9 +1025,14 @@ public class ReportingManager : IReportingManager {
 
         var merchant = merchantQueryResult.Data;
 
+        // Get the merchant state to get the balance
+        var merchantStateQueryResult = await ExecuteQuerySafeSingleOrDefault(context.MerchantBalanceProjectionState.Where(ms => ms.MerchantId == request.MerchantId), cancellationToken, "Error getting merchant state");
+        if (merchantStateQueryResult.IsFailed) return ResultHelpers.CreateFailure(merchantStateQueryResult);
+        var merchantState = merchantStateQueryResult.Data;
+        
         // Ok now enumerate the results
-        Merchant result = new Merchant {
-            Balance = 0,
+        Merchant result = new() {
+            Balance = merchantState.Balance,
             CreatedDateTime = merchant.CreatedDateTime,
             Name = merchant.Name,
             Reference = merchant.Reference,
