@@ -576,11 +576,13 @@ public class ReportingManager : IReportingManager {
 
         var merchants = merchantsQueryResult.Data;
 
-        Int32 merchantsWithSaleInLastHour = (from m in merchants where m.LastSaleDate == DateTime.Now.Date && m.LastSaleDateTime >= DateTime.Now.AddHours(-1) select m).Count();
+        DateTime now = DateTime.Now;
 
-        Int32 merchantsWithNoSaleToday = (from m in merchants where m.LastSaleDate >= DateTime.Now.Date.AddDays(-7) && m.LastSaleDate <= DateTime.Now.Date.AddDays(-1) select m).Count();
+        Int32 merchantsWithSaleInLastHour = (from m in merchants where m.LastSaleDateTime >= now.AddHours(-1) && m.LastSaleDateTime <= now select m).Count();
 
-        Int32 merchantsWithNoSaleInLast7Days = (from m in merchants where m.LastSaleDate <= DateTime.Now.Date.AddDays(-7) select m).Count();
+        Int32 merchantsWithNoSaleToday = (from m in merchants where m.LastSaleDate >= now.Date.AddDays(-7) && m.LastSaleDate <= now.Date.AddDays(-1) select m).Count();
+
+        Int32 merchantsWithNoSaleInLast7Days = (from m in merchants where m.LastSaleDate <= now.Date.AddDays(-7) select m).Count();
 
         MerchantKpi response = new() { MerchantsWithSaleInLastHour = merchantsWithSaleInLastHour, MerchantsWithNoSaleToday = merchantsWithNoSaleToday, MerchantsWithNoSaleInLast7Days = merchantsWithNoSaleInLast7Days };
 
@@ -1534,5 +1536,3 @@ public class ReportingManager : IReportingManager {
 
         #endregion
     }
-
-

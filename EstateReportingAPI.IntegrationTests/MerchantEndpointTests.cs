@@ -148,30 +148,32 @@ public class MerchantEndpointTests : ControllerTestsBase {
     [Fact]
     public async Task MerchantEndpoint_GetMerchantKpis_MerchantKpisReturned()
     {
-        await this.helper.AddEstate("Test Estate", "Ref1");
+        DateTime now = DateTime.Now;
 
-        await this.helper.AddMerchant("Test Estate", $"Test Merchant 1",100, DateTime.Now, DateTime.Now,
+        await this.helper.AddEstate("Test Estate", "Ref1");
+        
+        await this.helper.AddMerchant("Test Estate", $"Test Merchant 1",100, now, now,
             ("Address Line 1", $"Test Town", $"TE57 1NG", $"Region"),
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
-        await this.helper.AddMerchant("Test Estate", $"Test Merchant 2", 200, DateTime.Now, DateTime.Now.AddMinutes(-10),
+        await this.helper.AddMerchant("Test Estate", $"Test Merchant 2", 200, now, now.AddMinutes(-10),
             ("Address Line 1", $"Test Town", $"TE57 1NG", $"Region"),
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
-        await this.helper.AddMerchant("Test Estate", $"Test Merchant 3",300, DateTime.Now, DateTime.Now.AddHours(-2),
+        await this.helper.AddMerchant("Test Estate", $"Test Merchant 3",300, now, now.AddHours(-2),
             ("Address Line 1", $"Test Town", $"TE57 1NG", $"Region"),
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
-        await this.helper.AddMerchant("Test Estate", $"Test Merchant 4",400, DateTime.Now, DateTime.Now.AddHours(-3),
+        await this.helper.AddMerchant("Test Estate", $"Test Merchant 4",400, now, now.AddHours(-3),
             ("Address Line 1", $"Test Town", $"TE57 1NG", $"Region"),
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
-        await this.helper.AddMerchant("Test Estate", $"Test Merchant 5",500, DateTime.Now, DateTime.Now.AddDays(-2),
+        await this.helper.AddMerchant("Test Estate", $"Test Merchant 5",500, now, now.AddDays(-2),
             ("Address Line 1", $"Test Town", $"TE57 1NG", $"Region"),
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
-        await this.helper.AddMerchant("Test Estate", $"Test Merchant 6",600, DateTime.Now, DateTime.Now.AddDays(-1),
+        await this.helper.AddMerchant("Test Estate", $"Test Merchant 6",600, now, now.AddDays(-1),
             ("Address Line 1", $"Test Town", $"TE57 1NG", $"Region"),
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
-        await this.helper.AddMerchant("Test Estate", $"Test Merchant 7",700, DateTime.Now, DateTime.Now.AddDays(-3),
+        await this.helper.AddMerchant("Test Estate", $"Test Merchant 7",700, now, now.AddDays(-3),
             ("Address Line 1", $"Test Town", $"TE57 1NG", $"Region"),
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
-        await this.helper.AddMerchant("Test Estate", $"Test Merchant 8",800, DateTime.Now, DateTime.Now.AddDays(-10),
+        await this.helper.AddMerchant("Test Estate", $"Test Merchant 8",800, now, now.AddDays(-10),
             ("Address Line 1", $"Test Town", $"TE57 1NG", $"Region"),
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
 
