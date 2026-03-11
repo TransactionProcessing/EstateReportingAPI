@@ -3,6 +3,7 @@
 public class ContractProduct
 {   public Guid ContractId { get; set; }
     public Guid ProductId { get; set; }
+    public Int32 ContractProductReportingId { get; set; }
     public String ProductName { get; set; }
     public String DisplayText { get; set; }
     public Int32 ProductType { get; set; }

@@ -287,6 +287,7 @@ public class ReportingManager : IReportingManager {
                                                                                   CancellationToken cancellationToken) {
         var productsQuery = context.ContractProducts.Where(cp => cp.ContractId == contractId).Select(cp => new {
             cp.ContractProductId,
+            cp.ContractProductReportingId,
             cp.ContractId,
             cp.DisplayText,
             cp.ProductName,
@@ -305,6 +306,7 @@ public class ReportingManager : IReportingManager {
         var feesQuery = context.ContractProductTransactionFees.Where(tf => productIds.Contains(tf.ContractProductId)).Select(tf => new {
             tf.CalculationType,
             tf.ContractProductTransactionFeeId,
+            tf.ContractProductTransactionFeeReportingId,
             tf.FeeType,
             tf.Value,
             tf.ContractProductId,
@@ -326,12 +328,14 @@ public class ReportingManager : IReportingManager {
             ProductName = p.ProductName,
             ProductType = p.ProductType,
             Value = p.Value,
+            ContractProductReportingId = p.ContractProductReportingId,
             TransactionFees = feesLookup[p.ContractProductId].Select(f => new ContractProductTransactionFee {
                 Description = f.Description,
                 Value = f.Value,
                 CalculationType = f.CalculationType,
                 FeeType = f.FeeType,
-                TransactionFeeId = f.ContractProductTransactionFeeId
+                TransactionFeeId = f.ContractProductTransactionFeeId,
+                ContractProductTransactionFeeReportingId = f.ContractProductTransactionFeeReportingId
             }).ToList()
         }).ToList());
     }
@@ -1364,6 +1368,7 @@ public class ReportingManager : IReportingManager {
                                                                                        string stepName) {
             var query = context.ContractProducts.Where(cp => contractIds.Contains(cp.ContractId)).Select(cp => new ContractProductData {
                 ContractProductId = cp.ContractProductId,
+                ContractProductReportingId = cp.ContractProductReportingId,
                 ContractId = cp.ContractId,
                 DisplayText = cp.DisplayText,
                 ProductName = cp.ProductName,
@@ -1379,6 +1384,7 @@ public class ReportingManager : IReportingManager {
                                                                                string stepName) {
             var query = context.ContractProductTransactionFees.Where(tf => productIds.Contains(tf.ContractProductId)).Select(tf => new ContractFeeData {
                 ContractProductTransactionFeeId = tf.ContractProductTransactionFeeId,
+                ContractProducTransactionFeeReportingId = tf.ContractProductTransactionFeeReportingId,
                 ContractProductId = tf.ContractProductId,
                 Description = tf.Description,
                 CalculationType = tf.CalculationType,
@@ -1402,6 +1408,7 @@ public class ReportingManager : IReportingManager {
                 Products = products.Where(p => p.ContractId == b.ContractId).Select(p => new Models.ContractProduct {
                     ContractId = p.ContractId,
                     ProductId = p.ContractProductId,
+                    ContractProductReportingId = p.ContractProductReportingId,
                     DisplayText = p.DisplayText,
                     ProductName = p.ProductName,
                     ProductType = p.ProductType,
@@ -1411,7 +1418,8 @@ public class ReportingManager : IReportingManager {
                         Value = f.Value,
                         CalculationType = f.CalculationType,
                         FeeType = f.FeeType,
-                        TransactionFeeId = f.ContractProductTransactionFeeId
+                        TransactionFeeId = f.ContractProductTransactionFeeId,
+                        ContractProductTransactionFeeReportingId = f.ContractProducTransactionFeeReportingId
                     }).ToList()
                 }).ToList()
             }).ToList();
@@ -1496,6 +1504,7 @@ public class ReportingManager : IReportingManager {
 
         private sealed class ContractProductData {
             public Guid ContractProductId { get; init; }
+            public int ContractProductReportingId { get; init; }
             public Guid ContractId { get; init; }
             public string? DisplayText { get; init; }
             public string? ProductName { get; init; }
@@ -1505,6 +1514,7 @@ public class ReportingManager : IReportingManager {
 
         private sealed class ContractFeeData {
             public Guid ContractProductTransactionFeeId { get; init; }
+            public int ContractProducTransactionFeeReportingId { get; init; }
             public Guid ContractProductId { get; init; }
             public string? Description { get; init; }
             public int CalculationType { get; init; }

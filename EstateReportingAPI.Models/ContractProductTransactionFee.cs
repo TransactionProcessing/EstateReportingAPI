@@ -2,6 +2,7 @@
 
 public class ContractProductTransactionFee
 {
+    public Int32 ContractProductTransactionFeeReportingId { get; set; }
     public Guid TransactionFeeId { get; set; }
     public string? Description { get; set; }
     public Int32 CalculationType { get; set; }

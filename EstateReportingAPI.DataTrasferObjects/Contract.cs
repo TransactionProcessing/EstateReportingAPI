@@ -32,6 +32,9 @@ public class ContractProduct
 {
     [JsonProperty("contract_id")]
     public Guid ContractId { get; set; }
+    [JsonProperty("contract_product_reporting_id")]
+    public Int32 ContractProductReportingId { get; set; }
+
     [JsonProperty("product_id")]
     public Guid ProductId { get; set; }
     [JsonProperty("product_name")]
@@ -49,6 +52,9 @@ public class ContractProduct
 public class ContractProductTransactionFee {
     [JsonProperty("transaction_fee_id")] 
     public Guid TransactionFeeId { get; set; }
+    [JsonProperty("contract_product_transaction_fee_reporting_id")]
+    public Int32 ContractProductTransactionFeeReportingId { get; set; }
+
     [JsonProperty("description")] 
     public string? Description { get; set; }
     [JsonProperty("calculation_type")] 
