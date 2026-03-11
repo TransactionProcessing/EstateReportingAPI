@@ -79,7 +79,10 @@ public class ContractEndPointTests : ControllerTestsBase {
         contracts.SingleOrDefault(c => c.Description == "Healthcare Centre 1 Contract").ShouldNotBeNull();
         contracts.SingleOrDefault(c => c.Description == "PataPawa PostPay Contract").ShouldNotBeNull();
         contracts.SingleOrDefault(c => c.Description == "PataPawa PrePay Contract").ShouldNotBeNull();
-
+        foreach (Contract contract in contracts) {
+            contract.Products.Any(cp => cp.ContractProductReportingId != 0).ShouldBeTrue();
+            contract.Products.ToList().ForEach(cp => cp.TransactionFees.Any(t => t.ContractProductTransactionFeeReportingId != 0).ShouldBeTrue());
+        }
     }
 
     [Fact]
@@ -111,7 +114,9 @@ public class ContractEndPointTests : ControllerTestsBase {
         Contract contract = result.Data;
         contract.ShouldNotBeNull();
         contract.Description.ShouldBe("PataPawa PrePay Contract");
-
+        contract.ContractReportingId.ShouldNotBe(0);
+        contract.Products.Any(cp => cp.ContractProductReportingId != 0).ShouldBeTrue();
+        contract.Products.ToList().ForEach(cp => cp.TransactionFees.Any(t => t.ContractProductTransactionFeeReportingId != 0).ShouldBeTrue());
     }
 
     protected override async Task ClearStandingData() {

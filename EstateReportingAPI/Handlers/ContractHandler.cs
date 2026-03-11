@@ -51,12 +51,14 @@ public static class ContractHandler {
                 ProductName = p.ProductName,
                 ProductType = p.ProductType,
                 Value = p.Value,
+                ContractProductReportingId = p.ContractProductReportingId,
                 TransactionFees = p.TransactionFees.Select(f => new DataTransferObjects.ContractProductTransactionFee {
                     Description = f.Description,
                     Value = f.Value,
                     CalculationType = f.CalculationType,
                     FeeType = f.FeeType,
-                    TransactionFeeId = f.TransactionFeeId
+                    TransactionFeeId = f.TransactionFeeId,
+                    ContractProductTransactionFeeReportingId = f.ContractProductTransactionFeeReportingId
                 }).ToList()
             }).ToList()
         }).ToList());
@@ -87,13 +89,15 @@ public static class ContractHandler {
                 ProductName = p.ProductName,
                 ProductType = p.ProductType,
                 Value = p.Value,
+                ContractProductReportingId = p.ContractProductReportingId,
                 TransactionFees = p.TransactionFees.Select(f => new DataTransferObjects.ContractProductTransactionFee
                 {
                     Description = f.Description,
                     Value = f.Value,
                     CalculationType = f.CalculationType,
                     FeeType = f.FeeType,
-                    TransactionFeeId = f.TransactionFeeId
+                    TransactionFeeId = f.TransactionFeeId,
+                    ContractProductTransactionFeeReportingId = f.ContractProductTransactionFeeReportingId
                 }).ToList()
             }).ToList()
         });
