@@ -57,8 +57,7 @@ namespace EstateReportingAPI
 
             ConfigurationReader.Initialise(Configuration);
             app.UseMiddleware<TenantMiddleware>();
-            app.AddRequestLogging();
-            app.AddResponseLogging();
+            app.AddRequestResponseLogging();
             app.AddExceptionHandler();
 
             app.UseRouting();
