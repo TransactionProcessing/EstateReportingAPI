@@ -280,7 +280,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         var comparisonDateTransactions = new List<Transaction>();
         //DatabaseHelper helper1 = new DatabaseHelper(context);
         // TODO: make counts dynamic
-        DateTime todaysDateTime = DateTime.Now;
+        DateTime todaysDateTime = DateTime.Now.Date;
         //todaysDateTime = todaysDateTime.AddHours(12).AddMinutes(30);
 
         Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 3 }, { "Test Merchant 2", 6 }, { "Test Merchant 3", 2 }, { "Test Merchant 4", 0 } };
@@ -293,7 +293,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
                 foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
                     var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
                     for (int i = 0; i < transactionCount; i++) {
-                        Transaction transaction = await this.helper.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
+                        Transaction transaction = await this.helper.BuildTransactionX(todaysDateTime, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
                         todaysTransactions.Add(transaction);
                     }
                 }
@@ -309,7 +309,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
                 foreach ((Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId) product in productList) {
                     var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
                     for (int i = 0; i < transactionCount; i++) {
-                        Transaction transaction = await this.helper.BuildTransactionX(comparisonDate.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
+                        Transaction transaction = await this.helper.BuildTransactionX(comparisonDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
                         comparisonDateTransactions.Add(transaction);
                     }
                 }
