@@ -646,10 +646,10 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             await ClearStandingData();
 
             // Last Hour
-            await helper.AddMerchant("Test Estate", "Merchant 1", todaysDateTime.AddMinutes(-10));
-            await helper.AddMerchant("Test Estate", "Merchant 2", todaysDateTime.AddMinutes(-10));
-            await helper.AddMerchant("Test Estate", "Merchant 3", todaysDateTime.AddMinutes(-10));
-            await helper.AddMerchant("Test Estate", "Merchant 4", todaysDateTime.AddMinutes(-10));
+            await helper.AddMerchant("Test Estate", "Merchant 1", todaysDateTime);
+            await helper.AddMerchant("Test Estate", "Merchant 2", todaysDateTime);
+            await helper.AddMerchant("Test Estate", "Merchant 3", todaysDateTime);
+            await helper.AddMerchant("Test Estate", "Merchant 4", todaysDateTime);
 
             // Yesterday             
             await helper.AddMerchant("Test Estate", "Merchant 5", todaysDateTime.AddDays(-1));
@@ -736,10 +736,10 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
             await ClearStandingData();
 
             // Last Hour
-            await helper.AddMerchant("Test Estate", "Merchant 1", todaysDateTime.AddMinutes(-10));
-            await helper.AddMerchant("Test Estate", "Merchant 2", todaysDateTime.AddMinutes(-10));
-            await helper.AddMerchant("Test Estate", "Merchant 3", todaysDateTime.AddMinutes(-10));
-            await helper.AddMerchant("Test Estate", "Merchant 4", todaysDateTime.AddMinutes(-10));
+            await helper.AddMerchant("Test Estate", "Merchant 1", todaysDateTime);
+            await helper.AddMerchant("Test Estate", "Merchant 2", todaysDateTime);
+            await helper.AddMerchant("Test Estate", "Merchant 3", todaysDateTime);
+            await helper.AddMerchant("Test Estate", "Merchant 4", todaysDateTime);
 
             // Yesterday             
             await helper.AddMerchant("Test Estate", "Merchant 5", todaysDateTime.AddDays(-1));
@@ -1324,7 +1324,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
                     foreach ((Guid productId, String productName, Decimal? productValue) product in productList) {
                         var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
                         for (int i = 0; i < transactionCount; i++) {
-                            Transaction transaction = await helper1.BuildTransactionX(todaysDateTime.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
+                            Transaction transaction = await helper1.BuildTransactionX(todaysDateTime, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
                             todaysTransactions.Add(transaction);
                         }
                     }
@@ -1340,7 +1340,7 @@ public class FactTransactionsControllerTests_ProductsTests : FactTransactionsCon
                     foreach ((Guid productId, String productName, Decimal? productValue) product in productList) {
                         var transactionCount = transactionCounts.Single(m => m.Key == merchant.Name).Value;
                         for (int i = 0; i < transactionCount; i++) {
-                            Transaction transaction = await helper1.BuildTransactionX(comparisonDate.AddHours(-1), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
+                            Transaction transaction = await helper1.BuildTransactionX(comparisonDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "1009", product.productValue);
                             comparisonDateTransactions.Add(transaction);
                         }
                     }
