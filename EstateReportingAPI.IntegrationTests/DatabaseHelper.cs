@@ -380,8 +380,8 @@ public class DatabaseHelper{
             EstateId = estate.EstateId,
             MerchantId = Guid.NewGuid(),
             Name = merchantName,
-            LastSaleDate = lastSaleDateTime.Date,
-            LastSaleDateTime = lastSaleDateTime
+            //LastSaleDate = lastSaleDateTime.Date,
+            //LastSaleDateTime = lastSaleDateTime
         };
 
         await this.Context.Merchants.AddAsync(merchant);
@@ -452,7 +452,8 @@ public class DatabaseHelper{
         MerchantBalanceProjectionState state = new MerchantBalanceProjectionState {
             Balance = balance,
             MerchantId = savedMerchant.MerchantId,
-            MerchantName = savedMerchant.Name
+            MerchantName = savedMerchant.Name,
+            LastSale = lastSaleDateTime,
         };
         await this.Context.MerchantBalanceProjectionState.AddAsync(state);
 

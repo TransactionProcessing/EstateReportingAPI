@@ -569,7 +569,7 @@ public class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        var merchantsQuery = context.Merchants.Select(m => new { m.Name, m.LastSaleDate, m.LastSaleDateTime });
+        var merchantsQuery = context.MerchantBalanceProjectionState.Select(m => new { m.MerchantName, m.LastSale });
         var merchantsQueryResult = await ExecuteQuerySafeToList(merchantsQuery, cancellationToken, "Error retrieving merchants for KPI's");
         if (merchantsQueryResult.IsFailed)
             return ResultHelpers.CreateFailure(merchantsQueryResult);
@@ -578,11 +578,11 @@ public class ReportingManager : IReportingManager {
 
         DateTime now = DateTime.Now;
 
-        Int32 merchantsWithSaleInLastHour = (from m in merchants where m.LastSaleDateTime >= now.AddHours(-1) && m.LastSaleDateTime <= now select m).Count();
+        Int32 merchantsWithSaleInLastHour = (from m in merchants where m.LastSale >= now.AddHours(-1) && m.LastSale <= now select m).Count();
 
-        Int32 merchantsWithNoSaleToday = (from m in merchants where m.LastSaleDate >= now.Date.AddDays(-7) && m.LastSaleDate <= now.Date.AddDays(-1) select m).Count();
+        Int32 merchantsWithNoSaleToday = (from m in merchants where m.LastSale >= now.AddDays(-7) && m.LastSale <= now.AddDays(-1) select m).Count();
 
-        Int32 merchantsWithNoSaleInLast7Days = (from m in merchants where m.LastSaleDate <= now.Date.AddDays(-7) select m).Count();
+        Int32 merchantsWithNoSaleInLast7Days = (from m in merchants where m.LastSale <= now.AddDays(-7) select m).Count();
 
         MerchantKpi response = new() { MerchantsWithSaleInLastHour = merchantsWithSaleInLastHour, MerchantsWithNoSaleToday = merchantsWithNoSaleToday, MerchantsWithNoSaleInLast7Days = merchantsWithNoSaleInLast7Days };
 
