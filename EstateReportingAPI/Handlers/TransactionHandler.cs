@@ -103,7 +103,8 @@ public static class TransactionHandler {
                         OperatorId = t.OperatorId,
                         MerchantReportingId = t.MerchantReportingId,
                         ProductId = t.ProductId,
-                        ProductReportingId = t.ProductReportingId
+                        ProductReportingId = t.ProductReportingId,
+                        TransactionNumber = t.TransactionNumber
 
                 })
                     .ToList()

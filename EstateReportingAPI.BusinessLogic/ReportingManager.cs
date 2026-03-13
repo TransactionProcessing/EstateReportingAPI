@@ -705,6 +705,7 @@ public class ReportingManager : IReportingManager {
                 Value = t.TransactionAmount,
                 FeeValue = msf != null ? msf.FeeValue : 0m,
                 SettlementId = s != null ? s.SettlementId : Guid.Empty,
+                TransactionNumber = Int32.Parse(t.TransactionNumber)
             };
     }
 
@@ -737,7 +738,8 @@ public class ReportingManager : IReportingManager {
                 Status = q.Status,
                 Value = q.Value,
                 TotalFees = q.FeeValue,
-                SettlementReference = q.SettlementId.ToString()
+                SettlementReference = q.SettlementId.ToString(),
+                TransactionNumber = q.TransactionNumber
             }).ToList(),
             Summary = new TransactionDetailSummary { TransactionCount = queryResults.Count(), TotalValue = queryResults.Sum(q => q.Value), TotalFees = queryResults.Sum(q => q.FeeValue) }
         };
@@ -1466,7 +1468,8 @@ public class ReportingManager : IReportingManager {
             public decimal Value { get; init; }
             public decimal FeeValue { get; init; }
             public Guid SettlementId { get; init; }
-        }
+            public Int32 TransactionNumber { get; init; }
+    }
 
         private sealed class OperatorTransactionData {
             public Guid MerchantId { get; init; }
