@@ -17,4 +17,5 @@ public class TransactionDetail {
     public Decimal Value { get; set; }
     public Decimal TotalFees { get; set; }
     public String SettlementReference { get; set; }
+    public Int32 TransactionNumber { get; set; }
 }

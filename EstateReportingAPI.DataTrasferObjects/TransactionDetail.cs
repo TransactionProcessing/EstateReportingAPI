@@ -37,4 +37,6 @@ public class TransactionDetail
     public Decimal TotalFees { get; set; }
     [JsonProperty("settlement_reference")]
     public String SettlementReference { get; set; }
+    [JsonProperty("transaction_number")]
+    public Int32 TransactionNumber { get; set; }
 }

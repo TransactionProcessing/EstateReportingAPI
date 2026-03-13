@@ -393,6 +393,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         foreach (Transaction transaction in transactions) {
             var foundTxn = transactionDetailReportResponse.Transactions.SingleOrDefault(t => t.Id == transaction.TransactionId);
             foundTxn.ShouldNotBeNull(transaction.TransactionId.ToString());
+            foundTxn.TransactionNumber.ShouldNotBe(0);
         }
     }
 
