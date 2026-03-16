@@ -20,5 +20,6 @@ RUN dotnet publish "EstateReportingAPI.csproj" -c Release -o /app/publish /p:Use
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=publish --chown=10001:10001 /app/publish .
+USER 10001:10001
 ENTRYPOINT ["dotnet", "EstateReportingAPI.dll"]
