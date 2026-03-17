@@ -1014,7 +1014,7 @@ public class ReportingManager : IReportingManager {
         var merchantStateQueryResult = await ExecuteQuerySafeSingleOrDefault(context.MerchantBalanceProjectionState.Where(ms => ms.MerchantId == request.MerchantId), cancellationToken, "Error getting merchant state");
         if (merchantStateQueryResult.IsFailed) return ResultHelpers.CreateFailure(merchantStateQueryResult);
 
-        return Result.Success(MapMerchant(merchantQueryResult.Data, merchantStateQueryResult.Data.Balance));
+        return Result.Success(ModelFactory.ConvertFrom(merchantQueryResult.Data, merchantStateQueryResult.Data.Balance));
     }
 
     private static IQueryable<MerchantData> BuildMerchantQuery(EstateManagementContext context,
@@ -1052,32 +1052,8 @@ public class ReportingManager : IReportingManager {
                       .Where(m => m.MerchantId == merchantId);
     }
 
-    private static Merchant MapMerchant(MerchantData merchant,
-                                        decimal balance) {
-        return new Merchant {
-            Balance = balance,
-            CreatedDateTime = merchant.CreatedDateTime,
-            Name = merchant.Name,
-            Reference = merchant.Reference,
-            MerchantId = merchant.MerchantId,
-            MerchantReportingId = merchant.MerchantReportingId,
-            SettlementSchedule = merchant.SettlementSchedule,
-            AddressId = merchant.AddressInfo.AddressId,
-            AddressLine1 = merchant.AddressInfo.AddressLine1,
-            AddressLine2 = merchant.AddressInfo.AddressLine2,
-            Town = merchant.AddressInfo.Town,
-            Region = merchant.AddressInfo.Region,
-            PostCode = merchant.AddressInfo.PostalCode,
-            Country = merchant.AddressInfo.Country,
-            ContactId = merchant.ContactInfo.ContactId,
-            ContactName = merchant.ContactInfo.Name,
-            ContactEmail = merchant.ContactInfo.EmailAddress,
-            ContactPhone = merchant.ContactInfo.PhoneNumber
-        };
-    }
-
     public async Task<Result<List<MerchantOperator>>> GetMerchantOperators(MerchantQueries.GetMerchantOperatorsQuery request,
-                                                                           CancellationToken cancellationToken) {
+                                                                            CancellationToken cancellationToken) {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
@@ -1537,34 +1513,6 @@ public class ReportingManager : IReportingManager {
             public int FeeType { get; init; }
             public decimal Value { get; init; }
             public bool IsEnabled { get; init; }
-        }
-
-        private sealed class MerchantData {
-            public Guid MerchantId { get; init; }
-            public int MerchantReportingId { get; init; }
-            public string? Name { get; init; }
-            public DateTime CreatedDateTime { get; init; }
-            public string? Reference { get; init; }
-            public int SettlementSchedule { get; init; }
-            public MerchantAddressData? AddressInfo { get; init; }
-            public MerchantContactData? ContactInfo { get; init; }
-        }
-
-        private sealed class MerchantAddressData {
-            public Guid AddressId { get; init; }
-            public string? AddressLine1 { get; init; }
-            public string? AddressLine2 { get; init; }
-            public string? Country { get; init; }
-            public string? PostalCode { get; init; }
-            public string? Region { get; init; }
-            public string? Town { get; init; }
-        }
-
-        private sealed class MerchantContactData {
-            public Guid ContactId { get; init; }
-            public string? Name { get; init; }
-            public string? EmailAddress { get; init; }
-            public string? PhoneNumber { get; init; }
         }
 
         private sealed class ProductPerformanceItemData {
