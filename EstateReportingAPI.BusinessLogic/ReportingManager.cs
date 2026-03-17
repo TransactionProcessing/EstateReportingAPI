@@ -1005,40 +1005,57 @@ public class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-
-        var merchantQuery = context.Merchants.Select(m => new {
-            MerchantReportingId = m.MerchantReportingId,
-            Name = m.Name,
-            CreatedDateTime = m.CreatedDateTime,
-            MerchantId = m.MerchantId,
-            Reference = m.Reference,
-            m.SettlementSchedule,
-            AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId).OrderByDescending(ma => ma.CreatedDateTime).Select(ma => new {
-                ma.AddressId,
-                ma.AddressLine1,
-                ma.AddressLine2,
-                ma.Country,
-                ma.PostalCode,
-                ma.Region,
-                ma.Town
-            }).FirstOrDefault(),
-            ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId).OrderByDescending(mc => mc.CreatedDateTime).Select(mc => new { mc.ContactId, mc.Name, mc.EmailAddress, mc.PhoneNumber }).FirstOrDefault()
-        }).Where(m => m.MerchantId == request.MerchantId);
-
+        var merchantQuery = BuildMerchantQuery(context, request.MerchantId);
         var merchantQueryResult = await ExecuteQuerySafeSingleOrDefault(merchantQuery, cancellationToken, "Error getting merchant");
+        if (merchantQueryResult.IsFailed) {
+            return ResultHelpers.CreateFailure(merchantQueryResult);
+        }
 
-        if (merchantQueryResult.IsFailed) return ResultHelpers.CreateFailure(merchantQueryResult);
-
-        var merchant = merchantQueryResult.Data;
-
-        // Get the merchant state to get the balance
         var merchantStateQueryResult = await ExecuteQuerySafeSingleOrDefault(context.MerchantBalanceProjectionState.Where(ms => ms.MerchantId == request.MerchantId), cancellationToken, "Error getting merchant state");
         if (merchantStateQueryResult.IsFailed) return ResultHelpers.CreateFailure(merchantStateQueryResult);
-        var merchantState = merchantStateQueryResult.Data;
-        
-        // Ok now enumerate the results
-        Merchant result = new() {
-            Balance = merchantState.Balance,
+
+        return Result.Success(MapMerchant(merchantQueryResult.Data, merchantStateQueryResult.Data.Balance));
+    }
+
+    private static IQueryable<MerchantData> BuildMerchantQuery(EstateManagementContext context,
+                                                               Guid merchantId) {
+        return context.Merchants
+                      .Select(m => new MerchantData {
+                          MerchantReportingId = m.MerchantReportingId,
+                          Name = m.Name,
+                          CreatedDateTime = m.CreatedDateTime,
+                          MerchantId = m.MerchantId,
+                          Reference = m.Reference,
+                          SettlementSchedule = m.SettlementSchedule,
+                          AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId)
+                                               .OrderByDescending(ma => ma.CreatedDateTime)
+                                               .Select(ma => new MerchantAddressData {
+                                                   AddressId = ma.AddressId,
+                                                   AddressLine1 = ma.AddressLine1,
+                                                   AddressLine2 = ma.AddressLine2,
+                                                   Country = ma.Country,
+                                                   PostalCode = ma.PostalCode,
+                                                   Region = ma.Region,
+                                                   Town = ma.Town
+                                               })
+                                               .FirstOrDefault(),
+                          ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId)
+                                               .OrderByDescending(mc => mc.CreatedDateTime)
+                                               .Select(mc => new MerchantContactData {
+                                                   ContactId = mc.ContactId,
+                                                   Name = mc.Name,
+                                                   EmailAddress = mc.EmailAddress,
+                                                   PhoneNumber = mc.PhoneNumber
+                                               })
+                                               .FirstOrDefault()
+                      })
+                      .Where(m => m.MerchantId == merchantId);
+    }
+
+    private static Merchant MapMerchant(MerchantData merchant,
+                                        decimal balance) {
+        return new Merchant {
+            Balance = balance,
             CreatedDateTime = merchant.CreatedDateTime,
             Name = merchant.Name,
             Reference = merchant.Reference,
@@ -1057,8 +1074,6 @@ public class ReportingManager : IReportingManager {
             ContactEmail = merchant.ContactInfo.EmailAddress,
             ContactPhone = merchant.ContactInfo.PhoneNumber
         };
-
-        return Result.Success(result);
     }
 
     public async Task<Result<List<MerchantOperator>>> GetMerchantOperators(MerchantQueries.GetMerchantOperatorsQuery request,
@@ -1522,6 +1537,34 @@ public class ReportingManager : IReportingManager {
             public int FeeType { get; init; }
             public decimal Value { get; init; }
             public bool IsEnabled { get; init; }
+        }
+
+        private sealed class MerchantData {
+            public Guid MerchantId { get; init; }
+            public int MerchantReportingId { get; init; }
+            public string? Name { get; init; }
+            public DateTime CreatedDateTime { get; init; }
+            public string? Reference { get; init; }
+            public int SettlementSchedule { get; init; }
+            public MerchantAddressData? AddressInfo { get; init; }
+            public MerchantContactData? ContactInfo { get; init; }
+        }
+
+        private sealed class MerchantAddressData {
+            public Guid AddressId { get; init; }
+            public string? AddressLine1 { get; init; }
+            public string? AddressLine2 { get; init; }
+            public string? Country { get; init; }
+            public string? PostalCode { get; init; }
+            public string? Region { get; init; }
+            public string? Town { get; init; }
+        }
+
+        private sealed class MerchantContactData {
+            public Guid ContactId { get; init; }
+            public string? Name { get; init; }
+            public string? EmailAddress { get; init; }
+            public string? PhoneNumber { get; init; }
         }
 
         private sealed class ProductPerformanceItemData {
