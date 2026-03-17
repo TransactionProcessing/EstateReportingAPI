@@ -26,4 +26,24 @@ internal static class ModelFactory {
             ContactPhone = merchant.ContactInfo.PhoneNumber
         };
     }
+
+    internal static Merchant ConvertFrom(MerchantWithAddressData merchant,
+                                         decimal balance) {
+        return new Merchant {
+            Balance = balance,
+            CreatedDateTime = merchant.Merchant.CreatedDateTime,
+            Name = merchant.Merchant.Name,
+            Region = merchant.MerchantAddress.Region,
+            Reference = merchant.Merchant.Reference,
+            PostCode = merchant.MerchantAddress.PostalCode,
+            SettlementSchedule = merchant.Merchant.SettlementSchedule,
+            MerchantId = merchant.Merchant.MerchantId,
+            AddressId = merchant.MerchantAddress.AddressId,
+            AddressLine1 = merchant.MerchantAddress.AddressLine1,
+            AddressLine2 = merchant.MerchantAddress.AddressLine2,
+            Town = merchant.MerchantAddress.Town,
+            Country = merchant.MerchantAddress.Country,
+            MerchantReportingId = merchant.Merchant.MerchantReportingId
+        };
+    }
 }
