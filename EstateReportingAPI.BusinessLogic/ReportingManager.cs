@@ -937,30 +937,7 @@ public class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-
-        var merchantWithAddresses = context.Merchants.Where(m => m.EstateId == request.EstateId).GroupJoin(context.MerchantAddresses, m => m.MerchantId, a => a.MerchantId, (m,
-                                                                                                                                                                             addresses) => new { Merchant = m, Address = addresses.First() }).AsQueryable();
-
-        // Now apply the other filters from request.QueryOptions
-        if (String.IsNullOrEmpty(request.QueryOptions.Name) == false) {
-            merchantWithAddresses = merchantWithAddresses.Where(m => m.Merchant.Name.Contains(request.QueryOptions.Name)).AsQueryable();
-        }
-
-        if (String.IsNullOrEmpty(request.QueryOptions.Reference) == false) {
-            merchantWithAddresses = merchantWithAddresses.Where(m => m.Merchant.Reference == request.QueryOptions.Reference).AsQueryable();
-        }
-
-        if (request.QueryOptions.SettlementSchedule > 0) {
-            merchantWithAddresses = merchantWithAddresses.Where(m => m.Merchant.SettlementSchedule == request.QueryOptions.SettlementSchedule).AsQueryable();
-        }
-
-        if (String.IsNullOrEmpty(request.QueryOptions.Region) == false) {
-            merchantWithAddresses = merchantWithAddresses.Where(m => m.Address.Region.Contains(request.QueryOptions.Region)).AsQueryable();
-        }
-
-        if (String.IsNullOrEmpty(request.QueryOptions.PostCode) == false) {
-            merchantWithAddresses = merchantWithAddresses.Where(m => m.Address.PostalCode == request.QueryOptions.PostCode).AsQueryable();
-        }
+        var merchantWithAddresses = ApplyMerchantFilters(BuildMerchantWithAddressQuery(context, request.EstateId), request.QueryOptions);
 
         var queryResults = await ExecuteQuerySafeToList(merchantWithAddresses, cancellationToken, "Error retrieving merchants");
 
@@ -976,29 +953,7 @@ public class ReportingManager : IReportingManager {
         if (balanceQueryResults.IsFailed)
             return ResultHelpers.CreateFailure(balanceQueryResults);
 
-        // Ok now enumerate the results
-        List<Merchant> response = new();
-        foreach (var queryResult in merchants) {
-            response.Add(new Merchant
-            {
-                Balance = balanceQueryResults.Data.Single(b => b.MerchantId == queryResult.Merchant.MerchantId).Balance,
-                CreatedDateTime = queryResult.Merchant.CreatedDateTime,
-                Name = queryResult.Merchant.Name,
-                Region = queryResult.Address.Region,
-                Reference = queryResult.Merchant.Reference,
-                PostCode = queryResult.Address.PostalCode,
-                SettlementSchedule = queryResult.Merchant.SettlementSchedule,
-                MerchantId = queryResult.Merchant.MerchantId,
-                AddressId = queryResult.Address.AddressId,
-                AddressLine1 = queryResult.Address.AddressLine1,
-                AddressLine2 = queryResult.Address.AddressLine2,
-                Town = queryResult.Address.Town,
-                Country = queryResult.Address.Country,
-                MerchantReportingId = queryResult.Merchant.MerchantReportingId
-            });
-        }
-
-        return Result.Success(response);
+        return Result.Success(BuildMerchantResponse(merchants, balanceQueryResults.Data));
     }
 
     public async Task<Result<Merchant>> GetMerchant(MerchantQueries.GetMerchantQuery request, CancellationToken cancellationToken) {
@@ -1050,6 +1005,56 @@ public class ReportingManager : IReportingManager {
                                                .FirstOrDefault()
                       })
                       .Where(m => m.MerchantId == merchantId);
+    }
+
+    private static IQueryable<MerchantWithAddressData> BuildMerchantWithAddressQuery(EstateManagementContext context,
+                                                                                      Guid estateId) {
+        return context.Merchants
+                      .Where(m => m.EstateId == estateId)
+                      .GroupJoin(context.MerchantAddresses,
+                                 m => m.MerchantId,
+                                 a => a.MerchantId,
+                                 (m, addresses) => new MerchantWithAddressData { Merchant = m, Address = addresses.First() });
+    }
+
+    private static IQueryable<MerchantWithAddressData> ApplyMerchantFilters(IQueryable<MerchantWithAddressData> query,
+                                                                            MerchantQueries.MerchantQueryOptions queryOptions) {
+        if (String.IsNullOrEmpty(queryOptions.Name) == false)
+            query = query.Where(m => m.Merchant.Name.Contains(queryOptions.Name));
+
+        if (String.IsNullOrEmpty(queryOptions.Reference) == false)
+            query = query.Where(m => m.Merchant.Reference == queryOptions.Reference);
+
+        if (queryOptions.SettlementSchedule > 0)
+            query = query.Where(m => m.Merchant.SettlementSchedule == queryOptions.SettlementSchedule);
+
+        if (String.IsNullOrEmpty(queryOptions.Region) == false)
+            query = query.Where(m => m.Address.Region.Contains(queryOptions.Region));
+
+        if (String.IsNullOrEmpty(queryOptions.PostCode) == false)
+            query = query.Where(m => m.Address.PostalCode == queryOptions.PostCode);
+
+        return query;
+    }
+
+    private static List<Merchant> BuildMerchantResponse(List<MerchantWithAddressData> merchants,
+                                                        List<MerchantBalanceProjectionState> balances) {
+        return merchants.Select(merchant => new Merchant {
+            Balance = balances.Single(b => b.MerchantId == merchant.Merchant.MerchantId).Balance,
+            CreatedDateTime = merchant.Merchant.CreatedDateTime,
+            Name = merchant.Merchant.Name,
+            Region = merchant.Address.Region,
+            Reference = merchant.Merchant.Reference,
+            PostCode = merchant.Address.PostalCode,
+            SettlementSchedule = merchant.Merchant.SettlementSchedule,
+            MerchantId = merchant.Merchant.MerchantId,
+            AddressId = merchant.Address.AddressId,
+            AddressLine1 = merchant.Address.AddressLine1,
+            AddressLine2 = merchant.Address.AddressLine2,
+            Town = merchant.Address.Town,
+            Country = merchant.Address.Country,
+            MerchantReportingId = merchant.Merchant.MerchantReportingId
+        }).ToList();
     }
 
     public async Task<Result<List<MerchantOperator>>> GetMerchantOperators(MerchantQueries.GetMerchantOperatorsQuery request,
@@ -1426,6 +1431,11 @@ public class ReportingManager : IReportingManager {
             public decimal TotalValue { get; init; }
             public int AuthorisedCount { get; init; }
             public int DeclinedCount { get; init; }
+        }
+
+        private sealed class MerchantWithAddressData {
+            public TransactionProcessor.Database.Entities.Merchant Merchant { get; init; }
+            public MerchantAddress Address { get; init; }
         }
 
         private sealed class MerchantTransactionFinalProjection {
