@@ -1039,8 +1039,16 @@ public class ReportingManager : IReportingManager {
 
     private static List<Merchant> BuildMerchantResponse(List<MerchantWithAddressData> merchants,
                                                         List<MerchantBalanceProjectionState> balances) {
+        Dictionary<Guid, decimal> balanceLookup = new();
+        foreach (var balance in balances) {
+            if (balanceLookup.TryAdd(balance.MerchantId, balance.Balance) == false)
+                throw new InvalidOperationException("Sequence contains more than one matching element");
+        }
+
         return merchants.Select(merchant => new Merchant {
-            Balance = balances.Single(b => b.MerchantId == merchant.Merchant.MerchantId).Balance,
+            Balance = balanceLookup.TryGetValue(merchant.Merchant.MerchantId, out var balance)
+                ? balance
+                : throw new InvalidOperationException("Sequence contains no matching element"),
             CreatedDateTime = merchant.Merchant.CreatedDateTime,
             Name = merchant.Merchant.Name,
             Region = merchant.Address.Region,
