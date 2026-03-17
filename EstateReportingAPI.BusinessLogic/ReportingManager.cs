@@ -1001,70 +1001,59 @@ public class ReportingManager : IReportingManager {
         return Result.Success(response);
     }
 
-    public async Task<Result<Merchant>> GetMerchant(MerchantQueries.GetMerchantQuery request,
-                                                    CancellationToken cancellationToken) {
+    public async Task<Result<Merchant>> GetMerchant(MerchantQueries.GetMerchantQuery request, CancellationToken cancellationToken) {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-
-        var merchantQuery = context.Merchants.Select(m => new {
-            MerchantReportingId = m.MerchantReportingId,
-            Name = m.Name,
-            CreatedDateTime = m.CreatedDateTime,
-            MerchantId = m.MerchantId,
-            Reference = m.Reference,
-            m.SettlementSchedule,
-            AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId).OrderByDescending(ma => ma.CreatedDateTime).Select(ma => new {
-                ma.AddressId,
-                ma.AddressLine1,
-                ma.AddressLine2,
-                ma.Country,
-                ma.PostalCode,
-                ma.Region,
-                ma.Town
-            }).FirstOrDefault(),
-            ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId).OrderByDescending(mc => mc.CreatedDateTime).Select(mc => new { mc.ContactId, mc.Name, mc.EmailAddress, mc.PhoneNumber }).FirstOrDefault()
-        }).Where(m => m.MerchantId == request.MerchantId);
-
+        var merchantQuery = BuildMerchantQuery(context, request.MerchantId);
         var merchantQueryResult = await ExecuteQuerySafeSingleOrDefault(merchantQuery, cancellationToken, "Error getting merchant");
-
-        if (merchantQueryResult.IsFailed)
+        if (merchantQueryResult.IsFailed) {
             return ResultHelpers.CreateFailure(merchantQueryResult);
+        }
 
-        var merchant = merchantQueryResult.Data;
-
-        // Get the merchant state to get the balance
         var merchantStateQueryResult = await ExecuteQuerySafeSingleOrDefault(context.MerchantBalanceProjectionState.Where(ms => ms.MerchantId == request.MerchantId), cancellationToken, "Error getting merchant state");
         if (merchantStateQueryResult.IsFailed) return ResultHelpers.CreateFailure(merchantStateQueryResult);
-        var merchantState = merchantStateQueryResult.Data;
-        
-        // Ok now enumerate the results
-        Merchant result = new() {
-            Balance = merchantState.Balance,
-            CreatedDateTime = merchant.CreatedDateTime,
-            Name = merchant.Name,
-            Reference = merchant.Reference,
-            MerchantId = merchant.MerchantId,
-            MerchantReportingId = merchant.MerchantReportingId,
-            SettlementSchedule = merchant.SettlementSchedule,
-            AddressId = merchant.AddressInfo.AddressId,
-            AddressLine1 = merchant.AddressInfo.AddressLine1,
-            AddressLine2 = merchant.AddressInfo.AddressLine2,
-            Town = merchant.AddressInfo.Town,
-            Region = merchant.AddressInfo.Region,
-            PostCode = merchant.AddressInfo.PostalCode,
-            Country = merchant.AddressInfo.Country,
-            ContactId = merchant.ContactInfo.ContactId,
-            ContactName = merchant.ContactInfo.Name,
-            ContactEmail = merchant.ContactInfo.EmailAddress,
-            ContactPhone = merchant.ContactInfo.PhoneNumber
-        };
 
-        return Result.Success(result);
+        return Result.Success(ModelFactory.ConvertFrom(merchantQueryResult.Data, merchantStateQueryResult.Data.Balance));
+    }
+
+    private static IQueryable<MerchantData> BuildMerchantQuery(EstateManagementContext context,
+                                                               Guid merchantId) {
+        return context.Merchants
+                      .Select(m => new MerchantData {
+                          MerchantReportingId = m.MerchantReportingId,
+                          Name = m.Name,
+                          CreatedDateTime = m.CreatedDateTime,
+                          MerchantId = m.MerchantId,
+                          Reference = m.Reference,
+                          SettlementSchedule = m.SettlementSchedule,
+                          AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId)
+                                               .OrderByDescending(ma => ma.CreatedDateTime)
+                                               .Select(ma => new MerchantAddressData {
+                                                   AddressId = ma.AddressId,
+                                                   AddressLine1 = ma.AddressLine1,
+                                                   AddressLine2 = ma.AddressLine2,
+                                                   Country = ma.Country,
+                                                   PostalCode = ma.PostalCode,
+                                                   Region = ma.Region,
+                                                   Town = ma.Town
+                                               })
+                                               .FirstOrDefault(),
+                          ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId)
+                                               .OrderByDescending(mc => mc.CreatedDateTime)
+                                               .Select(mc => new MerchantContactData {
+                                                   ContactId = mc.ContactId,
+                                                   Name = mc.Name,
+                                                   EmailAddress = mc.EmailAddress,
+                                                   PhoneNumber = mc.PhoneNumber
+                                               })
+                                               .FirstOrDefault()
+                      })
+                      .Where(m => m.MerchantId == merchantId);
     }
 
     public async Task<Result<List<MerchantOperator>>> GetMerchantOperators(MerchantQueries.GetMerchantOperatorsQuery request,
-                                                                           CancellationToken cancellationToken) {
+                                                                            CancellationToken cancellationToken) {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
