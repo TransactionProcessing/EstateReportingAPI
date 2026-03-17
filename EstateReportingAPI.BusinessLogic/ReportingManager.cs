@@ -368,8 +368,8 @@ public class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        var todaysSalesQuery = (from t in context.TodayTransactions where t.IsAuthorised == false && t.TransactionType == "Sale" && t.ResponseCode == request.ResponseCode select t.TransactionAmount);
-        var comparisonSalesQuery = (from t in context.TransactionHistory where t.IsAuthorised == false && t.TransactionType == "Sale" && t.TransactionDate == request.ComparisonDate && t.TransactionTime <= DateTime.Now.TimeOfDay && t.ResponseCode == request.ResponseCode select t.TransactionAmount);
+        IQueryable<Decimal> todaysSalesQuery = this.BuildTodaysFailedSalesQuery(context, request.ResponseCode);
+        IQueryable<Decimal> comparisonSalesQuery = this.BuildComparisonFailedSalesQuery(context, request.ComparisonDate, request.ResponseCode);
 
         var todaysSalesQueryResult = await ExecuteQuerySafeToList(todaysSalesQuery, cancellationToken, "Error retrieving todays failed sales");
         if (todaysSalesQueryResult.IsFailed)
@@ -1357,15 +1357,30 @@ public class ReportingManager : IReportingManager {
             return from t in context.TodayTransactions where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == DateTime.Now.Date && t.TransactionTime <= DateTime.Now.TimeOfDay select t;
         }
 
+        private IQueryable<Decimal> BuildTodaysFailedSalesQuery(EstateManagementContext context,
+                                                                String responseCode) {
+            return from t in context.TodayTransactions
+                   where t.IsAuthorised == false && t.TransactionType == "Sale" && t.ResponseCode == responseCode
+                   select t.TransactionAmount;
+        }
+
         private IQueryable<TransactionHistory> BuildComparisonSalesQuery(EstateManagementContext context,
-                                                                         DateTime comparisonDate) {
+                                                                          DateTime comparisonDate) {
             return from t in context.TransactionHistory where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == comparisonDate && t.TransactionTime <= DateTime.Now.TimeOfDay select t;
         }
 
+        private IQueryable<Decimal> BuildComparisonFailedSalesQuery(EstateManagementContext context,
+                                                                    DateTime comparisonDate,
+                                                                    String responseCode) {
+            return from t in context.TransactionHistory
+                   where t.IsAuthorised == false && t.TransactionType == "Sale" && t.TransactionDate == comparisonDate && t.TransactionTime <= DateTime.Now.TimeOfDay && t.ResponseCode == responseCode
+                   select t.TransactionAmount;
+        }
+
         private static async Task<Result<List<ContractProductData>>> LoadProductsAsync(EstateManagementContext context,
-                                                                                       List<Guid> contractIds,
-                                                                                       CancellationToken cancellationToken,
-                                                                                       string stepName) {
+                                                                                        List<Guid> contractIds,
+                                                                                        CancellationToken cancellationToken,
+                                                                                        string stepName) {
             var query = context.ContractProducts.Where(cp => contractIds.Contains(cp.ContractId)).Select(cp => new ContractProductData {
                 ContractProductId = cp.ContractProductId,
                 ContractProductReportingId = cp.ContractProductReportingId,
