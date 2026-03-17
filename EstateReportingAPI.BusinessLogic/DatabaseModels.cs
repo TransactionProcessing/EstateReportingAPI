@@ -29,3 +29,8 @@ internal sealed class MerchantContactData {
     public string? EmailAddress { get; init; }
     public string? PhoneNumber { get; init; }
 }
+
+internal sealed class MerchantWithAddressData {
+    public required TransactionProcessor.Database.Entities.Merchant Merchant { get; init; }
+    public required TransactionProcessor.Database.Entities.MerchantAddress MerchantAddress { get; init; }
+}
