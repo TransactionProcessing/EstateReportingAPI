@@ -1001,8 +1001,7 @@ public class ReportingManager : IReportingManager {
         return Result.Success(response);
     }
 
-    public async Task<Result<Merchant>> GetMerchant(MerchantQueries.GetMerchantQuery request,
-                                                    CancellationToken cancellationToken) {
+    public async Task<Result<Merchant>> GetMerchant(MerchantQueries.GetMerchantQuery request, CancellationToken cancellationToken) {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
@@ -1028,8 +1027,7 @@ public class ReportingManager : IReportingManager {
 
         var merchantQueryResult = await ExecuteQuerySafeSingleOrDefault(merchantQuery, cancellationToken, "Error getting merchant");
 
-        if (merchantQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(merchantQueryResult);
+        if (merchantQueryResult.IsFailed) return ResultHelpers.CreateFailure(merchantQueryResult);
 
         var merchant = merchantQueryResult.Data;
 
