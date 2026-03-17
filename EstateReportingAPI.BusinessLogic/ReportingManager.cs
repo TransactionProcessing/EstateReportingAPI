@@ -20,6 +20,7 @@ using System.Threading;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Calendar = Models.Calendar;
 using Merchant = Models.Merchant;
+using MerchantBalanceProjectionState = TransactionProcessor.ProjectionEngine.Database.Database.Entities.MerchantBalanceProjectionState;
 
 public interface IReportingManager
 {
