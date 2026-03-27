@@ -3,9 +3,6 @@ using OpenIddict.Client;
 using Shared.Middleware;
 
 namespace EstateReportingAPI.Bootstrapper{
-    using System.Diagnostics.CodeAnalysis;
-    using System.Net.Security;
-    using System.Reflection;
     using Common;
     using Lamar;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,8 +10,12 @@ namespace EstateReportingAPI.Bootstrapper{
     using Microsoft.IdentityModel.Tokens;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
+    using OpenIddict.Validation.AspNetCore;
     using Shared.General;
     using Swashbuckle.AspNetCore.Filters;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Net.Security;
+    using System.Reflection;
 
     [ExcludeFromCodeCoverage]
     public class MiddlewareRegistry : ServiceRegistry{
@@ -81,24 +82,35 @@ namespace EstateReportingAPI.Bootstrapper{
         private void ConfigureAuthentication(){
             String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
             if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) != 0){
+                this.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+                });
+
                 this.AddOpenIddict()
-                    // Register the OpenIddict client components.
-                    .AddClient(options => {
-                        // Allow grant_type=client_credentials to be negotiated.
-                        options.AllowClientCredentialsFlow();
+                    .AddValidation(options =>
+                    {
+                        // Same as your Authority
+                        options.SetIssuer(new Uri(ConfigurationReader.GetValue("SecurityConfiguration", "Authority")));
 
-                        // Disable token storage, which is not necessary for non-interactive flows like
-                        // grant_type=password, grant_type=client_credentials or grant_type=refresh_token.
-                        options.DisableTokenStorage();
+                        // Enables discovery and HTTP backchannel support
+                        options.UseSystemNetHttp()
+                            .ConfigureHttpClientHandler(handler =>
+                            {
+                                // DEV ONLY: bypass all certificate errors
+                                handler.ServerCertificateCustomValidationCallback =
+                                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                            });
 
-                        // Register the System.Net.Http integration and use the identity of the current
-                        // assembly as a more specific user agent, which can be useful when dealing with
-                        // providers that use the user agent as a way to throttle requests (e.g Reddit).
-                        options.UseSystemNetHttp().SetProductInformation(typeof(Program).Assembly);
+                        // Register the ASP.NET Core integration
+                        options.UseAspNetCore();
 
-                        // Add a client registration matching the client application definition in the server project.
-                        options.AddRegistration(new OpenIddictClientRegistration { Issuer = new Uri(ConfigurationReader.GetValue("SecurityConfiguration", "Authority"), UriKind.Absolute), ClientId = ConfigurationReader.GetValue("SecurityConfiguration", "ApiName") });
+                        // Optionally set expected audience(s):
+                        options.AddAudiences(ConfigurationReader.GetValue("SecurityConfiguration", "ApiName"));
+
                     });
+
+                this.AddAuthorization();
             }
         }
 
