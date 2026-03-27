@@ -1,4 +1,5 @@
 ﻿using Microsoft.OpenApi;
+using OpenIddict.Client;
 using Shared.Middleware;
 
 namespace EstateReportingAPI.Bootstrapper{
@@ -80,29 +81,24 @@ namespace EstateReportingAPI.Bootstrapper{
         private void ConfigureAuthentication(){
             String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
             if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) != 0){
-                this.AddAuthentication(options => {
-                                           options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                                           options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                                           options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                                       }).AddJwtBearer(options => {
-                                                           options.BackchannelHttpHandler = new HttpClientHandler{
-                                                                                                                     ServerCertificateCustomValidationCallback = (message,
-                                                                                                                                                                  certificate,
-                                                                                                                                                                  chain,
-                                                                                                                                                                  sslPolicyErrors) => true
-                                                                                                                 };
-                                                           options.Authority = ConfigurationReader.GetValue("SecurityConfiguration", "Authority");
-                                                           options.Audience = ConfigurationReader.GetValue("SecurityConfiguration", "ApiName");
+                this.AddOpenIddict()
+                    // Register the OpenIddict client components.
+                    .AddClient(options => {
+                        // Allow grant_type=client_credentials to be negotiated.
+                        options.AllowClientCredentialsFlow();
 
-                                                           options.TokenValidationParameters = new TokenValidationParameters{
-                                                                                                                               ValidateAudience = false,
-                                                                                                                               ValidAudience =
-                                                                                                                                   ConfigurationReader.GetValue("SecurityConfiguration", "ApiName"),
-                                                                                                                               ValidIssuer =
-                                                                                                                                   ConfigurationReader.GetValue("SecurityConfiguration", "Authority"),
-                                                                                                                           };
-                                                           options.IncludeErrorDetails = true;
-                                                       });
+                        // Disable token storage, which is not necessary for non-interactive flows like
+                        // grant_type=password, grant_type=client_credentials or grant_type=refresh_token.
+                        options.DisableTokenStorage();
+
+                        // Register the System.Net.Http integration and use the identity of the current
+                        // assembly as a more specific user agent, which can be useful when dealing with
+                        // providers that use the user agent as a way to throttle requests (e.g Reddit).
+                        options.UseSystemNetHttp().SetProductInformation(typeof(Program).Assembly);
+
+                        // Add a client registration matching the client application definition in the server project.
+                        options.AddRegistration(new OpenIddictClientRegistration { Issuer = new Uri(ConfigurationReader.GetValue("SecurityConfiguration", "Authority"), UriKind.Absolute), ClientId = ConfigurationReader.GetValue("SecurityConfiguration", "ApiName") });
+                    });
             }
         }
 
