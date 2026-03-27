@@ -1,5 +1,4 @@
 ﻿using Microsoft.OpenApi;
-using OpenIddict.Client;
 using Shared.Middleware;
 
 namespace EstateReportingAPI.Bootstrapper{
