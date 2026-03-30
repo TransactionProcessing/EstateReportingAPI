@@ -78,7 +78,6 @@ public class Program{
             });
 
             webBuilder.UseStartup<Startup>();
-            webBuilder.UseConfiguration(Startup.Configuration);
             webBuilder.UseKestrel();
         });
         return hostBuilder;
