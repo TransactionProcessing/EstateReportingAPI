@@ -37,7 +37,7 @@ public class QueryTimingInterceptor : DbCommandInterceptor {
     public override async ValueTask<DbDataReader> ReaderExecutedAsync(DbCommand command,
                                                                       CommandExecutedEventData eventData,
                                                                       DbDataReader result,
-                                                                      CancellationToken cancellationToken = new CancellationToken()) {
+                                                                      CancellationToken cancellationToken) {
         LogIfRequired(command, eventData);
 
         return result;
