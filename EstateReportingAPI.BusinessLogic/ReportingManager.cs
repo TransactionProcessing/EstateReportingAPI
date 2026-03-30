@@ -108,7 +108,7 @@ public class ReportingManager : IReportingManager {
         try {
             T item = await query.SingleOrDefaultAsync(cancellationToken);
 
-            if (item == null)
+            if (EqualityComparer<T>.Default.Equals(item, default(T)))
                 return Result.NotFound(contextMessage);
 
             return Result.Success(item);
