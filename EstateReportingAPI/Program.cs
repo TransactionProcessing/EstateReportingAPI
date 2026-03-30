@@ -55,7 +55,6 @@ public class Program{
     }
 
     private static IHostBuilder ConfigureWebHost(IHostBuilder hostBuilder, String basePath) {
-        IConfigurationRoot config;
         hostBuilder.ConfigureWebHostDefaults(webBuilder =>
         {
             webBuilder.ConfigureAppConfiguration((context, configBuilder) =>
@@ -72,7 +71,7 @@ public class Program{
                     .AddEnvironmentVariables();
 
                 // Keep existing static usage (if you must), and initialise the ConfigurationReader now.
-                Startup.Configuration = configBuilder.Build(); ;
+                Startup.Configuration = configBuilder.Build();
                 ConfigurationReader.Initialise(Startup.Configuration);
 
                 ConfigureSentry(env, webBuilder);
