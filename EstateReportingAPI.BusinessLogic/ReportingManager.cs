@@ -43,6 +43,7 @@ public interface IReportingManager
     Task<Result<List<MerchantOperator>>> GetMerchantOperators(MerchantQueries.GetMerchantOperatorsQuery request, CancellationToken cancellationToken);
     Task<Result<List<MerchantContract>>> GetMerchantContracts(MerchantQueries.GetMerchantContractsQuery request, CancellationToken cancellationToken);
     Task<Result<List<MerchantDevice>>> GetMerchantDevices(MerchantQueries.GetMerchantDevicesQuery request, CancellationToken cancellationToken);
+    Task<Result<List<MerchantOpeningHour>>> GetMerchantOpeningHours(MerchantQueries.GetMerchantOpeningHoursQuery request, CancellationToken cancellationToken);
     Task<Result<Operator>> GetOperator(OperatorQueries.GetOperatorQuery request, CancellationToken cancellationToken);
     Task<Result<TransactionDetailReportResponse>> GetTransactionDetailReport(TransactionQueries.TransactionDetailReportQuery request,
                                                                     CancellationToken cancellationToken);
@@ -58,6 +59,9 @@ public interface IReportingManager
     Task<Result<TodaysSettlement>> GetTodaysSettlement(SettlementQueries.TodaysSettlementQuery request,
                                                        CancellationToken cancellationToken);
     #endregion
+
+    Task<Result<MerchantScheduleResponse>> GetMerchantSchedule(MerchantQueries.GetMerchantScheduleQuery request,
+                                                               CancellationToken cancellationToken);
 }
 
 public class ReportingManager : IReportingManager {
@@ -625,6 +629,47 @@ public class ReportingManager : IReportingManager {
         return Result.Success(operators);
     }
 
+    public async Task<Result<List<MerchantOpeningHour>>> GetMerchantOpeningHours(MerchantQueries.GetMerchantOpeningHoursQuery request,
+                                                                                 CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        var openingHoursQuery = (from mo in context.MerchantOpeningHours
+        where mo.MerchantId == request.MerchantId
+        select new {
+            SundayOpen = mo.SundayOpening,
+            SundayClose = mo.SundayClosing,
+            MondayOpen = mo.MondayOpening,
+            MondayClose = mo.MondayClosing,
+            TuesdayOpen = mo.TuesdayOpening,
+            TuesdayClose = mo.TuesdayClosing,
+            WednesdayOpen = mo.WednesdayOpening,
+            WednesdayClose = mo.WednesdayClosing,
+            ThursdayOpen = mo.ThursdayOpening,
+            ThursdayClose = mo.ThursdayClosing,
+            FridayOpen = mo.FridayOpening,
+            FridayClose = mo.FridayClosing,
+            SaturdayOpen = mo.SaturdayOpening,
+            SaturdayClose = mo.SaturdayClosing,
+        });
+
+        var openingHoursResult = await ExecuteQuerySafeSingleOrDefault(openingHoursQuery, cancellationToken, "Error retrieving merchant opening hours");
+
+        if (openingHoursResult.IsFailed)
+            return ResultHelpers.CreateFailure(openingHoursResult);
+
+        List<MerchantOpeningHour> openingHours = new List<MerchantOpeningHour>();
+        openingHours.Add(new MerchantOpeningHour {OpeningTime = openingHoursResult.Data.SundayOpen, ClosingTime = openingHoursResult.Data.SundayClose, DayOfWeek = DayOfWeek.Sunday, MerchantId = request.MerchantId});
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.MondayOpen, ClosingTime = openingHoursResult.Data.MondayClose, DayOfWeek = DayOfWeek.Monday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.TuesdayOpen, ClosingTime = openingHoursResult.Data.TuesdayClose, DayOfWeek = DayOfWeek.Tuesday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.WednesdayOpen, ClosingTime = openingHoursResult.Data.WednesdayClose, DayOfWeek = DayOfWeek.Wednesday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.ThursdayOpen, ClosingTime = openingHoursResult.Data.ThursdayClose, DayOfWeek = DayOfWeek.Thursday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.FridayOpen, ClosingTime = openingHoursResult.Data.FridayClose, DayOfWeek = DayOfWeek.Friday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.SaturdayOpen, ClosingTime = openingHoursResult.Data.SaturdayClose, DayOfWeek = DayOfWeek.Saturday, MerchantId = request.MerchantId });
+        
+        return Result.Success(openingHours);
+    }
+
     public async Task<Result<Operator>> GetOperator(OperatorQueries.GetOperatorQuery request,
                                                     CancellationToken cancellationToken) {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
@@ -966,16 +1011,19 @@ public class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        var merchantQuery = BuildMerchantQuery(context, request.MerchantId);
-        var merchantQueryResult = await ExecuteQuerySafeSingleOrDefault(merchantQuery, cancellationToken, "Error getting merchant");
+        IQueryable<MerchantData> merchantQuery = BuildMerchantQuery(context, request.MerchantId);
+        Result<MerchantData> merchantQueryResult = await ExecuteQuerySafeSingleOrDefault(merchantQuery, cancellationToken, "Error getting merchant");
         if (merchantQueryResult.IsFailed) {
             return ResultHelpers.CreateFailure(merchantQueryResult);
         }
 
-        var merchantStateQueryResult = await ExecuteQuerySafeSingleOrDefault(context.MerchantBalanceProjectionState.Where(ms => ms.MerchantId == request.MerchantId), cancellationToken, "Error getting merchant state");
+        Result<List<MerchantOpeningHours>> openingHoursQueryResult = await ExecuteQuerySafeToList(context.MerchantOpeningHours.Where(m => m.MerchantId == request.MerchantId), cancellationToken, "Error getting merchant opening hours");
+        if (openingHoursQueryResult.IsFailed) return ResultHelpers.CreateFailure(openingHoursQueryResult);
+
+        Result<MerchantBalanceProjectionState> merchantStateQueryResult = await ExecuteQuerySafeSingleOrDefault(context.MerchantBalanceProjectionState.Where(ms => ms.MerchantId == request.MerchantId), cancellationToken, "Error getting merchant state");
         if (merchantStateQueryResult.IsFailed) return ResultHelpers.CreateFailure(merchantStateQueryResult);
 
-        return Result.Success(ModelFactory.ConvertFrom(merchantQueryResult.Data, merchantStateQueryResult.Data.Balance));
+        return Result.Success(ModelFactory.ConvertFrom(merchantQueryResult.Data, merchantStateQueryResult.Data.Balance, openingHoursQueryResult.Data));
     }
 
     private static IQueryable<MerchantData> BuildMerchantQuery(EstateManagementContext context,
@@ -1303,8 +1351,47 @@ public class ReportingManager : IReportingManager {
         return response;
     }
 
-        private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
-                                                                                               CancellationToken cancellationToken) {
+    public async Task<Result<MerchantScheduleResponse>> GetMerchantSchedule(MerchantQueries.GetMerchantScheduleQuery request,
+                                                                            CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        var merchantScheduleQuery = from s in context.MerchantSchedules
+        join d in context.MerchantScheduleMonths on s.MerchantScheduleId equals d.MerchantScheduleId
+        where s.MerchantId == request.MerchantId && s.Year == request.Year
+                                    select new {
+            s.MerchantId,
+            s.MerchantScheduleId,
+            s.Year,
+            d.Month,
+            d.ClosedDays
+        };
+        
+        var merchantScheduleQueryResult = await ExecuteQuerySafeToList(merchantScheduleQuery, cancellationToken, "Error getting merchant schedule");
+        if (merchantScheduleQueryResult.IsFailed)
+            return ResultHelpers.CreateFailure(merchantScheduleQueryResult);
+
+        MerchantScheduleResponse response = new MerchantScheduleResponse();
+        foreach (var item in merchantScheduleQueryResult.Data) {
+
+            List<Int32> closedDaysList = item.ClosedDays
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => int.TryParse(s, out var n) ? n : (int?)null)
+                .Where(n => n.HasValue)
+                .Select(n => n.Value)
+                .ToList();
+
+            MerchantScheduleMonthResponse? monthSchedule = new() { ClosedDays = closedDaysList, Month = item.Month };
+            
+            response.Months.Add(monthSchedule);
+        }
+        response.Year = request.Year;
+
+        return response;
+    }
+
+    private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
+                                                                                           CancellationToken cancellationToken) {
             // Get the settleed fees summary
             DatabaseProjections.SettlementGroupProjection summary = await BuildSettlementSummaryQuery(query).SingleOrDefaultAsync(cancellationToken);
 

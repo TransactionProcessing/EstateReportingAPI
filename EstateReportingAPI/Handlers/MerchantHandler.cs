@@ -135,6 +135,8 @@ public static class MerchantHandler
         }).ToList());
     }
 
+
+
     public static async Task<IResult> GetMerchantContracts([FromHeader] Guid estateId,
                                                            [FromRoute] Guid merchantId,
                                                            IMediator mediator,
@@ -176,5 +178,38 @@ public static class MerchantHandler
             DeviceId = c.DeviceId,
             DeviceIdentifier = c.DeviceIdentifier
         }).ToList());
+    }
+
+    public static async Task<IResult> GetMerchantOpeningHours([FromHeader] Guid estateId,
+                                                         [FromRoute] Guid merchantId,
+                                                         IMediator mediator,
+                                                         CancellationToken cancellationToken) {
+        MerchantQueries.GetMerchantOpeningHoursQuery query = new(estateId, merchantId);
+        Result<List<MerchantOpeningHour>> result = await mediator.Send(query, cancellationToken);
+
+        return ResponseFactory.FromResult(result, r => r.Select(c => new DataTransferObjects.MerchantOpeningHour()
+        {
+            MerchantId = c.MerchantId,
+            DayOfWeek = c.DayOfWeek,
+            OpeningTime = c.OpeningTime,
+            ClosingTime = c.ClosingTime
+        }).ToList());
+    }
+
+    public static async Task<IResult> GetMerchantSchedule([FromHeader] Guid estateId,
+                                                          [FromRoute] Guid merchantId,
+                                                          [FromRoute] Int32 year,
+                                                          IMediator mediator,
+                                                          CancellationToken cancellationToken) {
+        MerchantQueries.GetMerchantScheduleQuery query = new(estateId, merchantId, year);
+        Result<MerchantScheduleResponse> result = await mediator.Send(query, cancellationToken);
+
+        return ResponseFactory.FromResult(result, r => new DataTransferObjects.MerchantScheduleResponse() {
+            Year = r.Year,
+            Months = r.Months.Select(m => new DataTransferObjects.MerchantScheduleMonthResponse() {
+                Month = m.Month,
+                ClosedDays = m.ClosedDays
+            }).ToList()
+        });
     }
 }

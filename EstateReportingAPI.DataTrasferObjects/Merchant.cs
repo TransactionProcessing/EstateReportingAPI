@@ -45,8 +45,19 @@
         [JsonProperty("contact_phone")]
         public String ContactPhone { get; set; }
 
-
         #endregion
+    }
+
+    public class OpeningHoursResponse
+    {
+        [JsonProperty("day_of_week")]
+        public Int32 DayOfWeek { get; set; }
+
+        [JsonProperty("opening")]
+        public string Opening { get; set; }
+
+        [JsonProperty("closing")]
+        public string Closing { get; set; }
     }
 
     public class MerchantOperator
@@ -109,5 +120,35 @@
         public String DeviceIdentifier { get; set; }
         [JsonProperty("is_deleted")]
         public Boolean IsDeleted { get; set; }
+    }
+
+    public class MerchantOpeningHour
+    {
+        [JsonProperty("merchant_id")]
+        public Guid MerchantId { get; set; }
+        [JsonProperty("day_of_week")]
+        public DayOfWeek DayOfWeek { get; set; }
+        [JsonProperty("opening_time")]
+        public String OpeningTime { get; set; }
+        [JsonProperty("closing_time")]
+        public String ClosingTime { get; set; }
+    }
+
+    public class MerchantScheduleResponse
+    {
+        [JsonProperty("year")]
+        public int Year { get; set; }
+
+        [JsonProperty("months")]
+        public List<MerchantScheduleMonthResponse> Months { get; set; }
+    }
+
+    public class MerchantScheduleMonthResponse
+    {
+        [JsonProperty("month")]
+        public int Month { get; set; }
+
+        [JsonProperty("closed_days")]
+        public List<int> ClosedDays { get; set; }
     }
 }

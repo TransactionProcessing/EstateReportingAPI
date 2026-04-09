@@ -5,12 +5,25 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using EstateReportingAPI.Models;
 using JasperFx.Core;
 using Microsoft.Data.SqlClient;
 using Shared.Logger;
+using SimpleResults;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
 using TransactionProcessor.ProjectionEngine.Database.Database.Entities;
+using Calendar = TransactionProcessor.Database.Entities.Calendar;
+using Contract = TransactionProcessor.Database.Entities.Contract;
+using ContractProduct = TransactionProcessor.Database.Entities.ContractProduct;
+using ContractProductTransactionFee = TransactionProcessor.Database.Entities.ContractProductTransactionFee;
+using Estate = TransactionProcessor.Database.Entities.Estate;
+using EstateOperator = TransactionProcessor.Database.Entities.EstateOperator;
+using Merchant = TransactionProcessor.Database.Entities.Merchant;
+using MerchantContract = TransactionProcessor.Database.Entities.MerchantContract;
+using MerchantDevice = TransactionProcessor.Database.Entities.MerchantDevice;
+using MerchantOperator = TransactionProcessor.Database.Entities.MerchantOperator;
+using Operator = TransactionProcessor.Database.Entities.Operator;
 
 namespace EstateReportingAPI.IntegrationTests;
 
@@ -369,7 +382,8 @@ public class DatabaseHelper{
                                         (String contactName, String contactEmail, String contactPhone) contact,
                                         List<String> operators = null,
                                         List<String> contracts = null,
-                                        List<String> devices = null) {
+                                        List<String> devices = null,
+                                        Dictionary<DayOfWeek, MerchantOpeningHour> openingHours = null) {
         Estate? estate = await this.Context.Estates.SingleOrDefaultAsync(e => e.Name == estateName);
 
         if (estate == null) {
@@ -449,7 +463,63 @@ public class DatabaseHelper{
             }
         }
 
-        MerchantBalanceProjectionState state = new MerchantBalanceProjectionState {
+        if (openingHours != null && openingHours.Any()) {
+            var sunday = openingHours.TryGetValue(DayOfWeek.Sunday, out MerchantOpeningHour sundayHour) ? sundayHour : null;
+            var monday = openingHours.TryGetValue(DayOfWeek.Monday, out MerchantOpeningHour mondayHour) ? mondayHour : null;
+            var tuesday = openingHours.TryGetValue(DayOfWeek.Tuesday, out MerchantOpeningHour tuesdayHour) ? tuesdayHour : null;
+            var wednesday = openingHours.TryGetValue(DayOfWeek.Wednesday, out MerchantOpeningHour wednesdayHour) ? wednesdayHour : null;
+            var thursday = openingHours.TryGetValue(DayOfWeek.Thursday, out MerchantOpeningHour thursdayHour) ? thursdayHour : null;
+            var friday = openingHours.TryGetValue(DayOfWeek.Friday, out MerchantOpeningHour fridayHour) ? fridayHour : null;
+            var saturday = openingHours.TryGetValue(DayOfWeek.Saturday, out MerchantOpeningHour saturdayHour) ? saturdayHour : null;
+
+            MerchantOpeningHours merchantOpeningHours = new MerchantOpeningHours {
+                MerchantId = savedMerchant.MerchantId,
+                SundayOpening = sunday?.OpeningTime,
+                SundayClosing = sunday?.ClosingTime,
+                MondayOpening = monday?.OpeningTime,
+                MondayClosing = monday?.ClosingTime,
+                TuesdayOpening = tuesday?.OpeningTime,
+                TuesdayClosing = tuesday?.ClosingTime,
+                WednesdayOpening = wednesday?.OpeningTime,
+                WednesdayClosing = wednesday?.ClosingTime,
+                ThursdayOpening = thursday?.OpeningTime,
+                ThursdayClosing = thursday?.ClosingTime,
+                FridayOpening = friday?.OpeningTime,
+                FridayClosing = friday?.ClosingTime,
+                SaturdayOpening = saturday?.OpeningTime,
+                SaturdayClosing = saturday?.ClosingTime
+            };
+            await this.Context.MerchantOpeningHours.AddAsync(merchantOpeningHours);
+        }
+
+        MerchantSchedule schedule = new MerchantSchedule {
+            MerchantId = savedMerchant.MerchantId,
+            Year = 2026,
+            MerchantScheduleId = Guid.NewGuid()
+        };
+
+        List<MerchantScheduleMonth> months = new();
+        months.Add(new MerchantScheduleMonth {
+            ClosedDays = "1,2,15",
+            MerchantScheduleId = schedule.MerchantScheduleId,
+            Month = 1
+        });
+        months.Add(new MerchantScheduleMonth
+        {
+            ClosedDays = "10,14,28",
+            MerchantScheduleId = schedule.MerchantScheduleId,
+            Month = 2 });
+        months.Add(new MerchantScheduleMonth
+        {
+            ClosedDays = "24,25,26,31",
+            MerchantScheduleId = schedule.MerchantScheduleId,
+            Month = 12
+        });
+        
+        await this.Context.MerchantSchedules.AddAsync(schedule);
+        await this.Context.MerchantScheduleMonths.AddRangeAsync(months);
+
+        MerchantBalanceProjectionState state = new() {
             Balance = balance,
             MerchantId = savedMerchant.MerchantId,
             MerchantName = savedMerchant.Name,
