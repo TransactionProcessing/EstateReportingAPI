@@ -37,7 +37,7 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.5" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.5" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.4" />
-		<PackageReference Include="TransactionProcessor.Database" Version="2026.3.1" />
+		<PackageReference Include="TransactionProcessor.Database" Version="2026.4.2-build346" />
 		<PackageReference Include="Sentry.AspNetCore" Version="6.2.0" />
 	</ItemGroup>
 

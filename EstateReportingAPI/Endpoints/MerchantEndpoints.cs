@@ -29,10 +29,14 @@ public static class MerchantEndpoints
         group.MapGet("/{merchantId}", MerchantHandler.GetMerchant)
             .WithStandardProduces<Merchant>();
         group.MapGet("/{merchantId}/operators", MerchantHandler.GetMerchantOperators)
-            .WithStandardProduces<Merchant>();
+            .WithStandardProduces<List<MerchantOperator>>();
         group.MapGet("/{merchantId}/contracts", MerchantHandler.GetMerchantContracts)
-            .WithStandardProduces<Merchant>();
+            .WithStandardProduces<List<MerchantContract>>();
         group.MapGet("/{merchantId}/devices", MerchantHandler.GetMerchantDevices)
-            .WithStandardProduces<Merchant>();
+            .WithStandardProduces<List<MerchantDevice>>();
+        group.MapGet("/{merchantId}/openinghours", MerchantHandler.GetMerchantOpeningHours)
+            .WithStandardProduces<List<MerchantOpeningHour>>();
+        group.MapGet("/{merchantId}/schedule/{year}", MerchantHandler.GetMerchantSchedule)
+            .WithStandardProduces<MerchantScheduleResponse>();
     }
 }

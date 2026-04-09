@@ -14,6 +14,7 @@ public record MerchantQueries {
     public record GetMerchantOperatorsQuery(Guid EstateId, Guid MerchantId) : IRequest<Result<List<MerchantOperator>>>;
     public record GetMerchantContractsQuery(Guid EstateId, Guid MerchantId) : IRequest<Result<List<MerchantContract>>>;
     public record GetMerchantDevicesQuery(Guid EstateId, Guid MerchantId) : IRequest<Result<List<MerchantDevice>>>;
-
+    public record GetMerchantOpeningHoursQuery(Guid EstateId, Guid MerchantId) : IRequest<Result<List<MerchantOpeningHour>>>;
+    public record GetMerchantScheduleQuery(Guid EstateId, Guid MerchantId, Int32 Year) : IRequest<Result<MerchantScheduleResponse>>;
     public record MerchantQueryOptions(String Name,String Reference,Int32? SettlementSchedule,String Region, String PostCode);
 }

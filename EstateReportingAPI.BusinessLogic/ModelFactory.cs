@@ -1,10 +1,12 @@
 namespace EstateReportingAPI.BusinessLogic;
 
+using TransactionProcessor.Database.Entities;
 using Merchant = EstateReportingAPI.Models.Merchant;
 
 internal static class ModelFactory {
     internal static Merchant ConvertFrom(MerchantData merchant,
-                                         decimal balance) {
+                                         decimal balance,
+                                         List<MerchantOpeningHours> openingHours) {
         return new Merchant {
             Balance = balance,
             CreatedDateTime = merchant.CreatedDateTime,
@@ -23,7 +25,8 @@ internal static class ModelFactory {
             ContactId = merchant.ContactInfo.ContactId,
             ContactName = merchant.ContactInfo.Name,
             ContactEmail = merchant.ContactInfo.EmailAddress,
-            ContactPhone = merchant.ContactInfo.PhoneNumber
+            ContactPhone = merchant.ContactInfo.PhoneNumber,
+            
         };
     }
 
