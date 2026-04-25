@@ -11,7 +11,9 @@ public class MerchantRequestHandler : IRequestHandler<MerchantQueries.GetRecentM
     IRequestHandler<MerchantQueries.GetMerchantQuery, Result<Merchant>>,
     IRequestHandler<MerchantQueries.GetMerchantContractsQuery, Result<List<MerchantContract>>>,
     IRequestHandler<MerchantQueries.GetMerchantOperatorsQuery, Result<List<MerchantOperator>>>,
-    IRequestHandler<MerchantQueries.GetMerchantDevicesQuery, Result<List<MerchantDevice>>>
+    IRequestHandler<MerchantQueries.GetMerchantDevicesQuery, Result<List<MerchantDevice>>>,
+    IRequestHandler<MerchantQueries.GetMerchantOpeningHoursQuery, Result<List<MerchantOpeningHour>>>,
+    IRequestHandler<MerchantQueries.GetMerchantScheduleQuery, Result<MerchantScheduleResponse>>
 {
     private readonly IReportingManager Manager;
     public MerchantRequestHandler(IReportingManager manager)
@@ -52,5 +54,15 @@ public class MerchantRequestHandler : IRequestHandler<MerchantQueries.GetRecentM
     public async Task<Result<List<MerchantDevice>>> Handle(MerchantQueries.GetMerchantDevicesQuery request,
                                                            CancellationToken cancellationToken) {
         return await this.Manager.GetMerchantDevices(request, cancellationToken);
+    }
+
+    public async Task<Result<List<MerchantOpeningHour>>> Handle(MerchantQueries.GetMerchantOpeningHoursQuery request,
+                                                                CancellationToken cancellationToken) {
+        return await this.Manager.GetMerchantOpeningHours(request, cancellationToken);
+    }
+
+    public async Task<Result<MerchantScheduleResponse>> Handle(MerchantQueries.GetMerchantScheduleQuery request,
+                                                               CancellationToken cancellationToken) {
+        return await this.Manager.GetMerchantSchedule(request, cancellationToken);
     }
 }

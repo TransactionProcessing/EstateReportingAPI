@@ -11,7 +11,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="10.7.1" />
     <PackageReference Include="Shared" Version="2026.3.1" />
     <PackageReference Include="Shared.Results" Version="2026.3.1" />
-    <PackageReference Include="TransactionProcessor.Database" Version="2026.3.1" />
+    <PackageReference Include="TransactionProcessor.Database" Version="2026.4.2-build346" />
   </ItemGroup>
 
   <ItemGroup>
