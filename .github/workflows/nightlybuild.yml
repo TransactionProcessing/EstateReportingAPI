@@ -38,10 +38,9 @@ jobs:
         dotnet test "EstateReportingAPI.IntegrationTests\EstateReportingAPI.IntegrationTests.csproj" /p:CollectCoverage=true /p:Exclude="[xunit*]*" /p:ExcludeByAttribute="Obsolete" /p:ExcludeByAttribute="GeneratedCodeAttribute" /p:ExcludeByAttribute="CompilerGeneratedAttribute" /p:ExcludeByAttribute="ExcludeFromCodeCoverageAttribute" /p:CoverletOutput="../lcov2.info" /maxcpucount:1 /p:CoverletOutputFormat="lcov"        
 
     - uses: actions/upload-artifact@v4
-      if: ${{ failure() }}
       with:
         name: tracelogs
-        path: /home/txnproc/trace/   
+        path: /home/runner/trace/   
 
     - uses: dacbd/create-issue-action@main
       if: ${{ failure() }}

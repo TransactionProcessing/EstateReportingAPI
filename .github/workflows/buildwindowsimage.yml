@@ -24,11 +24,11 @@ jobs:
       run: |
         docker build . --file EstateReportingAPI/Dockerfilewindows --tag stuartferguson/estatereportingapiwindows:dev
         docker login --username=${{ secrets.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }}
-        docker push stuartferguson/estatereportingapi:dev
+        docker push stuartferguson/estatereportingapiwindows:dev
 
     - name: Publish Images to Docker Hub - Formal Release
       if: ${{ github.event.release.prerelease == false }} 
       run: |
         docker build . --file EstateReportingAPI/Dockerfilewindows --tag stuartferguson/estatereportingapiwindows:latest
         docker login --username=${{ secrets.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }}
-        docker push stuartferguson/estatereportingapi:latest
+        docker push stuartferguson/estatereportingapiwindows:latest

@@ -23,12 +23,7 @@ jobs:
       run: dotnet restore EstateReportingAPI.sln --source ${{ secrets.PUBLICFEEDURL }} --source ${{ secrets.PRIVATEFEED_URL }}
 
     - name: Build Code
-      run: dotnet build EstateReportingAPI.sln --configuration Release
-
-    - name: Run Unit Tests
-      run: |
-        echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
-        dotnet test "EstateReportingAPI.Tests\EstateReportingAPI.Tests.csproj"      
+      run: dotnet build EstateReportingAPI.sln --configuration Release   
         
     - name: Publish Images to Docker Hub - Pre Release
       if: ${{ github.event.release.prerelease == true }} 

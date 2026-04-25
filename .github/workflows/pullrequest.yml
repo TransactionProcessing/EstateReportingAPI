@@ -32,7 +32,6 @@ jobs:
         dotnet test "EstateReportingAPI.IntegrationTests\EstateReportingAPI.IntegrationTests.csproj"
 
     - uses: actions/upload-artifact@v4
-      if: ${{ failure() }}
       with:
         name: tracelogs
-        path: /home/txnproc/trace/   
+        path: /home/runner/trace/   
