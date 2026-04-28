@@ -66,12 +66,7 @@ namespace EstateReportingAPI
                                  endpoints.MapContractEndpoints();
                                  endpoints.MapTransactionEndpoints();
                                  endpoints.MapSettlementEndpoints();
-
-                                 // Old Endpoints
-                                 //endpoints.MapFactSettlementsEndpoints();
-                                 //endpoints.MapFactTransactionEndpoints();
-
-                                 //endpoints.MapControllers();
+                                 
                                  endpoints.MapHealthChecks("health", new HealthCheckOptions()
                                  {
                                      Predicate = _ => true,
