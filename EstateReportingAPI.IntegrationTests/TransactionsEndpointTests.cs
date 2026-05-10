@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EstateReportingAPI.DataTransferObjects;
-using Newtonsoft.Json;
+using Shared.Serialisation;
 using Shouldly;
 using SimpleResults;
 using TransactionProcessor.Database.Entities;
@@ -378,7 +378,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = []
         };
 
-        String payload = JsonConvert.SerializeObject(request);
+        String payload = StringSerialiser.Serialise(request);
 
 
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
@@ -449,7 +449,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = []
         };
 
-        String payload = JsonConvert.SerializeObject(request);
+        String payload = StringSerialiser.Serialise(request);
             
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
@@ -522,7 +522,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = []
         };
 
-        String payload = JsonConvert.SerializeObject(request);
+        String payload = StringSerialiser.Serialise(request);
 
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
@@ -594,7 +594,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = productsForFilter.Select(c => c.contractProductReportingId).ToList(),
         };
 
-        String payload = JsonConvert.SerializeObject(request);
+        String payload = StringSerialiser.Serialise(request);
 
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
@@ -716,7 +716,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = []
         };
 
-        String payload = JsonConvert.SerializeObject(request);
+        String payload = StringSerialiser.Serialise(request);
             
         var result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.TransactionSummaryByMerchantResponse>($"{this.BaseRoute}/transactionsummarybymerchantreport", payload, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
@@ -856,7 +856,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = []
         };
 
-        String payload = JsonConvert.SerializeObject(request);
+        String payload = StringSerialiser.Serialise(request);
 
         var result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.TransactionSummaryByOperatorResponse>($"{this.BaseRoute}/transactionsummarybyoperatorreport", payload, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();

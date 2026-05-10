@@ -9,7 +9,6 @@ using TransactionProcessor.Database.Contexts;
 namespace EstateReportingAPI.IntegrationTests;
 
 using BusinessLogic;
-using EstateReportingAPI.Common;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
