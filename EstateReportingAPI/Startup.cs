@@ -1,4 +1,5 @@
 using EstateReportingAPI.Bootstrapper;
+using EstateReportingAPI.Endpoints;
 using HealthChecks.UI.Client;
 using Lamar;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -6,11 +7,11 @@ using Shared.Extensions;
 using Shared.General;
 using Shared.Logger;
 using System.Diagnostics.CodeAnalysis;
-using EstateReportingAPI.Endpoints;
 
 namespace EstateReportingAPI
 {
     using Shared.Middleware;
+    using Shared.Serialisation;
 
     [ExcludeFromCodeCoverage]
     public class Startup
@@ -25,15 +26,19 @@ namespace EstateReportingAPI
             WebHostEnvironment = webHostEnvironment;
         }
 
-        public void ConfigureContainer(ServiceRegistry services)
+        public void ConfigureContainer(ServiceRegistry services)  
         {
             ConfigurationReader.Initialise(Configuration);
 
             services.IncludeRegistry<MiddlewareRegistry>();
             services.IncludeRegistry<RepositoryRegistry>();
             services.IncludeRegistry<MediatorRegistry>();
-            
+            services.IncludeRegistry<SerialiserRegistry>();
+
             Container = new Container(services);
+
+            var serialiser = Container.GetRequiredService<IStringSerialiser>();
+            StringSerialiser.Initialise(serialiser);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)

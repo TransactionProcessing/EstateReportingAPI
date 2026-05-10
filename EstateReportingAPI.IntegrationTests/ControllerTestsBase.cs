@@ -4,8 +4,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Shared.IntegrationTesting.TestContainers;
+using Shared.Serialisation;
 using SimpleResults;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
@@ -81,7 +81,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         String content = await result.Content.ReadAsStringAsync(cancellationToken);
         content.ShouldNotBeNull();
 
-        return Result.Success(JsonConvert.DeserializeObject<T>(content));
+        return Result.Success(StringSerialiser.Deserialise<T>(content));
     }
 
     internal async Task<Result<T?>> CreateAndSendHttpRequestMessage<T>(String url, String payload, CancellationToken cancellationToken)
@@ -98,7 +98,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         String content = await result.Content.ReadAsStringAsync(cancellationToken);
         content.ShouldNotBeNull();
 
-        return Result.Success(JsonConvert.DeserializeObject<T>(content));
+        return Result.Success(StringSerialiser.Deserialise<T>(content));
     }
     
     //public static IContainer DatabaseServerContainer;
