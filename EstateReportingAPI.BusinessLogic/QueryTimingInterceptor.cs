@@ -84,7 +84,7 @@ public class DbContextResolverX<TContext> : IDbContextResolver<TContext> where T
             // Create an isolated service collection and provider
             ServiceCollection services = new();
             services.AddDbContext<TContext>(options => {
-                options.UseSqlServer(connectionString);
+                options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure());
                 options.AddInterceptors(Interceptor); // attach here
             });
 
