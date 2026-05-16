@@ -52,7 +52,7 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
 
             containerBuilder.AddTransient<EstateManagementContext>(_ => context);
             var serviceProvider = containerBuilder.BuildServiceProvider();
-            
+
             var inMemorySettings = new Dictionary<string, string>
             {
                 { "ConnectionStrings:TransactionProcessorReadModel", DatabaseConnectionString }
@@ -71,8 +71,8 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
 
             containerBuilder.AddAuthentication(TestAuthHandler.AuthenticationScheme)
                             .AddScheme<TestAuthHandlerOptions, TestAuthHandler>(TestAuthHandler.AuthenticationScheme, options => { });
-            
-            
+
+
         });
 
     }
