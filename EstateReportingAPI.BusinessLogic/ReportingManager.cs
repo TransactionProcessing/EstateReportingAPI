@@ -23,8 +23,7 @@ using Merchant = Models.Merchant;
 using MerchantBalanceProjectionState = TransactionProcessor.ProjectionEngine.Database.Database.Entities.MerchantBalanceProjectionState;
 
 public interface IReportingManager
-{
-    #region Methods
+{ 
     Task<Result<List<Calendar>>> GetCalendarComparisonDates(CalendarQueries.GetComparisonDatesQuery request, CancellationToken cancellationToken);
     Task<Result<List<Calendar>>> GetCalendarDates(CalendarQueries.GetAllDatesQuery request, CancellationToken cancellationToken);
     Task<Result<List<Int32>>> GetCalendarYears(CalendarQueries.GetYearsQuery request, CancellationToken cancellationToken);
@@ -57,11 +56,13 @@ public interface IReportingManager
     Task<Result<List<TodaysSalesByHour>>> GetTodaysSalesByHour(TransactionQueries.TodaysSalesByHour request,
                                                                CancellationToken cancellationToken);
     Task<Result<TodaysSettlement>> GetTodaysSettlement(SettlementQueries.TodaysSettlementQuery request,
-                                                       CancellationToken cancellationToken);
-    #endregion
-
+                                                        CancellationToken cancellationToken);
+    
     Task<Result<MerchantScheduleResponse>> GetMerchantSchedule(MerchantQueries.GetMerchantScheduleQuery request,
                                                                CancellationToken cancellationToken);
+
+    Task<Result<List<FileImportLog>>> GetFileImportLogList(FileImportLogQueries.GetFileImportLogListQuery request,
+                                                          CancellationToken cancellationToken);
 }
 
 public class ReportingManager : IReportingManager {
@@ -70,15 +71,9 @@ public class ReportingManager : IReportingManager {
     private Guid Id;
     private static readonly String EstateManagementDatabaseName = "TransactionProcessorReadModel";
 
-    #region Constructors
-
     public ReportingManager(IDbContextResolver<EstateManagementContext> resolver) {
         this.Resolver = resolver;
     }
-
-    #endregion
-
-    #region Methods
 
     private static async Task<Result<T>> ExecuteQuerySafeSum<T>(IQueryable query,
                                                                 CancellationToken cancellationToken,
@@ -1390,6 +1385,70 @@ public class ReportingManager : IReportingManager {
         return response;
     }
 
+    public async Task<Result<List<FileImportLog>>> GetFileImportLogList(FileImportLogQueries.GetFileImportLogListQuery request,
+                                                                        CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+        // Build flat projection of the required data then assemble into hierarchical models in-memory
+        var flatQuery = from fil in context.FileImportLogs
+                        join f in context.Files on fil.FileImportLogId equals f.FileImportLogId
+                        join esu in context.EstateSecurityUsers on f.UserId equals esu.SecurityUserId into esuJoin
+                        from esu in esuJoin.DefaultIfEmpty()
+                        join m in context.Merchants on f.MerchantId equals m.MerchantId into mJoin
+                        from m in mJoin.DefaultIfEmpty()
+                        join fl in context.FileLines on f.FileId equals fl.FileId
+                        where fil.ImportLogDate >= request.StartDate && fil.ImportLogDate <= request.EndDate
+                              && (request.MerchantId == null || f.MerchantId == request.MerchantId)
+                        select new FileImportFlatData {
+                            FileImportLogId = fil.FileImportLogId,
+                            ImportLogDateTime = fil.ImportLogDateTime,
+                            FileId = f.FileId,
+                            FileName = f.FileLocation,
+                            FileProfileId = f.FileProfileId,
+                            DateTimeUploaded = f.FileReceivedDateTime,
+                            UserId = f.UserId,
+                            UploadedBy = esu != null ? esu.EmailAddress : null,
+                            MerchantId = f.MerchantId,
+                            MerchantName = m != null ? m.Name : null,
+                            LineNumber = fl.LineNumber,
+                            LineContents = fl.FileLineData,
+                            LineStatus = fl.Status
+                        };
+
+        var flatResult = await ExecuteQuerySafeToList(flatQuery, cancellationToken, "Error retrieving file import logs");
+
+        if (flatResult.IsFailed)
+            return ResultHelpers.CreateFailure(flatResult);
+
+        var flatItems = flatResult.Data;
+
+        // assemble hierarchical model
+        var fileImportLogs = flatItems
+            .GroupBy(x => new { x.FileImportLogId, x.ImportLogDateTime })
+            .Select(g => new FileImportLog {
+                FileImportLogId = g.Key.FileImportLogId,
+                ImportLogDateTime = g.Key.ImportLogDateTime,
+                FileDetailsList = g.GroupBy(f => new { f.FileId, f.FileName, f.FileProfileId, f.DateTimeUploaded, f.UserId, f.UploadedBy, f.MerchantId, f.MerchantName })
+                    .Select(fg => new FileDetails {
+                        FileId = fg.Key.FileId,
+                        FileName = fg.Key.FileName,
+                        FileProfile = fg.Key.FileProfileId != null ? fg.Key.FileProfileId.ToString() : null,
+                        DateTimeUploaded = fg.Key.DateTimeUploaded,
+                        UserId = fg.Key.UserId,
+                        UploadedBy = fg.Key.UploadedBy,
+                        MerchantId = fg.Key.MerchantId,
+                        MerchantName = fg.Key.MerchantName,
+                        FileLines = fg.Select(fl => new FileLine {
+                            LineNumber = fl.LineNumber,
+                            LineContents = fl.LineContents,
+                            LineStatus = fl.LineStatus
+                        }).ToList()
+                    }).ToList()
+            }).ToList();
+
+        return Result.Success(fileImportLogs);
+    }
+
     private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
                                                                                            CancellationToken cancellationToken) {
             // Get the settleed fees summary
@@ -1637,5 +1696,19 @@ public class ReportingManager : IReportingManager {
             public decimal PercentOfTotalAmount { get; init; }
         }
 
-        #endregion
-    }
+        private sealed class FileImportFlatData {
+            public Guid FileImportLogId { get; init; }
+            public DateTime ImportLogDateTime { get; init; }
+            public Guid FileId { get; init; }
+            public string? FileName { get; init; }
+            public Guid? FileProfileId { get; init; }
+            public DateTime DateTimeUploaded { get; init; }
+            public Guid UserId { get; init; }
+            public string? UploadedBy { get; init; }
+            public Guid MerchantId { get; init; }
+            public string? MerchantName { get; init; }
+            public int LineNumber { get; init; }
+            public string? LineContents { get; init; }
+            public string? LineStatus { get; init; }
+        }
+}
