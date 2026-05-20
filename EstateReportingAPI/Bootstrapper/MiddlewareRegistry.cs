@@ -20,7 +20,7 @@ namespace EstateReportingAPI.Bootstrapper{
         public MiddlewareRegistry()
         {
             this.ConfigureHealthChecks();
-            this.ConfigureSwagger();
+            //this.ConfigureSwagger();
             this.ConfigureAuthentication();
             this.ConfigureControllers();
             this.ConfigureMiddlewareLogging();

@@ -24,6 +24,10 @@ using MerchantContract = TransactionProcessor.Database.Entities.MerchantContract
 using MerchantDevice = TransactionProcessor.Database.Entities.MerchantDevice;
 using MerchantOperator = TransactionProcessor.Database.Entities.MerchantOperator;
 using Operator = TransactionProcessor.Database.Entities.Operator;
+using FileImportLog = TransactionProcessor.Database.Entities.FileImportLog;
+using DbFile = TransactionProcessor.Database.Entities.File;
+using FileLine = TransactionProcessor.Database.Entities.FileLine;
+using EstateSecurityUser = TransactionProcessor.Database.Entities.EstateSecurityUser;
 
 namespace EstateReportingAPI.IntegrationTests;
 
@@ -38,6 +42,65 @@ public class DatabaseHelper{
     public DatabaseHelper(EstateManagementContext context, Guid estateId) {
         this.Context = context;
         this.EstateId = estateId;
+    }
+
+    public async Task<Guid> AddEstateUser(String estateName, string name, string email){
+        Estate? estate = await this.Context.Estates.SingleOrDefaultAsync(e => e.Name == estateName);
+        if (estate == null) throw new Exception($"No estate found with name {estateName}");
+
+        EstateSecurityUser user = new EstateSecurityUser {
+            EstateId = estate.EstateId,
+            SecurityUserId = Guid.NewGuid(),
+            EmailAddress = email
+        };
+
+        await this.Context.AddAsync(user);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+
+        return user.SecurityUserId;
+    }
+
+    public async Task<Guid> AddFileImportLog(Guid estateId, DateTime importDate){
+        FileImportLog fil = new FileImportLog {
+            FileImportLogId = Guid.NewGuid(),
+            EstateId = estateId,
+            ImportLogDateTime = importDate,
+            ImportLogDate = importDate.Date
+        };
+
+        await this.Context.AddAsync(fil);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+
+        return fil.FileImportLogId;
+    }
+
+    public async Task<Guid> AddFile(Guid fileImportLogId, Guid merchantId, Guid userId, string fileLocation){
+        DbFile file = new DbFile {
+            FileId = Guid.NewGuid(),
+            FileImportLogId = fileImportLogId,
+            FileLocation = fileLocation,
+            FileProfileId = Guid.NewGuid(),
+            FileReceivedDateTime = DateTime.Now,
+            UserId = userId,
+            MerchantId = merchantId
+        };
+
+        await this.Context.AddAsync(file);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+
+        return file.FileId;
+    }
+
+    public async Task AddFileLine(Guid fileId, int lineNumber, string data, string status){
+        FileLine fl = new FileLine {
+            FileId = fileId,
+            LineNumber = lineNumber,
+            FileLineData = data,
+            Status = status
+        };
+
+        await this.Context.AddAsync(fl);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
     }
 
     public async Task DeleteAllMerchants(){
