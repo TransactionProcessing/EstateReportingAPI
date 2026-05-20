@@ -1489,6 +1489,9 @@ public class ReportingManager : IReportingManager {
             return ResultHelpers.CreateFailure(flatResult);
 
         var flatItems = flatResult.Data;
+
+        if (flatItems.Count == 0)
+            return Result.NotFound();
         
         var fileImportLogs = flatItems
             .GroupBy(x => new { x.FileImportLogId, x.ImportLogDateTime })
