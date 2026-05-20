@@ -9,9 +9,3 @@ namespace EstateReportingAPI.BusinessLogic.Queries;
 public record SettlementQueries {
     public record TodaysSettlementQuery(Guid EstateId, DateTime ComparisonDate) : IRequest<Result<TodaysSettlement>>;
 }
-
-[ExcludeFromCodeCoverage]
-public record FileImportLogQueries
-{
-    public record GetFileImportLogListQuery(Guid EstateId, Guid? MerchantId, DateTime StartDate, DateTime EndDate) : IRequest<Result<List<FileImportLog>>>;
-}

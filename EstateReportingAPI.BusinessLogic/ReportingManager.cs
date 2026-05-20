@@ -63,6 +63,8 @@ public interface IReportingManager
 
     Task<Result<List<FileImportLog>>> GetFileImportLogList(FileImportLogQueries.GetFileImportLogListQuery request,
                                                           CancellationToken cancellationToken);
+    Task<Result<FileImportLog>> GetFileImportLog(FileImportLogQueries.GetFileImportLogQuery request,
+                                                           CancellationToken cancellationToken);
 }
 
 public class ReportingManager : IReportingManager {
@@ -1446,6 +1448,74 @@ public class ReportingManager : IReportingManager {
                     }).ToList()
             }).ToList();
 
+        return Result.Success(fileImportLogs);
+    }
+
+    public async Task<Result<FileImportLog>> GetFileImportLog(FileImportLogQueries.GetFileImportLogQuery request,
+                                                                        CancellationToken cancellationToken)
+    {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+        // Build flat projection of the required data then assemble into hierarchical models in-memory
+        var flatQuery = from fil in context.FileImportLogs
+                        join f in context.Files on fil.FileImportLogId equals f.FileImportLogId
+                        join esu in context.EstateSecurityUsers on f.UserId equals esu.SecurityUserId into esuJoin
+                        from esu in esuJoin.DefaultIfEmpty()
+                        join m in context.Merchants on f.MerchantId equals m.MerchantId into mJoin
+                        from m in mJoin.DefaultIfEmpty()
+                        join fl in context.FileLines on f.FileId equals fl.FileId
+                        where fil.FileImportLogId == request.FileImportLogId
+                              && (request.MerchantId == null || f.MerchantId == request.MerchantId)
+                        select new FileImportFlatData
+                        {
+                            FileImportLogId = fil.FileImportLogId,
+                            ImportLogDateTime = fil.ImportLogDateTime,
+                            FileId = f.FileId,
+                            FileName = f.FileLocation,
+                            FileProfileId = f.FileProfileId,
+                            DateTimeUploaded = f.FileReceivedDateTime,
+                            UserId = f.UserId,
+                            UploadedBy = esu != null ? esu.EmailAddress : null,
+                            MerchantId = f.MerchantId,
+                            MerchantName = m != null ? m.Name : null,
+                            LineNumber = fl.LineNumber,
+                            LineContents = fl.FileLineData,
+                            LineStatus = fl.Status
+                        };
+
+        var flatResult = await ExecuteQuerySafeToList(flatQuery, cancellationToken, "Error retrieving file import logs");
+
+        if (flatResult.IsFailed)
+            return ResultHelpers.CreateFailure(flatResult);
+
+        var flatItems = flatResult.Data;
+        
+        var fileImportLogs = flatItems
+            .GroupBy(x => new { x.FileImportLogId, x.ImportLogDateTime })
+            .Select(g => new FileImportLog
+            {
+                FileImportLogId = g.Key.FileImportLogId,
+                ImportLogDateTime = g.Key.ImportLogDateTime,
+                FileDetailsList = g.GroupBy(f => new { f.FileId, f.FileName, f.FileProfileId, f.DateTimeUploaded, f.UserId, f.UploadedBy, f.MerchantId, f.MerchantName })
+                    .Select(fg => new FileDetails
+                    {
+                        FileId = fg.Key.FileId,
+                        FileName = fg.Key.FileName,
+                        FileProfile = fg.Key.FileProfileId != null ? fg.Key.FileProfileId.ToString() : null,
+                        DateTimeUploaded = fg.Key.DateTimeUploaded,
+                        UserId = fg.Key.UserId,
+                        UploadedBy = fg.Key.UploadedBy,
+                        MerchantId = fg.Key.MerchantId,
+                        MerchantName = fg.Key.MerchantName,
+                        FileLines = fg.Select(fl => new FileLine
+                        {
+                            LineNumber = fl.LineNumber,
+                            LineContents = fl.LineContents,
+                            LineStatus = fl.LineStatus
+                        }).ToList()
+                    }).ToList()
+            }).SingleOrDefault();
+        
         return Result.Success(fileImportLogs);
     }
 

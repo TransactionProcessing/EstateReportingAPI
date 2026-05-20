@@ -40,4 +40,42 @@ public static class FileImportHandler
             }).ToList()
         }).ToList());
     }
+
+    public static async Task<IResult> GetFileImportLog([FromHeader] Guid estateId,
+                                                           [FromRoute] Guid fileImportLogId,
+                                                           [FromQuery] Guid? merchantId,
+                                                           IMediator mediator,
+                                                           CancellationToken cancellationToken)
+    {
+        FileImportLogQueries.GetFileImportLogQuery query = new(estateId, merchantId, fileImportLogId);
+        Result<FileImportLog> result = await mediator.Send(query, cancellationToken);
+
+        if (result.IsSuccess && result.Data == null)
+        {
+            return Results.NotFound();
+        }
+
+        return ResponseFactory.FromResult(result, r => new DataTransferObjects.FileImportLog
+        {
+            FileImportLogId = r.FileImportLogId,
+            ImportLogDateTime = r.ImportLogDateTime,
+            FileDetailsList = r.FileDetailsList.Select(fd => new DataTransferObjects.FileDetails
+            {
+                DateTimeUploaded = fd.DateTimeUploaded,
+                FileId = fd.FileId,
+                FileName = fd.FileName,
+                FileProfile = fd.FileProfile,
+                MerchantId = fd.MerchantId,
+                MerchantName = fd.MerchantName,
+                UploadedBy = fd.UploadedBy,
+                UserId = fd.UserId,
+                FileLines = fd.FileLines.Select(fl => new DataTransferObjects.FileLine
+                {
+                    LineContents = fl.LineContents,
+                    LineNumber = fl.LineNumber,
+                    LineStatus = fl.LineStatus
+                }).ToList()
+            }).ToList()
+        });
+    }
 }

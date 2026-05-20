@@ -19,6 +19,8 @@ public static class FileImportLogEndpoints
             group = group.RequireAuthorization();
         }
 
-        group.MapGet("", FileImportHandler.GetFileImportLogList).WithStandardProduces<List<FileImportLog>>();
+        group.MapGet("/", FileImportHandler.GetFileImportLogList).WithStandardProduces<List<FileImportLog>>();
+        
+        group.MapGet("/{fileimportlogid}", FileImportHandler.GetFileImportLog).WithStandardProduces<FileImportLog>();
     }
 }
