@@ -50,11 +50,6 @@ public static class FileImportHandler
         FileImportLogQueries.GetFileImportLogQuery query = new(estateId, merchantId, fileImportLogId);
         Result<FileImportLog> result = await mediator.Send(query, cancellationToken);
 
-        if (result.IsSuccess && result.Data == null)
-        {
-            return Results.NotFound();
-        }
-
         return ResponseFactory.FromResult(result, r => new DataTransferObjects.FileImportLog
         {
             FileImportLogId = r.FileImportLogId,
@@ -63,8 +58,12 @@ public static class FileImportHandler
             {
                 DateTimeUploaded = fd.DateTimeUploaded,
                 FileId = fd.FileId,
-                FileName = fd.FileName,
-                FileProfile = fd.FileProfile,
+                FileName = Path.GetFileName(fd.FileName),
+                FileProfile = fd.FileProfile.ToUpper() switch {
+                    "B2A59ABF-293D-4A6B-B81B-7007503C3476" => "Safaricom Topup",
+                    "8806EDBC-3ED6-406B-9E5F-A9078356BE99" => "Voucher Issue",
+                    _ => "Unknown"
+                },
                 MerchantId = fd.MerchantId,
                 MerchantName = fd.MerchantName,
                 UploadedBy = fd.UploadedBy,
