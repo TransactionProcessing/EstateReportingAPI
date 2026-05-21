@@ -24,3 +24,19 @@ public class FileImportLogRequestHandler : IRequestHandler<FileImportLogQueries.
         return await this.Manager.GetFileImportLog(request, cancellationToken);
     }
 }
+
+public class FileProfileConfigurationRequestHandler : IRequestHandler<FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery, Result<List<FileProfileConfiguration>>>
+    
+{
+    private readonly IReportingManager Manager;
+    public FileProfileConfigurationRequestHandler(IReportingManager manager)
+    {
+        this.Manager = manager;
+    }
+
+    public async Task<Result<List<FileProfileConfiguration>>> Handle(FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery request,
+                                                          CancellationToken cancellationToken)
+    {
+        return await this.Manager.GetFileProfileConfigurationList(request, cancellationToken);
+    }
+}

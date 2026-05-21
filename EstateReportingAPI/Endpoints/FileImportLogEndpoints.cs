@@ -24,3 +24,21 @@ public static class FileImportLogEndpoints
         group.MapGet("/{fileimportlogid}", FileImportHandler.GetFileImportLog).WithStandardProduces<FileImportLog>();
     }
 }
+
+public static class FileProfileConfigurationEndpoints
+{
+    private const string BaseRoute = "api/fileprofiles";
+
+    public static void MapFileProfileConfigurationEndpoints(this IEndpointRouteBuilder app)
+    {
+        RouteGroupBuilder group = app.MapGroup(BaseRoute).WithTags("File Profile Configurations");
+
+        Boolean disableAuthorisation = ConfigurationReader.GetValueOrDefault<Boolean>("AppSettings", "DisableAuthorisation", false);
+        if (disableAuthorisation == false)
+        {
+            group = group.RequireAuthorization();
+        }
+
+        group.MapGet("/", FileProfileConfigurationHandler.GetFileProfileConfigurationList).WithStandardProduces<List<FileProfileConfiguration>>();
+    }
+}
