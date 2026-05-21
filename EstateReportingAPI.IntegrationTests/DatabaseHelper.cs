@@ -28,6 +28,7 @@ using FileImportLog = TransactionProcessor.Database.Entities.FileImportLog;
 using DbFile = TransactionProcessor.Database.Entities.File;
 using FileLine = TransactionProcessor.Database.Entities.FileLine;
 using EstateSecurityUser = TransactionProcessor.Database.Entities.EstateSecurityUser;
+using FileProfileConfiguration = TransactionProcessor.Database.Entities.FileProfileConfiguration;
 
 namespace EstateReportingAPI.IntegrationTests;
 
@@ -100,6 +101,48 @@ public class DatabaseHelper{
         };
 
         await this.Context.AddAsync(fl);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+    }
+
+    public async Task<Guid> AddFileFormatHandler(string name)
+    {
+        Guid id = Guid.NewGuid();
+        FileFormatHandler h = new() { FileFormatHandlerId = id, Name = name };
+        
+        await this.Context.AddAsync(h);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+        
+        return id;
+    }
+
+    public async Task<Guid> AddRequestType(string name)
+    {
+        Guid id = Guid.NewGuid();
+        RequestType r = new() { RequestTypeId = id, Name = name };
+        
+        await this.Context.AddAsync(r);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+        
+        return id;
+    }
+    
+    public async Task AddFileProfileConfiguration(Guid fileProfileId,
+                                                  string name,
+                                                  string listeningDirectory,
+                                                  Guid fileFormatHandlerId,
+                                                  Guid requestTypeId,
+                                                  Guid operatorId,
+                                                  string lineTerminator) {
+        FileProfileConfiguration configuration = new() {
+            Name = name,
+            FileFormatHandlerId = fileFormatHandlerId,
+            FileProfileId = fileProfileId,
+            LineTerminator = lineTerminator,
+            ListeningDirectory = listeningDirectory,
+            OperatorId = operatorId,
+            RequestTypeId = requestTypeId
+        };
+        await this.Context.AddAsync(configuration);
         await this.Context.SaveChangesAsync(CancellationToken.None);
     }
 

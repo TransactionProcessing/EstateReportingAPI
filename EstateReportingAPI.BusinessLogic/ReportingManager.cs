@@ -8,13 +8,11 @@ using TransactionProcessor.Database.Entities.Summary;
 
 namespace EstateReportingAPI.BusinessLogic;
 
-using Azure;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using Shared.EntityFramework;
 using Shared.Results;
 using System;
-using System.ClientModel.Primitives;
 using System.Linq;
 using System.Threading;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -65,6 +63,8 @@ public interface IReportingManager
                                                           CancellationToken cancellationToken);
     Task<Result<FileImportLog>> GetFileImportLog(FileImportLogQueries.GetFileImportLogQuery request,
                                                            CancellationToken cancellationToken);
+    Task<Result<List<FileProfileConfiguration>>> GetFileProfileConfigurationList(FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery request,
+                                                        CancellationToken cancellationToken);
 }
 
 public class ReportingManager : IReportingManager {
@@ -1520,6 +1520,34 @@ public class ReportingManager : IReportingManager {
             }).SingleOrDefault();
         
         return Result.Success(fileImportLogs);
+    }
+
+    public async Task<Result<List<FileProfileConfiguration>>> GetFileProfileConfigurationList(FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery request,
+                                                                                              CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        var query = from c in context.FileProfileConfigurations
+            join h in context.FileFormatHandlers on c.FileFormatHandlerId equals h.FileFormatHandlerId
+            join r in context.RequestTypes on c.RequestTypeId equals r.RequestTypeId
+            join o in context.Operators on c.OperatorId equals o.OperatorId
+            select new FileProfileConfiguration
+            {
+                FileProfileId = c.FileProfileId,
+                Name = c.Name,
+                ListeningDirectory = c.ListeningDirectory,
+                RequestType = r.Name,
+                OperatorName = o.Name,
+                LineTerminator = c.LineTerminator,
+                FileFormatHandler = h.Name
+            };
+
+        Result<List<FileProfileConfiguration>> result = await ExecuteQuerySafeToList(query, cancellationToken, "Error retrieving file import logs");
+
+        if (result.IsFailed)
+            return ResultHelpers.CreateFailure(result);
+
+        return Result.Success(result.Data);
     }
 
     private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,

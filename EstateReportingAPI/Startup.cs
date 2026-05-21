@@ -72,6 +72,7 @@ namespace EstateReportingAPI
                                  endpoints.MapTransactionEndpoints();
                                  endpoints.MapSettlementEndpoints();
                                  endpoints.MapFileImportLogEndpoints();
+                                 endpoints.MapFileProfileConfigurationEndpoints();
                                  
                                  endpoints.MapHealthChecks("health", new HealthCheckOptions()
                                  {
@@ -84,9 +85,6 @@ namespace EstateReportingAPI
                                      ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
                                  });
                              });
-            //app.UseSwagger();
-
-            //app.UseSwaggerUI();
         }
     }
 }
