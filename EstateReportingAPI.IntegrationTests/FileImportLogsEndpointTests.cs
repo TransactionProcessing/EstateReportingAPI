@@ -12,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using SimpleResults;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace EstateReportingAPI.IntegrationTests
 {

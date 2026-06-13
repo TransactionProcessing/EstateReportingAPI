@@ -10,7 +10,6 @@ using Shouldly;
 using SimpleResults;
 using TransactionProcessor.Database.Entities;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace EstateReportingAPI.IntegrationTests;
 

@@ -19,7 +19,6 @@ using Shared.IntegrationTesting;
 using Shared.Logger;
 using Shouldly;
 using Xunit;
-using Xunit.Abstractions;
 
 public abstract class ControllerTestsBase : IAsyncLifetime
 {
@@ -30,7 +29,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     protected DatabaseHelper helper;
     protected ITestOutputHelper TestOutputHelper;
     protected DockerHelper DockerHelper;
-    public virtual async Task InitializeAsync()
+    public virtual async ValueTask InitializeAsync()
     {
         this.TestId = Guid.NewGuid();
         String scenarioName = this.TestId.ToString();
@@ -55,7 +54,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         await this.SetupStandingData();
     }
 
-    public virtual async Task DisposeAsync()
+    public virtual async ValueTask DisposeAsync()
     {
         await this.DockerHelper.StopContainersForScenarioRun(DockerServices.None);
     }
