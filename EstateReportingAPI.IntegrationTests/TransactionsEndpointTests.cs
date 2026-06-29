@@ -1071,4 +1071,65 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
         }
     }
+
+    [Fact]
+    public async Task TransactionsEndpoint_MerchantDailyPerformanceSummary_ReturnsMetricsAndLastFiveSales()
+    {
+        TransactionProcessor.Database.Entities.Merchant merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
+        var contract = this.contractList.Single(c => c.contractName == "Safaricom Contract");
+        var product = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value.First();
+
+        DateTime transactionDate = DateTime.Now.Date;
+        List<Transaction> transactions = new();
+
+        for (int i = 1; i <= 6; i++)
+        {
+            DateTime transactionDateTime = transactionDate.AddHours(9 + i);
+            string responseCode = i % 2 == 0 ? "1009" : "0000";
+
+            Transaction transaction = await this.helper.BuildTransactionX(
+                transactionDateTime,
+                merchant.MerchantId,
+                contract.operatorId,
+                contract.contractId,
+                product.productId,
+                responseCode,
+                product.productValue,
+                i);
+
+            transactions.Add(transaction);
+        }
+
+        await this.helper.AddTransactionsX(transactions);
+
+        MerchantDailyPerformanceSummaryRequest request = new()
+        {
+            MerchantReportingId = merchant.MerchantReportingId,
+            StartDate = transactionDate,
+            EndDate = transactionDate
+        };
+
+        var result = await this.CreateAndSendHttpRequestMessage<MerchantDailyPerformanceSummaryResponse>(
+            $"{this.BaseRoute}/merchantdailyperformancesummary",
+            StringSerialiser.Serialise(request),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+
+        MerchantDailyPerformanceSummaryResponse response = result.Data;
+        response.ShouldNotBeNull();
+        response.Metrics.ShouldNotBeNull();
+        response.DrillDownTransactions.ShouldNotBeNull();
+
+        response.Metrics.Count.ShouldBe(9);
+        response.Metrics.Single(m => m.Title == "Total Sales Count").Value.ShouldBe(6);
+        response.Metrics.Single(m => m.Title == "Successful Sales Count").Value.ShouldBe(3);
+        response.Metrics.Single(m => m.Title == "Failed Sales Count").Value.ShouldBe(3);
+        response.Metrics.Single(m => m.Title == "Top Product Sales Count").Value.ShouldBe(6);
+        response.Metrics.Single(m => m.Title == "Top Product Sales Count").Description.ShouldBe(product.productName);
+
+        response.DrillDownTransactions.Count.ShouldBe(5);
+        response.DrillDownTransactions.Select(x => x.Reference).ShouldBe(new[] { "0006", "0005", "0004", "0003", "0002" });
+        response.DrillDownTransactions.Select(x => x.Status).ShouldBe(new[] { "Failed", "Successful", "Failed", "Successful", "Failed" });
+    }
 }

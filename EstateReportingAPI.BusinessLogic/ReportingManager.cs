@@ -65,6 +65,9 @@ public interface IReportingManager
                                                            CancellationToken cancellationToken);
     Task<Result<List<FileProfileConfiguration>>> GetFileProfileConfigurationList(FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery request,
                                                         CancellationToken cancellationToken);
+
+    Task<Result<MerchantDailyPerformanceSummaryResponse>> GetMerchantDailyPerformanceSummary(TransactionQueries.MerchantDailyPerformanceSummaryQuery request,
+                                                                                             CancellationToken cancellationToken);
 }
 
 public class ReportingManager : IReportingManager {
@@ -1550,6 +1553,134 @@ public class ReportingManager : IReportingManager {
         return Result.Success(result.Data);
     }
 
+    public async Task<Result<MerchantDailyPerformanceSummaryResponse>> GetMerchantDailyPerformanceSummary(TransactionQueries.MerchantDailyPerformanceSummaryQuery request,
+                                                                                                          CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        DateTime startDate = request.Request.StartDate.Date;
+        DateTime endDate = request.Request.EndDate.Date;
+        int dayCount = Math.Max((endDate - startDate).Days + 1, 1);
+
+        IQueryable<MerchantDailyPerformanceGroupProjection> groupedTransactionsQuery =
+            from t in context.Transactions
+            join m in context.Merchants on t.MerchantId equals m.MerchantId
+            join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
+            where t.TransactionType == "Sale"
+                  && t.TransactionDate >= startDate
+                  && t.TransactionDate <= endDate
+                  && m.MerchantReportingId == request.Request.MerchantReportingId
+            group t by new
+            {
+                cp.ContractProductReportingId,
+                cp.ProductName,
+                t.IsAuthorised
+            }
+            into g
+            select new MerchantDailyPerformanceGroupProjection
+            {
+                ContractProductReportingId = g.Key.ContractProductReportingId,
+                ProductName = g.Key.ProductName,
+                IsAuthorised = g.Key.IsAuthorised,
+                SalesCount = g.Count(),
+                SalesValue = g.Sum(x => x.TransactionAmount)
+            };
+
+        var groupedTransactionsResult = await ExecuteQuerySafeToList(groupedTransactionsQuery, cancellationToken, "Error retrieving merchant daily performance summary");
+        if (groupedTransactionsResult.IsFailed)
+            return ResultHelpers.CreateFailure(groupedTransactionsResult);
+
+        var groupedTransactions = groupedTransactionsResult.Data;
+        if (groupedTransactions.Any() == false) {
+            return Result.Success(new MerchantDailyPerformanceSummaryResponse {
+                Metrics = new List<MetricItem> {
+                    new() { Title = "Total Sales Count", Value = 0, Description = "All sales transactions in the range", Category = 0 },
+                    new() { Title = "Total Sales Value", Value = 0, Description = "All sales value in the range", Category = 1 },
+                    new() { Title = "Successful Sales Count", Value = 0, Description = "Authorised sales count in the range", Category = 2 },
+                    new() { Title = "Successful Sales Value", Value = 0, Description = "Authorised sales value in the range", Category = 3 },
+                    new() { Title = "Failed Sales Count", Value = 0, Description = "Declined sales count in the range", Category = 4 },
+                    new() { Title = "Failed Sales Value", Value = 0, Description = "Declined sales value in the range", Category = 5 },
+                    new() { Title = "Average Sales Count", Value = 0, Description = "Average sales count per day in the range", Category = 6 },
+                    new() { Title = "Average Sales Value", Value = 0, Description = "Average value per sale in the range", Category = 7 }
+                }
+            });
+        }
+
+        int totalSalesCount = groupedTransactions.Sum(x => x.SalesCount);
+        decimal totalSalesValue = groupedTransactions.Sum(x => x.SalesValue);
+        int successfulSalesCount = groupedTransactions.Where(x => x.IsAuthorised).Sum(x => x.SalesCount);
+        decimal successfulSalesValue = groupedTransactions.Where(x => x.IsAuthorised).Sum(x => x.SalesValue);
+        int failedSalesCount = groupedTransactions.Where(x => !x.IsAuthorised).Sum(x => x.SalesCount);
+        decimal failedSalesValue = groupedTransactions.Where(x => !x.IsAuthorised).Sum(x => x.SalesValue);
+        decimal averageSalesCount = (decimal)totalSalesCount / dayCount;
+        decimal averageSalesValue = totalSalesCount == 0 ? 0m : totalSalesValue / totalSalesCount;
+
+        var topProduct = groupedTransactions
+            .GroupBy(x => new { x.ContractProductReportingId, x.ProductName })
+            .Select(g => new {
+                g.Key.ContractProductReportingId,
+                g.Key.ProductName,
+                SalesCount = g.Sum(x => x.SalesCount),
+                SalesValue = g.Sum(x => x.SalesValue)
+            })
+            .OrderByDescending(x => x.SalesCount)
+            .ThenBy(x => x.ProductName)
+            .FirstOrDefault();
+
+        List<MetricItem> metrics = new() {
+            new() { Title = "Total Sales Count", Value = totalSalesCount, Description = "All sales transactions in the range", Category = 0 },
+            new() { Title = "Total Sales Value", Value = totalSalesValue, Description = "All sales value in the range", Category = 1 },
+            new() { Title = "Successful Sales Count", Value = successfulSalesCount, Description = "Authorised sales count in the range", Category = 2 },
+            new() { Title = "Successful Sales Value", Value = successfulSalesValue, Description = "Authorised sales value in the range", Category = 3 },
+            new() { Title = "Failed Sales Count", Value = failedSalesCount, Description = "Declined sales count in the range", Category = 4 },
+            new() { Title = "Failed Sales Value", Value = failedSalesValue, Description = "Declined sales value in the range", Category = 5 },
+            new() { Title = "Average Sales Count", Value = averageSalesCount, Description = "Average sales count per day in the range", Category = 6 },
+            new() { Title = "Average Sales Value", Value = averageSalesValue, Description = "Average value per sale in the range", Category = 7 }
+        };
+
+        if (topProduct != null) {
+            metrics.Add(new MetricItem {
+                Title = "Top Product Sales Count",
+                Value = topProduct.SalesCount,
+                Description = topProduct.ProductName ?? "Unknown product",
+                Category = 8
+            });
+        }
+
+        IQueryable<MerchantDailyPerformanceRecentSaleProjection> recentSalesQuery =
+            (from t in context.Transactions
+             join m in context.Merchants on t.MerchantId equals m.MerchantId
+             join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
+             where t.TransactionType == "Sale"
+                   && t.TransactionDate >= startDate
+                   && t.TransactionDate <= endDate
+                   && m.MerchantReportingId == request.Request.MerchantReportingId
+             orderby t.TransactionDateTime descending
+             select new MerchantDailyPerformanceRecentSaleProjection
+             {
+                 Reference = t.TransactionNumber,
+                 Product = cp.ProductName,
+                 Status = t.IsAuthorised ? "Successful" : "Failed",
+                 Amount = t.TransactionAmount,
+                 TransactionDateTime = t.TransactionDateTime
+             }).Take(5);
+
+        var recentSalesResult = await ExecuteQuerySafeToList(recentSalesQuery, cancellationToken, "Error retrieving merchant recent sales");
+        if (recentSalesResult.IsFailed)
+            return ResultHelpers.CreateFailure(recentSalesResult);
+
+        return Result.Success(new MerchantDailyPerformanceSummaryResponse {
+            Metrics = metrics,
+            DrillDownTransactions = recentSalesResult.Data.Select(x => new DrillDownTransaction {
+                Reference = x.Reference,
+                Product = x.Product,
+                Status = x.Status,
+                Amount = x.Amount,
+                TransactionDateTime = x.TransactionDateTime
+            }).ToList()
+        });
+    }
+
     private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
                                                                                            CancellationToken cancellationToken) {
             // Get the settleed fees summary
@@ -1709,6 +1840,22 @@ public class ReportingManager : IReportingManager {
             public int AuthorisedCount { get; init; }
             public int DeclinedCount { get; init; }
             public decimal AuthorisedPercentage { get; init; }
+        }
+
+        private sealed class MerchantDailyPerformanceGroupProjection {
+            public int ContractProductReportingId { get; init; }
+            public string? ProductName { get; init; }
+            public bool IsAuthorised { get; init; }
+            public int SalesCount { get; init; }
+            public decimal SalesValue { get; init; }
+        }
+
+        private sealed class MerchantDailyPerformanceRecentSaleProjection {
+            public string Reference { get; init; }
+            public string? Product { get; init; }
+            public string Status { get; init; }
+            public decimal Amount { get; init; }
+            public DateTime TransactionDateTime { get; init; }
         }
 
         private sealed class TransactionDetailQueryResult {
