@@ -1562,122 +1562,24 @@ public class ReportingManager : IReportingManager {
         DateTime endDate = request.Request.EndDate.Date;
         int dayCount = Math.Max((endDate - startDate).Days + 1, 1);
 
-        IQueryable<MerchantDailyPerformanceGroupProjection> groupedTransactionsQuery =
-            from t in context.Transactions
-            join m in context.Merchants on t.MerchantId equals m.MerchantId
-            join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
-            where t.TransactionType == "Sale"
-                  && t.TransactionDate >= startDate
-                  && t.TransactionDate <= endDate
-                  && m.MerchantReportingId == request.Request.MerchantReportingId
-            group t by new
-            {
-                cp.ContractProductReportingId,
-                cp.ProductName,
-                t.IsAuthorised
-            }
-            into g
-            select new MerchantDailyPerformanceGroupProjection
-            {
-                ContractProductReportingId = g.Key.ContractProductReportingId,
-                ProductName = g.Key.ProductName,
-                IsAuthorised = g.Key.IsAuthorised,
-                SalesCount = g.Count(),
-                SalesValue = g.Sum(x => x.TransactionAmount)
-            };
-
-        var groupedTransactionsResult = await ExecuteQuerySafeToList(groupedTransactionsQuery, cancellationToken, "Error retrieving merchant daily performance summary");
+        var groupedTransactionsResult = await LoadMerchantDailyPerformanceGroups(context, request, startDate, endDate, cancellationToken);
         if (groupedTransactionsResult.IsFailed)
             return ResultHelpers.CreateFailure(groupedTransactionsResult);
 
         var groupedTransactions = groupedTransactionsResult.Data;
         if (groupedTransactions.Any() == false) {
-            return Result.Success(new MerchantDailyPerformanceSummaryResponse {
-                Metrics = new List<MetricItem> {
-                    new() { Title = "Total Sales Count", Value = 0, Description = "All sales transactions in the range", Category = 0 },
-                    new() { Title = "Total Sales Value", Value = 0, Description = "All sales value in the range", Category = 1 },
-                    new() { Title = "Successful Sales Count", Value = 0, Description = "Authorised sales count in the range", Category = 2 },
-                    new() { Title = "Successful Sales Value", Value = 0, Description = "Authorised sales value in the range", Category = 3 },
-                    new() { Title = "Failed Sales Count", Value = 0, Description = "Declined sales count in the range", Category = 4 },
-                    new() { Title = "Failed Sales Value", Value = 0, Description = "Declined sales value in the range", Category = 5 },
-                    new() { Title = "Average Sales Count", Value = 0, Description = "Average sales count per day in the range", Category = 6 },
-                    new() { Title = "Average Sales Value", Value = 0, Description = "Average value per sale in the range", Category = 7 }
-                }
-            });
+            return Result.Success(BuildEmptyMerchantDailyPerformanceSummaryResponse());
         }
 
-        int totalSalesCount = groupedTransactions.Sum(x => x.SalesCount);
-        decimal totalSalesValue = groupedTransactions.Sum(x => x.SalesValue);
-        int successfulSalesCount = groupedTransactions.Where(x => x.IsAuthorised).Sum(x => x.SalesCount);
-        decimal successfulSalesValue = groupedTransactions.Where(x => x.IsAuthorised).Sum(x => x.SalesValue);
-        int failedSalesCount = groupedTransactions.Where(x => !x.IsAuthorised).Sum(x => x.SalesCount);
-        decimal failedSalesValue = groupedTransactions.Where(x => !x.IsAuthorised).Sum(x => x.SalesValue);
-        decimal averageSalesCount = (decimal)totalSalesCount / dayCount;
-        decimal averageSalesValue = totalSalesCount == 0 ? 0m : totalSalesValue / totalSalesCount;
+        List<MetricItem> metrics = BuildMerchantDailyPerformanceMetrics(groupedTransactions, dayCount);
 
-        var topProduct = groupedTransactions
-            .GroupBy(x => new { x.ContractProductReportingId, x.ProductName })
-            .Select(g => new {
-                g.Key.ContractProductReportingId,
-                g.Key.ProductName,
-                SalesCount = g.Sum(x => x.SalesCount),
-                SalesValue = g.Sum(x => x.SalesValue)
-            })
-            .OrderByDescending(x => x.SalesCount)
-            .ThenBy(x => x.ProductName)
-            .FirstOrDefault();
-
-        List<MetricItem> metrics = new() {
-            new() { Title = "Total Sales Count", Value = totalSalesCount, Description = "All sales transactions in the range", Category = 0 },
-            new() { Title = "Total Sales Value", Value = totalSalesValue, Description = "All sales value in the range", Category = 1 },
-            new() { Title = "Successful Sales Count", Value = successfulSalesCount, Description = "Authorised sales count in the range", Category = 2 },
-            new() { Title = "Successful Sales Value", Value = successfulSalesValue, Description = "Authorised sales value in the range", Category = 3 },
-            new() { Title = "Failed Sales Count", Value = failedSalesCount, Description = "Declined sales count in the range", Category = 4 },
-            new() { Title = "Failed Sales Value", Value = failedSalesValue, Description = "Declined sales value in the range", Category = 5 },
-            new() { Title = "Average Sales Count", Value = averageSalesCount, Description = "Average sales count per day in the range", Category = 6 },
-            new() { Title = "Average Sales Value", Value = averageSalesValue, Description = "Average value per sale in the range", Category = 7 }
-        };
-
-        if (topProduct != null) {
-            metrics.Add(new MetricItem {
-                Title = "Top Product Sales Count",
-                Value = topProduct.SalesCount,
-                Description = topProduct.ProductName ?? "Unknown product",
-                Category = 8
-            });
-        }
-
-        IQueryable<MerchantDailyPerformanceRecentSaleProjection> recentSalesQuery =
-            (from t in context.Transactions
-             join m in context.Merchants on t.MerchantId equals m.MerchantId
-             join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
-             where t.TransactionType == "Sale"
-                   && t.TransactionDate >= startDate
-                   && t.TransactionDate <= endDate
-                   && m.MerchantReportingId == request.Request.MerchantReportingId
-             orderby t.TransactionDateTime descending
-             select new MerchantDailyPerformanceRecentSaleProjection
-             {
-                 Reference = t.TransactionNumber,
-                 Product = cp.ProductName,
-                 Status = t.IsAuthorised ? "Successful" : "Failed",
-                 Amount = t.TransactionAmount,
-                 TransactionDateTime = t.TransactionDateTime
-             }).Take(5);
-
-        var recentSalesResult = await ExecuteQuerySafeToList(recentSalesQuery, cancellationToken, "Error retrieving merchant recent sales");
+        var recentSalesResult = await LoadMerchantDailyPerformanceRecentSales(context, request, startDate, endDate, cancellationToken);
         if (recentSalesResult.IsFailed)
             return ResultHelpers.CreateFailure(recentSalesResult);
 
         return Result.Success(new MerchantDailyPerformanceSummaryResponse {
             Metrics = metrics,
-            DrillDownTransactions = recentSalesResult.Data.Select(x => new DrillDownTransaction {
-                Reference = x.Reference,
-                Product = x.Product,
-                Status = x.Status,
-                Amount = x.Amount,
-                TransactionDateTime = x.TransactionDateTime
-            }).ToList()
+            DrillDownTransactions = MapMerchantDailyPerformanceRecentSales(recentSalesResult.Data)
         });
     }
 
@@ -1856,6 +1758,146 @@ public class ReportingManager : IReportingManager {
             public string Status { get; init; }
             public decimal Amount { get; init; }
             public DateTime TransactionDateTime { get; init; }
+        }
+
+        private static MerchantDailyPerformanceSummaryResponse BuildEmptyMerchantDailyPerformanceSummaryResponse() {
+            return new MerchantDailyPerformanceSummaryResponse {
+                Metrics = BuildMerchantDailyPerformanceBaseMetrics()
+            };
+        }
+
+        private static List<MetricItem> BuildMerchantDailyPerformanceBaseMetrics() {
+            return new List<MetricItem> {
+                new() { Title = "Total Sales Count", Value = 0, Description = "All sales transactions in the range", Category = 0 },
+                new() { Title = "Total Sales Value", Value = 0, Description = "All sales value in the range", Category = 1 },
+                new() { Title = "Successful Sales Count", Value = 0, Description = "Authorised sales count in the range", Category = 2 },
+                new() { Title = "Successful Sales Value", Value = 0, Description = "Authorised sales value in the range", Category = 3 },
+                new() { Title = "Failed Sales Count", Value = 0, Description = "Declined sales count in the range", Category = 4 },
+                new() { Title = "Failed Sales Value", Value = 0, Description = "Declined sales value in the range", Category = 5 },
+                new() { Title = "Average Sales Count", Value = 0, Description = "Average sales count per day in the range", Category = 6 },
+                new() { Title = "Average Sales Value", Value = 0, Description = "Average value per sale in the range", Category = 7 }
+            };
+        }
+
+        private static List<MetricItem> BuildMerchantDailyPerformanceMetrics(List<MerchantDailyPerformanceGroupProjection> groupedTransactions,
+                                                                             int dayCount) {
+            int totalSalesCount = groupedTransactions.Sum(x => x.SalesCount);
+            decimal totalSalesValue = groupedTransactions.Sum(x => x.SalesValue);
+            int successfulSalesCount = groupedTransactions.Where(x => x.IsAuthorised).Sum(x => x.SalesCount);
+            decimal successfulSalesValue = groupedTransactions.Where(x => x.IsAuthorised).Sum(x => x.SalesValue);
+            int failedSalesCount = groupedTransactions.Where(x => !x.IsAuthorised).Sum(x => x.SalesCount);
+            decimal failedSalesValue = groupedTransactions.Where(x => !x.IsAuthorised).Sum(x => x.SalesValue);
+            decimal averageSalesCount = (decimal)totalSalesCount / dayCount;
+            decimal averageSalesValue = totalSalesCount == 0 ? 0m : totalSalesValue / totalSalesCount;
+
+            List<MetricItem> metrics = new() {
+                new() { Title = "Total Sales Count", Value = totalSalesCount, Description = "All sales transactions in the range", Category = 0 },
+                new() { Title = "Total Sales Value", Value = totalSalesValue, Description = "All sales value in the range", Category = 1 },
+                new() { Title = "Successful Sales Count", Value = successfulSalesCount, Description = "Authorised sales count in the range", Category = 2 },
+                new() { Title = "Successful Sales Value", Value = successfulSalesValue, Description = "Authorised sales value in the range", Category = 3 },
+                new() { Title = "Failed Sales Count", Value = failedSalesCount, Description = "Declined sales count in the range", Category = 4 },
+                new() { Title = "Failed Sales Value", Value = failedSalesValue, Description = "Declined sales value in the range", Category = 5 },
+                new() { Title = "Average Sales Count", Value = averageSalesCount, Description = "Average sales count per day in the range", Category = 6 },
+                new() { Title = "Average Sales Value", Value = averageSalesValue, Description = "Average value per sale in the range", Category = 7 }
+            };
+
+            MetricItem? topProductMetric = BuildTopProductMetric(groupedTransactions);
+            if (topProductMetric != null)
+                metrics.Add(topProductMetric);
+
+            return metrics;
+        }
+
+        private static MetricItem? BuildTopProductMetric(List<MerchantDailyPerformanceGroupProjection> groupedTransactions) {
+            var topProduct = groupedTransactions
+                .GroupBy(x => new { x.ContractProductReportingId, x.ProductName })
+                .Select(g => new {
+                    g.Key.ContractProductReportingId,
+                    g.Key.ProductName,
+                    SalesCount = g.Sum(x => x.SalesCount),
+                    SalesValue = g.Sum(x => x.SalesValue)
+                })
+                .OrderByDescending(x => x.SalesCount)
+                .ThenBy(x => x.ProductName)
+                .FirstOrDefault();
+
+            if (topProduct == null)
+                return null;
+
+            return new MetricItem {
+                Title = "Top Product Sales Count",
+                Value = topProduct.SalesCount,
+                Description = topProduct.ProductName ?? "Unknown product",
+                Category = 8
+            };
+        }
+
+        private async Task<Result<List<MerchantDailyPerformanceGroupProjection>>> LoadMerchantDailyPerformanceGroups(EstateManagementContext context,
+                                                                                                                   TransactionQueries.MerchantDailyPerformanceSummaryQuery request,
+                                                                                                                   DateTime startDate,
+                                                                                                                   DateTime endDate,
+                                                                                                                   CancellationToken cancellationToken) {
+            var query =
+                from t in context.Transactions
+                join m in context.Merchants on t.MerchantId equals m.MerchantId
+                join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
+                where t.TransactionType == "Sale"
+                      && t.TransactionDate >= startDate
+                      && t.TransactionDate <= endDate
+                      && m.MerchantReportingId == request.Request.MerchantReportingId
+                group t by new
+                {
+                    cp.ContractProductReportingId,
+                    cp.ProductName,
+                    t.IsAuthorised
+                }
+                into g
+                select new MerchantDailyPerformanceGroupProjection
+                {
+                    ContractProductReportingId = g.Key.ContractProductReportingId,
+                    ProductName = g.Key.ProductName,
+                    IsAuthorised = g.Key.IsAuthorised,
+                    SalesCount = g.Count(),
+                    SalesValue = g.Sum(x => x.TransactionAmount)
+                };
+
+            return await ExecuteQuerySafeToList(query, cancellationToken, "Error retrieving merchant daily performance summary");
+        }
+
+        private async Task<Result<List<MerchantDailyPerformanceRecentSaleProjection>>> LoadMerchantDailyPerformanceRecentSales(EstateManagementContext context,
+                                                                                                                               TransactionQueries.MerchantDailyPerformanceSummaryQuery request,
+                                                                                                                               DateTime startDate,
+                                                                                                                               DateTime endDate,
+                                                                                                                               CancellationToken cancellationToken) {
+            var query =
+                (from t in context.Transactions
+                 join m in context.Merchants on t.MerchantId equals m.MerchantId
+                 join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
+                 where t.TransactionType == "Sale"
+                       && t.TransactionDate >= startDate
+                       && t.TransactionDate <= endDate
+                       && m.MerchantReportingId == request.Request.MerchantReportingId
+                 orderby t.TransactionDateTime descending
+                 select new MerchantDailyPerformanceRecentSaleProjection
+                 {
+                     Reference = t.TransactionNumber,
+                     Product = cp.ProductName,
+                     Status = t.IsAuthorised ? "Successful" : "Failed",
+                     Amount = t.TransactionAmount,
+                     TransactionDateTime = t.TransactionDateTime
+                 }).Take(5);
+
+            return await ExecuteQuerySafeToList(query, cancellationToken, "Error retrieving merchant recent sales");
+        }
+
+        private static List<DrillDownTransaction> MapMerchantDailyPerformanceRecentSales(List<MerchantDailyPerformanceRecentSaleProjection> recentSales) {
+            return recentSales.Select(x => new DrillDownTransaction {
+                Reference = x.Reference,
+                Product = x.Product,
+                Status = x.Status,
+                Amount = x.Amount,
+                TransactionDateTime = x.TransactionDateTime
+            }).ToList();
         }
 
         private sealed class TransactionDetailQueryResult {
