@@ -3,6 +3,8 @@ using EstateReportingAPI.DataTransferObjects;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Results.Web;
+using SimpleResults;
+using TransactionProcessor.Database.Entities.Summary;
 using TodaysSales = EstateReportingAPI.Models.TodaysSales;
 
 namespace EstateReportingAPI.Handlers;
@@ -205,4 +207,38 @@ public static class TransactionHandler {
         return ResponseFactory.FromResult(result, SuccessFactory);
     }
 
+    public static async Task<IResult> MerchantDailyPerformanceSummary([FromHeader] Guid estateId,
+                                                                      [FromBody] MerchantDailyPerformanceSummaryRequest request,
+                                                                      IMediator mediator, CancellationToken cancellationToken)
+    {
+        TransactionQueries.MerchantDailyPerformanceSummaryQuery query = new(estateId, new Models.MerchantDailyPerformanceSummaryRequest {
+            EndDate = request.EndDate,
+            MerchantReportingId = request.MerchantReportingId,
+            StartDate = request.StartDate
+        });
+        Result<Models.MerchantDailyPerformanceSummaryResponse> result = await mediator.Send(query, cancellationToken);
+
+        MerchantDailyPerformanceSummaryResponse SuccessFactory(Models.MerchantDailyPerformanceSummaryResponse r) =>
+            new MerchantDailyPerformanceSummaryResponse
+            {
+                Metrics = r.Metrics?.Select(metric => new MetricItem
+                {
+                    Title = metric.Title,
+                    Value = metric.Value,
+                    Description = metric.Description,
+                    Category = metric.Category
+                }).ToList() ?? [],
+                DrillDownTransactions = r.DrillDownTransactions?.Select(transaction => new DrillDownTransaction
+                {
+                    Reference = transaction.Reference,
+                    Product = transaction.Product,
+                    Status = transaction.Status,
+                    Amount = transaction.Amount,
+                    TransactionDateTime = transaction.TransactionDateTime
+                }).ToList() ?? []
+            };
+
+        return ResponseFactory.FromResult(result, SuccessFactory);
+    }
 }
+
