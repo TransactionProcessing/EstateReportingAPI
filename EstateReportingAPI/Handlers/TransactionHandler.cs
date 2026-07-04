@@ -185,6 +185,68 @@ public static class TransactionHandler {
         return ResponseFactory.FromResult(result, SuccessFactory);
     }
 
+    public static async Task<IResult> TransactionMixSummary([FromHeader] Guid estateId,
+                                                            [FromBody] TransactionMixSummaryRequest request,
+                                                            IMediator mediator,
+                                                            CancellationToken cancellationToken)
+    {
+        if (request.StartDate > request.EndDate)
+            return Results.BadRequest("StartDate must be less than or equal to EndDate.");
+
+        Models.TransactionMixSummaryRequest queryRequest = new()
+        {
+            MerchantReportingId = request.MerchantReportingId,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate,
+            Breakdown = (Models.TransactionMixBreakdown)request.Breakdown,
+            Measure = (Models.TransactionMixMeasure)request.Measure,
+            TopN = request.TopN
+        };
+
+        var query = new TransactionQueries.TransactionMixSummaryQuery(estateId, queryRequest);
+        var result = await mediator.Send(query, cancellationToken);
+
+        TransactionMixSummaryResponse SuccessFactory(Models.TransactionMixSummaryResponse r) =>
+            new TransactionMixSummaryResponse
+            {
+                FromDate = r.FromDate,
+                ToDate = r.ToDate,
+                Breakdown = (TransactionMixBreakdown)r.Breakdown,
+                Measure = (TransactionMixMeasure)r.Measure,
+                TotalCount = r.TotalCount,
+                TotalValue = r.TotalValue,
+                Groups = r.Groups.Select(g => new TransactionMixSummaryGroup
+                {
+                    GroupKey = g.GroupKey,
+                    GroupName = g.GroupName,
+                    TransactionCount = g.TransactionCount,
+                    TransactionValue = g.TransactionValue
+                }).ToList(),
+                Transactions = r.Transactions.Select(t => new TransactionMixSummaryTransaction
+                {
+                    Id = t.Id,
+                    DateTime = t.DateTime,
+                    Merchant = t.Merchant,
+                    MerchantId = t.MerchantId,
+                    MerchantReportingId = t.MerchantReportingId,
+                    Operator = t.Operator,
+                    OperatorId = t.OperatorId,
+                    OperatorReportingId = t.OperatorReportingId,
+                    Product = t.Product,
+                    ProductId = t.ProductId,
+                    ProductReportingId = t.ProductReportingId,
+                    Type = t.Type,
+                    Status = t.Status,
+                    Value = t.Value,
+                    TotalFees = t.TotalFees,
+                    SettlementReference = t.SettlementReference,
+                    TransactionNumber = t.TransactionNumber
+                }).ToList()
+            };
+
+        return ResponseFactory.FromResult(result, SuccessFactory);
+    }
+
     public static async Task<IResult> TodaysSalesByHour([FromHeader] Guid estateId,
                                                              [FromQuery] DateTime comparisonDate,
                                                              IMediator mediator,

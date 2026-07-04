@@ -50,6 +50,8 @@ public interface IReportingManager
                                                                                  CancellationToken cancellationToken);
     Task<Result<ProductPerformanceResponse>> GetProductPerformanceReport(TransactionQueries.ProductPerformanceQuery request,
                                                                          CancellationToken cancellationToken);
+    Task<Result<TransactionMixSummaryResponse>> GetTransactionMixSummary(TransactionQueries.TransactionMixSummaryQuery request,
+                                                                          CancellationToken cancellationToken);
 
     Task<Result<List<TodaysSalesByHour>>> GetTodaysSalesByHour(TransactionQueries.TodaysSalesByHour request,
                                                                CancellationToken cancellationToken);
@@ -1241,6 +1243,56 @@ public class ReportingManager : IReportingManager {
         return Result.Success(BuildProductPerformanceResponse(queryResults));
     }
 
+    public async Task<Result<TransactionMixSummaryResponse>> GetTransactionMixSummary(TransactionQueries.TransactionMixSummaryQuery request,
+                                                                                      CancellationToken cancellationToken)
+    {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        if (request.Request.StartDate > request.Request.EndDate)
+            return Result.Failure("StartDate must be less than or equal to EndDate.");
+
+        if (!Enum.IsDefined(typeof(TransactionMixBreakdown), request.Request.Breakdown))
+            return Result.Failure("Unsupported transaction mix breakdown.");
+
+        if (!Enum.IsDefined(typeof(TransactionMixMeasure), request.Request.Measure))
+            return Result.Failure("Unsupported transaction mix measure.");
+
+        var detailRequest = new TransactionDetailReportRequest
+        {
+            Merchants = request.Request.MerchantReportingId.HasValue ? new List<int> { request.Request.MerchantReportingId.Value } : [],
+            Operators = [],
+            Products = [],
+            StartDate = request.Request.StartDate,
+            EndDate = request.Request.EndDate
+        };
+
+        var query = ApplyTransactionDetailFilters(BuildTransactionDetailBaseQuery(context, detailRequest), detailRequest);
+        var queryResult = await ExecuteQuerySafeToList(query, cancellationToken, "Error retrieving transaction mix summary report");
+
+        if (queryResult.IsFailed)
+            return ResultHelpers.CreateFailure(queryResult);
+
+        var queryResults = queryResult.Data;
+
+        if (queryResults.Any() == false)
+        {
+            return Result.Success(new TransactionMixSummaryResponse
+            {
+                FromDate = request.Request.StartDate,
+                ToDate = request.Request.EndDate,
+                Breakdown = request.Request.Breakdown,
+                Measure = request.Request.Measure,
+                TotalCount = 0,
+                TotalValue = 0m,
+                Groups = [],
+                Transactions = []
+            });
+        }
+
+        return Result.Success(BuildTransactionMixSummaryResponse(queryResults, request.Request));
+    }
+
     private static IQueryable<ProductPerformanceItemData> BuildProductPerformanceQuery(EstateManagementContext context,
                                                                                        DateTime startDate,
                                                                                        DateTime endDate,
@@ -1276,6 +1328,80 @@ public class ReportingManager : IReportingManager {
                 PercentageOfTotal = q.PercentOfTotalAmount
             }).ToList(),
             Summary = new ProductPerformanceSummary { TotalCount = queryResults.Sum(q => q.TransactionCount), TotalValue = queryResults.Sum(q => q.TotalAmount), AveragePerProduct = this.SafeDivide(queryResults.Sum(q => q.TotalAmount), queryResults.Count), TotalProducts = queryResults.Count() }
+        };
+    }
+
+    private static TransactionMixSummaryResponse BuildTransactionMixSummaryResponse(List<TransactionDetailQueryResult> queryResults,
+                                                                                     TransactionMixSummaryRequest request)
+    {
+        var groupedResults = queryResults
+            .GroupBy(q => request.Breakdown switch
+            {
+                TransactionMixBreakdown.Product => q.ContractProductReportingId.ToString(),
+                TransactionMixBreakdown.TransactionType => q.TransactionType ?? string.Empty,
+                TransactionMixBreakdown.Operator => q.OperatorReportingId.ToString(),
+                TransactionMixBreakdown.Status => q.Status ?? string.Empty,
+                _ => string.Empty
+            })
+            .Select(g =>
+            {
+                var first = g.First();
+                string groupName = request.Breakdown switch
+                {
+                    TransactionMixBreakdown.Product => first.ProductName ?? string.Empty,
+                    TransactionMixBreakdown.TransactionType => first.TransactionType ?? string.Empty,
+                    TransactionMixBreakdown.Operator => first.OperatorName ?? string.Empty,
+                    TransactionMixBreakdown.Status => first.Status ?? string.Empty,
+                    _ => string.Empty
+                };
+
+                return new TransactionMixSummaryGroup
+                {
+                    GroupKey = g.Key,
+                    GroupName = groupName,
+                    TransactionCount = g.Count(),
+                    TransactionValue = g.Sum(x => x.Value)
+                };
+            });
+
+        var orderedGroups = request.Measure == TransactionMixMeasure.Count
+            ? groupedResults.OrderByDescending(g => g.TransactionCount).ThenBy(g => g.GroupName)
+            : groupedResults.OrderByDescending(g => g.TransactionValue).ThenBy(g => g.GroupName);
+
+        int topN = request.TopN > 0 ? request.TopN : 5;
+
+        return new TransactionMixSummaryResponse
+        {
+            FromDate = request.StartDate,
+            ToDate = request.EndDate,
+            Breakdown = request.Breakdown,
+            Measure = request.Measure,
+            TotalCount = queryResults.Count,
+            TotalValue = queryResults.Sum(q => q.Value),
+            Groups = orderedGroups.Take(topN).ToList(),
+            Transactions = queryResults
+                .OrderByDescending(q => q.TransactionDateTime)
+                .Select(q => new TransactionMixSummaryTransaction
+                {
+                    Id = q.TransactionId,
+                    DateTime = q.TransactionDateTime,
+                    Merchant = q.MerchantName,
+                    MerchantId = q.MerchantId,
+                    MerchantReportingId = q.MerchantReportingId,
+                    Operator = q.OperatorName,
+                    OperatorId = q.OperatorId,
+                    OperatorReportingId = q.OperatorReportingId,
+                    Product = q.ProductName,
+                    ProductId = q.ContractProductId,
+                    ProductReportingId = q.ContractProductReportingId,
+                    Type = q.TransactionType,
+                    Status = q.Status,
+                    Value = q.Value,
+                    TotalFees = q.FeeValue,
+                    SettlementReference = q.SettlementId == Guid.Empty ? null : q.SettlementId.ToString(),
+                    TransactionNumber = q.TransactionNumber
+                })
+                .ToList()
         };
     }
 
