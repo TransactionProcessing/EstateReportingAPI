@@ -15,4 +15,5 @@ public record TransactionQueries {
     public record ProductPerformanceQuery(Guid EstateId, DateTime StartDate, DateTime EndDate) : IRequest<Result<ProductPerformanceResponse>>;
     public record TransactionMixSummaryQuery(Guid EstateId, TransactionMixSummaryRequest Request) : IRequest<Result<TransactionMixSummaryResponse>>;
     public record TodaysSalesByHour(Guid estateId, DateTime comparisonDate) : IRequest<Result<List<Models.TodaysSalesByHour>>>;
+    public record MerchantDailyPerformanceSummaryQuery(Guid EstateId, MerchantDailyPerformanceSummaryRequest Request) : IRequest<Result<MerchantDailyPerformanceSummaryResponse>>;
 }
