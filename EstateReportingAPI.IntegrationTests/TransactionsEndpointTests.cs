@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using EstateReportingAPI.DataTransferObjects;
@@ -9,6 +10,7 @@ using Shared.Serialisation;
 using Shouldly;
 using SimpleResults;
 using TransactionProcessor.Database.Entities;
+using System.Text.Json;
 using Xunit;
 
 namespace EstateReportingAPI.IntegrationTests;
@@ -18,6 +20,33 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
     public TransactionsEndpointTests(ITestOutputHelper testOutputHelper) {
         this.TestOutputHelper = testOutputHelper;
+    }
+
+    private static JsonElement GetPropertyCaseInsensitive(JsonElement element, string propertyName) {
+        if (element.TryGetProperty(propertyName, out JsonElement value))
+            return value;
+
+        string pascalCase = char.ToUpperInvariant(propertyName[0]) + propertyName[1..];
+        if (element.TryGetProperty(pascalCase, out value))
+            return value;
+
+        var snakeCaseBuilder = new System.Text.StringBuilder();
+        for (int i = 0; i < propertyName.Length; i++) {
+            char current = propertyName[i];
+            if (char.IsUpper(current) && i > 0) {
+                snakeCaseBuilder.Append('_');
+                snakeCaseBuilder.Append(char.ToLowerInvariant(current));
+            }
+            else {
+                snakeCaseBuilder.Append(char.ToLowerInvariant(current));
+            }
+        }
+
+        string snakeCase = snakeCaseBuilder.ToString();
+        if (element.TryGetProperty(snakeCase, out value))
+            return value;
+
+        throw new KeyNotFoundException($"Property '{propertyName}' was not found.");
     }
 
 
@@ -1131,5 +1160,137 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         response.DrillDownTransactions.Count.ShouldBe(5);
         response.DrillDownTransactions.Select(x => x.Reference).ShouldBe(new[] { "0006", "0005", "0004", "0003", "0002" });
         response.DrillDownTransactions.Select(x => x.Status).ShouldBe(new[] { "Failed", "Successful", "Failed", "Successful", "Failed" });
+    }
+
+    [Fact]
+    public async Task TransactionsEndpoint_RecentActivityReceiptReport_MerchantFilter_ReturnsDescendingResults() {
+        var reportDate = DateTime.Now.Date;
+        var merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
+        var otherMerchant = this.merchantsList.Single(m => m.Name == "Test Merchant 2");
+        var contract = this.contractList.Single(c => c.operatorName == "Safaricom");
+        var product = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value.First();
+        var @operator = this.operatorsList.Single(o => o.Name == "Safaricom");
+
+        List<Transaction> transactions = new() {
+            await this.helper.BuildTransactionX(reportDate.AddHours(8), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue, 11),
+            await this.helper.BuildTransactionX(reportDate.AddHours(10), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue, 12),
+            await this.helper.BuildTransactionX(reportDate.AddHours(9), otherMerchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue, 21)
+        };
+
+        transactions[0].TransactionReference = "receipt-001";
+        transactions[1].TransactionReference = "receipt-002";
+        transactions[2].TransactionReference = "receipt-003";
+
+        await this.helper.AddTransactionsX(transactions);
+        await this.helper.RunTodaysTransactionsSummaryProcessing(reportDate);
+        await this.helper.RunHistoricTransactionsSummaryProcessing(reportDate);
+
+        var payload = JsonSerializer.Serialize(new Dictionary<string, object?> {
+            ["report_date"] = reportDate,
+            ["merchant_reporting_id"] = merchant.MerchantReportingId,
+            ["search_text"] = null,
+            ["page_number"] = 1,
+            ["page_size"] = 10
+        });
+
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{this.BaseRoute}/recentactivityreceiptreport");
+        requestMessage.Headers.Add("estateId", this.TestId.ToString());
+        requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Test");
+        requestMessage.Content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await this.Client.SendAsync(requestMessage, CancellationToken.None);
+        response.IsSuccessStatusCode.ShouldBeTrue(response.StatusCode.ToString());
+
+        string content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        using JsonDocument document = JsonDocument.Parse(content);
+
+        static JsonElement GetPropertyCaseInsensitive(JsonElement element, string propertyName) {
+            if (element.TryGetProperty(propertyName, out JsonElement value))
+                return value;
+
+            string pascalCase = char.ToUpperInvariant(propertyName[0]) + propertyName[1..];
+            if (element.TryGetProperty(pascalCase, out value))
+                return value;
+
+            var snakeCaseBuilder = new System.Text.StringBuilder();
+            for (int i = 0; i < propertyName.Length; i++) {
+                char current = propertyName[i];
+                if (char.IsUpper(current) && i > 0) {
+                    snakeCaseBuilder.Append('_');
+                    snakeCaseBuilder.Append(char.ToLowerInvariant(current));
+                }
+                else {
+                    snakeCaseBuilder.Append(char.ToLowerInvariant(current));
+                }
+            }
+
+            string snakeCase = snakeCaseBuilder.ToString();
+            if (element.TryGetProperty(snakeCase, out value))
+                return value;
+
+            throw new KeyNotFoundException($"Property '{propertyName}' was not found.");
+        }
+
+        DateTime.Parse(GetPropertyCaseInsensitive(document.RootElement, "reportDate").GetString()!).Date.ShouldBe(reportDate);
+        GetPropertyCaseInsensitive(document.RootElement, "pageNumber").GetInt32().ShouldBe(1);
+        GetPropertyCaseInsensitive(document.RootElement, "pageSize").GetInt32().ShouldBe(10);
+        GetPropertyCaseInsensitive(document.RootElement, "totalCount").GetInt32().ShouldBe(2);
+
+        JsonElement items = GetPropertyCaseInsensitive(document.RootElement, "items");
+        items.GetArrayLength().ShouldBe(2);
+        GetPropertyCaseInsensitive(items[0], "reference").GetString().ShouldBe("0012");
+        GetPropertyCaseInsensitive(items[1], "reference").GetString().ShouldBe("0011");
+        GetPropertyCaseInsensitive(items[0], "receiptReference").GetString().ShouldBe("receipt-002");
+        GetPropertyCaseInsensitive(items[1], "receiptReference").GetString().ShouldBe("receipt-001");
+        GetPropertyCaseInsensitive(items[0], "operator").GetString().ShouldBe(@operator.Name);
+        DateTime.Parse(GetPropertyCaseInsensitive(items[0], "transactionDateTime").GetString()!).ShouldBe(reportDate.AddHours(10));
+    }
+
+    [Fact]
+    public async Task TransactionsEndpoint_RecentActivityReceiptReport_SearchText_IsAppliedBeforePaging() {
+        var reportDate = DateTime.Now.Date;
+        var merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
+        var otherMerchant = this.merchantsList.Single(m => m.Name == "Test Merchant 2");
+        var contract = this.contractList.Single(c => c.operatorName == "Safaricom");
+        var product = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value.First();
+
+        List<Transaction> transactions = new() {
+            await this.helper.BuildTransactionX(reportDate.AddHours(8), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue, 11),
+            await this.helper.BuildTransactionX(reportDate.AddHours(10), merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue, 12),
+            await this.helper.BuildTransactionX(reportDate.AddHours(9), otherMerchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue, 21)
+        };
+
+        transactions[0].TransactionReference = "receipt-001";
+        transactions[1].TransactionReference = "receipt-002";
+        transactions[2].TransactionReference = "receipt-003";
+
+        await this.helper.AddTransactionsX(transactions);
+        await this.helper.RunTodaysTransactionsSummaryProcessing(reportDate);
+        await this.helper.RunHistoricTransactionsSummaryProcessing(reportDate);
+
+        var payload = JsonSerializer.Serialize(new Dictionary<string, object?> {
+            ["report_date"] = reportDate,
+            ["merchant_reporting_id"] = merchant.MerchantReportingId,
+            ["search_text"] = "receipt",
+            ["page_number"] = 1,
+            ["page_size"] = 1
+        });
+
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{this.BaseRoute}/recentactivityreceiptreport");
+        requestMessage.Headers.Add("estateId", this.TestId.ToString());
+        requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Test");
+        requestMessage.Content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await this.Client.SendAsync(requestMessage, CancellationToken.None);
+        response.IsSuccessStatusCode.ShouldBeTrue(response.StatusCode.ToString());
+
+        string content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        using JsonDocument document = JsonDocument.Parse(content);
+
+        GetPropertyCaseInsensitive(document.RootElement, "totalCount").GetInt32().ShouldBe(2);
+        JsonElement items = GetPropertyCaseInsensitive(document.RootElement, "items");
+        items.GetArrayLength().ShouldBe(1);
+        GetPropertyCaseInsensitive(items[0], "reference").GetString().ShouldBe("0012");
+        GetPropertyCaseInsensitive(items[0], "receiptReference").GetString().ShouldBe("receipt-002");
     }
 }

@@ -47,11 +47,13 @@ public interface IReportingManager
     Task<Result<TransactionSummaryByMerchantResponse>> GetTransactionSummaryByMerchantReport(TransactionQueries.TransactionSummaryByMerchantQuery request,
                                                                              CancellationToken cancellationToken);
     Task<Result<TransactionSummaryByOperatorResponse>> GetTransactionSummaryByOperatorReport(TransactionQueries.TransactionSummaryByOperatorQuery request,
-                                                                                 CancellationToken cancellationToken);
+                                                                                  CancellationToken cancellationToken);
     Task<Result<ProductPerformanceResponse>> GetProductPerformanceReport(TransactionQueries.ProductPerformanceQuery request,
                                                                          CancellationToken cancellationToken);
     Task<Result<TransactionMixSummaryResponse>> GetTransactionMixSummary(TransactionQueries.TransactionMixSummaryQuery request,
-                                                                          CancellationToken cancellationToken);
+                                                                           CancellationToken cancellationToken);
+    Task<Result<GetRecentActivityReceiptReportResponse>> GetRecentActivityReceiptReport(TransactionQueries.GetRecentActivityReceiptReportQuery request,
+                                                                                         CancellationToken cancellationToken);
 
     Task<Result<List<TodaysSalesByHour>>> GetTodaysSalesByHour(TransactionQueries.TodaysSalesByHour request,
                                                                CancellationToken cancellationToken);
@@ -101,6 +103,19 @@ public class ReportingManager : IReportingManager {
         try {
             List<T> items = await query.ToListAsync(cancellationToken);
             return Result.Success(items);
+        }
+        catch (Exception ex) {
+            string msg = contextMessage == null ? $"Error executing query: {ex.Message}" : $"{contextMessage}: {ex.Message}";
+            return Result.Failure(msg);
+        }
+    }
+
+    private static async Task<Result<int>> ExecuteQuerySafeCount(IQueryable query,
+                                                                 CancellationToken cancellationToken,
+                                                                 string contextMessage = null) {
+        try {
+            int count = await query.CountAsync(cancellationToken);
+            return Result.Success(count);
         }
         catch (Exception ex) {
             string msg = contextMessage == null ? $"Error executing query: {ex.Message}" : $"{contextMessage}: {ex.Message}";
@@ -1293,9 +1308,89 @@ public class ReportingManager : IReportingManager {
         return Result.Success(BuildTransactionMixSummaryResponse(queryResults, request.Request));
     }
 
+    public async Task<Result<GetRecentActivityReceiptReportResponse>> GetRecentActivityReceiptReport(TransactionQueries.GetRecentActivityReceiptReportQuery request,
+                                                                                                     CancellationToken cancellationToken) {
+        using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
+        await using EstateManagementContext context = resolvedContext.Context;
+
+        DateTime reportDate = request.Request.ReportDate.Date;
+        int pageNumber = request.Request.PageNumber > 0 ? request.Request.PageNumber : 1;
+        int pageSize = request.Request.PageSize > 0 ? request.Request.PageSize : 10;
+
+        IQueryable<RecentActivityReceiptQueryResult> query = from t in context.Transactions
+            join m in context.Merchants on t.MerchantId equals m.MerchantId
+            join o in context.Operators on t.OperatorId equals o.OperatorId
+            join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
+            where t.TransactionDate == reportDate
+            select new RecentActivityReceiptQueryResult {
+                TransactionDateTime = t.TransactionDateTime,
+                MerchantReportingId = m.MerchantReportingId,
+                Reference = t.TransactionNumber,
+                TransactionType = t.TransactionType,
+                Product = cp.ProductName,
+                Operator = o.Name,
+                Status = t.IsAuthorised ? "Successful" : "Failed",
+                Amount = t.TransactionAmount,
+                ReceiptReference = t.TransactionReference
+            };
+
+        if (request.Request.MerchantReportingId.HasValue)
+            query = query.Where(q => q.MerchantReportingId == request.Request.MerchantReportingId.Value);
+
+        if (string.IsNullOrWhiteSpace(request.Request.SearchText) == false) {
+            string searchText = request.Request.SearchText.Trim();
+            query = query.Where(q =>
+                q.Reference.Contains(searchText) ||
+                q.TransactionType.Contains(searchText) ||
+                q.Product.Contains(searchText) ||
+                q.Operator.Contains(searchText) ||
+                q.Status.Contains(searchText) ||
+                q.ReceiptReference.Contains(searchText));
+        }
+
+        query = query.OrderByDescending(q => q.TransactionDateTime);
+
+        var totalCountResult = await ExecuteQuerySafeCount(query, cancellationToken, "Error counting recent activity receipt report rows");
+        if (totalCountResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalCountResult);
+
+        int totalCount = totalCountResult.Data;
+        if (totalCount == 0) {
+            return Result.Success(new GetRecentActivityReceiptReportResponse {
+                ReportDate = reportDate,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = 0,
+                Items = []
+            });
+        }
+
+        var pageQuery = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+        var pageResult = await ExecuteQuerySafeToList(pageQuery, cancellationToken, "Error retrieving recent activity receipt report");
+        if (pageResult.IsFailed)
+            return ResultHelpers.CreateFailure(pageResult);
+
+        return Result.Success(new GetRecentActivityReceiptReportResponse {
+            ReportDate = reportDate,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            Items = pageResult.Data.Select(item => new RecentActivityReceiptItemDto {
+                Reference = item.Reference,
+                TransactionType = item.TransactionType,
+                Product = item.Product,
+                Operator = item.Operator,
+                Status = item.Status,
+                Amount = item.Amount,
+                TransactionDateTime = item.TransactionDateTime,
+                ReceiptReference = item.ReceiptReference
+            }).ToList()
+        });
+    }
+
     private static IQueryable<ProductPerformanceItemData> BuildProductPerformanceQuery(EstateManagementContext context,
-                                                                                       DateTime startDate,
-                                                                                       DateTime endDate,
+                                                                                        DateTime startDate,
+                                                                                        DateTime endDate,
                                                                                        decimal grandTotalAmount) {
         return from t in context.Transactions
             join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
@@ -2024,6 +2119,18 @@ public class ReportingManager : IReportingManager {
                 Amount = x.Amount,
                 TransactionDateTime = x.TransactionDateTime
             }).ToList();
+        }
+
+        private sealed class RecentActivityReceiptQueryResult {
+            public DateTime TransactionDateTime { get; init; }
+            public int MerchantReportingId { get; init; }
+            public string Reference { get; init; }
+            public string? TransactionType { get; init; }
+            public string? Product { get; init; }
+            public string? Operator { get; init; }
+            public string? Status { get; init; }
+            public decimal Amount { get; init; }
+            public string? ReceiptReference { get; init; }
         }
 
         private sealed class TransactionDetailQueryResult {

@@ -12,6 +12,7 @@ public class TransactionRequestHandler : IRequestHandler<TransactionQueries.Toda
     IRequestHandler<TransactionQueries.TransactionSummaryByOperatorQuery, Result<TransactionSummaryByOperatorResponse>>,
     IRequestHandler<TransactionQueries.ProductPerformanceQuery, Result<ProductPerformanceResponse>>,
     IRequestHandler<TransactionQueries.TransactionMixSummaryQuery, Result<TransactionMixSummaryResponse>>,
+    IRequestHandler<TransactionQueries.GetRecentActivityReceiptReportQuery, Result<GetRecentActivityReceiptReportResponse>>,
     IRequestHandler<TransactionQueries.TodaysSalesByHour, Result<List<TodaysSalesByHour>>>,
     IRequestHandler<TransactionQueries.MerchantDailyPerformanceSummaryQuery, Result<MerchantDailyPerformanceSummaryResponse>>
 
@@ -58,6 +59,12 @@ public class TransactionRequestHandler : IRequestHandler<TransactionQueries.Toda
                                                                     CancellationToken cancellationToken)
     {
         return await this.Manager.GetTransactionMixSummary(request, cancellationToken);
+    }
+
+    public async Task<Result<GetRecentActivityReceiptReportResponse>> Handle(TransactionQueries.GetRecentActivityReceiptReportQuery request,
+                                                                             CancellationToken cancellationToken)
+    {
+        return await this.Manager.GetRecentActivityReceiptReport(request, cancellationToken);
     }
 
     public async Task<Result<List<TodaysSalesByHour>>> Handle(TransactionQueries.TodaysSalesByHour request,
