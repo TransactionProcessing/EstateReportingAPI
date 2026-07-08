@@ -247,9 +247,49 @@ public static class TransactionHandler {
         return ResponseFactory.FromResult(result, SuccessFactory);
     }
 
+    public static async Task<IResult> RecentActivityReceiptReport([FromHeader] Guid estateId,
+                                                                  [FromBody] GetRecentActivityReceiptReportRequest request,
+                                                                  IMediator mediator,
+                                                                  CancellationToken cancellationToken)
+    {
+        Models.GetRecentActivityReceiptReportRequest queryRequest = new()
+        {
+            ReportDate = request.ReportDate,
+            MerchantReportingId = request.MerchantReportingId,
+            SearchText = request.SearchText,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize
+        };
+
+        var query = new TransactionQueries.GetRecentActivityReceiptReportQuery(estateId, queryRequest);
+        var result = await mediator.Send(query, cancellationToken);
+
+        GetRecentActivityReceiptReportResponse SuccessFactory(Models.GetRecentActivityReceiptReportResponse r) =>
+            new GetRecentActivityReceiptReportResponse
+            {
+                ReportDate = r.ReportDate,
+                PageNumber = r.PageNumber,
+                PageSize = r.PageSize,
+                TotalCount = r.TotalCount,
+                Items = r.Items.Select(item => new RecentActivityReceiptItemDto
+                {
+                    Reference = item.Reference,
+                    TransactionType = item.TransactionType,
+                    Product = item.Product,
+                    Operator = item.Operator,
+                    Status = item.Status,
+                    Amount = item.Amount,
+                    TransactionDateTime = item.TransactionDateTime,
+                    ReceiptReference = item.ReceiptReference
+                }).ToList()
+            };
+
+        return ResponseFactory.FromResult(result, SuccessFactory);
+    }
+
     public static async Task<IResult> TodaysSalesByHour([FromHeader] Guid estateId,
-                                                             [FromQuery] DateTime comparisonDate,
-                                                             IMediator mediator,
+                                                              [FromQuery] DateTime comparisonDate,
+                                                              IMediator mediator,
                                                              CancellationToken cancellationToken)
     {
         var query = new TransactionQueries.TodaysSalesByHour(estateId, comparisonDate);
