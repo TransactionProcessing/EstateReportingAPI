@@ -2,6 +2,7 @@
 using SimpleResults;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.DynamicLinq;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
 using TransactionProcessor.Database.Entities.Summary;
@@ -1996,6 +1997,7 @@ public class ReportingManager : IReportingManager {
         private sealed class MerchantDailyPerformanceGroupProjection {
             public int ContractProductReportingId { get; init; }
             public string? ProductName { get; init; }
+            public string OperatorName { get; init; }
             public bool IsAuthorised { get; init; }
             public int SalesCount { get; init; }
             public decimal SalesValue { get; init; }
@@ -2004,6 +2006,7 @@ public class ReportingManager : IReportingManager {
         private sealed class MerchantDailyPerformanceRecentSaleProjection {
             public string Reference { get; init; }
             public string? Product { get; init; }
+            public String Operator { get; init; }
             public string Status { get; init; }
             public decimal Amount { get; init; }
             public DateTime TransactionDateTime { get; init; }
@@ -2040,14 +2043,14 @@ public class ReportingManager : IReportingManager {
             decimal averageSalesValue = totalSalesCount == 0 ? 0m : totalSalesValue / totalSalesCount;
 
             List<MetricItem> metrics = new() {
-                new() { Title = "Total Sales Count", Value = totalSalesCount, Description = "All sales transactions in the range", Category = 0 },
-                new() { Title = "Total Sales Value", Value = totalSalesValue, Description = "All sales value in the range", Category = 1 },
-                new() { Title = "Successful Sales Count", Value = successfulSalesCount, Description = "Authorised sales count in the range", Category = 2 },
-                new() { Title = "Successful Sales Value", Value = successfulSalesValue, Description = "Authorised sales value in the range", Category = 3 },
-                new() { Title = "Failed Sales Count", Value = failedSalesCount, Description = "Declined sales count in the range", Category = 4 },
-                new() { Title = "Failed Sales Value", Value = failedSalesValue, Description = "Declined sales value in the range", Category = 5 },
-                new() { Title = "Average Sales Count", Value = averageSalesCount, Description = "Average sales count per day in the range", Category = 6 },
-                new() { Title = "Average Sales Value", Value = averageSalesValue, Description = "Average value per sale in the range", Category = 7 }
+                new() { Title = "Total Sales Count", Value = totalSalesCount, Description = "All sales transactions in the range", Category = 1, Type = 0},
+                new() { Title = "Total Sales Value", Value = totalSalesValue, Description = "All sales value in the range", Category = 1, Type = 1 },
+                new() { Title = "Successful Sales Count", Value = successfulSalesCount, Description = "Authorised sales count in the range", Category = 2, Type = 2 },
+                new() { Title = "Successful Sales Value", Value = successfulSalesValue, Description = "Authorised sales value in the range", Category = 2, Type = 3 },
+                new() { Title = "Failed Sales Count", Value = failedSalesCount, Description = "Declined sales count in the range", Category = 3, Type = 4 },
+                new() { Title = "Failed Sales Value", Value = failedSalesValue, Description = "Declined sales value in the range", Category = 3, Type = 5 },
+                new() { Title = "Average Sales Count", Value = averageSalesCount, Description = "Average sales count per day in the range", Category = 4, Type = 6 },
+                new() { Title = "Average Sales Value", Value = averageSalesValue, Description = "Average value per sale in the range", Category = 4, Type = 7 }
             };
 
             MetricItem? topProductMetric = BuildTopProductMetric(groupedTransactions);
@@ -2059,10 +2062,11 @@ public class ReportingManager : IReportingManager {
 
         private static MetricItem? BuildTopProductMetric(List<MerchantDailyPerformanceGroupProjection> groupedTransactions) {
             var topProduct = groupedTransactions
-                .GroupBy(x => new { x.ContractProductReportingId, x.ProductName })
+                .GroupBy(x => new { x.ContractProductReportingId, x.OperatorName, x.ProductName })
                 .Select(g => new {
                     g.Key.ContractProductReportingId,
-                    g.Key.ProductName,
+                    g.Key.ProductName,  
+                    g.Key.OperatorName,
                     SalesCount = g.Sum(x => x.SalesCount),
                     SalesValue = g.Sum(x => x.SalesValue)
                 })
@@ -2076,8 +2080,9 @@ public class ReportingManager : IReportingManager {
             return new MetricItem {
                 Title = "Top Product Sales Count",
                 Value = topProduct.SalesCount,
-                Description = topProduct.ProductName ?? "Unknown product",
-                Category = 8
+                Description = $"{topProduct.OperatorName} {topProduct.ProductName}" ?? "Unknown product",
+                Category = 5,
+                Type = 8
             };
         }
 
@@ -2090,6 +2095,7 @@ public class ReportingManager : IReportingManager {
                 from t in context.Transactions
                 join m in context.Merchants on t.MerchantId equals m.MerchantId
                 join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
+                join op in context.Operators on t.OperatorId equals op.OperatorId
                 where t.TransactionType == "Sale"
                       && t.TransactionDate >= startDate
                       && t.TransactionDate <= endDate
@@ -2097,6 +2103,7 @@ public class ReportingManager : IReportingManager {
                 group t by new
                 {
                     cp.ContractProductReportingId,
+                    op.Name,                  
                     cp.ProductName,
                     t.IsAuthorised
                 }
@@ -2105,6 +2112,7 @@ public class ReportingManager : IReportingManager {
                 {
                     ContractProductReportingId = g.Key.ContractProductReportingId,
                     ProductName = g.Key.ProductName,
+                    OperatorName = g.Key.Name,
                     IsAuthorised = g.Key.IsAuthorised,
                     SalesCount = g.Count(),
                     SalesValue = g.Sum(x => x.TransactionAmount)
@@ -2122,6 +2130,7 @@ public class ReportingManager : IReportingManager {
                 (from t in context.Transactions
                  join m in context.Merchants on t.MerchantId equals m.MerchantId
                  join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
+                 join op in context.Operators on t.OperatorId equals op.OperatorId
                  where t.TransactionType == "Sale"
                        && t.TransactionDate >= startDate
                        && t.TransactionDate <= endDate
@@ -2131,6 +2140,7 @@ public class ReportingManager : IReportingManager {
                  {
                      Reference = t.TransactionNumber,
                      Product = cp.ProductName,
+                     Operator = op.Name,
                      Status = t.IsAuthorised ? "Successful" : "Failed",
                      Amount = t.TransactionAmount,
                      TransactionDateTime = t.TransactionDateTime
@@ -2143,6 +2153,7 @@ public class ReportingManager : IReportingManager {
             return recentSales.Select(x => new DrillDownTransaction {
                 Reference = x.Reference,
                 Product = x.Product,
+                Operator = x.Operator,
                 Status = x.Status,
                 Amount = x.Amount,
                 TransactionDateTime = x.TransactionDateTime

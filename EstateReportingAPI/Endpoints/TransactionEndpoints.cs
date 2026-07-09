@@ -38,8 +38,6 @@ public static class TransactionEndpoints
             .WithStandardProduces<List<TodaysSalesByHour>>();
         group.MapPost("merchantdailyperformancesummary", TransactionHandler.MerchantDailyPerformanceSummary)
             .WithStandardProduces<MerchantDailyPerformanceSummaryResponse>();
-        group.MapPost("dailymerchaantprformancesummary", TransactionHandler.MerchantDailyPerformanceSummary)
-            .WithStandardProduces<MerchantDailyPerformanceSummaryResponse>();
 
     }
 }

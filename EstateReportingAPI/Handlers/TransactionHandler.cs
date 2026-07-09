@@ -333,7 +333,7 @@ public static class TransactionHandler {
                 DrillDownTransactions = r.DrillDownTransactions?.Select(transaction => new DrillDownTransaction
                 {
                     Reference = transaction.Reference,
-                    Product = transaction.Product,
+                    Product = $"{transaction.Operator} {transaction.Product}",
                     Status = transaction.Status,
                     Amount = transaction.Amount,
                     TransactionDateTime = transaction.TransactionDateTime
