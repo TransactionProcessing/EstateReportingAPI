@@ -1107,7 +1107,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         TransactionProcessor.Database.Entities.Merchant merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
         var contract = this.contractList.Single(c => c.contractName == "Safaricom Contract");
         var product = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value.First();
-
+        var operatorRecord = this.operatorsList.Single(o => o.OperatorId == contract.operatorId);
         DateTime transactionDate = DateTime.Now.Date;
         List<Transaction> transactions = new();
 
@@ -1155,7 +1155,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         response.Metrics.Single(m => m.Title == "Successful Sales Count").Value.ShouldBe(3);
         response.Metrics.Single(m => m.Title == "Failed Sales Count").Value.ShouldBe(3);
         response.Metrics.Single(m => m.Title == "Top Product Sales Count").Value.ShouldBe(6);
-        response.Metrics.Single(m => m.Title == "Top Product Sales Count").Description.ShouldBe(product.productName);
+        response.Metrics.Single(m => m.Title == "Top Product Sales Count").Description.ShouldBe($"{operatorRecord.Name} {product.productName}");
 
         response.DrillDownTransactions.Count.ShouldBe(5);
         response.DrillDownTransactions.Select(x => x.Reference).ShouldBe(new[] { "0006", "0005", "0004", "0003", "0002" });

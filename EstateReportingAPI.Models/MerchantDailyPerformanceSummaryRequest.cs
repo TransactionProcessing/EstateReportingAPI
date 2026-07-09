@@ -25,12 +25,15 @@ namespace EstateReportingAPI.Models
         public string Description { get; set; }
 
         public Int32 Category { get; set; }
+        public Int32 Type { get; set; }
     }
 
     public class DrillDownTransaction {
         public string Reference { get; set; }
 
         public string Product { get; set; }
+
+        public string Operator { get; set; }
 
         public string Status { get; set; }
 
