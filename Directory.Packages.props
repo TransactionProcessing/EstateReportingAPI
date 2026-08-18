@@ -16,7 +16,7 @@
     <PackageVersion Include="TransactionProcessor.Database" Version="2026.7.2" />
     <PackageVersion Include="xunit.v3" Version="4.0.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
-    <PackageVersion Include="coverlet.msbuild" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.9.0" />
     <PackageVersion Include="ClientProxyBase" Version="2026.8.2" />
     <PackageVersion Include="Shared.Results" Version="2026.8.2" />
     <PackageVersion Include="MediatR" Version="14.2.0" />
