@@ -3,7 +3,7 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY ["EstateReportingAPI/NuGet.Config", "."]
+COPY ["NuGet.Config", "."]
 COPY ["EstateReportingAPI/EstateReportingAPI.csproj", "EstateReportingAPI/"]
 COPY ["Directory.Packages.props", "."]
 COPY . .
