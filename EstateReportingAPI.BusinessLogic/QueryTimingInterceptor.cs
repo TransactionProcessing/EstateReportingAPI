@@ -5,13 +5,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Shared.EntityFramework;
+using Shared.General;
 using Shared.Logger;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Text;
-using Shared.General;
+using TransactionProcessor.Database.Contexts;
 
 namespace EstateReportingAPI.BusinessLogic;
 
@@ -83,10 +84,37 @@ public class DbContextResolverX<TContext> : IDbContextResolver<TContext> where T
 
             // Create an isolated service collection and provider
             ServiceCollection services = new();
-            services.AddDbContext<TContext>(options => {
-                options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure());
-                options.AddInterceptors(Interceptor); // attach here
-            });
+            
+            SqlServerRetryOptions retryOptions;
+            try
+            {
+                retryOptions = ConfigurationReader.GetSection<SqlServerRetryOptions>("AppSettings:SqlServerRetry");
+            }
+            catch (KeyNotFoundException)
+            {
+                retryOptions = null;
+            }
+
+            if (retryOptions != null)
+            {
+                services.AddDbContext<EstateManagementContext>(options => {
+                    options.UseSharedSqlServer<EstateManagementContext>(ConfigurationReader.GetConnectionString("TransactionProcessorReadModel"), retry => {
+                        retry.AdditionalTransientErrorNumbers = retryOptions.AdditionalTransientErrorNumbers;
+                        retry.MaxRetryCount = retryOptions.MaxRetryCount;
+                        retry.MaxRetryDelay = retryOptions.MaxRetryDelay;
+                    });
+                    options.AddInterceptors(Interceptor);
+                });
+            }
+            else
+            {
+                services.AddDbContext<EstateManagementContext>(options => {
+                    options.UseSqlServer(ConfigurationReader.GetConnectionString("TransactionProcessorReadModel"), retry => { retry.EnableRetryOnFailure(); });
+                    options.AddInterceptors(Interceptor);
+                });
+
+            }
+
 
             ServiceProvider provider = services.BuildServiceProvider();
             scope = provider.CreateScope();
