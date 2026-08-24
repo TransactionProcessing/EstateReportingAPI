@@ -13,6 +13,59 @@ namespace EstateReportingAPI.IntegrationTests;
 public class ContractEndPointTests : ControllerTestsBase {
     private String BaseRoute = "api/contracts";
 
+    private void AssertContractMatchesDatabase(Contract contract, Guid contractId, bool includeProducts) {
+        var sourceContract = this.context.Contracts.Single(c => c.ContractId == contractId);
+        var sourceOperator = this.context.Operators.Single(o => o.OperatorId == sourceContract.OperatorId);
+        var sourceEstate = this.context.Estates.Single(e => e.EstateId == sourceContract.EstateId);
+
+        contract.EstateId.ShouldBe(sourceContract.EstateId);
+        contract.EstateReportingId.ShouldBe(sourceEstate.EstateReportingId);
+        contract.ContractId.ShouldBe(sourceContract.ContractId);
+        contract.ContractReportingId.ShouldBe(sourceContract.ContractReportingId);
+        contract.Description.ShouldBe(sourceContract.Description);
+        contract.OperatorName.ShouldBe(sourceOperator.Name);
+        contract.OperatorId.ShouldBe(sourceOperator.OperatorId);
+        contract.OperatorReportingId.ShouldBe(sourceOperator.OperatorReportingId);
+
+        if (includeProducts) {
+            var sourceProducts = this.context.ContractProducts
+                .Where(p => p.ContractId == contractId)
+                .OrderBy(p => p.ProductName)
+                .ToList();
+
+            contract.Products.ShouldNotBeNull();
+            contract.Products.Count.ShouldBe(sourceProducts.Count);
+
+            foreach (var sourceProduct in sourceProducts) {
+                var actualProduct = contract.Products.Single(p => p.ProductId == sourceProduct.ContractProductId);
+                actualProduct.ContractId.ShouldBe(sourceProduct.ContractId);
+                actualProduct.ContractProductReportingId.ShouldBe(sourceProduct.ContractProductReportingId);
+                actualProduct.ProductName.ShouldBe(sourceProduct.ProductName);
+                actualProduct.DisplayText.ShouldBe(sourceProduct.DisplayText);
+                actualProduct.ProductType.ShouldBe(sourceProduct.ProductType);
+                actualProduct.Value.ShouldBe(sourceProduct.Value);
+
+                var sourceFees = this.context.ContractProductTransactionFees
+                    .Where(f => f.ContractProductId == sourceProduct.ContractProductId)
+                    .OrderBy(f => f.ContractProductTransactionFeeReportingId)
+                    .ToList();
+
+                actualProduct.TransactionFees.Count.ShouldBe(sourceFees.Count);
+                foreach (var sourceFee in sourceFees) {
+                    var actualFee = actualProduct.TransactionFees.Single(f => f.TransactionFeeId == sourceFee.ContractProductTransactionFeeId);
+                    actualFee.ContractProductTransactionFeeReportingId.ShouldBe(sourceFee.ContractProductTransactionFeeReportingId);
+                    actualFee.Description.ShouldBe(sourceFee.Description);
+                    actualFee.CalculationType.ShouldBe(sourceFee.CalculationType);
+                    actualFee.FeeType.ShouldBe(sourceFee.FeeType);
+                    actualFee.Value.ShouldBe(sourceFee.Value);
+                }
+            }
+        }
+        else {
+            contract.Products.ShouldBeNull();
+        }
+    }
+
     [Fact]
     public async Task ContractEndpoint_GetRecentContracts_ContractsReturned() {
         await this.helper.AddEstate("Test Estate", "Ref1");
@@ -41,9 +94,9 @@ public class ContractEndPointTests : ControllerTestsBase {
 
         List<Contract> contracts = result.Data;
         contracts.Count.ShouldBe(3);
-        contracts.SingleOrDefault(c => c.Description == "Safaricom Contract").ShouldNotBeNull();
-        contracts.SingleOrDefault(c => c.Description == "PataPawa PostPay Contract").ShouldNotBeNull();
-        contracts.SingleOrDefault(c => c.Description == "PataPawa PrePay Contract").ShouldNotBeNull();
+        AssertContractMatchesDatabase(contracts.Single(c => c.Description == "Healthcare Centre 1 Contract"), contracts.Single(c => c.Description == "Healthcare Centre 1 Contract").ContractId, false);
+        AssertContractMatchesDatabase(contracts.Single(c => c.Description == "PataPawa PostPay Contract"), contracts.Single(c => c.Description == "PataPawa PostPay Contract").ContractId, false);
+        AssertContractMatchesDatabase(contracts.Single(c => c.Description == "PataPawa PrePay Contract"), contracts.Single(c => c.Description == "PataPawa PrePay Contract").ContractId, false);
 
     }
 
@@ -75,14 +128,10 @@ public class ContractEndPointTests : ControllerTestsBase {
 
         List<Contract> contracts = result.Data;
         contracts.Count.ShouldBe(4);
-        contracts.SingleOrDefault(c => c.Description == "Safaricom Contract").ShouldNotBeNull();
-        contracts.SingleOrDefault(c => c.Description == "Healthcare Centre 1 Contract").ShouldNotBeNull();
-        contracts.SingleOrDefault(c => c.Description == "PataPawa PostPay Contract").ShouldNotBeNull();
-        contracts.SingleOrDefault(c => c.Description == "PataPawa PrePay Contract").ShouldNotBeNull();
-        foreach (Contract contract in contracts) {
-            contract.Products.Any(cp => cp.ContractProductReportingId != 0).ShouldBeTrue();
-            contract.Products.ToList().ForEach(cp => cp.TransactionFees.Any(t => t.ContractProductTransactionFeeReportingId != 0).ShouldBeTrue());
-        }
+        AssertContractMatchesDatabase(contracts.Single(c => c.Description == "Safaricom Contract"), contracts.Single(c => c.Description == "Safaricom Contract").ContractId, true);
+        AssertContractMatchesDatabase(contracts.Single(c => c.Description == "Healthcare Centre 1 Contract"), contracts.Single(c => c.Description == "Healthcare Centre 1 Contract").ContractId, true);
+        AssertContractMatchesDatabase(contracts.Single(c => c.Description == "PataPawa PostPay Contract"), contracts.Single(c => c.Description == "PataPawa PostPay Contract").ContractId, true);
+        AssertContractMatchesDatabase(contracts.Single(c => c.Description == "PataPawa PrePay Contract"), contracts.Single(c => c.Description == "PataPawa PrePay Contract").ContractId, true);
     }
 
     [Fact]
@@ -113,10 +162,7 @@ public class ContractEndPointTests : ControllerTestsBase {
 
         Contract contract = result.Data;
         contract.ShouldNotBeNull();
-        contract.Description.ShouldBe("PataPawa PrePay Contract");
-        contract.ContractReportingId.ShouldNotBe(0);
-        contract.Products.Any(cp => cp.ContractProductReportingId != 0).ShouldBeTrue();
-        contract.Products.ToList().ForEach(cp => cp.TransactionFees.Any(t => t.ContractProductTransactionFeeReportingId != 0).ShouldBeTrue());
+        AssertContractMatchesDatabase(contract, ppprepayContractId, true);
     }
 
     protected override async Task ClearStandingData() {

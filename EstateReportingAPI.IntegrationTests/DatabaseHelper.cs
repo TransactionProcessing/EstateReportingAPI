@@ -61,6 +61,20 @@ public class DatabaseHelper{
         return user.SecurityUserId;
     }
 
+    public async Task AddFileProfile(Guid operatorId, Guid fileFormatHandlerId, String fileProfileName, Guid requestTypeId, Guid fileProfileId) {
+        FileProfileConfiguration fileProfileConfiguration = new() {
+            OperatorId = operatorId,
+            FileFormatHandlerId = fileFormatHandlerId,
+            LineTerminator = "",
+            ListeningDirectory = "",
+            Name = fileProfileName,
+            RequestTypeId = requestTypeId,
+            FileProfileId = fileProfileId
+        };
+
+        await this.Context.AddAsync(fileProfileConfiguration);
+        await this.Context.SaveChangesAsync(CancellationToken.None);
+    }
     public async Task<Guid> AddFileImportLog(Guid estateId, DateTime importDate){
         FileImportLog fil = new FileImportLog {
             FileImportLogId = Guid.NewGuid(),
@@ -75,12 +89,12 @@ public class DatabaseHelper{
         return fil.FileImportLogId;
     }
 
-    public async Task<Guid> AddFile(Guid fileImportLogId, Guid merchantId, Guid userId, string fileLocation){
+    public async Task<Guid> AddFile(Guid fileImportLogId, Guid merchantId, Guid userId, string fileLocation, Guid fileProfileId){
         DbFile file = new DbFile {
             FileId = Guid.NewGuid(),
             FileImportLogId = fileImportLogId,
             FileLocation = fileLocation,
-            FileProfileId = Guid.NewGuid(),
+            FileProfileId = fileProfileId,
             FileReceivedDateTime = DateTime.Now,
             UserId = userId,
             MerchantId = merchantId
@@ -243,10 +257,8 @@ public class DatabaseHelper{
         if (contractProduct.Value.HasValue){
             transactionAmount = contractProduct.Value.GetValueOrDefault();
         }
-        else{
-            if (transactionAmount.HasValue == false){
-                transactionAmount = 75.00m;
-            }
+        else if (transactionAmount.HasValue == false){
+            throw new ArgumentNullException(nameof(transactionAmount), "Transaction amount must be provided explicitly for custom products.");
         }
 
         Transaction transaction = new Transaction
@@ -334,7 +346,7 @@ public class DatabaseHelper{
         //{
         if (transactionAmount.HasValue == false)
         {
-            transactionAmount = 75.00m;
+            throw new ArgumentNullException(nameof(transactionAmount), "Transaction amount must be provided explicitly for custom products.");
         }
         //}
 
@@ -810,14 +822,14 @@ public class DatabaseHelper{
 
         for (int i = 1; i <= settledTransactionCount; i++){
             Transaction transaction = await this.BuildTransactionX(settlementDate.AddDays(-1), merchantId, operatorId, contractProducts.c.ContractId,
-                contractProducts.cp.ContractProductId,"0000", null);
+                contractProducts.cp.ContractProductId,"0000", 75.00m);
             settledTransactions.Add(transaction);
             settlementFees.Add((0.5m, 0.5m * i, contractProducts.f.ContractProductTransactionFeeId, true, transaction.TransactionId));
         }
         
         for (int i = 1; i <= pendingSettlementTransactionCount; i++){
             Transaction transaction = await this.BuildTransactionX(settlementDate.AddDays(-1), merchantId, operatorId, contractProducts.c.ContractId,
-                contractProducts.cp.ContractProductId, "0000", null);
+                contractProducts.cp.ContractProductId, "0000", 75.00m);
             pendingSettlementTransactions.Add(transaction);
             pendingSettlementFees.Add((0.5m, 0.5m * i, contractProducts.f.ContractProductTransactionFeeId, false, transaction.TransactionId));
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Net;
@@ -24,6 +25,33 @@ namespace EstateReportingAPI.IntegrationTests
 
         private String BaseRoute = "api/fileimportlogs";
 
+        private void AssertFileLineMatchesSource(FileLine actual, int lineNumber, string contents, string status)
+        {
+            actual.LineNumber.ShouldBe(lineNumber);
+            actual.LineContents.ShouldBe(contents);
+            actual.LineStatus.ShouldBe(status);
+        }
+
+        private void AssertFileDetailsMatchesSource(FileDetails actual,
+                                                    Guid fileId,
+                                                    string fileName,
+                                                    Guid fileProfileId,
+                                                    Guid userId,
+                                                    string uploadedBy,
+                                                    Guid merchantId,
+                                                    string merchantName,
+                                                    DateTime uploadedAt)
+        {
+            actual.FileId.ShouldBe(fileId);
+            actual.FileName.ShouldBe(fileName);
+            actual.FileProfile.ShouldBe(fileProfileId.ToString());
+            actual.DateTimeUploaded.ShouldBe(uploadedAt, TimeSpan.FromSeconds(1));
+            actual.UserId.ShouldBe(userId);
+            actual.UploadedBy.ShouldBe(uploadedBy);
+            actual.MerchantId.ShouldBe(merchantId);
+            actual.MerchantName.ShouldBe(merchantName);
+        }
+
         [Fact]
         public async Task FileImportEndpoint_GetFileImportLogs_NoData_ReturnsEmptyList()
         {
@@ -46,9 +74,13 @@ namespace EstateReportingAPI.IntegrationTests
             // create a merchant and use it for the file
             var merchant = await this.helper.AddMerchant("Test Estate", "List Filter Merchant", 10, DateTime.MinValue, DateTime.MinValue, default, default);
 
-            // create file import log, file and a line associated to the merchant
+            var operatorRecord = await this.context.Operators.FirstAsync();
+             
+            // create file import log, file and a line
+            Guid fileProfileId = Guid.Parse("A5D66966-0E95-4F62-A530-7669284EB616");
+            await this.helper.AddFileProfile(operatorRecord.OperatorId, Guid.NewGuid(), "Test Profile 1", Guid.NewGuid(), fileProfileId);
             var filId = await this.helper.AddFileImportLog(this.TestId, DateTime.Now);
-            var fileId = await this.helper.AddFile(filId, merchant, userId, "test/location/file-filter-list.csv");
+            var fileId = await this.helper.AddFile(filId, merchant, userId, "test/location/file-filter-list.csv", fileProfileId);
             await this.helper.AddFileLine(fileId, 1, "filterlistline", "OK");
 
             DateTime start = DateTime.Today.AddDays(-1);
@@ -58,11 +90,31 @@ namespace EstateReportingAPI.IntegrationTests
             result.IsSuccess.ShouldBeTrue();
             var list = result.Data;
             list.ShouldNotBeNull();
-            list.Count.ShouldBeGreaterThan(0);
+            list.Count.ShouldBe(1);
 
-            var match = list.SelectMany(x => x.FileDetailsList).SelectMany(fd => fd.FileLines).SingleOrDefault(fl => fl.LineContents == "filterlistline");
-            match.ShouldNotBeNull();
-            match.LineStatus.ShouldBe("OK");
+            var sourceLog = this.context.FileImportLogs.Single(x => x.FileImportLogId == filId);
+            var sourceFile = this.context.Files.Single(x => x.FileImportLogId == filId);
+            var sourceLine = this.context.FileLines.Single(x => x.FileId == fileId);
+
+            var match = list.Single();
+            match.FileImportLogId.ShouldBe(sourceLog.FileImportLogId);
+            match.ImportLogDateTime.ShouldBe(sourceLog.ImportLogDateTime, TimeSpan.FromSeconds(1));
+            match.FileDetailsList.Count.ShouldBe(1);
+
+            var fileDetail = match.FileDetailsList.Single();
+            AssertFileDetailsMatchesSource(
+                fileDetail,
+                sourceFile.FileId,
+                sourceFile.FileLocation,
+                sourceFile.FileProfileId,
+                sourceFile.UserId,
+                "apiuser@example.com",
+                merchant,
+                "List Filter Merchant",
+                sourceFile.FileReceivedDateTime);
+
+            fileDetail.FileLines.Count.ShouldBe(1);
+            AssertFileLineMatchesSource(fileDetail.FileLines.Single(), sourceLine.LineNumber, sourceLine.FileLineData, sourceLine.Status);
         }
 
         [Fact]
@@ -74,20 +126,43 @@ namespace EstateReportingAPI.IntegrationTests
             // create a merchant and use it for the file
             var merchant = await this.helper.AddMerchant("Test Estate", "Filter Merchant", 10, DateTime.MinValue, DateTime.MinValue, default, default);
 
-            // create file import log, file and a line associated to the merchant
+            // create file import log, file and a line
+            var operatorRecord = await this.context.Operators.FirstAsync();
+
+            // create file import log, file and a line
+            Guid fileProfileId = Guid.Parse("A5D66966-0E95-4F62-A530-7669284EB616");
+            await this.helper.AddFileProfile(operatorRecord.OperatorId, Guid.NewGuid(), "Test Profile 1", Guid.NewGuid(), fileProfileId);
+            
             var filId = await this.helper.AddFileImportLog(this.TestId, DateTime.Now);
-            var fileId = await this.helper.AddFile(filId, merchant, userId, "test/location/file-filter.csv");
+            var fileId = await this.helper.AddFile(filId, merchant, userId, "test/location/file-filter.csv", fileProfileId);
             await this.helper.AddFileLine(fileId, 1, "filterline", "OK");
 
             Result<DataTransferObjects.FileImportLog> result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.FileImportLog>($"{this.BaseRoute}/{filId}?merchantId={merchant}", CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var item = result.Data;
             item.ShouldNotBeNull();
-            item.FileImportLogId.ShouldBe(filId);
+            var sourceLog = this.context.FileImportLogs.Single(x => x.FileImportLogId == filId);
+            var sourceFile = this.context.Files.Single(x => x.FileImportLogId == filId);
+            var sourceLine = this.context.FileLines.Single(x => x.FileId == fileId);
 
-            var match = item.FileDetailsList.SelectMany(fd => fd.FileLines).SingleOrDefault(fl => fl.LineContents == "filterline");
-            match.ShouldNotBeNull();
-            match.LineStatus.ShouldBe("OK");
+            item.FileImportLogId.ShouldBe(sourceLog.FileImportLogId);
+            item.ImportLogDateTime.ShouldBe(sourceLog.ImportLogDateTime, TimeSpan.FromSeconds(1));
+            item.FileDetailsList.Count.ShouldBe(1);
+
+            var fileDetail = item.FileDetailsList.Single();
+            AssertFileDetailsMatchesSource(
+                fileDetail,
+                sourceFile.FileId,
+                Path.GetFileName(sourceFile.FileLocation),
+                sourceFile.FileProfileId,
+                sourceFile.UserId,
+                "apiuser@example.com",
+                merchant,
+                "Filter Merchant",
+                sourceFile.FileReceivedDateTime);
+
+            fileDetail.FileLines.Count.ShouldBe(1);
+            AssertFileLineMatchesSource(fileDetail.FileLines.Single(), sourceLine.LineNumber, sourceLine.FileLineData, sourceLine.Status);
         }
 
         [Fact]
@@ -99,20 +174,41 @@ namespace EstateReportingAPI.IntegrationTests
             // pick a merchant
             var merchant = await this.context.Merchants.FirstAsync();
 
+            var operatorRecord = await this.context.Operators.FirstAsync();
+            
             // create file import log, file and a line
+            Guid fileProfileId = Guid.Parse("A5D66966-0E95-4F62-A530-7669284EB616");
+            await this.helper.AddFileProfile(operatorRecord.OperatorId, Guid.NewGuid(), "Test Profile 1", Guid.NewGuid(), fileProfileId);
             var filId = await this.helper.AddFileImportLog(this.TestId, DateTime.Now);
-            var fileId = await this.helper.AddFile(filId, merchant.MerchantId, userId, "test/location/file1.csv");
+            var fileId = await this.helper.AddFile(filId, merchant.MerchantId, userId, "test/location/file1.csv", fileProfileId);
             await this.helper.AddFileLine(fileId, 1, "line1data", "OK");
 
             Result<DataTransferObjects.FileImportLog> result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.FileImportLog>($"{this.BaseRoute}/{filId}", CancellationToken.None);
             result.IsSuccess.ShouldBeTrue();
             var item = result.Data;
             item.ShouldNotBeNull();
-            item.FileImportLogId.ShouldBe(filId);
+            var sourceLog = this.context.FileImportLogs.Single(x => x.FileImportLogId == filId);
+            var sourceFile = this.context.Files.Single(x => x.FileImportLogId == filId);
+            var sourceLine = this.context.FileLines.Single(x => x.FileId == fileId);
 
-            var match = item.FileDetailsList.SelectMany(fd => fd.FileLines).SingleOrDefault(fl => fl.LineContents == "line1data");
-            match.ShouldNotBeNull();
-            match.LineStatus.ShouldBe("OK");
+            item.FileImportLogId.ShouldBe(sourceLog.FileImportLogId);
+            item.ImportLogDateTime.ShouldBe(sourceLog.ImportLogDateTime, TimeSpan.FromSeconds(1));
+            item.FileDetailsList.Count.ShouldBe(1);
+
+            var fileDetail = item.FileDetailsList.Single();
+            AssertFileDetailsMatchesSource(
+                fileDetail,
+                sourceFile.FileId,
+                Path.GetFileName(sourceFile.FileLocation),
+                sourceFile.FileProfileId,
+                sourceFile.UserId,
+                "apiuser@example.com",
+                merchant.MerchantId,
+                merchant.Name,
+                sourceFile.FileReceivedDateTime);
+
+            fileDetail.FileLines.Count.ShouldBe(1);
+            AssertFileLineMatchesSource(fileDetail.FileLines.Single(), sourceLine.LineNumber, sourceLine.FileLineData, sourceLine.Status);
         }
 
         [Fact]
@@ -125,9 +221,14 @@ namespace EstateReportingAPI.IntegrationTests
             var merchant1 = await this.context.Merchants.FirstAsync();
             var merchant2 = await this.helper.AddMerchant("Test Estate", "Other Merchant", 50, DateTime.MinValue, DateTime.MinValue, default, default);
 
-            // create file import log, file and a line associated to merchant1
+            var operatorRecord = await this.context.Operators.FirstAsync();
+
+            // create file import log, file and a line
+            Guid fileProfileId = Guid.Parse("A5D66966-0E95-4F62-A530-7669284EB616");
+            await this.helper.AddFileProfile(operatorRecord.OperatorId, Guid.NewGuid(), "Test Profile 1", Guid.NewGuid(), fileProfileId);
+
             var filId = await this.helper.AddFileImportLog(this.TestId, DateTime.Now);
-            var fileId = await this.helper.AddFile(filId, merchant1.MerchantId, userId, "test/location/file1.csv");
+            var fileId = await this.helper.AddFile(filId, merchant1.MerchantId, userId, "test/location/file1.csv", fileProfileId);
             await this.helper.AddFileLine(fileId, 1, "line1data", "OK");
 
             var url = $"{this.BaseRoute}/{filId}?merchantId={merchant2}";
@@ -151,9 +252,14 @@ namespace EstateReportingAPI.IntegrationTests
             // pick a merchant
             var merchant = await this.context.Merchants.FirstAsync();
 
+            var operatorRecord = await this.context.Operators.FirstAsync();
+
             // create file import log, file and a line
+            Guid fileProfileId = Guid.Parse("A5D66966-0E95-4F62-A530-7669284EB616");
+            await this.helper.AddFileProfile(operatorRecord.OperatorId, Guid.NewGuid(), "Test Profile 1", Guid.NewGuid(), fileProfileId);
+
             var filId = await this.helper.AddFileImportLog(this.TestId, DateTime.Now);
-            var fileId = await this.helper.AddFile(filId, merchant.MerchantId, userId, "test/location/file1.csv");
+            var fileId = await this.helper.AddFile(filId, merchant.MerchantId, userId, "test/location/file1.csv", fileProfileId);
             await this.helper.AddFileLine(fileId, 1, "line1data", "OK");
 
             DateTime start = DateTime.Today.AddDays(-1);
@@ -163,11 +269,30 @@ namespace EstateReportingAPI.IntegrationTests
             result.IsSuccess.ShouldBeTrue();
             var list = result.Data;
             list.ShouldNotBeNull();
-            list.Count.ShouldBeGreaterThan(0);
+            list.Count.ShouldBe(1);
 
-            var match = list.SelectMany(x => x.FileDetailsList).SelectMany(f => f.FileLines).SingleOrDefault(fl => fl.LineContents == "line1data");
-            match.ShouldNotBeNull();
-            match.LineStatus.ShouldBe("OK");
+            var sourceLog = this.context.FileImportLogs.Single(x => x.FileImportLogId == filId);
+            var sourceFile = this.context.Files.Single(x => x.FileImportLogId == filId);
+            var sourceLine = this.context.FileLines.Single(x => x.FileId == fileId);
+
+            var match = list.Single();
+            match.FileImportLogId.ShouldBe(sourceLog.FileImportLogId);
+            match.ImportLogDateTime.ShouldBe(sourceLog.ImportLogDateTime, TimeSpan.FromSeconds(1));
+            match.FileDetailsList.Count.ShouldBe(1);
+
+            var fileDetail = match.FileDetailsList.Single();
+            AssertFileDetailsMatchesSource(
+                fileDetail,
+                sourceFile.FileId,
+                sourceFile.FileLocation,
+                sourceFile.FileProfileId,
+                sourceFile.UserId,
+                "apiuser@example.com",
+                merchant.MerchantId,
+                merchant.Name,
+                sourceFile.FileReceivedDateTime);
+            fileDetail.FileLines.Count.ShouldBe(1);
+            AssertFileLineMatchesSource(fileDetail.FileLines.Single(), sourceLine.LineNumber, sourceLine.FileLineData, sourceLine.Status);
         }
 
         [Fact]
@@ -214,7 +339,13 @@ namespace EstateReportingAPI.IntegrationTests
             sw.Stop();
             this.TestOutputHelper.WriteLine($"Setup Merchants {sw.ElapsedMilliseconds}ms");
             sw.Restart();
-            
+
+            // Operators
+            await this.helper.AddOperator("Test Estate", "Safaricom");
+            await this.helper.AddOperator("Test Estate", "Voucher");
+            await this.helper.AddOperator("Test Estate", "PataPawa PostPay");
+            await this.helper.AddOperator("Test Estate", "PataPawa PrePay");
+
             // File Profile (once the table is available at the RM)
         }
     }

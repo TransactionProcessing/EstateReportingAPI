@@ -81,11 +81,7 @@ public static class FileImportHandler
                 DateTimeUploaded = fd.DateTimeUploaded,
                 FileId = fd.FileId,
                 FileName = Path.GetFileName(fd.FileName),
-                FileProfile = fd.FileProfile.ToUpper() switch {
-                    "B2A59ABF-293D-4A6B-B81B-7007503C3476" => "Safaricom Topup",
-                    "8806EDBC-3ED6-406B-9E5F-A9078356BE99" => "Voucher Issue",
-                    _ => "Unknown"
-                },
+                FileProfile = fd.FileProfile,
                 MerchantId = fd.MerchantId,
                 MerchantName = fd.MerchantName,
                 UploadedBy = fd.UploadedBy,

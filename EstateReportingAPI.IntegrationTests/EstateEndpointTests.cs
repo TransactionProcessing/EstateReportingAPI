@@ -25,6 +25,15 @@ public class EstateEndpointTests : ControllerTestsBase {
         estate.ShouldNotBeNull();
         estate.EstateName.ShouldBe("Test Estate");
         estate.Reference.ShouldBe("Ref1");
+        estate.EstateId.ShouldBe(this.context.Estates.Single().EstateId);
+        estate.Operators.ShouldNotBeNull();
+        estate.Merchants.ShouldNotBeNull();
+        estate.Contracts.ShouldNotBeNull();
+        estate.Users.ShouldNotBeNull();
+        estate.Operators.ShouldBeEmpty();
+        estate.Merchants.ShouldBeEmpty();
+        estate.Contracts.ShouldBeEmpty();
+        estate.Users.ShouldBeEmpty();
     }
 
     [Fact]
@@ -41,8 +50,8 @@ public class EstateEndpointTests : ControllerTestsBase {
 
         List<EstateOperator> estateOperators = result.Data;
         estateOperators.Count.ShouldBe(2);
-        estateOperators.SingleOrDefault(e => e.Name == "Safaricom").ShouldNotBeNull();
-        estateOperators.SingleOrDefault(e => e.Name == "Voucher").ShouldNotBeNull();
+        estateOperators.Single(e => e.Name == "Safaricom").OperatorId.ShouldBe(this.context.Operators.Single(o => o.Name == "Safaricom").OperatorId);
+        estateOperators.Single(e => e.Name == "Voucher").OperatorId.ShouldBe(this.context.Operators.Single(o => o.Name == "Voucher").OperatorId);
     }
 
     protected override async Task ClearStandingData() {

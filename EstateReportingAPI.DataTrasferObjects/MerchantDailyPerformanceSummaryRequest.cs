@@ -27,6 +27,7 @@ namespace EstateReportingAPI.DataTransferObjects
         public string Description { get; set; }
 
         public int Category { get; set; }
+        public Int32 Type { get; set; }
     }
 
     public sealed class DrillDownTransaction

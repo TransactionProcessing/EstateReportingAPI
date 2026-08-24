@@ -25,10 +25,17 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     protected List<Merchant> merchantsList;
     protected List<Operator> operatorsList;
     protected List<(Guid contractId, String contractName, Guid operatorId, String operatorName)> contractList;
-    protected Dictionary<Guid, List<(Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId)>> contractProducts;
+    protected Dictionary<Guid, List<(Guid productId, String productName, Decimal productValue, Int32 contractProductReportingId)>> contractProducts;
     protected DatabaseHelper helper;
     protected ITestOutputHelper TestOutputHelper;
     protected DockerHelper DockerHelper;
+
+    protected static void AssertDecimalMatchesTo4Places(decimal actual, decimal expected)
+    {
+        Math.Round(actual, 4, MidpointRounding.AwayFromZero)
+            .ShouldBe(Math.Round(expected, 4, MidpointRounding.AwayFromZero));
+    }
+
     public virtual async ValueTask InitializeAsync()
     {
         this.TestId = Guid.NewGuid();

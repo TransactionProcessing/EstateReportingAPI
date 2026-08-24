@@ -30,7 +30,8 @@ internal sealed class MerchantContactData {
     public string? PhoneNumber { get; init; }
 }
 
-internal sealed class MerchantWithAddressData {
+internal sealed class MerchantWithAddressAndContactData {
     public required TransactionProcessor.Database.Entities.Merchant Merchant { get; init; }
     public required TransactionProcessor.Database.Entities.MerchantAddress MerchantAddress { get; init; }
+    public required TransactionProcessor.Database.Entities.MerchantContact MerchantContact { get; init; }
 }

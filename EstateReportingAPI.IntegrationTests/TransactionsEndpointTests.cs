@@ -49,6 +49,131 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         throw new KeyNotFoundException($"Property '{propertyName}' was not found.");
     }
 
+    private static decimal CalculateAverage(IReadOnlyCollection<Transaction> transactions) {
+        if (transactions.Count == 0)
+            return 0m;
+
+        return transactions.Sum(t => t.TransactionAmount) / transactions.Count;
+    }
+
+    private static void AssertTodaysSales(TodaysSales actual,
+                                          IReadOnlyCollection<Transaction> todaysTransactions,
+                                          IReadOnlyCollection<Transaction> comparisonTransactions) {
+        decimal todaysValue = todaysTransactions.Sum(t => t.TransactionAmount);
+        decimal comparisonValue = comparisonTransactions.Sum(t => t.TransactionAmount);
+
+        actual.TodaysSalesCount.ShouldBe(todaysTransactions.Count);
+        actual.TodaysSalesValue.ShouldBe(todaysValue);
+        actual.TodaysAverageSalesValue.ShouldBe(CalculateAverage(todaysTransactions));
+
+        actual.ComparisonSalesCount.ShouldBe(comparisonTransactions.Count);
+        actual.ComparisonSalesValue.ShouldBe(comparisonValue);
+        actual.ComparisonAverageSalesValue.ShouldBe(CalculateAverage(comparisonTransactions));
+    }
+
+    private static void AssertMerchantDailyPerformanceMetricMatches(MetricItem actual,
+                                                                    string title,
+                                                                    decimal value,
+                                                                    string description,
+                                                                    int category,
+                                                                    int type) {
+        actual.Title.ShouldBe(title);
+        actual.Value.ShouldBe(value);
+        actual.Description.ShouldBe(description);
+        actual.Category.ShouldBe(category);
+        actual.Type.ShouldBe(type);
+    }
+
+    private static void AssertDrillDownTransactionMatches(DrillDownTransaction actual, Transaction source, string expectedProduct) {
+        actual.Reference.ShouldBe(source.TransactionNumber);
+        actual.Product.ShouldBe(expectedProduct);
+        actual.Status.ShouldBe(source.IsAuthorised ? "Successful" : "Failed");
+        actual.Amount.ShouldBe(source.TransactionAmount);
+        actual.TransactionDateTime.ShouldBe(source.TransactionDateTime);
+    }
+
+    private static void AssertRecentActivityReceiptItemMatches(JsonElement actual,
+                                                               Transaction source,
+                                                               string expectedProduct,
+                                                               string expectedOperator,
+                                                               string expectedReceiptReference) {
+        GetPropertyCaseInsensitive(actual, "reference").GetString().ShouldBe(source.TransactionNumber);
+        GetPropertyCaseInsensitive(actual, "transactionType").GetString().ShouldBe(source.TransactionType);
+        GetPropertyCaseInsensitive(actual, "product").GetString().ShouldBe(expectedProduct);
+        GetPropertyCaseInsensitive(actual, "operator").GetString().ShouldBe(expectedOperator);
+        GetPropertyCaseInsensitive(actual, "status").GetString().ShouldBe(source.IsAuthorised ? "Successful" : "Failed");
+        GetPropertyCaseInsensitive(actual, "amount").GetDecimal().ShouldBe(source.TransactionAmount);
+        DateTime.Parse(GetPropertyCaseInsensitive(actual, "transactionDateTime").GetString()!).ShouldBe(source.TransactionDateTime);
+        GetPropertyCaseInsensitive(actual, "receiptReference").GetString().ShouldBe(expectedReceiptReference);
+    }
+
+    private void AssertTransactionDetailMatches(TransactionDetail actual, Transaction source) {
+        var merchant = this.context.Merchants.Single(m => m.MerchantId == source.MerchantId);
+        var operatorRecord = this.context.Operators.Single(o => o.OperatorId == source.OperatorId);
+        var product = this.context.ContractProducts.Single(p => p.ContractProductId == source.ContractProductId && p.ContractId == source.ContractId);
+
+        actual.Id.ShouldBe(source.TransactionId);
+        actual.DateTime.ShouldBe(source.TransactionDateTime);
+        actual.Merchant.ShouldBe(merchant.Name);
+        actual.MerchantId.ShouldBe(merchant.MerchantId);
+        actual.MerchantReportingId.ShouldBe(merchant.MerchantReportingId);
+        actual.Operator.ShouldBe(operatorRecord.Name);
+        actual.OperatorId.ShouldBe(operatorRecord.OperatorId);
+        actual.OperatorReportingId.ShouldBe(operatorRecord.OperatorReportingId);
+        actual.Product.ShouldBe(product.ProductName);
+        actual.ProductId.ShouldBe(product.ContractProductId);
+        actual.ProductReportingId.ShouldBe(product.ContractProductReportingId);
+        actual.Type.ShouldBe(source.TransactionType);
+        actual.Status.ShouldBe(source.IsAuthorised ? "Authorised" : "Declined");
+        actual.Value.ShouldBe(source.TransactionAmount);
+        actual.TotalFees.ShouldBe(0m);
+        actual.SettlementReference.ShouldBe(Guid.Empty.ToString());
+        actual.TransactionNumber.ShouldBe(Int32.Parse(source.TransactionNumber));
+    }
+
+    private void AssertMerchantSummaryRowMatchesSource(MerchantDetail actual, TransactionProcessor.Database.Entities.Merchant sourceMerchant, IReadOnlyCollection<Transaction> transactions) {
+        actual.MerchantId.ShouldBe(sourceMerchant.MerchantId);
+        actual.MerchantReportingId.ShouldBe(sourceMerchant.MerchantReportingId);
+        actual.MerchantName.ShouldBe(sourceMerchant.Name);
+        actual.TotalValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+        actual.TotalCount.ShouldBe(transactions.Count);
+        actual.AuthorisedCount.ShouldBe(transactions.Count(t => t.IsAuthorised));
+        actual.DeclinedCount.ShouldBe(transactions.Count(t => t.IsAuthorised == false));
+        actual.AverageValue.ShouldBe(transactions.Count == 0
+            ? 0m
+            : transactions.GroupBy(t => t.OperatorId).Select(g => g.Sum(t => t.TransactionAmount)).Average());
+        AssertDecimalMatchesTo4Places(actual.AuthorisedPercentage, transactions.Count == 0 ? 0m : (decimal)transactions.Count(t => t.IsAuthorised) / transactions.Count);
+    }
+
+    private void AssertOperatorSummaryRowMatchesSource(OperatorDetail actual, TransactionProcessor.Database.Entities.Operator sourceOperator, IReadOnlyCollection<Transaction> transactions) {
+        actual.OperatorId.ShouldBe(sourceOperator.OperatorId);
+        actual.OperatorReportingId.ShouldBe(sourceOperator.OperatorReportingId);
+        actual.OperatorName.ShouldBe(sourceOperator.Name);
+        actual.TotalValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+        actual.TotalCount.ShouldBe(transactions.Count);
+        actual.AuthorisedCount.ShouldBe(transactions.Count(t => t.IsAuthorised));
+        actual.DeclinedCount.ShouldBe(transactions.Count(t => t.IsAuthorised == false));
+        actual.AverageValue.ShouldBe(transactions.Count == 0
+            ? 0m
+            : transactions.GroupBy(t => t.MerchantId).Select(g => g.Sum(t => t.TransactionAmount)).Average());
+        AssertDecimalMatchesTo4Places(actual.AuthorisedPercentage, transactions.Count == 0 ? 0m : (decimal)transactions.Count(t => t.IsAuthorised) / transactions.Count);
+    }
+
+    private void AssertProductPerformanceRowMatchesSource(ProductPerformanceDetail actual,
+                                                          TransactionProcessor.Database.Entities.ContractProduct sourceProduct,
+                                                          TransactionProcessor.Database.Entities.Contract sourceContract,
+                                                          IReadOnlyCollection<Transaction> transactions,
+                                                          decimal expectedPercentageOfTotal) {
+        actual.ProductName.ShouldBe(sourceProduct.ProductName);
+        actual.ProductId.ShouldBe(sourceProduct.ContractProductId);
+        actual.ProductReportingId.ShouldBe(sourceProduct.ContractProductReportingId);
+        actual.ContractId.ShouldBe(sourceContract.ContractId);
+        actual.ContractReportingId.ShouldBe(sourceContract.ContractReportingId);
+        actual.TransactionCount.ShouldBe(transactions.Count);
+        actual.TransactionValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+        AssertDecimalMatchesTo4Places(actual.PercentageOfTotal, expectedPercentageOfTotal);
+    }
+
 
     protected override async Task ClearStandingData() {
 
@@ -118,7 +243,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         var query1 = this.context.Contracts.GroupJoin(this.context.ContractProducts, c => c.ContractId, cp => cp.ContractId, (c,
                                                                                                                               productGroup) => new { c.ContractId, Products = productGroup.Select(p => new { p.ContractProductReportingId, p.ContractProductId, p.ProductName, p.Value }).OrderBy(p => p.ContractProductId).Select(p => new { p.ContractProductId, p.ProductName, p.Value, p.ContractProductReportingId }).ToList() }).ToList();
 
-        this.contractProducts = query1.ToDictionary(item => item.ContractId, item => item.Products.Select(i => (i.ContractProductId, i.ProductName, i.Value, i.ContractProductReportingId)).ToList());
+        this.contractProducts = query1.ToDictionary(item => item.ContractId, item => item.Products.Select(i => (i.ContractProductId, i.ProductName, i.Value ?? 75.00m, i.ContractProductReportingId)).ToList());
 
         this.operatorsList = this.context.Operators.ToList();
 
@@ -177,11 +302,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         var todaysSales = result.Data;
 
         todaysSales.ShouldNotBeNull();
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count);
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
-
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count);
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
+        AssertTodaysSales(todaysSales, todaysTransactions, comparisonDateTransactions);
     }
 
 
@@ -235,11 +356,10 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         var todaysSales = result.Data;
 
         var operatorId = await this.helper.GetOperatorId(1, CancellationToken.None);
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => c.OperatorId == operatorId));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => c.OperatorId == operatorId).Sum(c => c.TransactionAmount));
-
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => c.OperatorId == operatorId));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => c.OperatorId == operatorId).Sum(c => c.TransactionAmount));
+        AssertTodaysSales(
+            todaysSales,
+            todaysTransactions.Where(c => c.OperatorId == operatorId).ToList(),
+            comparisonDateTransactions.Where(c => c.OperatorId == operatorId).ToList());
     }
 
 
@@ -293,11 +413,10 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         var todaysSales = result.Data;
 
         var merchantId = await this.helper.GetMerchantId(1, CancellationToken.None);
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(c => c.MerchantId == merchantId));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => c.MerchantId == merchantId).Sum(c => c.TransactionAmount));
-
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count(c => c.MerchantId == merchantId));
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(c => c.MerchantId == merchantId).Sum(c => c.TransactionAmount));
+        AssertTodaysSales(
+            todaysSales,
+            todaysTransactions.Where(c => c.MerchantId == merchantId).ToList(),
+            comparisonDateTransactions.Where(c => c.MerchantId == merchantId).ToList());
     }
 
     [Fact]
@@ -356,11 +475,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         DataTransferObjects.TodaysSales? todaysSales = result.Data;
 
         todaysSales.ShouldNotBeNull();
-        todaysSales.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count);
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
-
-        todaysSales.TodaysSalesCount.ShouldBe(todaysTransactions.Count);
-        todaysSales.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Sum(c => c.TransactionAmount));
+        AssertTodaysSales(todaysSales, todaysTransactions, comparisonDateTransactions);
     }
 
     [Fact]
@@ -417,11 +532,11 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         transactionDetailReportResponse.Summary.ShouldNotBeNull();
         transactionDetailReportResponse.Summary.TransactionCount.ShouldBe(transactions.Count);
         transactionDetailReportResponse.Summary.TotalValue.ShouldBe(transactions.Sum(t=> t.TransactionAmount));
+        transactionDetailReportResponse.Summary.TotalFees.ShouldBe(0m);
 
         foreach (Transaction transaction in transactions) {
-            var foundTxn = transactionDetailReportResponse.Transactions.SingleOrDefault(t => t.Id == transaction.TransactionId);
-            foundTxn.ShouldNotBeNull(transaction.TransactionId.ToString());
-            foundTxn.TransactionNumber.ShouldNotBe(0);
+            var foundTxn = transactionDetailReportResponse.Transactions.Single(t => t.Id == transaction.TransactionId);
+            AssertTransactionDetailMatches(foundTxn, transaction);
         }
     }
 
@@ -490,11 +605,12 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         transactionDetailReportResponse.Summary.ShouldNotBeNull();
         transactionDetailReportResponse.Summary.TransactionCount.ShouldBe(filteredTransactions.Count());
         transactionDetailReportResponse.Summary.TotalValue.ShouldBe(filteredTransactions.Sum(t => t.TransactionAmount));
+        transactionDetailReportResponse.Summary.TotalFees.ShouldBe(0m);
 
         foreach (Transaction transaction in filteredTransactions)
         {
-            var foundTxn = transactionDetailReportResponse.Transactions.SingleOrDefault(t => t.Id == transaction.TransactionId);
-            foundTxn.ShouldNotBeNull(transaction.TransactionId.ToString());
+            var foundTxn = transactionDetailReportResponse.Transactions.Single(t => t.Id == transaction.TransactionId);
+            AssertTransactionDetailMatches(foundTxn, transaction);
         }
     }
 
@@ -563,11 +679,12 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         transactionDetailReportResponse.Summary.ShouldNotBeNull();
         transactionDetailReportResponse.Summary.TransactionCount.ShouldBe(filteredTransactions.Count());
         transactionDetailReportResponse.Summary.TotalValue.ShouldBe(filteredTransactions.Sum(t => t.TransactionAmount));
+        transactionDetailReportResponse.Summary.TotalFees.ShouldBe(0m);
 
         foreach (Transaction transaction in filteredTransactions)
         {
-            var foundTxn = transactionDetailReportResponse.Transactions.SingleOrDefault(t => t.Id == transaction.TransactionId);
-            foundTxn.ShouldNotBeNull(transaction.TransactionId.ToString());
+            var foundTxn = transactionDetailReportResponse.Transactions.Single(t => t.Id == transaction.TransactionId);
+            AssertTransactionDetailMatches(foundTxn, transaction);
         }
     }
 
@@ -610,7 +727,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
         await this.helper.AddTransactionsX(transactions);
 
-        IEnumerable<(Guid productId, String productName, Decimal? productValue, Int32 contractProductReportingId)> productsForFilter = this.contractProducts.SelectMany(cp => cp.Value).Where(p => p.productName == "100 KES Topup");
+        IEnumerable<(Guid productId, String productName, Decimal productValue, Int32 contractProductReportingId)> productsForFilter = this.contractProducts.SelectMany(cp => cp.Value).Where(p => p.productName == "100 KES Topup");
 
         List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
         TransactionDetailReportRequest request = new TransactionDetailReportRequest
@@ -635,11 +752,12 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         transactionDetailReportResponse.Summary.ShouldNotBeNull();
         transactionDetailReportResponse.Summary.TransactionCount.ShouldBe(filteredTransactions.Count());
         transactionDetailReportResponse.Summary.TotalValue.ShouldBe(filteredTransactions.Sum(t => t.TransactionAmount));
+        transactionDetailReportResponse.Summary.TotalFees.ShouldBe(0m);
 
         foreach (Transaction transaction in filteredTransactions)
         {
-            var foundTxn = transactionDetailReportResponse.Transactions.SingleOrDefault(t => t.Id == transaction.TransactionId);
-            foundTxn.ShouldNotBeNull(transaction.TransactionId.ToString());
+            var foundTxn = transactionDetailReportResponse.Transactions.Single(t => t.Id == transaction.TransactionId);
+            AssertTransactionDetailMatches(foundTxn, transaction);
         }
     }
 
@@ -649,11 +767,11 @@ public class TransactionsEndpointTests : ControllerTestsBase {
     {
         var transactions = new List<Transaction>();
 
-        TransactionProcessor.Database.Entities.Merchant merchant1 = this.merchantsList.SingleOrDefault(m => m.Name == "Test Merchant 1");
-        var merchant2 = this.merchantsList.SingleOrDefault(m => m.Name == "Test Merchant 2");
-        var merchant3 = this.merchantsList.SingleOrDefault(m => m.Name == "Test Merchant 3");
-        var safaricomContract = this.contractList.SingleOrDefault(c => c.contractName == "Safaricom Contract");
-        var voucherContract = this.contractList.SingleOrDefault(c => c.contractName == "Healthcare Centre 1 Contract");
+        TransactionProcessor.Database.Entities.Merchant merchant1 = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
+        var merchant2 = this.merchantsList.Single(m => m.Name == "Test Merchant 2");
+        var merchant3 = this.merchantsList.Single(m => m.Name == "Test Merchant 3");
+        var safaricomContract = this.contractList.Single(c => c.contractName == "Safaricom Contract");
+        var voucherContract = this.contractList.Single(c => c.contractName == "Healthcare Centre 1 Contract");
         var safaricomProduct = this.contractProducts.Single(cp => cp.Key == safaricomContract.contractId).Value.First();
         var voucherProduct = this.contractProducts.Single(cp => cp.Key == voucherContract.contractId).Value.First();
 
@@ -690,7 +808,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             foreach (TransactionProcessor.Database.Entities.Merchant merchant in merchants) {
 
                 // Build merchant sales
-                KeyValuePair<(DateTime, TransactionProcessor.Database.Entities.Merchant), Int32> config = salesConfig.SingleOrDefault(c => c.Key == (transactionDate, merchant));
+                KeyValuePair<(DateTime, TransactionProcessor.Database.Entities.Merchant), Int32> config = salesConfig.Single(c => c.Key == (transactionDate, merchant));
 
                 for (int i = 0; i < config.Value; i++) {
                     string responseCode = i switch {
@@ -755,15 +873,13 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         transactionSummaryByMerchantResponse.Summary.TotalMerchants.ShouldBe(3);
         transactionSummaryByMerchantResponse.Summary.TotalCount.ShouldBe(transactions.Count);
         transactionSummaryByMerchantResponse.Summary.TotalValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+        transactionSummaryByMerchantResponse.Summary.AverageValue.ShouldBe(transactions.Sum(t => t.TransactionAmount) / transactions.Count);
 
         transactionSummaryByMerchantResponse.Merchants.Count.ShouldBe(3);
-        var operators = new List<Guid> { safaricomContract.operatorId, voucherContract.operatorId };
         foreach (var mr in merchants) {
-            var row = transactionSummaryByMerchantResponse.Merchants.SingleOrDefault(m => m.MerchantId == mr.MerchantId);
-            row.ShouldNotBeNull();
-            row.MerchantId.ShouldBe(mr.MerchantId);
-            row.TotalValue.ShouldBe(transactions.Where(t => t.MerchantId == mr.MerchantId).Sum(t => t.TransactionAmount));
-            row.TotalCount.ShouldBe(transactions.Count(t => t.MerchantId == mr.MerchantId));
+            var merchantTransactions = transactions.Where(t => t.MerchantId == mr.MerchantId).ToList();
+            var row = transactionSummaryByMerchantResponse.Merchants.Single(m => m.MerchantId == mr.MerchantId);
+            AssertMerchantSummaryRowMatchesSource(row, mr, merchantTransactions);
             row.AuthorisedCount.ShouldBe(authorisedCountsByMerchant[mr]);
             row.DeclinedCount.ShouldBe(declinedCountsByMerchant[mr]);
         }
@@ -775,11 +891,11 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
         var transactions = new List<Transaction>();
 
-        TransactionProcessor.Database.Entities.Merchant merchant1 = this.merchantsList.SingleOrDefault(m => m.Name == "Test Merchant 1");
-        var merchant2 = this.merchantsList.SingleOrDefault(m => m.Name == "Test Merchant 2");
-        var merchant3 = this.merchantsList.SingleOrDefault(m => m.Name == "Test Merchant 3");
-        var safaricomContract = this.contractList.SingleOrDefault(c => c.contractName == "Safaricom Contract");
-        var voucherContract = this.contractList.SingleOrDefault(c => c.contractName == "Healthcare Centre 1 Contract");
+        TransactionProcessor.Database.Entities.Merchant merchant1 = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
+        var merchant2 = this.merchantsList.Single(m => m.Name == "Test Merchant 2");
+        var merchant3 = this.merchantsList.Single(m => m.Name == "Test Merchant 3");
+        var safaricomContract = this.contractList.Single(c => c.contractName == "Safaricom Contract");
+        var voucherContract = this.contractList.Single(c => c.contractName == "Healthcare Centre 1 Contract");
         var safaricomProduct = this.contractProducts.Single(cp => cp.Key == safaricomContract.contractId).Value.First();
         var voucherProduct = this.contractProducts.Single(cp => cp.Key == voucherContract.contractId).Value.First();
 
@@ -818,7 +934,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             {
 
                 // Build merchant sales
-                KeyValuePair<(DateTime, TransactionProcessor.Database.Entities.Merchant), Int32> config = salesConfig.SingleOrDefault(c => c.Key == (transactionDate, merchant));
+                KeyValuePair<(DateTime, TransactionProcessor.Database.Entities.Merchant), Int32> config = salesConfig.Single(c => c.Key == (transactionDate, merchant));
 
                 for (int i = 0; i < config.Value; i++)
                 {
@@ -895,16 +1011,15 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         transactionSummaryByOperatorResponse.Summary.TotalOperators.ShouldBe(2);
         transactionSummaryByOperatorResponse.Summary.TotalCount.ShouldBe(transactions.Count);
         transactionSummaryByOperatorResponse.Summary.TotalValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+        transactionSummaryByOperatorResponse.Summary.AverageValue.ShouldBe(transactions.Sum(t => t.TransactionAmount) / transactions.Count);
 
         transactionSummaryByOperatorResponse.Operators.Count.ShouldBe(2);
         var operators = new List<Guid> { safaricomContract.operatorId, voucherContract.operatorId };
         foreach (var op in operators)
         {
-            var row = transactionSummaryByOperatorResponse.Operators.SingleOrDefault(o => o.OperatorId == op);
-            row.ShouldNotBeNull();
-            row.OperatorId.ShouldBe(op);
-            row.TotalValue.ShouldBe(transactions.Where(t => t.OperatorId == op).Sum(t => t.TransactionAmount));
-            row.TotalCount.ShouldBe(transactions.Count(t => t.OperatorId == op));
+            var operatorTransactions = transactions.Where(t => t.OperatorId == op).ToList();
+            var row = transactionSummaryByOperatorResponse.Operators.Single(o => o.OperatorId == op);
+            AssertOperatorSummaryRowMatchesSource(row, this.operatorsList.Single(o => o.OperatorId == op), operatorTransactions);
             row.AuthorisedCount.ShouldBe(authorisedCountsByOperator[op]);
             row.DeclinedCount.ShouldBe(declinedCountsByOperator[op]);
         }
@@ -925,7 +1040,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
         var transactions = new List<Transaction>();
 
-        TransactionProcessor.Database.Entities.Merchant merchant = this.merchantsList.SingleOrDefault(m => m.Name == "Test Merchant 1");
+        TransactionProcessor.Database.Entities.Merchant merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
 
         List<DateTime> transactionDates = [
             DateTime.Now.Date,
@@ -937,9 +1052,9 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         foreach (DateTime transactionDate in transactionDates) {
             foreach (var productData in productPerformanceData) {
                 var transactionCount = productData.Value;
-                var contract = this.contractList.SingleOrDefault(c => c.operatorName == productData.Key.@operator);
+                var contract = this.contractList.Single(c => c.operatorName == productData.Key.@operator);
                 var productList = this.contractProducts.Where(cp => cp.Key == contract.contractId).SelectMany(cp => cp.Value).ToList();
-                var product = productList.SingleOrDefault(p => p.productName == productData.Key.product);
+                var product = productList.Single(p => p.productName == productData.Key.product);
                 for (int i = 0; i < transactionCount; i++) {
                     Transaction transaction = await this.helper.BuildTransactionX(transactionDate, merchant.MerchantId, contract.operatorId, contract.contractId, product.productId, "0000", product.productValue);
                     transactions.Add(transaction);
@@ -958,16 +1073,16 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         productPerformanceResponse.Summary.TotalProducts.ShouldBe(8);
         productPerformanceResponse.Summary.TotalCount.ShouldBe(transactions.Count);
         productPerformanceResponse.Summary.TotalValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+        productPerformanceResponse.Summary.AveragePerProduct.ShouldBe(transactions.Sum(t => t.TransactionAmount) / productPerformanceData.Count);
 
         foreach (KeyValuePair<(String @operator, String product), Int32> productData in productPerformanceData) {
-            var contract = this.contractList.SingleOrDefault(c => c.operatorName == productData.Key.@operator);
+            var contract = this.contractList.Single(c => c.operatorName == productData.Key.@operator);
             var productList = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value;
-            var product = productList.SingleOrDefault(p => p.productName == productData.Key.product);
-            var productPerformanceResponseDetail = productPerformanceResponse.ProductDetails.SingleOrDefault(p => p.ProductId == product.productId);
-            productPerformanceResponseDetail.ShouldNotBeNull();
-            productPerformanceResponseDetail.TransactionCount.ShouldBe(transactions.Count(t => t.ContractProductId == product.productId));
-            productPerformanceResponseDetail.TransactionValue.ShouldBe(transactions.Where(t => t.ContractProductId == product.productId).Sum(t => t.TransactionAmount));
-            productPerformanceResponseDetail.PercentageOfTotal.ShouldNotBe(0);
+            var product = productList.Single(p => p.productName == productData.Key.product);
+            var productTransactions = transactions.Where(t => t.ContractProductId == product.productId).ToList();
+            var productPerformanceResponseDetail = productPerformanceResponse.ProductDetails.Single(p => p.ProductId == product.productId);
+            var expectedPercentageOfTotal = 100m * productTransactions.Sum(t => t.TransactionAmount) / transactions.Sum(t => t.TransactionAmount);
+            AssertProductPerformanceRowMatchesSource(productPerformanceResponseDetail, this.context.ContractProducts.Single(cp => cp.ContractProductId == product.productId), this.context.Contracts.Single(c => c.ContractId == contract.contractId), productTransactions, expectedPercentageOfTotal);
         }
     }
 
@@ -984,6 +1099,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
     public async Task TransactionsEndpoint_TodaysSalesByHour_SummaryDataReturned()
     {
         Stopwatch sw = Stopwatch.StartNew();
+        DateTime now = DateTime.Now;
+        int safeHourLimit = Math.Max(0, now.Hour - 2);
 
         List<Transaction> todaysTransactions = new List<Transaction>();
         List<Transaction> comparisonDateTransactions = new List<Transaction>();
@@ -991,9 +1108,9 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         Dictionary<string, int> transactionCounts = new() { { "Test Merchant 1", 3 }, { "Test Merchant 2", 6 }, { "Test Merchant 3", 2 }, { "Test Merchant 4", 0 } };
 
         // TODO: make counts dynamic
-        DateTime todaysDateTime = DateTime.Now;
+        DateTime todaysDateTime = now;
 
-        for (int hour = 0; hour < 24; hour++)
+        for (int hour = 0; hour <= safeHourLimit; hour++)
         {
             List<Transaction> localList = new List<Transaction>();
             DateTime date = new DateTime(todaysDateTime.Year, todaysDateTime.Month, todaysDateTime.Day, hour, 0, 0);
@@ -1040,7 +1157,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         sw.Restart();
 
         DateTime comparisonDate = todaysDateTime.AddDays(-1);
-        for (int hour = 0; hour < 24; hour++)
+        for (int hour = 0; hour <= safeHourLimit; hour++)
         {
             List<Transaction> localList = new List<Transaction>();
             DateTime date = new DateTime(comparisonDate.Year, comparisonDate.Month, comparisonDate.Day, hour, 0, 0);
@@ -1091,13 +1208,28 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         var todaysSalesByHour = result.Data;
         todaysSalesByHour.ShouldNotBeNull();
 
-        foreach (var hour in todaysSalesByHour) {
-            hour.ShouldNotBeNull();
-            hour.TodaysSalesCount.ShouldBe(todaysTransactions.Count(t => t.TransactionDateTime.Hour == hour.Hour && t.TransactionTime <= DateTime.Now.TimeOfDay), hour.Hour.ToString());
-            hour.TodaysSalesValue.ShouldBe(todaysTransactions.Where(t => t.TransactionDateTime.Hour == hour.Hour && t.TransactionTime <= DateTime.Now.TimeOfDay).Sum(t => t.TransactionAmount), hour.Hour.ToString());
-            hour.ComparisonSalesCount.ShouldBe(comparisonDateTransactions.Count(t => t.TransactionDateTime.Hour == hour.Hour && t.TransactionTime <= DateTime.Now.TimeOfDay), hour.Hour.ToString());
-            hour.ComparisonSalesValue.ShouldBe(comparisonDateTransactions.Where(t => t.TransactionDateTime.Hour == hour.Hour && t.TransactionTime <= DateTime.Now.TimeOfDay).Sum(t => t.TransactionAmount), hour.Hour.ToString());
+        var expectedHours = todaysTransactions
+            .GroupBy(t => t.TransactionDateTime.Hour)
+            .Select(g => g.Key)
+            .Union(comparisonDateTransactions
+                .GroupBy(t => t.TransactionDateTime.Hour)
+                .Select(g => g.Key))
+            .OrderBy(x => x)
+            .ToList();
 
+        var orderedTodaysSalesByHour = todaysSalesByHour.OrderBy(x => x.Hour).ToList();
+        orderedTodaysSalesByHour.Select(x => x.Hour).ShouldBe(expectedHours);
+
+        foreach (var hour in orderedTodaysSalesByHour) {
+            hour.ShouldNotBeNull();
+
+            var todaysHourTransactions = todaysTransactions.Where(t => t.TransactionDateTime.Hour == hour.Hour && t.TransactionTime <= now.TimeOfDay).ToList();
+            var comparisonHourTransactions = comparisonDateTransactions.Where(t => t.TransactionDateTime.Hour == hour.Hour && t.TransactionTime <= now.TimeOfDay).ToList();
+
+            hour.TodaysSalesCount.ShouldBe(todaysHourTransactions.Count, hour.Hour.ToString());
+            hour.TodaysSalesValue.ShouldBe(todaysHourTransactions.Sum(t => t.TransactionAmount), hour.Hour.ToString());
+            hour.ComparisonSalesCount.ShouldBe(comparisonHourTransactions.Count, hour.Hour.ToString());
+            hour.ComparisonSalesValue.ShouldBe(comparisonHourTransactions.Sum(t => t.TransactionAmount), hour.Hour.ToString());
         }
     }
 
@@ -1106,7 +1238,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
     {
         TransactionProcessor.Database.Entities.Merchant merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
         var contract = this.contractList.Single(c => c.contractName == "Safaricom Contract");
-        var product = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value.First();
+        var topProduct = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value.Single(p => p.productName == "50 KES Topup");
+        var secondaryProduct = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value.Single(p => p.productName == "100 KES Topup");
         var operatorRecord = this.operatorsList.Single(o => o.OperatorId == contract.operatorId);
         DateTime transactionDate = DateTime.Now.Date;
         List<Transaction> transactions = new();
@@ -1121,10 +1254,28 @@ public class TransactionsEndpointTests : ControllerTestsBase {
                 merchant.MerchantId,
                 contract.operatorId,
                 contract.contractId,
-                product.productId,
+                topProduct.productId,
                 responseCode,
-                product.productValue,
+                topProduct.productValue,
                 i);
+
+            transactions.Add(transaction);
+        }
+
+        for (int i = 1; i <= 4; i++)
+        {
+            DateTime transactionDateTime = transactionDate.AddHours(15 + i);
+            string responseCode = i % 2 == 0 ? "1009" : "0000";
+
+            Transaction transaction = await this.helper.BuildTransactionX(
+                transactionDateTime,
+                merchant.MerchantId,
+                contract.operatorId,
+                contract.contractId,
+                secondaryProduct.productId,
+                responseCode,
+                secondaryProduct.productValue,
+                100 + i);
 
             transactions.Add(transaction);
         }
@@ -1150,16 +1301,89 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         response.Metrics.ShouldNotBeNull();
         response.DrillDownTransactions.ShouldNotBeNull();
 
+        decimal totalSalesValue = transactions.Sum(t => t.TransactionAmount);
+        decimal successfulSalesValue = transactions.Where(t => t.IsAuthorised).Sum(t => t.TransactionAmount);
+        decimal failedSalesValue = transactions.Where(t => t.IsAuthorised == false).Sum(t => t.TransactionAmount);
+        decimal averageSalesValue = transactions.Count == 0 ? 0m : totalSalesValue / transactions.Count;
+
         response.Metrics.Count.ShouldBe(9);
-        response.Metrics.Single(m => m.Title == "Total Sales Count").Value.ShouldBe(6);
-        response.Metrics.Single(m => m.Title == "Successful Sales Count").Value.ShouldBe(3);
-        response.Metrics.Single(m => m.Title == "Failed Sales Count").Value.ShouldBe(3);
-        response.Metrics.Single(m => m.Title == "Top Product Sales Count").Value.ShouldBe(6);
-        response.Metrics.Single(m => m.Title == "Top Product Sales Count").Description.ShouldBe($"{operatorRecord.Name} {product.productName}");
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Total Sales Count"),
+            "Total Sales Count",
+            10,
+            "All sales transactions in the range",
+            1,
+            0);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Total Sales Value"),
+            "Total Sales Value",
+            totalSalesValue,
+            "All sales value in the range",
+            1,
+            1);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Successful Sales Count"),
+            "Successful Sales Count",
+            5,
+            "Authorised sales count in the range",
+            2,
+            2);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Successful Sales Value"),
+            "Successful Sales Value",
+            successfulSalesValue,
+            "Authorised sales value in the range",
+            2,
+            3);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Failed Sales Count"),
+            "Failed Sales Count",
+            5,
+            "Declined sales count in the range",
+            3,
+            4);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Failed Sales Value"),
+            "Failed Sales Value",
+            failedSalesValue,
+            "Declined sales value in the range",
+            3,
+            5);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Average Sales Count"),
+            "Average Sales Count",
+            10m,
+            "Average sales count per day in the range",
+            4,
+            6);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Average Sales Value"),
+            "Average Sales Value",
+            averageSalesValue,
+            "Average value per sale in the range",
+            4,
+            7);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Top Product Sales Count"),
+            "Top Product Sales Count",
+            6,
+            $"{operatorRecord.Name} {topProduct.productName}",
+            5,
+            8);
+
+        var expectedDrillDownTransactions = transactions
+            .OrderByDescending(t => t.TransactionDateTime)
+            .Take(5)
+            .ToList();
 
         response.DrillDownTransactions.Count.ShouldBe(5);
-        response.DrillDownTransactions.Select(x => x.Reference).ShouldBe(new[] { "0006", "0005", "0004", "0003", "0002" });
-        response.DrillDownTransactions.Select(x => x.Status).ShouldBe(new[] { "Failed", "Successful", "Failed", "Successful", "Failed" });
+        for (int i = 0; i < expectedDrillDownTransactions.Count; i++) {
+            var expectedTransactionProduct = this.context.ContractProducts.Single(p => p.ContractProductId == expectedDrillDownTransactions[i].ContractProductId && p.ContractId == expectedDrillDownTransactions[i].ContractId).ProductName;
+            AssertDrillDownTransactionMatches(
+                response.DrillDownTransactions[i],
+                expectedDrillDownTransactions[i],
+                $"{operatorRecord.Name} {expectedTransactionProduct}");
+        }
     }
 
     [Fact]
@@ -1238,12 +1462,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
         JsonElement items = GetPropertyCaseInsensitive(document.RootElement, "items");
         items.GetArrayLength().ShouldBe(2);
-        GetPropertyCaseInsensitive(items[0], "reference").GetString().ShouldBe("0012");
-        GetPropertyCaseInsensitive(items[1], "reference").GetString().ShouldBe("0011");
-        GetPropertyCaseInsensitive(items[0], "receiptReference").GetString().ShouldBe("receipt-002");
-        GetPropertyCaseInsensitive(items[1], "receiptReference").GetString().ShouldBe("receipt-001");
-        GetPropertyCaseInsensitive(items[0], "operator").GetString().ShouldBe(@operator.Name);
-        DateTime.Parse(GetPropertyCaseInsensitive(items[0], "transactionDateTime").GetString()!).ShouldBe(reportDate.AddHours(10));
+        AssertRecentActivityReceiptItemMatches(items[0], transactions[1], product.productName, @operator.Name, "receipt-002");
+        AssertRecentActivityReceiptItemMatches(items[1], transactions[0], product.productName, @operator.Name, "receipt-001");
     }
 
     [Fact]
@@ -1290,7 +1510,6 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         GetPropertyCaseInsensitive(document.RootElement, "totalCount").GetInt32().ShouldBe(2);
         JsonElement items = GetPropertyCaseInsensitive(document.RootElement, "items");
         items.GetArrayLength().ShouldBe(1);
-        GetPropertyCaseInsensitive(items[0], "reference").GetString().ShouldBe("0012");
-        GetPropertyCaseInsensitive(items[0], "receiptReference").GetString().ShouldBe("receipt-002");
+        AssertRecentActivityReceiptItemMatches(items[0], transactions[1], product.productName, contract.operatorName, "receipt-002");
     }
 }
