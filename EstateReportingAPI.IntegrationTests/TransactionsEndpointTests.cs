@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using EstateReportingAPI.DataTransferObjects;
+using Microsoft.EntityFrameworkCore;
 using Shared.Serialisation;
 using Shouldly;
 using SimpleResults;
@@ -1202,6 +1203,20 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         await this.helper.RunTodaysTransactionsSummaryProcessing(comparisonDate.Date);
         await this.helper.RunHistoricTransactionsSummaryProcessing(comparisonDate.Date);
         await this.helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
+
+        var todaysReadModelRows = await this.context.TodayTransactions
+            .Where(t => t.TransactionDate == todaysDateTime.Date)
+            .Select(t => new { t.TransactionDateTime, t.Hour })
+            .ToListAsync();
+        todaysReadModelRows.ShouldNotBeEmpty();
+        todaysReadModelRows.ShouldAllBe(x => x.Hour == x.TransactionDateTime.Hour);
+
+        var comparisonReadModelRows = await this.context.TransactionHistory
+            .Where(t => t.TransactionDate == comparisonDate.Date)
+            .Select(t => new { t.TransactionDateTime, t.Hour })
+            .ToListAsync();
+        comparisonReadModelRows.ShouldNotBeEmpty();
+        comparisonReadModelRows.ShouldAllBe(x => x.Hour == x.TransactionDateTime.Hour);
 
         var result = await this.CreateAndSendHttpRequestMessage<List<DataTransferObjects.TodaysSalesByHour>>($"{this.BaseRoute}/todayssalesbyhour?comparisondate={comparisonDate:yyyy-MM-dd}", CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
