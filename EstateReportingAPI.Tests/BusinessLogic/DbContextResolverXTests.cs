@@ -4,12 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
 using Shared.EntityFramework;
 using Shared.General;
 using Shouldly;
 using TransactionProcessor.Database.Contexts;
+using Xunit;
 
-namespace EstateReportingAPI.BusinessLogic.UnitTests;
+namespace EstateReportingAPI.Tests.BusinessLogic;
 
 public class DbContextResolverXTests
 {
@@ -17,7 +19,7 @@ public class DbContextResolverXTests
     public void Resolve_WhenEstateSuffixIsProvided_UsesTheSuffixedCatalog()
     {
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
+            .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["ConnectionStrings:TransactionProcessorReadModel"] = "Server=localhost;Initial Catalog=TransactionProcessorReadModel;Integrated Security=True;TrustServerCertificate=True"
             })
