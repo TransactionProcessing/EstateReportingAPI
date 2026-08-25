@@ -1457,6 +1457,71 @@ public class TransactionsEndpointTests : ControllerTestsBase {
     }
 
     [Fact]
+    public async Task TransactionsEndpoint_MerchantDailyPerformanceSummary_UsesFallbackWhenTopProductOperatorNameIsMissing()
+    {
+        TransactionProcessor.Database.Entities.Merchant merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
+        var contract = this.contractList.Single(c => c.contractName == "Safaricom Contract");
+        var topProduct = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value.Single(p => p.productName == "50 KES Topup");
+        var secondaryProduct = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value.Single(p => p.productName == "100 KES Topup");
+        DateTime transactionDate = DateTime.Now.Date;
+
+        List<Transaction> transactions = [
+            await this.helper.BuildTransactionX(
+                transactionDate.AddHours(9),
+                merchant.MerchantId,
+                Guid.NewGuid(),
+                contract.contractId,
+                topProduct.productId,
+                "0000",
+                topProduct.productValue,
+                3001),
+            await this.helper.BuildTransactionX(
+                transactionDate.AddHours(10),
+                merchant.MerchantId,
+                Guid.NewGuid(),
+                contract.contractId,
+                topProduct.productId,
+                "0000",
+                topProduct.productValue,
+                3002),
+            await this.helper.BuildTransactionX(
+                transactionDate.AddHours(11),
+                merchant.MerchantId,
+                contract.operatorId,
+                contract.contractId,
+                secondaryProduct.productId,
+                "0000",
+                secondaryProduct.productValue,
+                3003)
+        ];
+
+        await this.helper.AddTransactionsX(transactions);
+
+        MerchantDailyPerformanceSummaryRequest request = new()
+        {
+            MerchantReportingId = merchant.MerchantReportingId,
+            StartDate = transactionDate,
+            EndDate = transactionDate
+        };
+
+        var result = await this.CreateAndSendHttpRequestMessage<MerchantDailyPerformanceSummaryResponse>(
+            $"{this.BaseRoute}/merchantdailyperformancesummary",
+            StringSerialiser.Serialise(request),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+
+        MerchantDailyPerformanceSummaryResponse response = result.Data;
+        response.ShouldNotBeNull();
+        response.Metrics.ShouldNotBeNull();
+
+        response.Metrics.Single(m => m.Title == "Top Product Sales Count").ShouldSatisfyAllConditions(metric => {
+            metric.Value.ShouldBe(2);
+            metric.Description.ShouldBe("Unknown product");
+        });
+    }
+
+    [Fact]
     public async Task TransactionsEndpoint_MerchantDailyPerformanceSummary_NoSales_ReturnsStableMetricCategories()
     {
         TransactionProcessor.Database.Entities.Merchant merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");

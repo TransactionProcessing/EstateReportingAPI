@@ -2124,7 +2124,9 @@ public class ReportingManager : IReportingManager {
             return new MetricItem {
                 Title = "Top Product Sales Count",
                 Value = topProduct.SalesCount,
-                Description = $"{topProduct.OperatorName} {topProduct.ProductName}" ?? "Unknown product",
+                Description = string.IsNullOrWhiteSpace(topProduct.OperatorName) || string.IsNullOrWhiteSpace(topProduct.ProductName)
+                    ? "Unknown product"
+                    : $"{topProduct.OperatorName} {topProduct.ProductName}",
                 Category = 5,
                 Type = 8
             };
