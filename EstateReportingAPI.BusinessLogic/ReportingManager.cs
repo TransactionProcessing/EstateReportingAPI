@@ -2139,7 +2139,8 @@ public class ReportingManager : IReportingManager {
                 from t in context.Transactions
                 join m in context.Merchants on t.MerchantId equals m.MerchantId
                 join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
-                join op in context.Operators on t.OperatorId equals op.OperatorId
+                join op in context.Operators on t.OperatorId equals op.OperatorId into opJoin
+                from op in opJoin.DefaultIfEmpty()
                 where t.TransactionType == "Sale"
                       && t.TransactionDate >= startDate
                       && t.TransactionDate <= endDate
@@ -2147,7 +2148,7 @@ public class ReportingManager : IReportingManager {
                 group t by new
                 {
                     cp.ContractProductReportingId,
-                    op.Name,                  
+                    OperatorName = op == null ? string.Empty : op.Name,
                     cp.ProductName,
                     t.IsAuthorised
                 }
@@ -2156,7 +2157,7 @@ public class ReportingManager : IReportingManager {
                 {
                     ContractProductReportingId = g.Key.ContractProductReportingId,
                     ProductName = g.Key.ProductName,
-                    OperatorName = g.Key.Name,
+                    OperatorName = g.Key.OperatorName,
                     IsAuthorised = g.Key.IsAuthorised,
                     SalesCount = g.Count(),
                     SalesValue = g.Sum(x => x.TransactionAmount)
@@ -2174,7 +2175,8 @@ public class ReportingManager : IReportingManager {
                 (from t in context.Transactions
                  join m in context.Merchants on t.MerchantId equals m.MerchantId
                  join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
-                 join op in context.Operators on t.OperatorId equals op.OperatorId
+                 join op in context.Operators on t.OperatorId equals op.OperatorId into opJoin
+                 from op in opJoin.DefaultIfEmpty()
                  where t.TransactionType == "Sale"
                        && t.TransactionDate >= startDate
                        && t.TransactionDate <= endDate
@@ -2184,7 +2186,7 @@ public class ReportingManager : IReportingManager {
                  {
                      Reference = t.TransactionNumber,
                      Product = cp.ProductName,
-                     Operator = op.Name,
+                     Operator = op == null ? string.Empty : op.Name,
                      Status = t.IsAuthorised ? "Successful" : "Failed",
                      Amount = t.TransactionAmount,
                      TransactionDateTime = t.TransactionDateTime

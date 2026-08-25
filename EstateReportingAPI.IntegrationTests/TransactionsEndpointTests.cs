@@ -1402,6 +1402,61 @@ public class TransactionsEndpointTests : ControllerTestsBase {
     }
 
     [Fact]
+    public async Task TransactionsEndpoint_MerchantDailyPerformanceSummary_PreservesTransactionsWithoutOperatorRows()
+    {
+        TransactionProcessor.Database.Entities.Merchant merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
+        var contract = this.contractList.Single(c => c.contractName == "Safaricom Contract");
+        var product = this.contractProducts.Single(cp => cp.Key == contract.contractId).Value.Single(p => p.productName == "50 KES Topup");
+        DateTime transactionDate = DateTime.Now.Date;
+
+        List<Transaction> transactions = [
+            await this.helper.BuildTransactionX(
+                transactionDate.AddHours(9),
+                merchant.MerchantId,
+                contract.operatorId,
+                contract.contractId,
+                product.productId,
+                "0000",
+                product.productValue,
+                2001),
+            await this.helper.BuildTransactionX(
+                transactionDate.AddHours(10),
+                merchant.MerchantId,
+                Guid.NewGuid(),
+                contract.contractId,
+                product.productId,
+                "0000",
+                product.productValue,
+                2002)
+        ];
+
+        await this.helper.AddTransactionsX(transactions);
+
+        MerchantDailyPerformanceSummaryRequest request = new()
+        {
+            MerchantReportingId = merchant.MerchantReportingId,
+            StartDate = transactionDate,
+            EndDate = transactionDate
+        };
+
+        var result = await this.CreateAndSendHttpRequestMessage<MerchantDailyPerformanceSummaryResponse>(
+            $"{this.BaseRoute}/merchantdailyperformancesummary",
+            StringSerialiser.Serialise(request),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+
+        MerchantDailyPerformanceSummaryResponse response = result.Data;
+        response.ShouldNotBeNull();
+        response.Metrics.ShouldNotBeNull();
+        response.DrillDownTransactions.ShouldNotBeNull();
+
+        response.Metrics.Single(m => m.Title == "Total Sales Count").Value.ShouldBe(2);
+        response.Metrics.Single(m => m.Title == "Total Sales Value").Value.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+        response.DrillDownTransactions.Count.ShouldBe(2);
+    }
+
+    [Fact]
     public async Task TransactionsEndpoint_MerchantDailyPerformanceSummary_NoSales_ReturnsStableMetricCategories()
     {
         TransactionProcessor.Database.Entities.Merchant merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
