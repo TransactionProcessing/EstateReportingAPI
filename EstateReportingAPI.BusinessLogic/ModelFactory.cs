@@ -30,7 +30,7 @@ internal static class ModelFactory {
         };
     }
 
-    internal static Merchant ConvertFrom(MerchantWithAddressData merchant,
+    internal static Merchant ConvertFrom(MerchantWithAddressAndContactData merchant,
                                          decimal balance) {
         return new Merchant {
             Balance = balance,
@@ -46,6 +46,10 @@ internal static class ModelFactory {
             AddressLine2 = merchant.MerchantAddress.AddressLine2,
             Town = merchant.MerchantAddress.Town,
             Country = merchant.MerchantAddress.Country,
+            ContactId = merchant.MerchantContact.ContactId,
+            ContactName = merchant.MerchantContact.Name,
+            ContactEmail = merchant.MerchantContact.EmailAddress,
+            ContactPhone = merchant.MerchantContact.PhoneNumber,
             MerchantReportingId = merchant.Merchant.MerchantReportingId
         };
     }

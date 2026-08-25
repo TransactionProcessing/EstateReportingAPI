@@ -40,9 +40,9 @@ namespace EstateReportingAPI.IntegrationTests {
                 dates.Select(d => d.Date).Contains(date.Date).ShouldBeTrue();
             }
 
-            dates.Select(d => d.Description).Contains("Yesterday");
-            dates.Select(d => d.Description).Contains("Last Week");
-            dates.Select(d => d.Description).Contains("Last Month");
+            dates.Select(d => d.Description).Contains("Yesterday").ShouldBeTrue();
+            dates.Select(d => d.Description).Contains("Last Week").ShouldBeTrue();
+            dates.Select(d => d.Description).Contains("Last Month").ShouldBeTrue();
         }
 
         protected override async Task ClearStandingData() {

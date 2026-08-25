@@ -13,6 +13,32 @@ namespace EstateReportingAPI.IntegrationTests;
 public class MerchantEndpointTests : ControllerTestsBase {
     private String BaseRoute = "api/merchants";
 
+    private void AssertMerchantMatchesDatabase(Merchant merchant, Guid merchantId) {
+        var sourceMerchant = this.context.Merchants.Single(m => m.MerchantId == merchantId);
+        var sourceAddress = this.context.MerchantAddresses.Single(a => a.MerchantId == merchantId);
+        var sourceContact = this.context.MerchantContacts.Single(c => c.MerchantId == merchantId);
+        var sourceBalance = this.context.MerchantBalanceProjectionState.Single(s => s.MerchantId == merchantId);
+
+        merchant.MerchantId.ShouldBe(sourceMerchant.MerchantId);
+        merchant.MerchantReportingId.ShouldBe(sourceMerchant.MerchantReportingId);
+        merchant.Name.ShouldBe(sourceMerchant.Name);
+        merchant.Reference.ShouldBe(sourceMerchant.Reference);
+        merchant.Balance.ShouldBe(sourceBalance.Balance);
+        merchant.SettlementSchedule.ShouldBe(sourceMerchant.SettlementSchedule);
+        merchant.CreatedDateTime.ShouldBe(sourceMerchant.CreatedDateTime);
+        merchant.AddressId.ShouldBe(sourceAddress.AddressId);
+        merchant.AddressLine1.ShouldBe(sourceAddress.AddressLine1);
+        merchant.AddressLine2.ShouldBe(sourceAddress.AddressLine2);
+        merchant.Town.ShouldBe(sourceAddress.Town);
+        merchant.Region.ShouldBe(sourceAddress.Region);
+        merchant.PostCode.ShouldBe(sourceAddress.PostalCode);
+        merchant.Country.ShouldBe(sourceAddress.Country);
+        merchant.ContactId.ShouldBe(sourceContact.ContactId);
+        merchant.ContactName.ShouldBe(sourceContact.Name);
+        merchant.ContactEmail.ShouldBe(sourceContact.EmailAddress);
+        merchant.ContactPhone.ShouldBe(sourceContact.PhoneNumber);
+    }
+
     [Fact]
     public async Task MerchantEndpoint_GetMerchants_MerchantsReturned() {
         await this.helper.AddEstate("Test Estate", "Ref1");
@@ -30,9 +56,8 @@ public class MerchantEndpointTests : ControllerTestsBase {
         merchants.Count.ShouldBe(10);
             
         for (int i = 0; i < 10; i++) {
-            Merchant? expected = merchants.SingleOrDefault(m => m.Name == $"Test Merchant {i}");
-            expected.ShouldNotBeNull();
-            expected.Balance.ShouldBe(100 * i);
+            Merchant expected = merchants.Single(m => m.Name == $"Test Merchant {i}");
+            AssertMerchantMatchesDatabase(expected, expected.MerchantId);
         }
     }
 
@@ -49,8 +74,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
         var merchant = result.Data;
 
         merchant.ShouldNotBeNull();
-        merchant.Name.ShouldBe("Test Merchant 1");
-        merchant.Balance.ShouldBe(100);
+        AssertMerchantMatchesDatabase(merchant, merchantId);
     }
 
     [Fact]
@@ -70,9 +94,9 @@ public class MerchantEndpointTests : ControllerTestsBase {
 
         merchants.ShouldNotBeNull();
         merchants.Count.ShouldBe(3);
-        merchants.SingleOrDefault(m => m.Name == "Test Merchant 0").ShouldNotBeNull();
-        merchants.SingleOrDefault(m => m.Name == "Test Merchant 1").ShouldNotBeNull();
-        merchants.SingleOrDefault(m => m.Name == "Test Merchant 2").ShouldNotBeNull();
+        AssertMerchantMatchesDatabase(merchants.Single(m => m.Name == "Test Merchant 0"), merchants.Single(m => m.Name == "Test Merchant 0").MerchantId);
+        AssertMerchantMatchesDatabase(merchants.Single(m => m.Name == "Test Merchant 1"), merchants.Single(m => m.Name == "Test Merchant 1").MerchantId);
+        AssertMerchantMatchesDatabase(merchants.Single(m => m.Name == "Test Merchant 2"), merchants.Single(m => m.Name == "Test Merchant 2").MerchantId);
     }
 
 
@@ -94,8 +118,16 @@ public class MerchantEndpointTests : ControllerTestsBase {
 
         merchantOperators.ShouldNotBeNull();
         merchantOperators.Count.ShouldBe(2);
-        merchantOperators.SingleOrDefault(m => m.OperatorName == "Safaricom").ShouldNotBeNull();
-        merchantOperators.SingleOrDefault(m => m.OperatorName == "Voucher").ShouldNotBeNull();
+        merchantOperators.Single(m => m.OperatorName == "Safaricom").ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OperatorName.ShouldBe("Safaricom");
+            x.IsDeleted.ShouldBeFalse();
+        });
+        merchantOperators.Single(m => m.OperatorName == "Voucher").ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OperatorName.ShouldBe("Voucher");
+            x.IsDeleted.ShouldBeFalse();
+        });
     }
 
     [Fact]
@@ -123,8 +155,22 @@ public class MerchantEndpointTests : ControllerTestsBase {
 
         merchantContracts.ShouldNotBeNull();
         merchantContracts.Count.ShouldBe(2);
-        merchantContracts.SingleOrDefault(m => m.ContractName == "Safaricom Contract").ShouldNotBeNull();
-        merchantContracts.SingleOrDefault(m => m.ContractName == "Healthcare Centre 1 Contract").ShouldNotBeNull();
+        merchantContracts.Single(m => m.ContractName == "Safaricom Contract").ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OperatorName.ShouldBe("Safaricom");
+            x.IsDeleted.ShouldBeFalse();
+            x.ContractProducts.Count.ShouldBe(4);
+            x.ContractProducts.Select(p => p.ProductName).ShouldBe(new[] { "200 KES Topup", "100 KES Topup", "50 KES Topup", "Custom" });
+            x.ContractProducts.All(p => p.ContractId == x.ContractId && p.MerchantId == merchantId).ShouldBeTrue();
+        });
+        merchantContracts.Single(m => m.ContractName == "Healthcare Centre 1 Contract").ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OperatorName.ShouldBe("Voucher");
+            x.IsDeleted.ShouldBeFalse();
+            x.ContractProducts.Count.ShouldBe(2);
+            x.ContractProducts.Select(p => p.ProductName).ShouldBe(new[] { "10 KES Voucher", "Custom" });
+            x.ContractProducts.All(p => p.ContractId == x.ContractId && p.MerchantId == merchantId).ShouldBeTrue();
+        });
     }
 
     [Fact]
@@ -142,7 +188,11 @@ public class MerchantEndpointTests : ControllerTestsBase {
 
         merchantDevices.ShouldNotBeNull();
         merchantDevices.Count.ShouldBe(1);
-        merchantDevices.SingleOrDefault(m => m.DeviceIdentifier == "123456").ShouldNotBeNull();
+        merchantDevices.Single(m => m.DeviceIdentifier == "123456").ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.DeviceIdentifier.ShouldBe("123456");
+            x.IsDeleted.ShouldBeFalse();
+        });
     }
 
     [Fact]
@@ -170,13 +220,41 @@ public class MerchantEndpointTests : ControllerTestsBase {
 
         merchantOpeningHours.ShouldNotBeNull();
         merchantOpeningHours.Count.ShouldBe(7);
-        merchantOpeningHours.SingleOrDefault(m => m.DayOfWeek == DayOfWeek.Monday && m.OpeningTime == "09:00" && m.ClosingTime == "17:00").ShouldNotBeNull();
-        merchantOpeningHours.SingleOrDefault(m => m.DayOfWeek == DayOfWeek.Tuesday && m.OpeningTime == "09:00" && m.ClosingTime == "17:00").ShouldNotBeNull();
-        merchantOpeningHours.SingleOrDefault(m => m.DayOfWeek == DayOfWeek.Wednesday && m.OpeningTime == "09:00" && m.ClosingTime == "17:00").ShouldNotBeNull();
-        merchantOpeningHours.SingleOrDefault(m => m.DayOfWeek == DayOfWeek.Thursday && m.OpeningTime == "09:00" && m.ClosingTime == "17:00").ShouldNotBeNull();
-        merchantOpeningHours.SingleOrDefault(m => m.DayOfWeek == DayOfWeek.Friday && m.OpeningTime == "09:00" && m.ClosingTime == "17:00").ShouldNotBeNull();
-        merchantOpeningHours.SingleOrDefault(m => m.DayOfWeek == DayOfWeek.Saturday && m.OpeningTime == "10:00" && m.ClosingTime == "16:00").ShouldNotBeNull();
-        merchantOpeningHours.SingleOrDefault(m => m.DayOfWeek == DayOfWeek.Sunday && m.OpeningTime == "09:00" && m.ClosingTime == "18:00").ShouldNotBeNull();
+        merchantOpeningHours.Single(m => m.DayOfWeek == DayOfWeek.Monday).ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OpeningTime.ShouldBe("09:00");
+            x.ClosingTime.ShouldBe("17:00");
+        });
+        merchantOpeningHours.Single(m => m.DayOfWeek == DayOfWeek.Tuesday).ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OpeningTime.ShouldBe("09:00");
+            x.ClosingTime.ShouldBe("17:00");
+        });
+        merchantOpeningHours.Single(m => m.DayOfWeek == DayOfWeek.Wednesday).ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OpeningTime.ShouldBe("09:00");
+            x.ClosingTime.ShouldBe("17:00");
+        });
+        merchantOpeningHours.Single(m => m.DayOfWeek == DayOfWeek.Thursday).ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OpeningTime.ShouldBe("09:00");
+            x.ClosingTime.ShouldBe("17:00");
+        });
+        merchantOpeningHours.Single(m => m.DayOfWeek == DayOfWeek.Friday).ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OpeningTime.ShouldBe("09:00");
+            x.ClosingTime.ShouldBe("17:00");
+        });
+        merchantOpeningHours.Single(m => m.DayOfWeek == DayOfWeek.Saturday).ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OpeningTime.ShouldBe("10:00");
+            x.ClosingTime.ShouldBe("16:00");
+        });
+        merchantOpeningHours.Single(m => m.DayOfWeek == DayOfWeek.Sunday).ShouldSatisfyAllConditions(x => {
+            x.MerchantId.ShouldBe(merchantId);
+            x.OpeningTime.ShouldBe("09:00");
+            x.ClosingTime.ShouldBe("18:00");
+        });
     }
 
     [Fact]
@@ -196,21 +274,10 @@ public class MerchantEndpointTests : ControllerTestsBase {
         merchantSchedule.Year.ShouldBe(2026);
         merchantSchedule.Months.ShouldNotBeNull();
         merchantSchedule.Months.Count.ShouldBe(3);
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 1).ShouldNotBeNull();
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 1).ClosedDays.Contains(1).ShouldBeTrue();
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 1).ClosedDays.Contains(2).ShouldBeTrue();
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 1).ClosedDays.Contains(15).ShouldBeTrue();
-
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 2).ShouldNotBeNull();
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 2).ClosedDays.Contains(10).ShouldBeTrue();
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 2).ClosedDays.Contains(14).ShouldBeTrue();
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 2).ClosedDays.Contains(28).ShouldBeTrue();
-
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 12).ShouldNotBeNull();
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 12).ClosedDays.Contains(24).ShouldBeTrue();
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 12).ClosedDays.Contains(25).ShouldBeTrue();
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 12).ClosedDays.Contains(26).ShouldBeTrue();
-        merchantSchedule.Months.SingleOrDefault(m => m.Month == 12).ClosedDays.Contains(31).ShouldBeTrue();
+        merchantSchedule.Months.Select(m => m.Month).ShouldBe(new[] { 1, 2, 12 });
+        merchantSchedule.Months.Single(m => m.Month == 1).ClosedDays.ShouldBe(new[] { 1, 2, 15 });
+        merchantSchedule.Months.Single(m => m.Month == 2).ClosedDays.ShouldBe(new[] { 10, 14, 28 });
+        merchantSchedule.Months.Single(m => m.Month == 12).ClosedDays.ShouldBe(new[] { 24, 25, 26, 31 });
     }
 
     [Fact]

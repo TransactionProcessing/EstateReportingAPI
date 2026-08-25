@@ -45,16 +45,20 @@ namespace EstateReportingAPI.IntegrationTests
 
             await this.helper.AddFileProfileConfiguration(profileId, profileName, "C:\\listen", handlerId, requestId, operatorId, "\\n");
 
-            var result = await this.CreateAndSendHttpRequestMessage<List<FileProfileConfiguration>>($"{BaseRoute}", CancellationToken.None);
-            result.IsSuccess.ShouldBeTrue();
-            var list = result.Data;
-            list.ShouldNotBeNull();
-            list.Count.ShouldBeGreaterThan(0);
+        var result = await this.CreateAndSendHttpRequestMessage<List<FileProfileConfiguration>>($"{BaseRoute}", CancellationToken.None);
+        result.IsSuccess.ShouldBeTrue();
+        var list = result.Data;
+        list.ShouldNotBeNull();
+        list.Count.ShouldBeGreaterThan(0);
 
-            var match = list.SingleOrDefault(f => f.FileProfileId == profileId);
-            match.ShouldNotBeNull();
-            match.Name.ShouldBe(profileName);
-        }
+        var match = list.Single(f => f.FileProfileId == profileId);
+        match.Name.ShouldBe(profileName);
+        match.ListeningDirectory.ShouldBe("C:\\listen");
+        match.RequestType.ShouldBe(requestName);
+        match.OperatorName.ShouldBe("Test Operator");
+        match.LineTerminator.ShouldBe("\\n");
+        match.FileFormatHandler.ShouldBe(handlerName);
+    }
 
         protected override Task ClearStandingData()
         {

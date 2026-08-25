@@ -328,7 +328,8 @@ public static class TransactionHandler {
                     Title = metric.Title,
                     Value = metric.Value,
                     Description = metric.Description,
-                    Category = metric.Category
+                    Category = metric.Category,
+                    Type = metric.Type
                 }).ToList() ?? [],
                 DrillDownTransactions = r.DrillDownTransactions?.Select(transaction => new DrillDownTransaction
                 {

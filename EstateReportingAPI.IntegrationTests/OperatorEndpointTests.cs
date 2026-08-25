@@ -23,8 +23,20 @@ public class OperatorEndpointTests : ControllerTestsBase {
         result.IsSuccess.ShouldBeTrue();
         List<Operator> operators = result.Data;
         operators.Count.ShouldBe(2);
-        operators.SingleOrDefault(o => o.Name == "Safaricom").ShouldNotBeNull();
-        operators.SingleOrDefault(o => o.Name == "Voucher").ShouldNotBeNull();
+        operators.Single(o => o.Name == "Safaricom").ShouldSatisfyAllConditions(x => {
+            x.OperatorId.ShouldNotBe(Guid.Empty);
+            x.EstateReportingId.ShouldBeGreaterThan(0);
+            x.Name.ShouldBe("Safaricom");
+            x.RequireCustomMerchantNumber.ShouldBeFalse();
+            x.RequireCustomTerminalNumber.ShouldBeFalse();
+        });
+        operators.Single(o => o.Name == "Voucher").ShouldSatisfyAllConditions(x => {
+            x.OperatorId.ShouldNotBe(Guid.Empty);
+            x.EstateReportingId.ShouldBeGreaterThan(0);
+            x.Name.ShouldBe("Voucher");
+            x.RequireCustomMerchantNumber.ShouldBeFalse();
+            x.RequireCustomTerminalNumber.ShouldBeFalse();
+        });
     }
 
     [Fact]
@@ -35,7 +47,11 @@ public class OperatorEndpointTests : ControllerTestsBase {
         result.IsSuccess.ShouldBeTrue();
         Operator operatorData = result.Data;
         operatorData.ShouldNotBeNull();
+        operatorData.OperatorId.ShouldBe(operatorId);
+        operatorData.EstateReportingId.ShouldBeGreaterThan(0);
         operatorData.Name.ShouldBe("Safaricom");
+        operatorData.RequireCustomMerchantNumber.ShouldBeFalse();
+        operatorData.RequireCustomTerminalNumber.ShouldBeFalse();
     }
 
     protected override async Task ClearStandingData() {

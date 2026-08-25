@@ -231,14 +231,18 @@ public class ReportingManager : IReportingManager {
 
         var baseContractsQuery = (from c in context.Contracts
             join o in context.Operators on c.OperatorId equals o.OperatorId into ops
-            from o in ops.DefaultIfEmpty()
+            from o in ops
+            join e in context.Estates on c.EstateId equals e.EstateId into estates
+            from e in estates
             select new ContractBaseData {
+                EstateReportingId = e.EstateReportingId,
                 ContractId = c.ContractId,
                 ContractReportingId = c.ContractReportingId,
                 Description = c.Description,
                 EstateId = c.EstateId,
                 OperatorId = c.OperatorId,
-                OperatorName = o != null ? o.Name : null
+                OperatorReportingId = o.OperatorReportingId,
+                OperatorName = o.Name
             }).OrderByDescending(x => x.Description);
 
         var baseContractsResult = await ExecuteQuerySafeToList(baseContractsQuery, cancellationToken, "Error retrieving contracts - Step 1");
@@ -267,19 +271,22 @@ public class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        // Step 1: load contract with operator name via a left-join (translatable)
+        // Step 1: load contract with operator name
         var baseContractQuery = (from c in context.Contracts
         join o in context.Operators on c.OperatorId equals o.OperatorId into ops
-        from o in ops.DefaultIfEmpty()
+        from o in ops
+        join e in context.Estates on c.EstateId equals e.EstateId into estates
+        from e in estates
         where c.ContractId == request.ContractId
         select new {
+            e.EstateReportingId,
             c.ContractId,
             c.ContractReportingId,
             c.Description,
             c.EstateId,
             c.OperatorId,
-            OperatorName = o != null ? o.Name : null
-        }).OrderByDescending(x => x.Description);
+            o.OperatorReportingId,
+            OperatorName = o.Name }).OrderByDescending(x => x.Description);
 
         var baseContractQueryResult = await ExecuteQuerySafeSingleOrDefault(baseContractQuery, cancellationToken, "Error retrieving contract - Step 1");
 
@@ -295,12 +302,14 @@ public class ReportingManager : IReportingManager {
             return ResultHelpers.CreateFailure(productsResult);
 
         return Result.Success(new Contract {
+            EstateReportingId = baseContract.EstateReportingId,
             ContractId = baseContract.ContractId,
             ContractReportingId = baseContract.ContractReportingId,
             Description = baseContract.Description,
             EstateId = baseContract.EstateId,
             OperatorName = baseContract.OperatorName,
             OperatorId = baseContract.OperatorId,
+            OperatorReportingId = baseContract.OperatorReportingId,
             Products = productsResult.Data
         });
     }
@@ -368,21 +377,43 @@ public class ReportingManager : IReportingManager {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        IQueryable<Contract> contractsQuery = context.Contracts.Select(c => new Contract() {
-            ContractId = c.ContractId,
-            ContractReportingId = c.ContractReportingId,
-            Description = c.Description,
-            EstateId = c.EstateId,
-            OperatorName = context.Operators.Where(o => o.OperatorId == c.OperatorId).Select(o => o.Name).FirstOrDefault(),
-            OperatorId = c.OperatorId,
-        }).OrderByDescending(c => c.Description).Take(3);
+        var contractsQuery = (from c in context.Contracts
+            join o in context.Operators on c.OperatorId equals o.OperatorId into ops
+            from o in ops
+            join e in context.Estates on c.EstateId equals e.EstateId into estates
+            from e in estates
+            select new
+            {
+                e.EstateReportingId,
+                c.ContractId,
+                c.ContractReportingId,
+                c.Description,
+                c.EstateId,
+                c.OperatorId,
+                o.OperatorReportingId,
+                OperatorName = o.Name
+            }).OrderByDescending(x => x.ContractReportingId).Take(3);
 
-        Result<List<Contract>> result = await ExecuteQuerySafeToList(contractsQuery, cancellationToken, "Error retrieving recent contracts");
+        var result = await ExecuteQuerySafeToList(contractsQuery, cancellationToken, "Error retrieving recent contracts");
 
         if (result.IsFailed)
             return ResultHelpers.CreateFailure(result);
 
-        return result;
+        List<Contract> response = new List<Contract>();
+        foreach (var contract in result.Data) {
+            response.Add(new Contract {
+                EstateId = contract.EstateId,
+                EstateReportingId = contract.EstateReportingId,
+                ContractId = contract.ContractId,
+                ContractReportingId = contract.ContractReportingId,
+                Description = contract.Description,
+                OperatorName = contract.OperatorName,
+                OperatorId = contract.OperatorId,
+                OperatorReportingId = contract.OperatorReportingId,
+            });
+        }
+
+        return response;
     }
     
     public async Task<Result<TodaysSales>> GetTodaysFailedSales(TransactionQueries.TodaysFailedSales request,
@@ -548,12 +579,13 @@ public class ReportingManager : IReportingManager {
             Reference = m.Reference,
             AddressInfo = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId)
                 .OrderByDescending(ma => ma.CreatedDateTime)
-                .Select(ma => new { ma.AddressLine1, ma.AddressLine2, ma.Country, ma.PostalCode, ma.Region, ma.Town })
+                .Select(ma => new { ma.AddressId, ma.AddressLine1, ma.AddressLine2, ma.Country, ma.PostalCode, ma.Region, ma.Town })
                 .FirstOrDefault(),
             ContactInfo = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId)
                 .OrderByDescending(mc => mc.CreatedDateTime)
-                .Select(mc => new { mc.Name, mc.EmailAddress, mc.PhoneNumber })
-                .FirstOrDefault()
+                .Select(mc => new { mc.ContactId, mc.Name, mc.EmailAddress, mc.PhoneNumber })
+                .FirstOrDefault(),
+            BalanceState = context.MerchantBalanceProjectionState.Where(mb => mb.MerchantId == m.MerchantId).SingleOrDefault()
         }).OrderByDescending(m => m.CreatedDateTime).Take(3);
 
         var recentMerchantsResult = await ExecuteQuerySafeToList(merchantsQuery, cancellationToken, "Error retrieving recent merchants");
@@ -567,8 +599,10 @@ public class ReportingManager : IReportingManager {
                 Reference = merchant.Reference,
                 MerchantReportingId = merchant.MerchantReportingId,
                 CreatedDateTime = merchant.CreatedDateTime,
+                Balance = merchant.BalanceState.Balance
             };
             if (merchant.AddressInfo != null) {
+                model.AddressId = merchant.AddressInfo.AddressId;
                 model.AddressLine1 = merchant.AddressInfo.AddressLine1;
                 model.AddressLine2 = merchant.AddressInfo.AddressLine2;
                 model.Country = merchant.AddressInfo.Country;
@@ -577,6 +611,8 @@ public class ReportingManager : IReportingManager {
                 model.Region = merchant.AddressInfo.Region;
             }
             if (merchant.ContactInfo != null) {
+                model.ContactId = merchant.ContactInfo.ContactId;
+                
                 model.ContactName = merchant.ContactInfo.Name;
                 model.ContactEmail = merchant.ContactInfo.EmailAddress;
                 model.ContactPhone = merchant.ContactInfo.PhoneNumber;
@@ -1079,18 +1115,23 @@ public class ReportingManager : IReportingManager {
                       .Where(m => m.MerchantId == merchantId);
     }
 
-    private static IQueryable<MerchantWithAddressData> BuildMerchantWithAddressQuery(EstateManagementContext context,
-                                                                                      Guid estateId) {
+    private static IQueryable<MerchantWithAddressAndContactData> BuildMerchantWithAddressQuery(EstateManagementContext context,
+                                                                                               Guid estateId) {
         return context.Merchants
                       .Where(m => m.EstateId == estateId)
-                      .GroupJoin(context.MerchantAddresses,
-                                 m => m.MerchantId,
-                                 a => a.MerchantId,
-                                 (m, addresses) => new MerchantWithAddressData { Merchant = m, MerchantAddress = addresses.First() });
+                      .Select(m => new MerchantWithAddressAndContactData {
+                          Merchant = m,
+                          MerchantAddress = context.MerchantAddresses.Where(ma => ma.MerchantId == m.MerchantId)
+                                                      .OrderByDescending(ma => ma.CreatedDateTime)
+                                                      .First(),
+                          MerchantContact = context.MerchantContacts.Where(mc => mc.MerchantId == m.MerchantId)
+                                                     .OrderByDescending(mc => mc.CreatedDateTime)
+                                                     .First()
+                      });
     }
 
-    private static IQueryable<MerchantWithAddressData> ApplyMerchantFilters(IQueryable<MerchantWithAddressData> query,
-                                                                            MerchantQueries.MerchantQueryOptions queryOptions) {
+    private static IQueryable<MerchantWithAddressAndContactData> ApplyMerchantFilters(IQueryable<MerchantWithAddressAndContactData> query,
+                                                                                     MerchantQueries.MerchantQueryOptions queryOptions) {
         if (String.IsNullOrEmpty(queryOptions.Name) == false)
             query = query.Where(m => m.Merchant.Name.Contains(queryOptions.Name));
 
@@ -1717,6 +1758,7 @@ public class ReportingManager : IReportingManager {
                         join m in context.Merchants on f.MerchantId equals m.MerchantId into mJoin
                         from m in mJoin.DefaultIfEmpty()
                         join fl in context.FileLines on f.FileId equals fl.FileId
+                        //join fp in context.FileProfileConfigurations on f.FileProfileId equals fp.FileProfileId
                         where fil.FileImportLogId == request.FileImportLogId
                               && (request.MerchantId == null || f.MerchantId == request.MerchantId)
                         select new FileImportFlatData
@@ -1948,8 +1990,10 @@ public class ReportingManager : IReportingManager {
                 ContractReportingId = b.ContractReportingId,
                 Description = b.Description,
                 EstateId = b.EstateId,
+                EstateReportingId = b.EstateReportingId,
                 OperatorName = b.OperatorName,
                 OperatorId = b.OperatorId,
+                OperatorReportingId = b.OperatorReportingId,
                 Products = products.Where(p => p.ContractId == b.ContractId).Select(p => new Models.ContractProduct {
                     ContractId = p.ContractId,
                     ProductId = p.ContractProductId,
@@ -2230,8 +2274,10 @@ public class ReportingManager : IReportingManager {
             public int ContractReportingId { get; init; }
             public string? Description { get; init; }
             public Guid EstateId { get; init; }
-            public Guid OperatorId { get; init; }
-            public string? OperatorName { get; init; }
+        public int EstateReportingId { get; init; }
+        public Guid OperatorId { get; init; }
+        public int OperatorReportingId { get; init; }
+        public string? OperatorName { get; init; }
         }
 
         private sealed class ContractProductData {

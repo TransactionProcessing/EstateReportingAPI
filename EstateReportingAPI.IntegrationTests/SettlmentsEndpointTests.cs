@@ -85,7 +85,7 @@ public class SettlmentsEndpointTests : ControllerTestsBase {
         var query1 = this.context.Contracts.GroupJoin(this.context.ContractProducts, c => c.ContractId, cp => cp.ContractId, (c,
                                                                                                                               productGroup) => new { c.ContractId, Products = productGroup.Select(p => new { p.ContractProductReportingId, p.ContractProductId, p.ProductName, p.Value }).OrderBy(p => p.ContractProductId).Select(p => new { p.ContractProductId, p.ProductName, p.Value, p.ContractProductReportingId }).ToList() }).ToList();
 
-        this.contractProducts = query1.ToDictionary(item => item.ContractId, item => item.Products.Select(i => (i.ContractProductId, i.ProductName, i.Value, i.ContractProductReportingId)).ToList());
+        this.contractProducts = query1.ToDictionary(item => item.ContractId, item => item.Products.Select(i => (i.ContractProductId, i.ProductName, i.Value ?? 75.00m, i.ContractProductReportingId)).ToList());
 
         this.operatorsList = this.context.Operators.ToList();
 

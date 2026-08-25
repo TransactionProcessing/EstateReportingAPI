@@ -24,6 +24,31 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
         this.TestOutputHelper = testOutputHelper;
     }
 
+    private void AssertTransactionMixSummaryTransactionMatches(TransactionMixSummaryTransaction actual, Transaction source)
+    {
+        var merchant = this.context.Merchants.Single(m => m.MerchantId == source.MerchantId);
+        var @operator = this.context.Operators.Single(o => o.OperatorId == source.OperatorId);
+        var product = this.context.ContractProducts.Single(p => p.ContractProductId == source.ContractProductId && p.ContractId == source.ContractId);
+
+        actual.Id.ShouldBe(source.TransactionId);
+        actual.DateTime.ShouldBe(source.TransactionDateTime);
+        actual.Merchant.ShouldBe(merchant.Name);
+        actual.MerchantId.ShouldBe(merchant.MerchantId);
+        actual.MerchantReportingId.ShouldBe(merchant.MerchantReportingId);
+        actual.Operator.ShouldBe(@operator.Name);
+        actual.OperatorId.ShouldBe(@operator.OperatorId);
+        actual.OperatorReportingId.ShouldBe(@operator.OperatorReportingId);
+        actual.Product.ShouldBe(product.ProductName);
+        actual.ProductId.ShouldBe(product.ContractProductId);
+        actual.ProductReportingId.ShouldBe(product.ContractProductReportingId);
+        actual.Type.ShouldBe(source.TransactionType);
+        actual.Status.ShouldBe(source.IsAuthorised ? "Authorised" : "Declined");
+        actual.Value.ShouldBe(source.TransactionAmount);
+        actual.TotalFees.ShouldBe(0m);
+        actual.SettlementReference.ShouldBeNull();
+        actual.TransactionNumber.ShouldBe(Int32.Parse(source.TransactionNumber));
+    }
+
     protected override async Task ClearStandingData()
     {
     }
@@ -52,7 +77,7 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
         this.contractList = this.context.Contracts.Join(this.context.Operators, c => c.OperatorId, o => o.OperatorId, (c, o) => new { c.ContractId, c.Description, o.OperatorId, o.Name }).ToList().Select(x => (x.ContractId, x.Description, x.OperatorId, x.Name)).ToList();
 
         var query1 = this.context.Contracts.GroupJoin(this.context.ContractProducts, c => c.ContractId, cp => cp.ContractId, (c, productGroup) => new { c.ContractId, Products = productGroup.Select(p => new { p.ContractProductReportingId, p.ContractProductId, p.ProductName, p.Value }).OrderBy(p => p.ContractProductId).Select(p => new { p.ContractProductId, p.ProductName, p.Value, p.ContractProductReportingId }).ToList() }).ToList();
-        this.contractProducts = query1.ToDictionary(item => item.ContractId, item => item.Products.Select(i => (i.ContractProductId, i.ProductName, i.Value, i.ContractProductReportingId)).ToList());
+        this.contractProducts = query1.ToDictionary(item => item.ContractId, item => item.Products.Select(i => (i.ContractProductId, i.ProductName, i.Value ?? 75.00m, i.ContractProductReportingId)).ToList());
         this.operatorsList = this.context.Operators.ToList();
     }
 
@@ -88,9 +113,23 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
 
         result.IsSuccess.ShouldBeTrue();
         result.Data.ShouldNotBeNull();
+        result.Data.FromDate.ShouldBe(startDate);
+        result.Data.ToDate.ShouldBe(endDate);
+        result.Data.Breakdown.ShouldBe(TransactionMixBreakdown.Product);
+        result.Data.Measure.ShouldBe(TransactionMixMeasure.Count);
         result.Data.TotalCount.ShouldBe(3);
+        result.Data.TotalValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
         result.Data.Groups.Count.ShouldBe(1);
+        result.Data.Groups[0].GroupKey.ShouldBe(product.contractProductReportingId.ToString());
+        result.Data.Groups[0].GroupName.ShouldBe(product.productName);
         result.Data.Groups[0].TransactionCount.ShouldBe(3);
+        result.Data.Groups[0].TransactionValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+        result.Data.Transactions.Count.ShouldBe(3);
+        foreach (var transaction in transactions)
+        {
+            var responseTransaction = result.Data.Transactions.Single(t => t.Id == transaction.TransactionId);
+            AssertTransactionMixSummaryTransactionMatches(responseTransaction, transaction);
+        }
     }
 
     [Fact]
