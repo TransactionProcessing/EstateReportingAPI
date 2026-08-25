@@ -35,6 +35,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EstateReportingAPI.Client\EstateReportingAPI.Client.csproj" />
+    <ProjectReference Include="..\EstateReportingAPI.BusinessLogic\EstateReportingAPI.BusinessLogic.csproj" />
     <ProjectReference Include="..\EstateReportingAPI\EstateReportingAPI.csproj" />
   </ItemGroup>
 
