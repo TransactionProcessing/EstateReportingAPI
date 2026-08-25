@@ -98,7 +98,7 @@ public class DbContextResolverX<TContext> : IDbContextResolver<TContext> where T
             if (retryOptions != null)
             {
                 services.AddDbContext<EstateManagementContext>(options => {
-                    options.UseSharedSqlServer<EstateManagementContext>(ConfigurationReader.GetConnectionString("TransactionProcessorReadModel"), retry => {
+                    options.UseSharedSqlServer<EstateManagementContext>(connectionString, retry => {
                         retry.AdditionalTransientErrorNumbers = retryOptions.AdditionalTransientErrorNumbers;
                         retry.MaxRetryCount = retryOptions.MaxRetryCount;
                         retry.MaxRetryDelay = retryOptions.MaxRetryDelay;
@@ -109,7 +109,7 @@ public class DbContextResolverX<TContext> : IDbContextResolver<TContext> where T
             else
             {
                 services.AddDbContext<EstateManagementContext>(options => {
-                    options.UseSqlServer(ConfigurationReader.GetConnectionString("TransactionProcessorReadModel"), retry => { retry.EnableRetryOnFailure(); });
+                    options.UseSqlServer(connectionString, retry => { retry.EnableRetryOnFailure(); });
                     options.AddInterceptors(Interceptor);
                 });
 
