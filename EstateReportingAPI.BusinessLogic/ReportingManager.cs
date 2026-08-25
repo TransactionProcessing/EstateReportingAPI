@@ -2064,14 +2064,14 @@ public class ReportingManager : IReportingManager {
 
         private static List<MetricItem> BuildMerchantDailyPerformanceBaseMetrics() {
             return new List<MetricItem> {
-                new() { Title = "Total Sales Count", Value = 0, Description = "All sales transactions in the range", Category = 0 },
-                new() { Title = "Total Sales Value", Value = 0, Description = "All sales value in the range", Category = 1 },
-                new() { Title = "Successful Sales Count", Value = 0, Description = "Authorised sales count in the range", Category = 2 },
-                new() { Title = "Successful Sales Value", Value = 0, Description = "Authorised sales value in the range", Category = 3 },
-                new() { Title = "Failed Sales Count", Value = 0, Description = "Declined sales count in the range", Category = 4 },
-                new() { Title = "Failed Sales Value", Value = 0, Description = "Declined sales value in the range", Category = 5 },
-                new() { Title = "Average Sales Count", Value = 0, Description = "Average sales count per day in the range", Category = 6 },
-                new() { Title = "Average Sales Value", Value = 0, Description = "Average value per sale in the range", Category = 7 }
+                new() { Title = "Total Sales Count", Value = 0, Description = "All sales transactions in the range", Category = 1, Type = 0 },
+                new() { Title = "Total Sales Value", Value = 0, Description = "All sales value in the range", Category = 1, Type = 1 },
+                new() { Title = "Successful Sales Count", Value = 0, Description = "Authorised sales count in the range", Category = 2, Type = 2 },
+                new() { Title = "Successful Sales Value", Value = 0, Description = "Authorised sales value in the range", Category = 2, Type = 3 },
+                new() { Title = "Failed Sales Count", Value = 0, Description = "Declined sales count in the range", Category = 3, Type = 4 },
+                new() { Title = "Failed Sales Value", Value = 0, Description = "Declined sales value in the range", Category = 3, Type = 5 },
+                new() { Title = "Average Sales Count", Value = 0, Description = "Average sales count per day in the range", Category = 4, Type = 6 },
+                new() { Title = "Average Sales Value", Value = 0, Description = "Average value per sale in the range", Category = 4, Type = 7 }
             };
         }
 
