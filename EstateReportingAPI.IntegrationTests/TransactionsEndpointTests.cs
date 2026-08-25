@@ -1457,6 +1457,90 @@ public class TransactionsEndpointTests : ControllerTestsBase {
     }
 
     [Fact]
+    public async Task TransactionsEndpoint_MerchantDailyPerformanceSummary_NoSales_ReturnsStableMetricCategories()
+    {
+        TransactionProcessor.Database.Entities.Merchant merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
+        DateTime startDate = DateTime.Now.Date.AddYears(1);
+        DateTime endDate = startDate.AddDays(6);
+
+        MerchantDailyPerformanceSummaryRequest request = new()
+        {
+            StartDate = startDate,
+            EndDate = endDate,
+            MerchantReportingId = merchant.MerchantReportingId
+        };
+
+        var payload = JsonSerializer.Serialize(request);
+        var result = await this.CreateAndSendHttpRequestMessage<MerchantDailyPerformanceSummaryResponse>(
+            $"{this.BaseRoute}/merchantdailyperformancesummary",
+            payload,
+            CancellationToken.None);
+
+        result.IsFailed.ShouldBeFalse(result.ToString());
+
+        MerchantDailyPerformanceSummaryResponse response = result.Data;
+        response.Metrics.Count.ShouldBe(8);
+        response.DrillDownTransactions.Count.ShouldBe(0);
+
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Total Sales Count"),
+            "Total Sales Count",
+            0,
+            "All sales transactions in the range",
+            1,
+            0);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Total Sales Value"),
+            "Total Sales Value",
+            0,
+            "All sales value in the range",
+            1,
+            1);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Successful Sales Count"),
+            "Successful Sales Count",
+            0,
+            "Authorised sales count in the range",
+            2,
+            2);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Successful Sales Value"),
+            "Successful Sales Value",
+            0,
+            "Authorised sales value in the range",
+            2,
+            3);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Failed Sales Count"),
+            "Failed Sales Count",
+            0,
+            "Declined sales count in the range",
+            3,
+            4);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Failed Sales Value"),
+            "Failed Sales Value",
+            0,
+            "Declined sales value in the range",
+            3,
+            5);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Average Sales Count"),
+            "Average Sales Count",
+            0,
+            "Average sales count per day in the range",
+            4,
+            6);
+        AssertMerchantDailyPerformanceMetricMatches(
+            response.Metrics.Single(m => m.Title == "Average Sales Value"),
+            "Average Sales Value",
+            0,
+            "Average value per sale in the range",
+            4,
+            7);
+    }
+
+    [Fact]
     public async Task TransactionsEndpoint_RecentActivityReceiptReport_MerchantFilter_ReturnsDescendingResults() {
         var reportDate = DateTime.Now.Date;
         var merchant = this.merchantsList.Single(m => m.Name == "Test Merchant 1");
