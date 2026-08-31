@@ -13,23 +13,23 @@
     <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.2.3" />
-    <PackageVersion Include="TransactionProcessor.Database" Version="2026.7.2" />
+    <PackageVersion Include="TransactionProcessor.Database" Version="2026.8.1" />
     <PackageVersion Include="xunit.v3" Version="4.0.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.9.0" />
-    <PackageVersion Include="ClientProxyBase" Version="2026.8.2" />
-    <PackageVersion Include="Shared.Results" Version="2026.8.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.10.0" />
+    <PackageVersion Include="ClientProxyBase" Version="2026.8.3" />
+    <PackageVersion Include="Shared.Results" Version="2026.8.3" />
     <PackageVersion Include="MediatR" Version="14.2.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="10.7.3" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="10.7.4" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
-    <PackageVersion Include="Shared.Results.Web" Version="2026.8.2" />
-    <PackageVersion Include="OpenIddict.Validation.AspNetCore" Version="7.6.0" />
-    <PackageVersion Include="OpenIddict.Validation.SystemNetHttp" Version="7.6.0" />
+    <PackageVersion Include="Shared.Results.Web" Version="2026.8.3" />
+    <PackageVersion Include="OpenIddict.Validation.AspNetCore" Version="7.6.1" />
+    <PackageVersion Include="OpenIddict.Validation.SystemNetHttp" Version="7.6.1" />
     <PackageVersion Include="Lamar" Version="16.0.0" />
     <PackageVersion Include="Lamar.Microsoft.DependencyInjection" Version="16.0.0" />
     <PackageVersion Include="NLog.Extensions.Logging" Version="6.2.0" />
-    <PackageVersion Include="Shared" Version="2026.8.2" />
+    <PackageVersion Include="Shared" Version="2026.8.3" />
     <PackageVersion Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
     <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
     <PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
@@ -42,14 +42,14 @@
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.11" />
     <PackageVersion Include="Sentry.AspNetCore" Version="6.9.0" />
-    <PackageVersion Include="Shared.Logger" Version="2026.8.2" />
-    <PackageVersion Include="Shared.IntegrationTesting" Version="2026.8.2" />
+    <PackageVersion Include="Shared.Logger" Version="2026.8.3" />
+    <PackageVersion Include="Shared.IntegrationTesting" Version="2026.8.3" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.8" />
     <PackageVersion Include="coverlet.collector" Version="3.2.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
     <PackageVersion Include="Ductus.FluentDocker" Version="2.85.0" />
     <PackageVersion Include="NLog" Version="6.2.0" />
-    <PackageVersion Include="SecurityService.Client" Version="2026.7.2" />
+    <PackageVersion Include="SecurityService.Client" Version="2026.8.1" />
   </ItemGroup>
 </Project>
