@@ -28,7 +28,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     protected Dictionary<Guid, List<(Guid productId, String productName, Decimal productValue, Int32 contractProductReportingId)>> contractProducts;
     protected DatabaseHelper helper;
     protected ITestOutputHelper TestOutputHelper;
-    protected DockerHelper DockerHelper;
+    protected Int32 SqlPort;
 
     protected static void AssertDecimalMatchesTo4Places(decimal actual, decimal expected)
     {
@@ -38,16 +38,10 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 
     public virtual async ValueTask InitializeAsync()
     {
-        this.TestId = Guid.NewGuid();
-        String scenarioName = this.TestId.ToString();
-        NlogLogger logger = new NlogLogger();
-        logger.Initialise(LogManager.GetLogger(scenarioName), scenarioName);
-        LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
+        IntegrationTestEnvironment environment = await IntegrationTestEnvironment.GetAsync();
+        this.SqlPort = environment.SqlPort;
 
-        this.DockerHelper = new TestDockerHelper();
-        this.DockerHelper.Logger = logger;
-        
-        await this.DockerHelper.StartContainersForScenarioRun(scenarioName, DockerServices.SqlServer);
+        this.TestId = Guid.NewGuid();
         
         String dbConnString = GetLocalConnectionString($"TransactionProcessorReadModel-{this.TestId}");
 
@@ -61,10 +55,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         await this.SetupStandingData();
     }
 
-    public virtual async ValueTask DisposeAsync()
-    {
-        await this.DockerHelper.StopContainersForScenarioRun(DockerServices.None);
-    }
+    public virtual ValueTask DisposeAsync() => default;
 
     protected EstateManagementContext context;
 
@@ -112,10 +103,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     public static (String usename, String password) SqlCredentials = ("sa", "thisisalongpassword123!");
 
     public String GetLocalConnectionString(String databaseName) {
-        var dockerHelper = this.DockerHelper as TestDockerHelper;
-        Int32? databaseHostPort = dockerHelper.GetSqlPort();
-
-        return $"server=localhost,{databaseHostPort};database={databaseName};user id={SqlCredentials.usename};password={SqlCredentials.password};Encrypt=false";
+        return $"server=localhost,{this.SqlPort};database={databaseName};user id={SqlCredentials.usename};password={SqlCredentials.password};Encrypt=false";
     }
 
     //internal async Task StartSqlContainer(){
@@ -169,7 +157,7 @@ public class TestDockerHelper : DockerHelper{
     }
 
     public Int32? GetSqlPort() {
-        var sqlContainer = this.Containers.SingleOrDefault(c => c.Item1 == DockerServices.SqlServer);
+        var sqlContainer = this.Containers.FirstOrDefault(c => c.Item1 == DockerServices.SqlServer);
         if (sqlContainer == default) {
             return null;
         }
