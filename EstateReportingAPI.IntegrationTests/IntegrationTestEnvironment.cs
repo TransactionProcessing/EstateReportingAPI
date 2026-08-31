@@ -73,11 +73,11 @@ internal sealed class IntegrationTestEnvironment
         }
 
         CleanupRegistered = true;
-        AppDomain.CurrentDomain.ProcessExit += (_, _) => Cleanup().GetAwaiter().GetResult();
-        AssemblyLoadContext.Default.Unloading += _ => Cleanup().GetAwaiter().GetResult();
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => CleanupSafely().GetAwaiter().GetResult();
+        AssemblyLoadContext.Default.Unloading += _ => CleanupSafely().GetAwaiter().GetResult();
     }
 
-    private static async Task Cleanup()
+    private static async Task CleanupSafely()
     {
         if (Instance == null)
         {
@@ -92,11 +92,18 @@ internal sealed class IntegrationTestEnvironment
                 return;
             }
 
-            await Instance.DockerHelper.StopContainersForScenarioRun(DockerServices.None).ConfigureAwait(false);
-            Instance = null;
+            try
+            {
+                await Instance.DockerHelper.StopContainersForScenarioRun(DockerServices.None).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                LogManager.GetLogger(ScenarioName).Error(ex, "Failed to stop integration test containers during shutdown.");
+            }
         }
         finally
         {
+            Instance = null;
             InitialisationLock.Release();
         }
     }
