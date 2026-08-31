@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
 using Shared.IntegrationTesting;
@@ -12,6 +14,8 @@ internal sealed class IntegrationTestEnvironment
 {
     private static readonly SemaphoreSlim InitialisationLock = new(1, 1);
     private static IntegrationTestEnvironment? Instance;
+    private static readonly string ScenarioName = $"IntegrationTests-{Process.GetCurrentProcess().Id}-{Guid.NewGuid():N}";
+    private static bool CleanupRegistered;
 
     private IntegrationTestEnvironment(TestDockerHelper dockerHelper, int sqlPort)
     {
@@ -38,21 +42,58 @@ internal sealed class IntegrationTestEnvironment
                 return Instance;
             }
 
-            string scenarioName = "IntegrationTests";
+            RegisterCleanupHandlers();
+
             NlogLogger logger = new();
-            logger.Initialise(LogManager.GetLogger(scenarioName), scenarioName);
+            logger.Initialise(LogManager.GetLogger(ScenarioName), ScenarioName);
             LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
 
             TestDockerHelper dockerHelper = new();
             dockerHelper.Logger = logger;
 
-            await dockerHelper.StartContainersForScenarioRun(scenarioName, DockerServices.SqlServer);
+            await dockerHelper.StartContainersForScenarioRun(ScenarioName, DockerServices.SqlServer);
 
             int sqlPort = dockerHelper.GetSqlPort()
                 ?? throw new InvalidOperationException("SQL Server container did not expose port 1433.");
 
             Instance = new IntegrationTestEnvironment(dockerHelper, sqlPort);
             return Instance;
+        }
+        finally
+        {
+            InitialisationLock.Release();
+        }
+    }
+
+    private static void RegisterCleanupHandlers()
+    {
+        if (CleanupRegistered)
+        {
+            return;
+        }
+
+        CleanupRegistered = true;
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => Cleanup().GetAwaiter().GetResult();
+        AssemblyLoadContext.Default.Unloading += _ => Cleanup().GetAwaiter().GetResult();
+    }
+
+    private static async Task Cleanup()
+    {
+        if (Instance == null)
+        {
+            return;
+        }
+
+        await InitialisationLock.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (Instance == null)
+            {
+                return;
+            }
+
+            await Instance.DockerHelper.StopContainersForScenarioRun(DockerServices.None).ConfigureAwait(false);
+            Instance = null;
         }
         finally
         {

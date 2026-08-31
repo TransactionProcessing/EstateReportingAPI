@@ -55,7 +55,18 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         await this.SetupStandingData();
     }
 
-    public virtual ValueTask DisposeAsync() => default;
+    public virtual async ValueTask DisposeAsync()
+    {
+        this.Dispose();
+
+        if (this.context != null)
+        {
+            await this.context.DisposeAsync();
+        }
+
+        this.Client?.Dispose();
+        this.factory?.Dispose();
+    }
 
     protected EstateManagementContext context;
 
