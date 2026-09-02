@@ -31,6 +31,7 @@ jobs:
       run: |
         echo "ASPNETCORE_ENVIRONMENT are > ${ASPNETCORE_ENVIRONMENT}"
         dotnet run --project "EstateReportingAPI.Tests\EstateReportingAPI.Tests.csproj" --configuration Release --no-build
+        dotnet run --project "EstateReportingAPI.BusinessLogic.UnitTests\EstateReportingAPI.BusinessLogic.UnitTests.csproj" --configuration Release --no-build
         
     - name: Run Integration Tests
       run: |
