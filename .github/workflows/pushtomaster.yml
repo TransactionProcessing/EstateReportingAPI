@@ -40,7 +40,7 @@ jobs:
     
     - name: Print Version
       id: next_version
-      run: echo ::set-output name=VERSION::${{ steps.bump-semver.outputs.new_version }}-build$GITHUB_RUN_NUMBER
+      run: echo ::set-output name=VERSION::${{ steps.bump-semver.outputs.new_version }}.$GITHUB_RUN_NUMBER
         
     - name: Build and Publish Nuget Packages
       run: |
@@ -52,3 +52,54 @@ jobs:
         docker build . --file EstateReportingAPI/Dockerfile --tag stuartferguson/estatereportingapi:master
         docker login --username=${{ secrets.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }}
         docker push stuartferguson/estatereportingapi:master
+
+    - name: Publish API
+      run: dotnet publish "EstateReportingAPI\EstateReportingAPI.csproj" --configuration Release --output publishOutput -r win-x64 --self-contained
+              -p:Version=${{ steps.next_version.outputs.VERSION }}
+              -p:AssemblyVersion=${{ steps.next_version.outputs.VERSION }}
+              -p:FileVersion=${{ steps.next_version.outputs.VERSION }}
+              -p:InformationalVersion=${{ steps.next_version.outputs.VERSION }}
+
+    - name: Build Release Package
+      run: |
+         cd /home/runner/work/EstateReportingAPI/EstateReportingAPI/publishOutput
+         zip -r ../estatereportingapi.zip ./*
+
+    - name: Upload the artifact
+      uses: actions/upload-artifact@v4.4.0
+      with:
+        name: estatereportingapi
+        path: estatereportingapi.zip        
+
+  deploydevelopment:
+    runs-on: [developmentserver, windows]
+    needs: build
+    environment: development
+    name: "Deploy to Development"
+    
+    steps:
+      - name: Download the artifact
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: estatereportingapi
+  
+      - name: Remove existing  Windows service
+        run: |
+          $serviceName = "Transaction Processing - Estate Reporting"
+          # Check if the service exists
+          if (Get-Service -Name $serviceName -ErrorAction SilentlyContinue) {
+            Stop-Service -Name $serviceName
+            sc.exe delete $serviceName
+          }
+  
+      - name: Unzip the files
+        run: |
+          Expand-Archive -Path estatereportingapi.zip -DestinationPath "C:\txnproc\transactionprocessing\estatereportingapi" -Force
+  
+      - name: Install as a Windows service
+        run: |
+          $serviceName = "Transaction Processing - Estate Reporting"
+          $servicePath = "C:\txnproc\transactionprocessing\estatereportingapi\EstateReportingAPI.exe"
+                   
+          New-Service -Name $serviceName -BinaryPathName $servicePath -Description $serviceName -DisplayName $serviceName -StartupType Automatic
+          Start-Service -Name $serviceName
