@@ -11,6 +11,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace EstateReportingAPI
 {
     using Shared.Middleware;
+    using Shared.Monitoring;
     using Shared.Serialisation;
 
     [ExcludeFromCodeCoverage]
@@ -41,7 +42,8 @@ namespace EstateReportingAPI
             StringSerialiser.Initialise(serialiser);
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory,
+                              IHostApplicationLifetime lifetime, IHost host)
         {
             if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
@@ -85,6 +87,13 @@ namespace EstateReportingAPI
                                      ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
                                  });
                              });
+
+            lifetime.ApplicationStarted.Register(() =>
+            {
+                host.RegisterWithUptimeKumaAsync()
+                    .GetAwaiter()
+                    .GetResult();
+            });
         }
     }
 }

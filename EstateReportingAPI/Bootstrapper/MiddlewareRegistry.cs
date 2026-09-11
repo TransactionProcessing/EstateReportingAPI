@@ -1,5 +1,6 @@
 ﻿using Microsoft.OpenApi;
 using Shared.Middleware;
+using Shared.Monitoring;
 
 namespace EstateReportingAPI.Bootstrapper{
     using Lamar;
@@ -24,6 +25,7 @@ namespace EstateReportingAPI.Bootstrapper{
             this.ConfigureControllers();
             this.ConfigureMiddlewareLogging();
             this.ConfigureJsonOptions();
+            this.AddUptimeKuma();
         }
 
         private void ConfigureJsonOptions()
