@@ -1,4 +1,5 @@
-﻿using Microsoft.OpenApi;
+﻿using HealthMonitoring.Client;
+using Microsoft.OpenApi;
 using Shared.Middleware;
 using Shared.Monitoring;
 
@@ -25,7 +26,8 @@ namespace EstateReportingAPI.Bootstrapper{
             this.ConfigureControllers();
             this.ConfigureMiddlewareLogging();
             this.ConfigureJsonOptions();
-            this.AddUptimeKuma();
+            this.AddHealthMonitoringRegistration(Startup.Configuration);
+
         }
 
         private void ConfigureJsonOptions()

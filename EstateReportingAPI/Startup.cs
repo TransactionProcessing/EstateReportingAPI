@@ -88,12 +88,6 @@ namespace EstateReportingAPI
                                  });
                              });
 
-            lifetime.ApplicationStarted.Register(() =>
-            {
-                host.RegisterWithUptimeKumaAsync()
-                    .GetAwaiter()
-                    .GetResult();
-            });
         }
     }
 }
