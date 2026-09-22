@@ -69,7 +69,10 @@ public class Program{
                     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                     .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true)
                     .AddJsonFile($"/home/txnproc/config/appsettings.local.json", optional: true, reloadOnChange: true)
-                    .AddEnvironmentVariables();
+                    .AddEnvironmentVariables().AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["HealthMonitoring:Service:Version"] = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "0.0.0.0"
+                    });
 
                 // Keep existing static usage (if you must), and initialise the ConfigurationReader now.
                 Startup.Configuration = configBuilder.Build();
