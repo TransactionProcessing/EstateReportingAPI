@@ -11,7 +11,6 @@ using System.Diagnostics.CodeAnalysis;
 namespace EstateReportingAPI
 {
     using Shared.Middleware;
-    using Shared.Monitoring;
     using Shared.Serialisation;
 
     [ExcludeFromCodeCoverage]
