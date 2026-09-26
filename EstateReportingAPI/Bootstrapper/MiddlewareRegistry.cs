@@ -1,19 +1,13 @@
 ﻿using HealthMonitoring.Client;
-using Microsoft.OpenApi;
 using Shared.Middleware;
-using Shared.Monitoring;
 
 namespace EstateReportingAPI.Bootstrapper{
     using Lamar;
-    using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.Extensions.Diagnostics.HealthChecks;
-    using Microsoft.IdentityModel.Tokens;
     using OpenIddict.Validation.AspNetCore;
     using Shared.General;
     using Shared.Serialisation;
-    using Swashbuckle.AspNetCore.Filters;
     using System.Diagnostics.CodeAnalysis;
-    using System.Net.Security;
     using System.Reflection;
     using System.Text.Json;
 
