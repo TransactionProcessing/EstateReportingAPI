@@ -10,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace EstateReportingAPI
 {
+    using EstateReportingAPI.Common;
     using Shared.Middleware;
     using Shared.Serialisation;
 
@@ -61,6 +62,7 @@ namespace EstateReportingAPI
             app.UseRouting();
 
             app.UseAuthentication();
+            app.UseMiddleware<EstateContextMiddleware>();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
@@ -79,12 +81,12 @@ namespace EstateReportingAPI
                                  {
                                      Predicate = _ => true,
                                      ResponseWriter = Shared.HealthChecks.HealthCheckMiddleware.WriteResponse
-                                 });
+                                 }).AllowAnonymous();
                                  endpoints.MapHealthChecks("healthui", new HealthCheckOptions()
                                  {
                                      Predicate = _ => true,
                                      ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-                                 });
+                                 }).AllowAnonymous();
                              });
 
         }

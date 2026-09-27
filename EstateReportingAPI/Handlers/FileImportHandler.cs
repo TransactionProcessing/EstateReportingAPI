@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using EstateReportingAPI.Common;
 using EstateReportingAPI.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -9,11 +10,11 @@ namespace EstateReportingAPI.Handlers;
 
 public static class FileProfileConfigurationHandler
 {
-    public static async Task<IResult> GetFileProfileConfigurationList([FromHeader] Guid estateId,
+    public static async Task<IResult> GetFileProfileConfigurationList(IEstateContext estateContext,
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken)
     {
-        FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery query = new(estateId);
+        FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery query = new(estateContext.EstateId);
         Result<List<FileProfileConfiguration>> result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => r.Select(m => new DataTransferObjects.FileProfileConfiguration()
@@ -31,14 +32,14 @@ public static class FileProfileConfigurationHandler
 
 public static class FileImportHandler
 {
-    public static async Task<IResult> GetFileImportLogList([FromHeader] Guid estateId,
+    public static async Task<IResult> GetFileImportLogList(IEstateContext estateContext,
                                                            [FromQuery] Guid? merchantId,
                                                            [FromQuery] DateTime startDate,
                                                            [FromQuery] DateTime endDate,
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken)
     {
-        FileImportLogQueries.GetFileImportLogListQuery query = new(estateId, merchantId, startDate, endDate);
+        FileImportLogQueries.GetFileImportLogListQuery query = new(estateContext.EstateId, merchantId, startDate, endDate);
         Result<List<FileImportLog>> result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => r.Select(m => new DataTransferObjects.FileImportLog
@@ -63,13 +64,13 @@ public static class FileImportHandler
         }).ToList());
     }
 
-    public static async Task<IResult> GetFileImportLog([FromHeader] Guid estateId,
-                                                           [FromRoute] Guid fileImportLogId,
+    public static async Task<IResult> GetFileImportLog(IEstateContext estateContext,
+                                                       [FromRoute] Guid fileImportLogId,
                                                            [FromQuery] Guid? merchantId,
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken)
     {
-        FileImportLogQueries.GetFileImportLogQuery query = new(estateId, merchantId, fileImportLogId);
+        FileImportLogQueries.GetFileImportLogQuery query = new(estateContext.EstateId, merchantId, fileImportLogId);
         Result<FileImportLog> result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => new DataTransferObjects.FileImportLog

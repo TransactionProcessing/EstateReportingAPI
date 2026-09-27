@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using EstateReportingAPI.Common;
 using EstateReportingAPI.DataTransferObjects;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -7,11 +8,11 @@ using Shared.Results.Web;
 namespace EstateReportingAPI.Handlers;
 
 public static class SettlementHandler {
-    public static async Task<IResult> TodaysSettlements([FromHeader] Guid estateId,
+    public static async Task<IResult> TodaysSettlements(IEstateContext estateContext,
                                                         [FromQuery] DateTime comparisonDate,
                                                         IMediator mediator,
                                                         CancellationToken cancellationToken) {
-        var query = new SettlementQueries.TodaysSettlementQuery(estateId, comparisonDate);
+        var query = new SettlementQueries.TodaysSettlementQuery(estateContext.EstateId, comparisonDate);
         var result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => new TodaysSettlement() {

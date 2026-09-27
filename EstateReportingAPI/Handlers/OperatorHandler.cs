@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using EstateReportingAPI.Common;
 using EstateReportingAPI.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -8,11 +9,11 @@ using SimpleResults;
 namespace EstateReportingAPI.Handlers;
 
 public static class OperatorHandler {
-    public static async Task<IResult> GetOperators([FromHeader] Guid estateId,
+    public static async Task<IResult> GetOperators(IEstateContext estateContext,
                                                    IMediator mediator,
                                                    CancellationToken cancellationToken)
     {
-        OperatorQueries.GetOperatorsQuery query = new(estateId);
+        OperatorQueries.GetOperatorsQuery query = new(estateContext.EstateId);
         Result<List<Operator>> result = await mediator.Send(query, cancellationToken);
         return ResponseFactory.FromResult(result, r => r.Select(m => new DataTransferObjects.Operator
         {
@@ -25,12 +26,12 @@ public static class OperatorHandler {
         }).ToList());
     }
 
-    public static async Task<IResult> GetOperator([FromHeader] Guid estateId,
+    public static async Task<IResult> GetOperator(IEstateContext estateContext,
                                                   [FromRoute] Guid operatorId,
                                                   IMediator mediator,
                                                   CancellationToken cancellationToken)
     {
-        OperatorQueries.GetOperatorQuery query = new(estateId, operatorId);
+        OperatorQueries.GetOperatorQuery query = new(estateContext.EstateId, operatorId);
         Result<Operator> result = await mediator.Send(query, cancellationToken);
         return ResponseFactory.FromResult(result, r => new DataTransferObjects.Operator
         {

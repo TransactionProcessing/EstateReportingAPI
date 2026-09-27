@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using EstateReportingAPI.DataTransferObjects;
@@ -52,6 +55,112 @@ public class EstateEndpointTests : ControllerTestsBase {
         estateOperators.Count.ShouldBe(2);
         estateOperators.Single(e => e.Name == "Safaricom").OperatorId.ShouldBe(this.context.Operators.Single(o => o.Name == "Safaricom").OperatorId);
         estateOperators.Single(e => e.Name == "Voucher").OperatorId.ShouldBe(this.context.Operators.Single(o => o.Name == "Voucher").OperatorId);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_MatchingEstateClaimAndHeader_ReturnsEstate()
+    {
+        await this.helper.AddEstate("Test Estate", "Ref1");
+
+        using HttpResponseMessage response = await SendEstateRequest(this.TestId.ToString());
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_ValidEstateClaimWithoutHeader_ReturnsEstate()
+    {
+        await this.helper.AddEstate("Test Estate", "Ref1");
+
+        using HttpResponseMessage response = await SendEstateRequest();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_DifferentEstateHeader_ReturnsForbidden()
+    {
+        using HttpResponseMessage response = await SendEstateRequest(Guid.NewGuid().ToString());
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_MalformedEstateHeader_ReturnsForbidden()
+    {
+        using HttpResponseMessage response = await SendEstateRequest("not-a-guid");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_MissingEstateClaim_ReturnsForbidden()
+    {
+        using HttpResponseMessage response = await SendEstateRequest(omitEstateClaim: true);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_MalformedEstateClaim_ReturnsForbidden()
+    {
+        using HttpResponseMessage response = await SendEstateRequest(estateClaim: "not-a-guid");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_EmptyEstateClaim_ReturnsForbidden()
+    {
+        using HttpResponseMessage response = await SendEstateRequest(estateClaim: Guid.Empty.ToString());
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_EstateIdClaim_ReturnsEstate()
+    {
+        await this.helper.AddEstate("Test Estate", "Ref1");
+
+        using HttpResponseMessage response = await SendEstateRequest(
+            estateHeader: this.TestId.ToString(),
+            estateClaimType: "estateId");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_MissingAuthentication_ReturnsUnauthorized()
+    {
+        using HttpRequestMessage request = new(HttpMethod.Get, this.BaseRoute);
+
+        using HttpResponseMessage response = await this.Client.SendAsync(request);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    private async Task<HttpResponseMessage> SendEstateRequest(
+        string? estateHeader = null,
+        bool omitEstateClaim = false,
+        string? estateClaim = null,
+        string? estateClaimType = null)
+    {
+        using HttpRequestMessage request = new(HttpMethod.Get, this.BaseRoute);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Test");
+
+        if (estateHeader != null)
+            request.Headers.Add("estateId", estateHeader);
+
+        if (omitEstateClaim)
+            request.Headers.Add(TestAuthHandler.OmitEstateClaim, "true");
+
+        if (estateClaim != null)
+            request.Headers.Add(TestAuthHandler.EstateClaim, estateClaim);
+
+        if (estateClaimType != null)
+            request.Headers.Add(TestAuthHandler.EstateClaimType, estateClaimType);
+
+        return await this.Client.SendAsync(request);
     }
 
     protected override async Task ClearStandingData() {
