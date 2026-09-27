@@ -2,6 +2,7 @@
 using Shared.Middleware;
 
 namespace EstateReportingAPI.Bootstrapper{
+    using EstateReportingAPI.Common;
     using Lamar;
     using Microsoft.Extensions.Diagnostics.HealthChecks;
     using OpenIddict.Validation.AspNetCore;
@@ -21,6 +22,8 @@ namespace EstateReportingAPI.Bootstrapper{
             this.ConfigureMiddlewareLogging();
             this.ConfigureJsonOptions();
             this.AddHealthMonitoringRegistration(Startup.Configuration);
+            this.AddScoped<EstateContext>();
+            this.AddScoped<IEstateContext>(sp => sp.GetRequiredService<EstateContext>());
 
         }
 
@@ -55,7 +58,6 @@ namespace EstateReportingAPI.Bootstrapper{
                 {
                     options.DefaultScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
                 });
-
                 this.AddOpenIddict()
                     .AddValidation(options =>
                     {

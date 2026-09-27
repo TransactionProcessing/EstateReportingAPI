@@ -46,6 +46,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         String dbConnString = GetLocalConnectionString($"TransactionProcessorReadModel-{this.TestId}");
 
         this.factory = new CustomWebApplicationFactory<Startup>(dbConnString);
+        this.factory.DefaultEstateId = this.TestId;
         this.Client = this.factory.CreateClient();
         
         this.context = new EstateManagementContext(dbConnString);

@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using EstateReportingAPI.Common;
 using EstateReportingAPI.DataTrasferObjects;
 using EstateReportingAPI.Models;
 using MediatR;
@@ -9,10 +10,10 @@ using SimpleResults;
 namespace EstateReportingAPI.Handlers;
 
 public static class CalenderHandler {
-    public static async Task<IResult> GetCalendarComparisonDates([FromHeader] Guid estateId,
+    public static async Task<IResult> GetCalendarComparisonDates(IEstateContext estateContext,
                                                                  IMediator mediator,
                                                                  CancellationToken cancellationToken) {
-        CalendarQueries.GetComparisonDatesQuery query = new CalendarQueries.GetComparisonDatesQuery(estateId);
+        CalendarQueries.GetComparisonDatesQuery query = new CalendarQueries.GetComparisonDatesQuery(estateContext.EstateId);
         Result<List<Calendar>> result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => {
