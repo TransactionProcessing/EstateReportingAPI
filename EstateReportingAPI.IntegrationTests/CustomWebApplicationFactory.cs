@@ -30,6 +30,7 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
     {
         DatabaseConnectionString = databaseConnectionString;
         Environment.SetEnvironmentVariable("InTestMode", "true");
+        Environment.SetEnvironmentVariable("AppSettings__DisableAuthorisation", "true");
     }
 
     public string DefaultUserId { get; set; } = "1";
@@ -37,14 +38,6 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureAppConfiguration((_, configurationBuilder) =>
-        {
-            configurationBuilder.AddInMemoryCollection(new Dictionary<string, string>
-            {
-                { "AppSettings:DisableAuthorisation", "true" }
-            });
-        });
-
         builder.ConfigureServices(containerBuilder =>
         {
             var createcontext = new EstateManagementContext(DatabaseConnectionString);
