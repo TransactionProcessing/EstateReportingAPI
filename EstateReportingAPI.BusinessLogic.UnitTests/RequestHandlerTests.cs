@@ -6,7 +6,7 @@ using Imposter.Abstractions;
 using Shouldly;
 using SimpleResults;
 
-[assembly: GenerateImposter(typeof(IReportingManager))]
+[assembly: GenerateImposter(typeof(IMerchantReportingService))]
 [assembly: GenerateImposter(typeof(ITransactionReportingService))]
 [assembly: GenerateImposter(typeof(IEstateReportingService))]
 [assembly: GenerateImposter(typeof(ISettlementReportingService))]
@@ -86,7 +86,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task ContractRequestHandler_ForwardsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new ContractQueries.GetContractsQuery(Guid.NewGuid());
         manager.GetContracts(Arg<ContractQueries.GetContractsQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<Contract>())));
@@ -99,7 +99,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task ContractRequestHandler_ForwardsRecentContractsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new ContractQueries.GetRecentContractsQuery(Guid.NewGuid());
         manager.GetRecentContracts(Arg<ContractQueries.GetRecentContractsQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<Contract>())));
@@ -112,7 +112,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task ContractRequestHandler_ForwardsContractRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new ContractQueries.GetContractQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetContract(Arg<ContractQueries.GetContractQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new Contract())));
@@ -190,7 +190,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task MerchantRequestHandler_ForwardsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetMerchant(Arg<MerchantQueries.GetMerchantQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new Merchant())));
@@ -203,7 +203,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task MerchantRequestHandler_ForwardsRecentMerchantsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetRecentMerchantsQuery(Guid.NewGuid());
         manager.GetRecentMerchants(Arg<MerchantQueries.GetRecentMerchantsQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<Merchant>())));
@@ -216,7 +216,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task MerchantRequestHandler_ForwardsTransactionKpisRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetTransactionKpisQuery(Guid.NewGuid());
         manager.GetMerchantsTransactionKpis(Arg<MerchantQueries.GetTransactionKpisQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new MerchantKpi())));
@@ -229,7 +229,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task MerchantRequestHandler_ForwardsMerchantsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantsQuery(Guid.NewGuid(), new MerchantQueries.MerchantQueryOptions("", "", null, "", ""));
         manager.GetMerchants(Arg<MerchantQueries.GetMerchantsQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<Merchant>())));
@@ -242,7 +242,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task MerchantRequestHandler_ForwardsMerchantOperatorsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantOperatorsQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetMerchantOperators(Arg<MerchantQueries.GetMerchantOperatorsQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<MerchantOperator>())));
@@ -255,7 +255,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task MerchantRequestHandler_ForwardsMerchantContractsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantContractsQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetMerchantContracts(Arg<MerchantQueries.GetMerchantContractsQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<MerchantContract>())));
@@ -268,7 +268,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task MerchantRequestHandler_ForwardsMerchantDevicesRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantDevicesQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetMerchantDevices(Arg<MerchantQueries.GetMerchantDevicesQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<MerchantDevice>())));
@@ -281,7 +281,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task MerchantRequestHandler_ForwardsMerchantOpeningHoursRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantOpeningHoursQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetMerchantOpeningHours(Arg<MerchantQueries.GetMerchantOpeningHoursQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<MerchantOpeningHour>())));
@@ -294,7 +294,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task MerchantRequestHandler_ForwardsMerchantScheduleRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantScheduleQuery(Guid.NewGuid(), Guid.NewGuid(), 2026);
         manager.GetMerchantSchedule(Arg<MerchantQueries.GetMerchantScheduleQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new MerchantScheduleResponse())));
@@ -307,7 +307,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task OperatorRequestHandler_ForwardsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new OperatorQueries.GetOperatorsQuery(Guid.NewGuid());
         manager.GetOperators(Arg<OperatorQueries.GetOperatorsQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<Operator>())));
@@ -320,7 +320,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task OperatorRequestHandler_ForwardsOperatorRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IMerchantReportingServiceImposter();
         var request = new OperatorQueries.GetOperatorQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetOperator(Arg<OperatorQueries.GetOperatorQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new Operator())));

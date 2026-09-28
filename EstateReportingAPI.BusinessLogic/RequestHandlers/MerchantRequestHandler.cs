@@ -15,54 +15,54 @@ public class MerchantRequestHandler : IRequestHandler<MerchantQueries.GetRecentM
     IRequestHandler<MerchantQueries.GetMerchantOpeningHoursQuery, Result<List<MerchantOpeningHour>>>,
     IRequestHandler<MerchantQueries.GetMerchantScheduleQuery, Result<MerchantScheduleResponse>>
 {
-    private readonly IReportingManager Manager;
-    public MerchantRequestHandler(IReportingManager manager)
+    private readonly IMerchantReportingService ReportingService;
+    public MerchantRequestHandler(IMerchantReportingService reportingService)
     {
-        this.Manager = manager;
+        this.ReportingService = reportingService;
     }
         
     public async Task<Result<List<Merchant>>> Handle(MerchantQueries.GetRecentMerchantsQuery request,
                                                      CancellationToken cancellationToken) {
-        return await this.Manager.GetRecentMerchants(request, cancellationToken);
+        return await this.ReportingService.GetRecentMerchants(request, cancellationToken);
     }
     public async Task<Result<MerchantKpi>> Handle(MerchantQueries.GetTransactionKpisQuery request,
                                                   CancellationToken cancellationToken)
     {
-        return await this.Manager.GetMerchantsTransactionKpis(request, cancellationToken);
+        return await this.ReportingService.GetMerchantsTransactionKpis(request, cancellationToken);
     }
 
     public async Task<Result<List<Merchant>>> Handle(MerchantQueries.GetMerchantsQuery request,
                                                      CancellationToken cancellationToken) {
-        return await this.Manager.GetMerchants(request, cancellationToken);
+        return await this.ReportingService.GetMerchants(request, cancellationToken);
     }
 
     public async Task<Result<Merchant>> Handle(MerchantQueries.GetMerchantQuery request,
                                                CancellationToken cancellationToken) {
-        return await this.Manager.GetMerchant(request, cancellationToken);
+        return await this.ReportingService.GetMerchant(request, cancellationToken);
     }
 
     public async Task<Result<List<MerchantContract>>> Handle(MerchantQueries.GetMerchantContractsQuery request,
                                                              CancellationToken cancellationToken) {
-        return await this.Manager.GetMerchantContracts(request, cancellationToken);
+        return await this.ReportingService.GetMerchantContracts(request, cancellationToken);
     }
 
     public async Task<Result<List<MerchantOperator>>> Handle(MerchantQueries.GetMerchantOperatorsQuery request,
                                                              CancellationToken cancellationToken) {
-        return await this.Manager.GetMerchantOperators(request, cancellationToken);
+        return await this.ReportingService.GetMerchantOperators(request, cancellationToken);
     }
 
     public async Task<Result<List<MerchantDevice>>> Handle(MerchantQueries.GetMerchantDevicesQuery request,
                                                            CancellationToken cancellationToken) {
-        return await this.Manager.GetMerchantDevices(request, cancellationToken);
+        return await this.ReportingService.GetMerchantDevices(request, cancellationToken);
     }
 
     public async Task<Result<List<MerchantOpeningHour>>> Handle(MerchantQueries.GetMerchantOpeningHoursQuery request,
                                                                 CancellationToken cancellationToken) {
-        return await this.Manager.GetMerchantOpeningHours(request, cancellationToken);
+        return await this.ReportingService.GetMerchantOpeningHours(request, cancellationToken);
     }
 
     public async Task<Result<MerchantScheduleResponse>> Handle(MerchantQueries.GetMerchantScheduleQuery request,
                                                                CancellationToken cancellationToken) {
-        return await this.Manager.GetMerchantSchedule(request, cancellationToken);
+        return await this.ReportingService.GetMerchantSchedule(request, cancellationToken);
     }
 }

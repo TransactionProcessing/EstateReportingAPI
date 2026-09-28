@@ -10,27 +10,27 @@ public class ContractRequestHandler : IRequestHandler<ContractQueries.GetRecentC
     IRequestHandler<ContractQueries.GetContractQuery, Result<Contract>>
 {
 
-    private readonly IReportingManager Manager;
+    private readonly IMerchantReportingService ReportingService;
 
-    public ContractRequestHandler(IReportingManager manager)
+    public ContractRequestHandler(IMerchantReportingService reportingService)
     {
-        this.Manager = manager;
+        this.ReportingService = reportingService;
     }
     public async Task<Result<List<Contract>>> Handle(ContractQueries.GetRecentContractsQuery request,
                                                      CancellationToken cancellationToken) {
-        return await this.Manager.GetRecentContracts(request, cancellationToken);
+        return await this.ReportingService.GetRecentContracts(request, cancellationToken);
     }
 
     public async Task<Result<List<Contract>>> Handle(ContractQueries.GetContractsQuery request,
                                                      CancellationToken cancellationToken)
     {
-        var result = await this.Manager.GetContracts(request, cancellationToken);
+        var result = await this.ReportingService.GetContracts(request, cancellationToken);
         return result;
     }
 
     public async Task<Result<Contract>> Handle(ContractQueries.GetContractQuery request,
                                                CancellationToken cancellationToken)
     {
-        return await this.Manager.GetContract(request, cancellationToken);
+        return await this.ReportingService.GetContract(request, cancellationToken);
     }
 }
