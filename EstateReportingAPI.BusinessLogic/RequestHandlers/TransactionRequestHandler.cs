@@ -17,63 +17,63 @@ public class TransactionRequestHandler : IRequestHandler<TransactionQueries.Toda
     IRequestHandler<TransactionQueries.MerchantDailyPerformanceSummaryQuery, Result<MerchantDailyPerformanceSummaryResponse>>
 
 {
-    private readonly IReportingManager Manager;
+    private readonly ITransactionReportingService Service;
 
-    public TransactionRequestHandler(IReportingManager manager) {
-        this.Manager = manager;
+    public TransactionRequestHandler(ITransactionReportingService service) {
+        this.Service = service;
     }
 
     public async Task<Result<TodaysSales>> Handle(TransactionQueries.TodaysFailedSales request,
                                                   CancellationToken cancellationToken) {
-        return await this.Manager.GetTodaysFailedSales(request, cancellationToken);
+        return await this.Service.GetTodaysFailedSales(request, cancellationToken);
     }
 
     public async Task<Result<TodaysSales>> Handle(TransactionQueries.TodaysSalesQuery request,
                                                   CancellationToken cancellationToken) {
-        return await this.Manager.GetTodaysSales(request, cancellationToken);
+        return await this.Service.GetTodaysSales(request, cancellationToken);
     }
 
     public async Task<Result<TransactionDetailReportResponse>> Handle(TransactionQueries.TransactionDetailReportQuery request,
                                                                       CancellationToken cancellationToken) {
-        return await this.Manager.GetTransactionDetailReport(request, cancellationToken);
+        return await this.Service.GetTransactionDetailReport(request, cancellationToken);
     }
 
     public async Task<Result<TransactionSummaryByMerchantResponse>> Handle(TransactionQueries.TransactionSummaryByMerchantQuery request,
                                                                       CancellationToken cancellationToken)
     {
-        return await this.Manager.GetTransactionSummaryByMerchantReport(request, cancellationToken);
+        return await this.Service.GetTransactionSummaryByMerchantReport(request, cancellationToken);
     }
 
     public async Task<Result<TransactionSummaryByOperatorResponse>> Handle(TransactionQueries.TransactionSummaryByOperatorQuery request,
                                                                       CancellationToken cancellationToken)
     {
-        return await this.Manager.GetTransactionSummaryByOperatorReport(request, cancellationToken);
+        return await this.Service.GetTransactionSummaryByOperatorReport(request, cancellationToken);
     }
 
     public async Task<Result<ProductPerformanceResponse>> Handle(TransactionQueries.ProductPerformanceQuery request,
                                                                  CancellationToken cancellationToken) {
-        return await this.Manager.GetProductPerformanceReport(request, cancellationToken);
+        return await this.Service.GetProductPerformanceReport(request, cancellationToken);
     }
 
     public async Task<Result<TransactionMixSummaryResponse>> Handle(TransactionQueries.TransactionMixSummaryQuery request,
                                                                     CancellationToken cancellationToken)
     {
-        return await this.Manager.GetTransactionMixSummary(request, cancellationToken);
+        return await this.Service.GetTransactionMixSummary(request, cancellationToken);
     }
 
     public async Task<Result<GetRecentActivityReceiptReportResponse>> Handle(TransactionQueries.GetRecentActivityReceiptReportQuery request,
                                                                              CancellationToken cancellationToken)
     {
-        return await this.Manager.GetRecentActivityReceiptReport(request, cancellationToken);
+        return await this.Service.GetRecentActivityReceiptReport(request, cancellationToken);
     }
 
     public async Task<Result<List<TodaysSalesByHour>>> Handle(TransactionQueries.TodaysSalesByHour request,
                                                               CancellationToken cancellationToken) {
-        return await this.Manager.GetTodaysSalesByHour(request, cancellationToken);
+        return await this.Service.GetTodaysSalesByHour(request, cancellationToken);
     }
 
     public async Task<Result<MerchantDailyPerformanceSummaryResponse>> Handle(TransactionQueries.MerchantDailyPerformanceSummaryQuery request,
                                                                               CancellationToken cancellationToken) {
-        return await this.Manager.GetMerchantDailyPerformanceSummary(request, cancellationToken);
+        return await this.Service.GetMerchantDailyPerformanceSummary(request, cancellationToken);
     }
 }

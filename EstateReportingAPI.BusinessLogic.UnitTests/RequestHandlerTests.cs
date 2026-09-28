@@ -7,6 +7,7 @@ using Shouldly;
 using SimpleResults;
 
 [assembly: GenerateImposter(typeof(IReportingManager))]
+[assembly: GenerateImposter(typeof(ITransactionReportingService))]
 
 namespace EstateReportingAPI.BusinessLogic.UnitTests;
 
@@ -329,7 +330,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task TransactionRequestHandler_ForwardsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.ProductPerformanceQuery(Guid.NewGuid(), DateTime.Today, DateTime.Today);
         manager.GetProductPerformanceReport(Arg<TransactionQueries.ProductPerformanceQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new ProductPerformanceResponse())));
@@ -342,7 +343,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task TransactionRequestHandler_ForwardsFailedSalesRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TodaysFailedSales(Guid.NewGuid(), DateTime.Today, "1000");
         manager.GetTodaysFailedSales(Arg<TransactionQueries.TodaysFailedSales>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new TodaysSales())));
@@ -355,7 +356,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task TransactionRequestHandler_ForwardsTodaysSalesRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TodaysSalesQuery(Guid.NewGuid(), 1, 2, DateTime.Today);
         manager.GetTodaysSales(Arg<TransactionQueries.TodaysSalesQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new TodaysSales())));
@@ -368,7 +369,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task TransactionRequestHandler_ForwardsTransactionDetailRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TransactionDetailReportQuery(Guid.NewGuid(), new TransactionDetailReportRequest());
         manager.GetTransactionDetailReport(Arg<TransactionQueries.TransactionDetailReportQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new TransactionDetailReportResponse())));
@@ -381,7 +382,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task TransactionRequestHandler_ForwardsSummaryByMerchantRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TransactionSummaryByMerchantQuery(Guid.NewGuid(), new TransactionSummaryByMerchantRequest());
         manager.GetTransactionSummaryByMerchantReport(Arg<TransactionQueries.TransactionSummaryByMerchantQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new TransactionSummaryByMerchantResponse())));
@@ -394,7 +395,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task TransactionRequestHandler_ForwardsSummaryByOperatorRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TransactionSummaryByOperatorQuery(Guid.NewGuid(), new TransactionSummaryByOperatorRequest());
         manager.GetTransactionSummaryByOperatorReport(Arg<TransactionQueries.TransactionSummaryByOperatorQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new TransactionSummaryByOperatorResponse())));
@@ -407,7 +408,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task TransactionRequestHandler_ForwardsTransactionMixRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TransactionMixSummaryQuery(Guid.NewGuid(), new TransactionMixSummaryRequest());
         manager.GetTransactionMixSummary(Arg<TransactionQueries.TransactionMixSummaryQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new TransactionMixSummaryResponse())));
@@ -420,7 +421,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task TransactionRequestHandler_ForwardsRecentActivityRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.GetRecentActivityReceiptReportQuery(Guid.NewGuid(), new GetRecentActivityReceiptReportRequest());
         manager.GetRecentActivityReceiptReport(Arg<TransactionQueries.GetRecentActivityReceiptReportQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new GetRecentActivityReceiptReportResponse())));
@@ -433,7 +434,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task TransactionRequestHandler_ForwardsSalesByHourRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TodaysSalesByHour(Guid.NewGuid(), DateTime.Today);
         manager.GetTodaysSalesByHour(Arg<TransactionQueries.TodaysSalesByHour>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<TodaysSalesByHour>())));
@@ -446,7 +447,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task TransactionRequestHandler_ForwardsMerchantDailyPerformanceRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.MerchantDailyPerformanceSummaryQuery(Guid.NewGuid(), new MerchantDailyPerformanceSummaryRequest());
         manager.GetMerchantDailyPerformanceSummary(Arg<TransactionQueries.MerchantDailyPerformanceSummaryQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new MerchantDailyPerformanceSummaryResponse())));
