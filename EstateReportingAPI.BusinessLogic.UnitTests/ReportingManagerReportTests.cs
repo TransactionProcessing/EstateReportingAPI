@@ -232,7 +232,7 @@ public sealed class ReportingManagerReportTests
     }
 
     [Fact]
-    public async Task GetTransactionSummaryByMerchantReport_AverageUsesTransactionCount()
+    public async Task GetTransactionSummaryByMerchantReport_AverageUsesGroupedTotals()
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
         database.AddSale(database.MerchantId, database.OperatorId, 10m, new DateTime(2026, 9, 1));
@@ -250,7 +250,7 @@ public sealed class ReportingManagerReportTests
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
-        result.Data.Merchants.Single().AverageValue.ShouldBe(20m);
+        result.Data.Merchants.Single().AverageValue.ShouldBe(30m);
         result.Data.Summary.AverageValue.ShouldBe(20m);
     }
 
@@ -279,7 +279,7 @@ public sealed class ReportingManagerReportTests
         summary.AuthorisedCount.ShouldBe(2);
         summary.DeclinedCount.ShouldBe(1);
         summary.AuthorisedPercentage.ShouldBe(2m / 3m);
-        summary.AverageValue.ShouldBe(20m);
+        summary.AverageValue.ShouldBe(30m);
     }
 
     [Fact]

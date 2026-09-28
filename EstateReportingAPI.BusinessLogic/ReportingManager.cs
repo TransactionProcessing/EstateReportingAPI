@@ -923,7 +923,7 @@ public class ReportingManager : IReportingManager {
                 MerchantName = g.Key.MerchantName,
                 TotalCount = g.Sum(x => x.TotalCount),
                 TotalValue = g.Sum(x => x.TotalValue),
-                AverageValue = g.Sum(x => x.TotalCount) > 0 ? g.Sum(x => x.TotalValue) / g.Sum(x => x.TotalCount) : 0m,
+                AverageValue = g.Count() > 0 ? g.Sum(x => x.TotalValue) / g.Count() : 0m,
                 AuthorisedCount = g.Sum(x => x.AuthorisedCount),
                 DeclinedCount = g.Sum(x => x.DeclinedCount),
                 AuthorisedPercentage = g.Sum(x => x.TotalCount) > 0 ? (decimal)g.Sum(x => x.AuthorisedCount) / (decimal)g.Sum(x => x.TotalCount) : 0m
@@ -1003,7 +1003,7 @@ public class ReportingManager : IReportingManager {
                 OperatorName = g.Key.OperatorName,
                 TotalCount = g.Sum(x => x.TotalCount),
                 TotalValue = g.Sum(x => x.TotalValue),
-                AverageValue = g.Sum(x => x.TotalCount) > 0 ? g.Sum(x => x.TotalValue) / g.Sum(x => x.TotalCount) : 0m,
+                AverageValue = g.Count() > 0 ? g.Sum(x => x.TotalValue) / g.Count() : 0m,
                 AuthorisedCount = g.Sum(x => x.AuthorisedCount),
                 DeclinedCount = g.Sum(x => x.DeclinedCount),
                 AuthorisedPercentage = g.Sum(x => x.TotalCount) > 0 ? (decimal)g.Sum(x => x.AuthorisedCount) / (decimal)g.Sum(x => x.TotalCount) : 0m
