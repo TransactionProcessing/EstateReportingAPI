@@ -31,6 +31,19 @@ public sealed class TenantContextEndpointTests : ControllerTestsBase
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [Fact]
+    public async Task ProtectedEndpoint_RepeatedEstateHeaders_ReturnsForbidden()
+    {
+        using HttpRequestMessage request = new(HttpMethod.Get, "api/estates");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Test");
+        request.Headers.Add("estateId", this.TestId.ToString());
+        request.Headers.Add("estateId", Guid.NewGuid().ToString());
+
+        using HttpResponseMessage response = await this.Client.SendAsync(request);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
     [Theory]
     [InlineData("health")]
     [InlineData("healthui")]

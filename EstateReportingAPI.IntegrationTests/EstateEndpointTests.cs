@@ -130,13 +130,26 @@ public class EstateEndpointTests : ControllerTestsBase {
     }
 
     [Fact]
-    public async Task EstateEndpoint_MissingAuthentication_ReturnsUnauthorized()
+    public async Task EstateEndpoint_MissingAuthenticationAndEstateContext_ReturnsForbidden()
     {
         using HttpRequestMessage request = new(HttpMethod.Get, this.BaseRoute);
 
         using HttpResponseMessage response = await this.Client.SendAsync(request);
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_DisabledAuthorisationWithEstateHeader_ReturnsEstate()
+    {
+        await this.helper.AddEstate("Test Estate", "Ref1");
+
+        using HttpRequestMessage request = new(HttpMethod.Get, this.BaseRoute);
+        request.Headers.Add("estateId", this.TestId.ToString());
+
+        using HttpResponseMessage response = await this.Client.SendAsync(request);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     private async Task<HttpResponseMessage> SendEstateRequest(

@@ -29,7 +29,10 @@ namespace EstateReportingAPI.Common
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext httpContext,EstateContext estateContext)
+        public async Task InvokeAsync(
+            HttpContext httpContext,
+            EstateContext estateContext,
+            IConfiguration configuration)
         {
             // Health endpoints or anonymous endpoints do not need estate context.
             if (httpContext.GetEndpoint()?.Metadata
@@ -39,9 +42,40 @@ namespace EstateReportingAPI.Common
                 return;
             }
 
-            if (httpContext.User.Identity?.IsAuthenticated != true)
+            bool disableAuthorisation = configuration.GetValue<Boolean>(
+                "AppSettings:DisableAuthorisation");
+            bool isAuthenticated = httpContext.User.Identity?.IsAuthenticated == true;
+
+            if (isAuthenticated == false && disableAuthorisation == false)
             {
                 httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return;
+            }
+
+            Guid? headerEstateId = null;
+            if (httpContext.Request.Headers.TryGetValue("estateId", out var headerValues))
+            {
+                if (headerValues.Count != 1 ||
+                    !Guid.TryParse(headerValues[0], out Guid parsedHeaderEstateId) ||
+                    parsedHeaderEstateId == Guid.Empty)
+                {
+                    httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return;
+                }
+
+                headerEstateId = parsedHeaderEstateId;
+            }
+
+            if (isAuthenticated == false)
+            {
+                if (headerEstateId.HasValue == false)
+                {
+                    httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return;
+                }
+
+                estateContext.SetEstate(headerEstateId.Value);
+                await _next(httpContext);
                 return;
             }
 
@@ -54,16 +88,10 @@ namespace EstateReportingAPI.Common
                 return;
             }
 
-            // Backwards compatibility: if the header is supplied, it must agree
-            // with the authenticated claim.
-            if (httpContext.Request.Headers.TryGetValue("estateId", out var headerValue))
+            if (headerEstateId.HasValue && headerEstateId.Value != authenticatedEstateId)
             {
-                if (!Guid.TryParse(headerValue.SingleOrDefault(), out Guid headerEstateId) ||
-                    headerEstateId != authenticatedEstateId)
-                {
-                    httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    return;
-                }
+                httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return;
             }
 
             estateContext.SetEstate(authenticatedEstateId);
