@@ -20,6 +20,9 @@ public class RepositoryRegistry : ServiceRegistry{
             this.AddSingleton<IReportingManager, ReportingManager>();
         }
 
+        this.AddSingleton<ITransactionReportingService, TransactionReportingService>();
+        this.AddSingleton<IEstateReportingService, EstateReportingService>();
+
         this.AddSingleton<DbCommandInterceptor, QueryTimingInterceptor>();
         this.AddSingleton(typeof(IDbContextResolver<>), typeof(DbContextResolverX<>));
 

@@ -8,6 +8,7 @@ using SimpleResults;
 
 [assembly: GenerateImposter(typeof(IReportingManager))]
 [assembly: GenerateImposter(typeof(ITransactionReportingService))]
+[assembly: GenerateImposter(typeof(IEstateReportingService))]
 
 namespace EstateReportingAPI.BusinessLogic.UnitTests;
 
@@ -31,7 +32,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task CalendarRequestHandler_ForwardsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IEstateReportingServiceImposter();
         var request = new CalendarQueries.GetYearsQuery(Guid.NewGuid());
         manager.GetCalendarYears(Arg<CalendarQueries.GetYearsQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<int>())));
@@ -44,7 +45,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task CalendarRequestHandler_ForwardsAllDatesRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IEstateReportingServiceImposter();
         var request = new CalendarQueries.GetAllDatesQuery(Guid.NewGuid());
         manager.GetCalendarDates(Arg<CalendarQueries.GetAllDatesQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<Calendar>())));
@@ -57,7 +58,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task CalendarRequestHandler_ForwardsComparisonDatesRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IEstateReportingServiceImposter();
         var request = new CalendarQueries.GetComparisonDatesQuery(Guid.NewGuid());
         manager.GetCalendarComparisonDates(Arg<CalendarQueries.GetComparisonDatesQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<Calendar>())));
@@ -70,7 +71,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task CalendarRequestHandler_WhenComparisonDatesFails_ReturnsFailure()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IEstateReportingServiceImposter();
         var request = new CalendarQueries.GetComparisonDatesQuery(Guid.NewGuid());
         manager.GetCalendarComparisonDates(Arg<CalendarQueries.GetComparisonDatesQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult<Result<List<Calendar>>>(Result.Failure("Calendar lookup failed.")));
@@ -122,7 +123,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task EstateRequestHandler_ForwardsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IEstateReportingServiceImposter();
         var request = new EstateQueries.GetEstateQuery(Guid.NewGuid());
         manager.GetEstate(Arg<EstateQueries.GetEstateQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new Estate())));
@@ -135,7 +136,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task EstateRequestHandler_ForwardsEstateOperatorsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IEstateReportingServiceImposter();
         var request = new EstateQueries.GetEstateOperatorsQuery(Guid.NewGuid());
         manager.GetEstateOperators(Arg<EstateQueries.GetEstateOperatorsQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<EstateOperator>())));
