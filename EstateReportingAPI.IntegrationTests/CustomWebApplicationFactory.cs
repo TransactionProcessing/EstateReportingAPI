@@ -30,6 +30,7 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
     {
         DatabaseConnectionString = databaseConnectionString;
         Environment.SetEnvironmentVariable("InTestMode", "true");
+        Environment.SetEnvironmentVariable("AppSettings__DisableAuthorisation", "true");
     }
 
     public string DefaultUserId { get; set; } = "1";
