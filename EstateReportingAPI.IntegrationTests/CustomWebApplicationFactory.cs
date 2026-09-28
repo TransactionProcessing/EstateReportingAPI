@@ -37,6 +37,14 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.ConfigureAppConfiguration((_, configurationBuilder) =>
+        {
+            configurationBuilder.AddInMemoryCollection(new Dictionary<string, string>
+            {
+                { "AppSettings:DisableAuthorisation", "true" }
+            });
+        });
+
         builder.ConfigureServices(containerBuilder =>
         {
             var createcontext = new EstateManagementContext(DatabaseConnectionString);
