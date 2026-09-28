@@ -9,6 +9,7 @@ using SimpleResults;
 [assembly: GenerateImposter(typeof(IReportingManager))]
 [assembly: GenerateImposter(typeof(ITransactionReportingService))]
 [assembly: GenerateImposter(typeof(IEstateReportingService))]
+[assembly: GenerateImposter(typeof(ISettlementReportingService))]
 
 namespace EstateReportingAPI.BusinessLogic.UnitTests;
 
@@ -17,7 +18,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task SettlementRequestHandler_ForwardsRequestAndCancellationToken()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new ISettlementReportingServiceImposter();
         var expected = Result.Success(new TodaysSettlement());
         var request = new SettlementQueries.TodaysSettlementQuery(Guid.NewGuid(), DateTime.Today);
         var cancellationToken = new CancellationTokenSource().Token;
