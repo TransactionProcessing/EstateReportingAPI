@@ -6,19 +6,21 @@ Approved conversational design for issue #598.
 
 ## Goal
 
-Reduce the responsibility and test surface of `EstateReportingAPI.BusinessLogic/ReportingManager.cs` while preserving all existing MediatR request-handler behavior, public API contracts, response shapes, result semantics, and endpoint wiring.
+Remove the reporting god object by making MediatR request handlers depend directly on focused reporting services while preserving all existing request behavior, public API contracts, response shapes, result semantics, and endpoint wiring.
 
 ## Current Context
 
 `ReportingManager` is a 2,339-line class implementing 29 reporting operations across calendar, estate, merchant, operator, contract, transaction, settlement, and file-import concerns. All request handlers depend on `IReportingManager`, and integration tests construct the concrete manager directly. Existing report tests also use the manager as their entry point.
 
-The refactor must therefore preserve `IReportingManager` as the application-facing façade during this change. The new services are implementation boundaries, not replacements for the existing handler contract.
+The refactor may change internal handler constructor dependencies, but must preserve every MediatR request type, handler response type, endpoint route, serialized response, and result behavior. `IReportingManager` and `ReportingManager` are implementation details that can be removed once all consumers and tests have moved to focused services.
 
 ## Design
 
-### Application façade
+### Handler boundaries
 
-Keep `IReportingManager` with its existing method signatures. Keep `ReportingManager` as the registered implementation, but reduce it to delegation from the existing interface methods to focused services. The façade must not alter request types, response types, result status, error messages, query filters, ordering, or cancellation behavior.
+Change each MediatR request handler to inject only the focused service or services required by the requests it handles. Keep request types and handler `Handle` signatures unchanged. Handlers remain thin adapters: they pass the request and cancellation token to the service and return the service result unchanged.
+
+Remove `IReportingManager` and `ReportingManager` after all production consumers, test fixtures, and generated test doubles have been migrated. No compatibility façade is required because the interface is internal application wiring rather than an HTTP/API contract.
 
 ### Focused services
 
@@ -29,7 +31,7 @@ Introduce focused interfaces and implementations in `EstateReportingAPI.Business
    - Transaction detail, summary-by-merchant, summary-by-operator, product performance, transaction mix, recent activity receipt, sales-by-hour, and merchant daily performance reports.
 2. `IMerchantReportingService` / `MerchantReportingService`
    - Merchant and operator lookups and merchant-related relationships, schedules, opening hours, devices, contracts, and KPIs.
-   - Contract operations may be kept in this service because they are consumed as merchant/operator reporting lookups and share the same query dependencies; if code inspection shows a clean independent boundary, they may be split into `IContractReportingService` without changing the façade.
+   - Contract operations may be kept in this service because they are consumed as merchant/operator reporting lookups and share the same query dependencies; if code inspection shows a clean independent boundary, they may be split into `IContractReportingService`.
 3. `IEstateReportingService` / `EstateReportingService`
    - Estate, estate operators, and calendar comparison/date/year lookups.
    - File-profile configuration lookup is included here only if its existing query dependencies are configuration-oriented; otherwise it remains with file-import reporting.
@@ -46,22 +48,21 @@ Move the existing safe EF query wrappers (`SumAsync`, `ToListAsync`, `CountAsync
 
 ### Dependency injection and construction
 
-Register each focused interface and implementation in `RepositoryRegistry` with the same lifetime as the current manager unless the implementation requires a different lifetime based on its dependencies. Register `ReportingManager` against `IReportingManager` as before.
+Register each focused interface and implementation in `RepositoryRegistry` with the same lifetime as the current manager unless the implementation requires a different lifetime based on its dependencies. Remove the `IReportingManager`/`ReportingManager` registration after all handlers are migrated.
 
-Update direct test construction and test fixtures to use the façade plus its extracted services, or provide a narrowly scoped test composition helper. Do not retain duplicate production implementations solely to keep old constructors working.
+Update handler tests, generated imposters, direct test construction, and integration fixtures to compose the focused services directly. Do not retain duplicate production implementations or a compatibility façade solely to keep old constructors working.
 
 ### Testing strategy
 
 - Preserve and run the existing unit and integration suites to detect behavior and contract regressions.
 - Add focused unit coverage for at least one calculation-heavy transaction-report service without constructing `ReportingManager`.
-- Add focused coverage for delegation/registration seams where practical.
-- Retain existing manager-based report tests until the extraction is verified; only simplify them when doing so does not reduce endpoint or query coverage.
+- Add focused coverage for handler-to-service wiring where practical.
+- Move existing manager-based report setup to the extracted service under test without reducing endpoint or query coverage.
 
 ## Data flow
 
 ```text
 HTTP endpoint -> MediatR request -> existing request handler
-             -> IReportingManager / ReportingManager façade
              -> focused reporting service
              -> EstateManagementContext via IDbContextResolver
              -> existing Models + SimpleResults response contract
@@ -69,17 +70,18 @@ HTTP endpoint -> MediatR request -> existing request handler
 
 ## Error handling and compatibility
 
-The extracted methods must preserve current result propagation, including failed query messages, not-found responses, empty-list behavior, ordering, date boundaries, and cancellation-token use. The façade must return the delegated result unchanged. No endpoint route, MediatR query, DTO, model, or serialized response is changed.
+The extracted methods must preserve current result propagation, including failed query messages, not-found responses, empty-list behavior, ordering, date boundaries, and cancellation-token use. Handlers must return the delegated result unchanged. No endpoint route, MediatR query, DTO, model, or serialized response is changed.
 
 ## Scope boundaries
 
-In scope: splitting the manager, introducing focused interfaces/implementations, DI wiring, moving or adapting tests, and adding focused service tests.
+In scope: replacing the manager with focused interfaces/implementations, updating handler dependencies and DI wiring, moving or adapting tests, and adding focused service tests.
 
 Out of scope: changing API contracts, redesigning database queries for performance, changing result/error semantics, replacing MediatR, or broad repository abstractions.
 
 ## Acceptance criteria mapping
 
 - Each extracted service has one cohesive reporting responsibility and an interface.
+- Each MediatR handler depends directly on the focused service(s) required by its requests.
 - Existing handlers, endpoints, response contracts, and result semantics remain unchanged.
 - Existing integration tests continue to pass.
 - At least one calculation-focused unit test exercises an extracted service without the entire manager.
