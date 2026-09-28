@@ -1,0 +1,16 @@
+exclude_paths:
+  # Test projects and test infrastructure
+  - EstateReportingAPI.BusinessLogic.UnitTests/**
+  - EstateReportingAPI.IntegrationTests/**
+  - EstateReportingAPI.IntegrationUnitTests/**
+  - EstateReportingAPI.Tests/**
+  - EstateReportingAPI.Testing/**
+  - "**/*Tests/**"
+  - "**/*Test/**"
+
+  # Build, IDE, coverage, and test-result artifacts
+  - "**/bin/**"
+  - "**/obj/**"
+  - .vs/**
+  - coverage/**
+  - TestResults/**

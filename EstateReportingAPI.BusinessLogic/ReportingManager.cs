@@ -923,7 +923,7 @@ public class ReportingManager : IReportingManager {
                 MerchantName = g.Key.MerchantName,
                 TotalCount = g.Sum(x => x.TotalCount),
                 TotalValue = g.Sum(x => x.TotalValue),
-                AverageValue = g.Count() > 0 ? g.Sum(x => x.TotalValue) / g.Count() : 0m,
+                AverageValue = g.Sum(x => x.TotalCount) > 0 ? g.Sum(x => x.TotalValue) / g.Sum(x => x.TotalCount) : 0m,
                 AuthorisedCount = g.Sum(x => x.AuthorisedCount),
                 DeclinedCount = g.Sum(x => x.DeclinedCount),
                 AuthorisedPercentage = g.Sum(x => x.TotalCount) > 0 ? (decimal)g.Sum(x => x.AuthorisedCount) / (decimal)g.Sum(x => x.TotalCount) : 0m
@@ -1003,7 +1003,7 @@ public class ReportingManager : IReportingManager {
                 OperatorName = g.Key.OperatorName,
                 TotalCount = g.Sum(x => x.TotalCount),
                 TotalValue = g.Sum(x => x.TotalValue),
-                AverageValue = g.Count() > 0 ? g.Sum(x => x.TotalValue) / g.Count() : 0m,
+                AverageValue = g.Sum(x => x.TotalCount) > 0 ? g.Sum(x => x.TotalValue) / g.Sum(x => x.TotalCount) : 0m,
                 AuthorisedCount = g.Sum(x => x.AuthorisedCount),
                 DeclinedCount = g.Sum(x => x.DeclinedCount),
                 AuthorisedPercentage = g.Sum(x => x.TotalCount) > 0 ? (decimal)g.Sum(x => x.AuthorisedCount) / (decimal)g.Sum(x => x.TotalCount) : 0m
@@ -1053,12 +1053,17 @@ public class ReportingManager : IReportingManager {
         if (balanceQueryResults.IsFailed)
             return ResultHelpers.CreateFailure(balanceQueryResults);
 
-        Dictionary<Guid, decimal> balanceLookup = BuildMerchantBalanceLookup(balanceQueryResults.Data);
-        List<Merchant> response = merchants.Select(merchant =>
-                                                       ModelFactory.ConvertFrom(merchant, GetMerchantBalance(balanceLookup, merchant.Merchant.MerchantId)))
-                                           .ToList();
+        try {
+            Dictionary<Guid, decimal> balanceLookup = BuildMerchantBalanceLookup(balanceQueryResults.Data);
+            List<Merchant> response = merchants.Select(merchant =>
+                                                           ModelFactory.ConvertFrom(merchant, GetMerchantBalance(balanceLookup, merchant.Merchant.MerchantId)))
+                                               .ToList();
 
-        return Result.Success(response);
+            return Result.Success(response);
+        }
+        catch (InvalidOperationException ex) {
+            return Result.Failure(ex.Message);
+        }
     }
 
     public async Task<Result<Merchant>> GetMerchant(MerchantQueries.GetMerchantQuery request, CancellationToken cancellationToken) {
