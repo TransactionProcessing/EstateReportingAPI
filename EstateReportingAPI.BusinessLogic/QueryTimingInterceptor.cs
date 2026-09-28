@@ -11,11 +11,14 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using TransactionProcessor.Database.Contexts;
 
 namespace EstateReportingAPI.BusinessLogic;
 
+// Infrastructure component currently scheduled for generalisation and relocation to Shared; exclude until that work is completed.
+[ExcludeFromCodeCoverage]
 public class QueryTimingInterceptor : DbCommandInterceptor {
 
     internal void LogIfRequired(DbCommand command,
@@ -46,6 +49,8 @@ public class QueryTimingInterceptor : DbCommandInterceptor {
 }
 
 
+// Infrastructure component currently scheduled for generalisation and relocation to Shared; exclude until that work is completed.
+[ExcludeFromCodeCoverage]
 public class DbContextResolverX<TContext> : IDbContextResolver<TContext> where TContext : DbContext
 {
     private readonly IServiceProvider _rootProvider;

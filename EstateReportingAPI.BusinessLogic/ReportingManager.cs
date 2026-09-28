@@ -1053,12 +1053,17 @@ public class ReportingManager : IReportingManager {
         if (balanceQueryResults.IsFailed)
             return ResultHelpers.CreateFailure(balanceQueryResults);
 
-        Dictionary<Guid, decimal> balanceLookup = BuildMerchantBalanceLookup(balanceQueryResults.Data);
-        List<Merchant> response = merchants.Select(merchant =>
-                                                       ModelFactory.ConvertFrom(merchant, GetMerchantBalance(balanceLookup, merchant.Merchant.MerchantId)))
-                                           .ToList();
+        try {
+            Dictionary<Guid, decimal> balanceLookup = BuildMerchantBalanceLookup(balanceQueryResults.Data);
+            List<Merchant> response = merchants.Select(merchant =>
+                                                           ModelFactory.ConvertFrom(merchant, GetMerchantBalance(balanceLookup, merchant.Merchant.MerchantId)))
+                                               .ToList();
 
-        return Result.Success(response);
+            return Result.Success(response);
+        }
+        catch (InvalidOperationException ex) {
+            return Result.Failure(ex.Message);
+        }
     }
 
     public async Task<Result<Merchant>> GetMerchant(MerchantQueries.GetMerchantQuery request, CancellationToken cancellationToken) {
