@@ -10,6 +10,7 @@ using SimpleResults;
 [assembly: GenerateImposter(typeof(ITransactionReportingService))]
 [assembly: GenerateImposter(typeof(IEstateReportingService))]
 [assembly: GenerateImposter(typeof(ISettlementReportingService))]
+[assembly: GenerateImposter(typeof(IFileImportReportingService))]
 
 namespace EstateReportingAPI.BusinessLogic.UnitTests;
 
@@ -150,7 +151,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task FileImportLogRequestHandler_ForwardsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IFileImportReportingServiceImposter();
         var request = new FileImportLogQueries.GetFileImportLogListQuery(Guid.NewGuid(), null, DateTime.Today, DateTime.Today);
         manager.GetFileImportLogList(Arg<FileImportLogQueries.GetFileImportLogListQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<FileImportLog>())));
@@ -163,7 +164,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task FileImportLogRequestHandler_ForwardsSingleLogRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IFileImportReportingServiceImposter();
         var request = new FileImportLogQueries.GetFileImportLogQuery(Guid.NewGuid(), null, Guid.NewGuid());
         manager.GetFileImportLog(Arg<FileImportLogQueries.GetFileImportLogQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new FileImportLog())));
@@ -176,7 +177,7 @@ public sealed class RequestHandlerTests
     [Fact]
     public async Task FileProfileConfigurationRequestHandler_ForwardsRequest()
     {
-        var manager = new IReportingManagerImposter();
+        var manager = new IFileImportReportingServiceImposter();
         var request = new FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery(Guid.NewGuid());
         manager.GetFileProfileConfigurationList(Arg<FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<FileProfileConfiguration>())));
