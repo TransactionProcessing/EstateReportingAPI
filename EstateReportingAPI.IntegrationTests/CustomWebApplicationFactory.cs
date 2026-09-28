@@ -66,9 +66,7 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
                 .Build();
 
             IDbContextResolver<EstateManagementContext> resolver = new DbContextResolver<EstateManagementContext>(serviceProvider, configuration);
-            IReportingManager manager = new ReportingManager(resolver);
-
-            containerBuilder.AddSingleton(manager);
+            containerBuilder.AddSingleton(resolver);
 
             containerBuilder.Configure<TestAuthHandlerOptions>(options =>
             {
