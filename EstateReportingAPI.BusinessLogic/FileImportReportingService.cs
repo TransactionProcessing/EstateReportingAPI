@@ -120,7 +120,7 @@ public sealed class FileImportReportingService : IFileImportReportingService
 
         if (flatItems.Count == 0)
             return Result.NotFound();
-        
+
         var fileImportLogs = flatItems
             .GroupBy(x => new { x.FileImportLogId, x.ImportLogDateTime })
             .Select(g => new FileImportLog
@@ -146,7 +146,7 @@ public sealed class FileImportReportingService : IFileImportReportingService
                         }).ToList()
                     }).ToList()
             }).SingleOrDefault();
-        
+
         return Result.Success(fileImportLogs);
     }
 

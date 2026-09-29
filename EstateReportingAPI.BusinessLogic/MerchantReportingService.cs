@@ -279,7 +279,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         return response;
     }
-    
+
 
     private Int32 SafeDivide(Int32 number,
                              Int32 divisor) {
@@ -294,7 +294,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         return number / divisor;
     }
-    
+
     public async Task<Result<List<Merchant>>> GetRecentMerchants(MerchantQueries.GetRecentMerchantsQuery request,
                                                                  CancellationToken cancellationToken) {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = this.Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
@@ -341,7 +341,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
             }
             if (merchant.ContactInfo != null) {
                 model.ContactId = merchant.ContactInfo.ContactId;
-                
+
                 model.ContactName = merchant.ContactInfo.Name;
                 model.ContactEmail = merchant.ContactInfo.EmailAddress;
                 model.ContactPhone = merchant.ContactInfo.PhoneNumber;
@@ -449,7 +449,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
         openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.ThursdayOpen, ClosingTime = openingHoursResult.Data.ThursdayClose, DayOfWeek = DayOfWeek.Thursday, MerchantId = request.MerchantId });
         openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.FridayOpen, ClosingTime = openingHoursResult.Data.FridayClose, DayOfWeek = DayOfWeek.Friday, MerchantId = request.MerchantId });
         openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.SaturdayOpen, ClosingTime = openingHoursResult.Data.SaturdayClose, DayOfWeek = DayOfWeek.Saturday, MerchantId = request.MerchantId });
-        
+
         return Result.Success(openingHours);
     }
 
@@ -499,7 +499,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
             return ResultHelpers.CreateFailure(queryResults);
 
         var merchants = queryResults.Data;
-        
+
         var merchantBalancesQuery  = context.MerchantBalanceProjectionState.Where(mb => merchants.Select(m => m.Merchant.MerchantId).Contains(mb.MerchantId));
 
         var balanceQueryResults = await ExecuteQuerySafeToList(merchantBalancesQuery, cancellationToken, "Error retrieving merchant balances");
@@ -752,7 +752,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
             d.Month,
             d.ClosedDays
         };
-        
+
         var merchantScheduleQueryResult = await ExecuteQuerySafeToList(merchantScheduleQuery, cancellationToken, "Error getting merchant schedule");
         if (merchantScheduleQueryResult.IsFailed)
             return ResultHelpers.CreateFailure(merchantScheduleQueryResult);
@@ -768,7 +768,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
                 .ToList();
 
             MerchantScheduleMonthResponse? monthSchedule = new() { ClosedDays = closedDaysList, Month = item.Month };
-            
+
             response.Months.Add(monthSchedule);
         }
         response.Year = request.Year;
@@ -936,7 +936,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
                 .GroupBy(x => new { x.ContractProductReportingId, x.OperatorName, x.ProductName })
                 .Select(g => new {
                     g.Key.ContractProductReportingId,
-                    g.Key.ProductName,  
+                    g.Key.ProductName,
                     g.Key.OperatorName,
                     SalesCount = g.Sum(x => x.SalesCount),
                     SalesValue = g.Sum(x => x.SalesValue)
