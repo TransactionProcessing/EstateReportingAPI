@@ -7,8 +7,16 @@ using TransactionProcessor.Database.Contexts;
 using Shared.EntityFramework;
 using Shared.Results;
 
-namespace EstateReportingAPI.BusinessLogic;
+namespace EstateReportingAPI.BusinessLogic.Services;
 
+public interface IEstateReportingService
+{
+    Task<Result<List<Calendar>>> GetCalendarComparisonDates(CalendarQueries.GetComparisonDatesQuery request, CancellationToken cancellationToken);
+    Task<Result<List<Calendar>>> GetCalendarDates(CalendarQueries.GetAllDatesQuery request, CancellationToken cancellationToken);
+    Task<Result<List<int>>> GetCalendarYears(CalendarQueries.GetYearsQuery request, CancellationToken cancellationToken);
+    Task<Result<List<EstateOperator>>> GetEstateOperators(EstateQueries.GetEstateOperatorsQuery request, CancellationToken cancellationToken);
+    Task<Result<Estate>> GetEstate(EstateQueries.GetEstateQuery request, CancellationToken cancellationToken);
+}
 public sealed class EstateReportingService : IEstateReportingService
 {
     private readonly IDbContextResolver<EstateManagementContext> Resolver;

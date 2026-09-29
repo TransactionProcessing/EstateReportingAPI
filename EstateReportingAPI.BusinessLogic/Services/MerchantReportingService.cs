@@ -20,8 +20,25 @@ using Operator = EstateReportingAPI.Models.Operator;
 using ContractProductTransactionFee = EstateReportingAPI.Models.ContractProductTransactionFee;
 using MerchantBalanceProjectionState = TransactionProcessor.ProjectionEngine.Database.Database.Entities.MerchantBalanceProjectionState;
 
-namespace EstateReportingAPI.BusinessLogic;
+namespace EstateReportingAPI.BusinessLogic.Services;
 
+public interface IMerchantReportingService
+{
+    Task<Result<List<Contract>>> GetRecentContracts(ContractQueries.GetRecentContractsQuery request, CancellationToken cancellationToken);
+    Task<Result<List<Contract>>> GetContracts(ContractQueries.GetContractsQuery request, CancellationToken cancellationToken);
+    Task<Result<Contract>> GetContract(ContractQueries.GetContractQuery request, CancellationToken cancellationToken);
+    Task<Result<List<Merchant>>> GetRecentMerchants(MerchantQueries.GetRecentMerchantsQuery request, CancellationToken cancellationToken);
+    Task<Result<MerchantKpi>> GetMerchantsTransactionKpis(MerchantQueries.GetTransactionKpisQuery request, CancellationToken cancellationToken);
+    Task<Result<List<Operator>>> GetOperators(OperatorQueries.GetOperatorsQuery request, CancellationToken cancellationToken);
+    Task<Result<List<MerchantOpeningHour>>> GetMerchantOpeningHours(MerchantQueries.GetMerchantOpeningHoursQuery request, CancellationToken cancellationToken);
+    Task<Result<Operator>> GetOperator(OperatorQueries.GetOperatorQuery request, CancellationToken cancellationToken);
+    Task<Result<List<Merchant>>> GetMerchants(MerchantQueries.GetMerchantsQuery request, CancellationToken cancellationToken);
+    Task<Result<Merchant>> GetMerchant(MerchantQueries.GetMerchantQuery request, CancellationToken cancellationToken);
+    Task<Result<List<MerchantOperator>>> GetMerchantOperators(MerchantQueries.GetMerchantOperatorsQuery request, CancellationToken cancellationToken);
+    Task<Result<List<MerchantContract>>> GetMerchantContracts(MerchantQueries.GetMerchantContractsQuery request, CancellationToken cancellationToken);
+    Task<Result<List<MerchantDevice>>> GetMerchantDevices(MerchantQueries.GetMerchantDevicesQuery request, CancellationToken cancellationToken);
+    Task<Result<MerchantScheduleResponse>> GetMerchantSchedule(MerchantQueries.GetMerchantScheduleQuery request, CancellationToken cancellationToken);
+}
 public sealed class MerchantReportingService : IMerchantReportingService
 {
     private readonly IDbContextResolver<EstateManagementContext> Resolver;
@@ -280,20 +297,6 @@ public sealed class MerchantReportingService : IMerchantReportingService
         return response;
     }
 
-
-    private Int32 SafeDivide(Int32 number,
-                             Int32 divisor) {
-        if (divisor == 0) return number;
-
-        return number / divisor;
-    }
-
-    private Decimal SafeDivide(Decimal number,
-                               Int32 divisor) {
-        if (divisor == 0) return number;
-
-        return number / divisor;
-    }
 
     public async Task<Result<List<Merchant>>> GetRecentMerchants(MerchantQueries.GetRecentMerchantsQuery request,
                                                                  CancellationToken cancellationToken) {
@@ -841,265 +844,6 @@ public sealed class MerchantReportingService : IMerchantReportingService
             }).ToList();
         }
 
-        private sealed class MerchantTransactionGroupProjection {
-            public Guid MerchantId { get; init; }
-            public int MerchantReportingId { get; init; }
-            public string MerchantName { get; init; }
-            public Guid OperatorId { get; init; }
-            public int OperatorReportingId { get; init; }
-            public int TotalCount { get; init; }
-            public decimal TotalValue { get; init; }
-            public int AuthorisedCount { get; init; }
-            public int DeclinedCount { get; init; }
-        }
-
-        private sealed class MerchantTransactionFinalProjection {
-            public Guid MerchantId { get; init; }
-            public int MerchantReportingId { get; init; }
-            public string MerchantName { get; init; }
-            public int TotalCount { get; init; }
-            public decimal TotalValue { get; init; }
-            public decimal AverageValue { get; init; }
-            public int AuthorisedCount { get; init; }
-            public int DeclinedCount { get; init; }
-            public decimal AuthorisedPercentage { get; init; }
-        }
-
-        private sealed class MerchantDailyPerformanceGroupProjection {
-            public int ContractProductReportingId { get; init; }
-            public string? ProductName { get; init; }
-            public string OperatorName { get; init; }
-            public bool IsAuthorised { get; init; }
-            public int SalesCount { get; init; }
-            public decimal SalesValue { get; init; }
-        }
-
-        private sealed class MerchantDailyPerformanceRecentSaleProjection {
-            public string Reference { get; init; }
-            public string? Product { get; init; }
-            public String Operator { get; init; }
-            public string Status { get; init; }
-            public decimal Amount { get; init; }
-            public DateTime TransactionDateTime { get; init; }
-        }
-
-        private static MerchantDailyPerformanceSummaryResponse BuildEmptyMerchantDailyPerformanceSummaryResponse() {
-            return new MerchantDailyPerformanceSummaryResponse {
-                Metrics = BuildMerchantDailyPerformanceBaseMetrics()
-            };
-        }
-
-        private static List<MetricItem> BuildMerchantDailyPerformanceBaseMetrics() {
-            return new List<MetricItem> {
-                new() { Title = "Total Sales Count", Value = 0, Description = "All sales transactions in the range", Category = 1, Type = 0 },
-                new() { Title = "Total Sales Value", Value = 0, Description = "All sales value in the range", Category = 1, Type = 1 },
-                new() { Title = "Successful Sales Count", Value = 0, Description = "Authorised sales count in the range", Category = 2, Type = 2 },
-                new() { Title = "Successful Sales Value", Value = 0, Description = "Authorised sales value in the range", Category = 2, Type = 3 },
-                new() { Title = "Failed Sales Count", Value = 0, Description = "Declined sales count in the range", Category = 3, Type = 4 },
-                new() { Title = "Failed Sales Value", Value = 0, Description = "Declined sales value in the range", Category = 3, Type = 5 },
-                new() { Title = "Average Sales Count", Value = 0, Description = "Average sales count per day in the range", Category = 4, Type = 6 },
-                new() { Title = "Average Sales Value", Value = 0, Description = "Average value per sale in the range", Category = 4, Type = 7 }
-            };
-        }
-
-        private static List<MetricItem> BuildMerchantDailyPerformanceMetrics(List<MerchantDailyPerformanceGroupProjection> groupedTransactions,
-                                                                             int dayCount) {
-            int totalSalesCount = groupedTransactions.Sum(x => x.SalesCount);
-            decimal totalSalesValue = groupedTransactions.Sum(x => x.SalesValue);
-            int successfulSalesCount = groupedTransactions.Where(x => x.IsAuthorised).Sum(x => x.SalesCount);
-            decimal successfulSalesValue = groupedTransactions.Where(x => x.IsAuthorised).Sum(x => x.SalesValue);
-            int failedSalesCount = groupedTransactions.Where(x => !x.IsAuthorised).Sum(x => x.SalesCount);
-            decimal failedSalesValue = groupedTransactions.Where(x => !x.IsAuthorised).Sum(x => x.SalesValue);
-            decimal averageSalesCount = (decimal)totalSalesCount / dayCount;
-            decimal averageSalesValue = totalSalesCount == 0 ? 0m : totalSalesValue / totalSalesCount;
-
-            List<MetricItem> metrics = new() {
-                new() { Title = "Total Sales Count", Value = totalSalesCount, Description = "All sales transactions in the range", Category = 1, Type = 0},
-                new() { Title = "Total Sales Value", Value = totalSalesValue, Description = "All sales value in the range", Category = 1, Type = 1 },
-                new() { Title = "Successful Sales Count", Value = successfulSalesCount, Description = "Authorised sales count in the range", Category = 2, Type = 2 },
-                new() { Title = "Successful Sales Value", Value = successfulSalesValue, Description = "Authorised sales value in the range", Category = 2, Type = 3 },
-                new() { Title = "Failed Sales Count", Value = failedSalesCount, Description = "Declined sales count in the range", Category = 3, Type = 4 },
-                new() { Title = "Failed Sales Value", Value = failedSalesValue, Description = "Declined sales value in the range", Category = 3, Type = 5 },
-                new() { Title = "Average Sales Count", Value = averageSalesCount, Description = "Average sales count per day in the range", Category = 4, Type = 6 },
-                new() { Title = "Average Sales Value", Value = averageSalesValue, Description = "Average value per sale in the range", Category = 4, Type = 7 }
-            };
-
-            MetricItem? topProductMetric = BuildTopProductMetric(groupedTransactions);
-            if (topProductMetric != null)
-                metrics.Add(topProductMetric);
-
-            return metrics;
-        }
-
-        private static MetricItem? BuildTopProductMetric(List<MerchantDailyPerformanceGroupProjection> groupedTransactions) {
-            var topProduct = groupedTransactions
-                .GroupBy(x => new { x.ContractProductReportingId, x.OperatorName, x.ProductName })
-                .Select(g => new {
-                    g.Key.ContractProductReportingId,
-                    g.Key.ProductName,
-                    g.Key.OperatorName,
-                    SalesCount = g.Sum(x => x.SalesCount),
-                    SalesValue = g.Sum(x => x.SalesValue)
-                })
-                .OrderByDescending(x => x.SalesCount)
-                .ThenBy(x => x.ProductName)
-                .FirstOrDefault();
-
-            if (topProduct == null)
-                return null;
-
-            return new MetricItem {
-                Title = "Top Product Sales Count",
-                Value = topProduct.SalesCount,
-                Description = string.IsNullOrWhiteSpace(topProduct.OperatorName) || string.IsNullOrWhiteSpace(topProduct.ProductName)
-                    ? "Unknown product"
-                    : $"{topProduct.OperatorName} {topProduct.ProductName}",
-                Category = 5,
-                Type = 8
-            };
-        }
-
-        private async Task<Result<List<MerchantDailyPerformanceGroupProjection>>> LoadMerchantDailyPerformanceGroups(EstateManagementContext context,
-                                                                                                                   TransactionQueries.MerchantDailyPerformanceSummaryQuery request,
-                                                                                                                   DateTime startDate,
-                                                                                                                   DateTime endDate,
-                                                                                                                   CancellationToken cancellationToken) {
-            var query =
-                from t in context.Transactions
-                join m in context.Merchants on t.MerchantId equals m.MerchantId
-                join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
-                join op in context.Operators on t.OperatorId equals op.OperatorId into opJoin
-                from op in opJoin.DefaultIfEmpty()
-                where t.TransactionType == "Sale"
-                      && t.TransactionDate >= startDate
-                      && t.TransactionDate <= endDate
-                      && m.MerchantReportingId == request.Request.MerchantReportingId
-                group t by new
-                {
-                    cp.ContractProductReportingId,
-                    OperatorName = op == null ? string.Empty : op.Name,
-                    cp.ProductName,
-                    t.IsAuthorised
-                }
-                into g
-                select new MerchantDailyPerformanceGroupProjection
-                {
-                    ContractProductReportingId = g.Key.ContractProductReportingId,
-                    ProductName = g.Key.ProductName,
-                    OperatorName = g.Key.OperatorName,
-                    IsAuthorised = g.Key.IsAuthorised,
-                    SalesCount = g.Count(),
-                    SalesValue = g.Sum(x => x.TransactionAmount)
-                };
-
-            return await ExecuteQuerySafeToList(query, cancellationToken, "Error retrieving merchant daily performance summary");
-        }
-
-        private async Task<Result<List<MerchantDailyPerformanceRecentSaleProjection>>> LoadMerchantDailyPerformanceRecentSales(EstateManagementContext context,
-                                                                                                                               TransactionQueries.MerchantDailyPerformanceSummaryQuery request,
-                                                                                                                               DateTime startDate,
-                                                                                                                               DateTime endDate,
-                                                                                                                               CancellationToken cancellationToken) {
-            var query =
-                (from t in context.Transactions
-                 join m in context.Merchants on t.MerchantId equals m.MerchantId
-                 join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
-                 join op in context.Operators on t.OperatorId equals op.OperatorId into opJoin
-                 from op in opJoin.DefaultIfEmpty()
-                 where t.TransactionType == "Sale"
-                       && t.TransactionDate >= startDate
-                       && t.TransactionDate <= endDate
-                       && m.MerchantReportingId == request.Request.MerchantReportingId
-                 orderby t.TransactionDateTime descending
-                 select new MerchantDailyPerformanceRecentSaleProjection
-                 {
-                     Reference = t.TransactionNumber,
-                     Product = cp.ProductName,
-                     Operator = op == null ? string.Empty : op.Name,
-                     Status = t.IsAuthorised ? "Successful" : "Failed",
-                     Amount = t.TransactionAmount,
-                     TransactionDateTime = t.TransactionDateTime
-                 }).Take(5);
-
-            return await ExecuteQuerySafeToList(query, cancellationToken, "Error retrieving merchant recent sales");
-        }
-
-        private static List<DrillDownTransaction> MapMerchantDailyPerformanceRecentSales(List<MerchantDailyPerformanceRecentSaleProjection> recentSales) {
-            return recentSales.Select(x => new DrillDownTransaction {
-                Reference = x.Reference,
-                Product = x.Product,
-                Operator = x.Operator,
-                Status = x.Status,
-                Amount = x.Amount,
-                TransactionDateTime = x.TransactionDateTime
-            }).ToList();
-        }
-
-        private sealed class RecentActivityReceiptQueryResult {
-            public DateTime TransactionDateTime { get; init; }
-            public int MerchantReportingId { get; init; }
-            public string Reference { get; init; }
-            public string? TransactionType { get; init; }
-            public string? Product { get; init; }
-            public string? Operator { get; init; }
-            public string? Status { get; init; }
-            public decimal Amount { get; init; }
-            public string? ReceiptReference { get; init; }
-        }
-
-        private sealed class RecentActivityReceiptRequestParameters {
-            public DateTime ReportDate { get; init; }
-            public int? MerchantReportingId { get; init; }
-            public string? SearchText { get; init; }
-            public int PageNumber { get; init; }
-            public int PageSize { get; init; }
-        }
-
-        private sealed class TransactionDetailQueryResult {
-            public Guid TransactionId { get; init; }
-            public DateTime TransactionDateTime { get; init; }
-            public Guid MerchantId { get; init; }
-            public int MerchantReportingId { get; init; }
-            public string? MerchantName { get; init; }
-            public Guid OperatorId { get; init; }
-            public int OperatorReportingId { get; init; }
-            public string? OperatorName { get; init; }
-            public string? ProductName { get; init; }
-            public Guid ContractProductId { get; init; }
-            public int ContractProductReportingId { get; init; }
-            public string? TransactionType { get; init; }
-            public string? Status { get; init; }
-            public decimal Value { get; init; }
-            public decimal FeeValue { get; init; }
-            public Guid SettlementId { get; init; }
-            public Int32 TransactionNumber { get; init; }
-    }
-
-        private sealed class OperatorTransactionData {
-            public Guid MerchantId { get; init; }
-            public int MerchantReportingId { get; init; }
-            public string? MerchantName { get; init; }
-            public Guid OperatorId { get; init; }
-            public int OperatorReportingId { get; init; }
-            public string? OperatorName { get; init; }
-            public int TotalCount { get; init; }
-            public decimal TotalValue { get; init; }
-            public int AuthorisedCount { get; init; }
-            public int DeclinedCount { get; init; }
-        }
-
-        private sealed class OperatorSummaryData {
-            public Guid OperatorId { get; init; }
-            public int OperatorReportingId { get; init; }
-            public string? OperatorName { get; init; }
-            public int TotalCount { get; init; }
-            public decimal TotalValue { get; init; }
-            public decimal AverageValue { get; init; }
-            public int AuthorisedCount { get; init; }
-            public int DeclinedCount { get; init; }
-            public decimal AuthorisedPercentage { get; init; }
-        }
-
         private sealed class ContractBaseData {
             public Guid ContractId { get; init; }
             public int ContractReportingId { get; init; }
@@ -1132,31 +876,6 @@ public sealed class MerchantReportingService : IMerchantReportingService
             public bool IsEnabled { get; init; }
         }
 
-        private sealed class ProductPerformanceItemData {
-            public string? ProductName { get; init; }
-            public Guid ContractProductId { get; init; }
-            public int ContractProductReportingId { get; init; }
-            public Guid ContractId { get; init; }
-            public int ContractReportingId { get; init; }
-            public int TransactionCount { get; init; }
-            public decimal TotalAmount { get; init; }
-            public decimal PercentOfTotalAmount { get; init; }
-        }
-
-        private sealed class FileImportFlatData {
-            public Guid FileImportLogId { get; init; }
-            public DateTime ImportLogDateTime { get; init; }
-            public Guid FileId { get; init; }
-            public string? FileName { get; init; }
-            public Guid? FileProfileId { get; init; }
-            public DateTime DateTimeUploaded { get; init; }
-            public Guid UserId { get; init; }
-            public string? UploadedBy { get; init; }
-            public Guid MerchantId { get; init; }
-            public string? MerchantName { get; init; }
-            public int LineNumber { get; init; }
-            public string? LineContents { get; init; }
-            public string? LineStatus { get; init; }
-        }
 
 }
+

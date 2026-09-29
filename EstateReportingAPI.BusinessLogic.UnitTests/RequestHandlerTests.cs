@@ -1,6 +1,6 @@
-using EstateReportingAPI.BusinessLogic;
 using EstateReportingAPI.BusinessLogic.Queries;
 using EstateReportingAPI.BusinessLogic.RequestHandlers;
+using EstateReportingAPI.BusinessLogic.Services;
 using EstateReportingAPI.Models;
 using Imposter.Abstractions;
 using Shouldly;

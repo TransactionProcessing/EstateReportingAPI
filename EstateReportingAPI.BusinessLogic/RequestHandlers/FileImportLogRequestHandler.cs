@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using EstateReportingAPI.BusinessLogic.Services;
 using EstateReportingAPI.Models;
 using MediatR;
 using SimpleResults;

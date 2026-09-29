@@ -8,6 +8,7 @@ using Shared.EntityFramework;
 using TransactionProcessor.Database.Contexts;
 using Db = TransactionProcessor.Database.Entities;
 using BalanceState = TransactionProcessor.ProjectionEngine.Database.Database.Entities.MerchantBalanceProjectionState;
+using EstateReportingAPI.BusinessLogic.Services;
 
 namespace EstateReportingAPI.BusinessLogic.UnitTests;
 

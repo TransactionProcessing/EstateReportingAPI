@@ -6,7 +6,14 @@ using TransactionProcessor.Database.Contexts;
 using Shared.EntityFramework;
 using Shared.Results;
 
-namespace EstateReportingAPI.BusinessLogic;
+namespace EstateReportingAPI.BusinessLogic.Services;
+
+public interface IFileImportReportingService
+{
+    Task<Result<List<FileImportLog>>> GetFileImportLogList(FileImportLogQueries.GetFileImportLogListQuery request, CancellationToken cancellationToken);
+    Task<Result<FileImportLog>> GetFileImportLog(FileImportLogQueries.GetFileImportLogQuery request, CancellationToken cancellationToken);
+    Task<Result<List<FileProfileConfiguration>>> GetFileProfileConfigurationList(FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery request, CancellationToken cancellationToken);
+}
 
 public sealed class FileImportReportingService : IFileImportReportingService
 {

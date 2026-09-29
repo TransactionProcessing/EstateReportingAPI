@@ -4,6 +4,7 @@ using TransactionProcessor.Database.Contexts;
 namespace EstateReportingAPI.Bootstrapper;
 
 using BusinessLogic;
+using EstateReportingAPI.BusinessLogic.Services;
 using Lamar;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;

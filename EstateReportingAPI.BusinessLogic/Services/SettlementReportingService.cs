@@ -5,7 +5,12 @@ using SimpleResults;
 using TransactionProcessor.Database.Contexts;
 using Shared.EntityFramework;
 
-namespace EstateReportingAPI.BusinessLogic;
+namespace EstateReportingAPI.BusinessLogic.Services;
+
+public interface ISettlementReportingService
+{
+    Task<Result<TodaysSettlement>> GetTodaysSettlement(SettlementQueries.TodaysSettlementQuery request, CancellationToken cancellationToken);
+}
 
 public sealed class SettlementReportingService : ISettlementReportingService
 {

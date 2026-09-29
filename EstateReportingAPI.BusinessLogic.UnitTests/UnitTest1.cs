@@ -10,6 +10,7 @@ using Imposter.Abstractions;
 
 namespace EstateReportingAPI.BusinessLogic.UnitTests
 {
+    using EstateReportingAPI.BusinessLogic.Services;
     using Shouldly;
 
     public class ReportingServiceTests
