@@ -30,7 +30,7 @@ namespace EstateReportingAPI.BusinessLogic.UnitTests
         }
 
         [Fact]
-        public async Task ReportingManager_GetCalendarYears_YearsAreReturned(){
+        public async Task ReportingService_GetCalendarYears_YearsAreReturned(){
 
             //Required properties '{'DayOfWeek', 'DayOfWeekShort', 'MonthNameLong', 'MonthNameShort', 'WeekNumberString', 'YearWeekNumber'}' 
             var options = new DbContextOptionsBuilder<EstateManagementContext>()
