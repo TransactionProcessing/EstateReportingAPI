@@ -11,7 +11,7 @@ using BalanceState = TransactionProcessor.ProjectionEngine.Database.Database.Ent
 
 namespace EstateReportingAPI.BusinessLogic.UnitTests;
 
-public sealed class ReportingManagerReportTests
+public sealed class ReportingServiceReportTests
 {
     private static readonly Guid EstateId = Guid.Parse("F64241E7-F778-4F77-8A64-099CB51BF4CE");
 
@@ -22,7 +22,7 @@ public sealed class ReportingManagerReportTests
         database.AddCalendar(new DateTime(2026, 9, 1));
         await database.SaveAsync();
 
-        var result = await database.Manager.GetCalendarComparisonDates(
+        var result = await database.EstateService.GetCalendarComparisonDates(
             new CalendarQueries.GetComparisonDatesQuery(EstateId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -37,7 +37,7 @@ public sealed class ReportingManagerReportTests
         database.AddCalendar(new DateTime(2026, 9, 1));
         await database.SaveAsync();
 
-        var result = await database.Manager.GetCalendarDates(
+        var result = await database.EstateService.GetCalendarDates(
             new CalendarQueries.GetAllDatesQuery(EstateId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -51,7 +51,7 @@ public sealed class ReportingManagerReportTests
         database.AddContractFees();
         await database.SaveAsync();
 
-        var result = await database.Manager.GetContract(
+        var result = await database.MerchantService.GetContract(
             new ContractQueries.GetContractQuery(EstateId, database.ContractId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -67,7 +67,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetRecentContracts(
+        var result = await database.MerchantService.GetRecentContracts(
             new ContractQueries.GetRecentContractsQuery(EstateId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -82,7 +82,7 @@ public sealed class ReportingManagerReportTests
         database.AddEstateUser();
         await database.SaveAsync();
 
-        var result = await database.Manager.GetEstate(
+        var result = await database.EstateService.GetEstate(
             new EstateQueries.GetEstateQuery(EstateId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -99,7 +99,7 @@ public sealed class ReportingManagerReportTests
         database.AddEstateOperator();
         await database.SaveAsync();
 
-        var result = await database.Manager.GetEstateOperators(
+        var result = await database.EstateService.GetEstateOperators(
             new EstateQueries.GetEstateOperatorsQuery(EstateId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -115,7 +115,7 @@ public sealed class ReportingManagerReportTests
         database.AddBalance(database.SecondMerchantId, 20m);
         await database.SaveAsync();
 
-        var result = await database.Manager.GetRecentMerchants(
+        var result = await database.MerchantService.GetRecentMerchants(
             new MerchantQueries.GetRecentMerchantsQuery(EstateId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -130,7 +130,7 @@ public sealed class ReportingManagerReportTests
         database.AddBalance(database.MerchantId, 10m);
         await database.SaveAsync();
 
-        var result = await database.Manager.GetMerchantsTransactionKpis(
+        var result = await database.MerchantService.GetMerchantsTransactionKpis(
             new MerchantQueries.GetTransactionKpisQuery(EstateId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -142,7 +142,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetOperators(
+        var result = await database.MerchantService.GetOperators(
             new OperatorQueries.GetOperatorsQuery(EstateId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -154,7 +154,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetOperator(
+        var result = await database.MerchantService.GetOperator(
             new OperatorQueries.GetOperatorQuery(EstateId, database.OperatorId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -166,7 +166,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetFileImportLogList(
+        var result = await database.FileImportService.GetFileImportLogList(
             new FileImportLogQueries.GetFileImportLogListQuery(EstateId, null, DateTime.Today.AddDays(-1), DateTime.Today),
             CancellationToken.None);
 
@@ -181,7 +181,7 @@ public sealed class ReportingManagerReportTests
         Guid logId = database.AddFileImportData();
         await database.SaveAsync();
 
-        var result = await database.Manager.GetFileImportLogList(
+        var result = await database.FileImportService.GetFileImportLogList(
             new FileImportLogQueries.GetFileImportLogListQuery(EstateId, null, DateTime.Today.AddDays(-1), DateTime.Today),
             CancellationToken.None);
 
@@ -197,7 +197,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetFileImportLog(
+        var result = await database.FileImportService.GetFileImportLog(
             new FileImportLogQueries.GetFileImportLogQuery(EstateId, null, Guid.NewGuid()), CancellationToken.None);
 
         result.IsSuccess.ShouldBeFalse();
@@ -210,7 +210,7 @@ public sealed class ReportingManagerReportTests
         Guid logId = database.AddFileImportData();
         await database.SaveAsync();
 
-        var result = await database.Manager.GetFileImportLog(
+        var result = await database.FileImportService.GetFileImportLog(
             new FileImportLogQueries.GetFileImportLogQuery(EstateId, null, logId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -224,7 +224,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetFileProfileConfigurationList(
+        var result = await database.FileImportService.GetFileProfileConfigurationList(
             new FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery(EstateId), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -240,7 +240,7 @@ public sealed class ReportingManagerReportTests
         database.AddSale(database.MerchantId, database.SecondOperatorId, 30m, new DateTime(2026, 9, 1));
         await database.SaveAsync();
 
-        var result = await database.Manager.GetTransactionSummaryByMerchantReport(
+        var result = await database.TransactionService.GetTransactionSummaryByMerchantReport(
             new TransactionQueries.TransactionSummaryByMerchantQuery(
                 EstateId,
                 new TransactionSummaryByMerchantRequest {
@@ -263,7 +263,7 @@ public sealed class ReportingManagerReportTests
         database.AddSale(database.SecondMerchantId, database.OperatorId, 30m, new DateTime(2026, 9, 1), authorised: true);
         await database.SaveAsync();
 
-        var result = await database.Manager.GetTransactionSummaryByOperatorReport(
+        var result = await database.TransactionService.GetTransactionSummaryByOperatorReport(
             new TransactionQueries.TransactionSummaryByOperatorQuery(
                 EstateId,
                 new TransactionSummaryByOperatorRequest {
@@ -290,7 +290,7 @@ public sealed class ReportingManagerReportTests
         database.AddSale(database.SecondMerchantId, database.SecondOperatorId, 20m, new DateTime(2026, 9, 1));
         await database.SaveAsync();
 
-        var result = await database.Manager.GetTransactionDetailReport(
+        var result = await database.TransactionService.GetTransactionDetailReport(
             new TransactionQueries.TransactionDetailReportQuery(
                 EstateId,
                 new TransactionDetailReportRequest {
@@ -315,7 +315,7 @@ public sealed class ReportingManagerReportTests
         database.AddSale(database.SecondMerchantId, database.SecondOperatorId, 20m, new DateTime(2026, 9, 1));
         await database.SaveAsync();
 
-        var result = await database.Manager.GetTransactionSummaryByOperatorReport(
+        var result = await database.TransactionService.GetTransactionSummaryByOperatorReport(
             new TransactionQueries.TransactionSummaryByOperatorQuery(
                 EstateId,
                 new TransactionSummaryByOperatorRequest {
@@ -335,7 +335,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetTransactionSummaryByMerchantReport(
+        var result = await database.TransactionService.GetTransactionSummaryByMerchantReport(
             new TransactionQueries.TransactionSummaryByMerchantQuery(
                 EstateId,
                 new TransactionSummaryByMerchantRequest {
@@ -355,7 +355,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetTransactionMixSummary(
+        var result = await database.TransactionService.GetTransactionMixSummary(
             new TransactionQueries.TransactionMixSummaryQuery(
                 EstateId,
                 new TransactionMixSummaryRequest {
@@ -374,7 +374,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetTransactionMixSummary(
+        var result = await database.TransactionService.GetTransactionMixSummary(
             new TransactionQueries.TransactionMixSummaryQuery(
                 EstateId,
                 new TransactionMixSummaryRequest {
@@ -393,7 +393,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetRecentActivityReceiptReport(
+        var result = await database.TransactionService.GetRecentActivityReceiptReport(
             new TransactionQueries.GetRecentActivityReceiptReportQuery(
                 EstateId,
                 new GetRecentActivityReceiptReportRequest {
@@ -419,7 +419,7 @@ public sealed class ReportingManagerReportTests
         database.AddSale(database.MerchantId, database.OperatorId, 30m, new DateTime(2026, 9, 1, 11, 0, 0));
         await database.SaveAsync();
 
-        var result = await database.Manager.GetRecentActivityReceiptReport(
+        var result = await database.TransactionService.GetRecentActivityReceiptReport(
             new TransactionQueries.GetRecentActivityReceiptReportQuery(
                 EstateId,
                 new GetRecentActivityReceiptReportRequest {
@@ -444,7 +444,7 @@ public sealed class ReportingManagerReportTests
         database.AddSettlementFee(transactionWithFee, 0.5m);
         await database.SaveAsync();
 
-        var result = await database.Manager.GetTransactionDetailReport(
+        var result = await database.TransactionService.GetTransactionDetailReport(
             new TransactionQueries.TransactionDetailReportQuery(
                 EstateId,
                 new TransactionDetailReportRequest {
@@ -470,7 +470,7 @@ public sealed class ReportingManagerReportTests
         database.AddSale(database.MerchantId, database.OperatorId, 30m, new DateTime(2026, 8, 31));
         await database.SaveAsync();
 
-        var result = await database.Manager.GetTransactionDetailReport(
+        var result = await database.TransactionService.GetTransactionDetailReport(
             new TransactionQueries.TransactionDetailReportQuery(
                 EstateId,
                 new TransactionDetailReportRequest {
@@ -489,7 +489,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetTodaysSettlement(
+        var result = await database.SettlementService.GetTodaysSettlement(
             new SettlementQueries.TodaysSettlementQuery(EstateId, DateTime.Today.AddDays(-1)),
             CancellationToken.None);
 
@@ -508,7 +508,7 @@ public sealed class ReportingManagerReportTests
         await using TestDatabase database = await TestDatabase.CreateAsync();
         DateTime comparisonDate = DateTime.Today.AddDays(-1);
 
-        var result = await database.Manager.GetTodaysSales(
+        var result = await database.TransactionService.GetTodaysSales(
             new TransactionQueries.TodaysSalesQuery(EstateId, 20, 10, comparisonDate),
             CancellationToken.None);
 
@@ -527,7 +527,7 @@ public sealed class ReportingManagerReportTests
         await using TestDatabase database = await TestDatabase.CreateAsync();
         DateTime comparisonDate = DateTime.Today.AddDays(-1);
 
-        var result = await database.Manager.GetTodaysFailedSales(
+        var result = await database.TransactionService.GetTodaysFailedSales(
             new TransactionQueries.TodaysFailedSales(EstateId, comparisonDate, "1000"),
             CancellationToken.None);
 
@@ -549,7 +549,7 @@ public sealed class ReportingManagerReportTests
         database.AddSale(database.MerchantId, database.OperatorId, 30m, new DateTime(2026, 9, 2, 11, 0, 0), authorised: true);
         await database.SaveAsync();
 
-        var result = await database.Manager.GetMerchantDailyPerformanceSummary(
+        var result = await database.TransactionService.GetMerchantDailyPerformanceSummary(
             new TransactionQueries.MerchantDailyPerformanceSummaryQuery(
                 EstateId,
                 new MerchantDailyPerformanceSummaryRequest {
@@ -578,7 +578,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetMerchantDailyPerformanceSummary(
+        var result = await database.TransactionService.GetMerchantDailyPerformanceSummary(
             new TransactionQueries.MerchantDailyPerformanceSummaryQuery(
                 EstateId,
                 new MerchantDailyPerformanceSummaryRequest {
@@ -602,7 +602,7 @@ public sealed class ReportingManagerReportTests
         database.AddBalance(database.SecondMerchantId, 20m);
         await database.SaveAsync();
 
-        var result = await database.Manager.GetMerchants(
+        var result = await database.MerchantService.GetMerchants(
             new MerchantQueries.GetMerchantsQuery(
                 EstateId,
                 new MerchantQueries.MerchantQueryOptions("Merchant 1", "M1", 2, "Region", "P1")),
@@ -621,7 +621,7 @@ public sealed class ReportingManagerReportTests
         database.AddMerchantRelatedData();
         await database.SaveAsync();
 
-        var result = await database.Manager.GetMerchant(
+        var result = await database.MerchantService.GetMerchant(
             new MerchantQueries.GetMerchantQuery(EstateId, database.MerchantId),
             CancellationToken.None);
 
@@ -643,7 +643,7 @@ public sealed class ReportingManagerReportTests
         database.AddSale(database.MerchantId, database.OperatorId, 30m, new DateTime(2026, 9, 1));
         await database.SaveAsync();
 
-        var result = await database.Manager.GetProductPerformanceReport(
+        var result = await database.TransactionService.GetProductPerformanceReport(
             new TransactionQueries.ProductPerformanceQuery(EstateId, new DateTime(2026, 9, 1), new DateTime(2026, 9, 1)),
             CancellationToken.None);
 
@@ -665,7 +665,7 @@ public sealed class ReportingManagerReportTests
         database.AddMerchantRelatedData();
         await database.SaveAsync();
 
-        var operators = await database.Manager.GetMerchantOperators(
+        var operators = await database.MerchantService.GetMerchantOperators(
             new MerchantQueries.GetMerchantOperatorsQuery(EstateId, database.MerchantId), CancellationToken.None);
 
         operators.IsSuccess.ShouldBeTrue();
@@ -679,7 +679,7 @@ public sealed class ReportingManagerReportTests
         database.AddMerchantRelatedData();
         await database.SaveAsync();
 
-        var contracts = await database.Manager.GetMerchantContracts(
+        var contracts = await database.MerchantService.GetMerchantContracts(
             new MerchantQueries.GetMerchantContractsQuery(EstateId, database.MerchantId), CancellationToken.None);
 
         contracts.IsSuccess.ShouldBeTrue();
@@ -694,7 +694,7 @@ public sealed class ReportingManagerReportTests
         database.AddMerchantRelatedData();
         await database.SaveAsync();
 
-        var devices = await database.Manager.GetMerchantDevices(
+        var devices = await database.MerchantService.GetMerchantDevices(
             new MerchantQueries.GetMerchantDevicesQuery(EstateId, database.MerchantId), CancellationToken.None);
 
         devices.IsSuccess.ShouldBeTrue();
@@ -708,7 +708,7 @@ public sealed class ReportingManagerReportTests
         database.AddMerchantRelatedData();
         await database.SaveAsync();
 
-        var openingHours = await database.Manager.GetMerchantOpeningHours(
+        var openingHours = await database.MerchantService.GetMerchantOpeningHours(
             new MerchantQueries.GetMerchantOpeningHoursQuery(EstateId, database.MerchantId), CancellationToken.None);
 
         openingHours.IsSuccess.ShouldBeTrue();
@@ -723,7 +723,7 @@ public sealed class ReportingManagerReportTests
         database.AddMerchantRelatedData();
         await database.SaveAsync();
 
-        var schedule = await database.Manager.GetMerchantSchedule(
+        var schedule = await database.MerchantService.GetMerchantSchedule(
             new MerchantQueries.GetMerchantScheduleQuery(EstateId, database.MerchantId, 2026), CancellationToken.None);
 
         schedule.IsSuccess.ShouldBeTrue();
@@ -736,7 +736,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetTodaysSalesByHour(
+        var result = await database.TransactionService.GetTodaysSalesByHour(
             new TransactionQueries.TodaysSalesByHour(EstateId, DateTime.Today.AddDays(-1)),
             CancellationToken.None);
 
@@ -751,7 +751,7 @@ public sealed class ReportingManagerReportTests
         database.AddContractFees();
         await database.SaveAsync();
 
-        var result = await database.Manager.GetContracts(
+        var result = await database.MerchantService.GetContracts(
             new ContractQueries.GetContractsQuery(EstateId),
             CancellationToken.None);
 
@@ -771,7 +771,7 @@ public sealed class ReportingManagerReportTests
         database.AddSale(database.MerchantId, database.OperatorId, 25m, new DateTime(2026, 9, 1), authorised: false);
         await database.SaveAsync();
 
-        var result = await database.Manager.GetTransactionMixSummary(
+        var result = await database.TransactionService.GetTransactionMixSummary(
             new TransactionQueries.TransactionMixSummaryQuery(
                 EstateId,
                 new TransactionMixSummaryRequest {
@@ -801,7 +801,7 @@ public sealed class ReportingManagerReportTests
         database.AddSale(database.SecondMerchantId, database.OperatorId, 20m, new DateTime(2026, 9, 1, 10, 0, 0));
         await database.SaveAsync();
 
-        var result = await database.Manager.GetRecentActivityReceiptReport(
+        var result = await database.TransactionService.GetRecentActivityReceiptReport(
             new TransactionQueries.GetRecentActivityReceiptReportQuery(
                 EstateId,
                 new GetRecentActivityReceiptReportRequest {
@@ -821,7 +821,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetProductPerformanceReport(
+        var result = await database.TransactionService.GetProductPerformanceReport(
             new TransactionQueries.ProductPerformanceQuery(EstateId, new DateTime(2026, 9, 1), new DateTime(2026, 9, 1)),
             CancellationToken.None);
 
@@ -836,7 +836,7 @@ public sealed class ReportingManagerReportTests
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
-        var result = await database.Manager.GetMerchants(
+        var result = await database.MerchantService.GetMerchants(
             new MerchantQueries.GetMerchantsQuery(EstateId, new MerchantQueries.MerchantQueryOptions("", "", null, "", "")),
             CancellationToken.None);
 
@@ -851,7 +851,7 @@ public sealed class ReportingManagerReportTests
         database.AddBalance(database.MerchantId, 20m);
         await database.SaveAsync();
 
-        var result = await database.Manager.GetMerchants(
+        var result = await database.MerchantService.GetMerchants(
             new MerchantQueries.GetMerchantsQuery(EstateId, new MerchantQueries.MerchantQueryOptions("", "", null, "", "")),
             CancellationToken.None);
 
@@ -863,12 +863,16 @@ public sealed class ReportingManagerReportTests
         private readonly ServiceProvider services;
         private readonly EstateManagementContext seedContext;
 
-        private TestDatabase(ServiceProvider services, EstateManagementContext seedContext, ReportingManager manager,
+        private TestDatabase(ServiceProvider services, EstateManagementContext seedContext, IEstateReportingService estateService, IMerchantReportingService merchantService, IFileImportReportingService fileImportService, ITransactionReportingService transactionService, ISettlementReportingService settlementService,
                              Guid merchantId, Guid secondMerchantId, Guid operatorId, Guid secondOperatorId, Guid contractId, Guid productId)
         {
             this.services = services;
             this.seedContext = seedContext;
-            Manager = manager;
+            EstateService = estateService;
+            MerchantService = merchantService;
+            FileImportService = fileImportService;
+            TransactionService = transactionService;
+            SettlementService = settlementService;
             MerchantId = merchantId;
             SecondMerchantId = secondMerchantId;
             OperatorId = operatorId;
@@ -877,7 +881,11 @@ public sealed class ReportingManagerReportTests
             ProductId = productId;
         }
 
-        public ReportingManager Manager { get; }
+        public IEstateReportingService EstateService { get; }
+        public IMerchantReportingService MerchantService { get; }
+        public IFileImportReportingService FileImportService { get; }
+        public ITransactionReportingService TransactionService { get; }
+        public ISettlementReportingService SettlementService { get; }
         public Guid MerchantId { get; }
         public Guid SecondMerchantId { get; }
         public Guid OperatorId { get; }
@@ -932,7 +940,7 @@ public sealed class ReportingManagerReportTests
             resolver.Resolve(Arg<string>.Any(), Arg<string>.Any())
                 .Returns(new ResolvedDbContext<EstateManagementContext>(services.CreateScope()));
 
-            return new TestDatabase(services, seedContext, new ReportingManager(resolver.Instance()), merchantId, secondMerchantId, operatorId,
+            return new TestDatabase(services, seedContext, new EstateReportingService(resolver.Instance()), new MerchantReportingService(resolver.Instance()), new FileImportReportingService(resolver.Instance()), new TransactionReportingService(resolver.Instance()), new SettlementReportingService(resolver.Instance()), merchantId, secondMerchantId, operatorId,
                 secondOperatorId, contractId, productId);
         }
 
@@ -1149,3 +1157,4 @@ public sealed class ReportingManagerReportTests
         }
     }
 }
+

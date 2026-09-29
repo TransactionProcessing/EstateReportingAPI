@@ -12,7 +12,7 @@ namespace EstateReportingAPI.BusinessLogic.UnitTests
 {
     using Shouldly;
 
-    public class ReportingManagerTests
+    public class ReportingServiceTests
     {
         //Task<List<Calendar>> GetCalendarComparisonDates(Guid estateId, CancellationToken cancellationToken);
         //Task<List<Calendar>> GetCalendarDates(Guid estateId, CancellationToken cancellationToken);
@@ -79,9 +79,9 @@ namespace EstateReportingAPI.BusinessLogic.UnitTests
             var resolver = new IDbContextResolverImposter<EstateManagementContext>();
             resolver.Resolve(Arg<String>.Any(), Arg<String>.Any()).Returns(new ResolvedDbContext<EstateManagementContext>(services.CreateScope()));
 
-            var manager = new ReportingManager(resolver.Instance());
+            var reportingService = new EstateReportingService(resolver.Instance());
 
-            var years = await manager.GetCalendarYears(new CalendarQueries.GetYearsQuery(TestData.EstateId), CancellationToken.None);
+            var years = await reportingService.GetCalendarYears(new CalendarQueries.GetYearsQuery(TestData.EstateId), CancellationToken.None);
 
             years.Data.Count.ShouldBe(3);
             years.Data.ShouldContain(2021);
