@@ -9,7 +9,7 @@ using Db = TransactionProcessor.Database.Entities;
 
 namespace EstateReportingAPI.BusinessLogic.UnitTests;
 
-public sealed class ReportingManagerExtensionsTests
+public sealed class ReportingQueryExtensionsTests
 {
     [Fact]
     public void TodayTransactionFilters_HandleEmptyAndSelectedValues()

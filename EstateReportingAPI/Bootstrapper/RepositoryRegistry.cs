@@ -4,6 +4,7 @@ using TransactionProcessor.Database.Contexts;
 namespace EstateReportingAPI.Bootstrapper;
 
 using BusinessLogic;
+using EstateReportingAPI.BusinessLogic.Services;
 using Lamar;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
@@ -15,10 +16,11 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public class RepositoryRegistry : ServiceRegistry{
     public RepositoryRegistry() {
-        String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
-        if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) != 0) {
-            this.AddSingleton<IReportingManager, ReportingManager>();
-        }
+        this.AddSingleton<ITransactionReportingService, TransactionReportingService>();
+        this.AddSingleton<IEstateReportingService, EstateReportingService>();
+        this.AddSingleton<ISettlementReportingService, SettlementReportingService>();
+        this.AddSingleton<IFileImportReportingService, FileImportReportingService>();
+        this.AddSingleton<IMerchantReportingService, MerchantReportingService>();
 
         this.AddSingleton<DbCommandInterceptor, QueryTimingInterceptor>();
         this.AddSingleton(typeof(IDbContextResolver<>), typeof(DbContextResolverX<>));

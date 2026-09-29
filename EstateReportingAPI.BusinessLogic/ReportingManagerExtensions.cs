@@ -4,7 +4,7 @@ using TransactionProcessor.Database.Entities.Summary;
 
 namespace EstateReportingAPI.BusinessLogic;
 
-public static class ReportingManagerExtensions{
+public static class ReportingQueryExtensions{
     public static IQueryable<TodayTransaction> ApplyMerchantFilter(this IQueryable<TodayTransaction> query, List<int> merchantReportingIds)
     {
         if (merchantReportingIds == null || merchantReportingIds.Count == 0)

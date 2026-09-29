@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using EstateReportingAPI.BusinessLogic.Services;
 using EstateReportingAPI.Models;
 using MediatR;
 using SimpleResults;
@@ -9,19 +10,19 @@ public class OperatorRequestHandler : IRequestHandler<OperatorQueries.GetOperato
     IRequestHandler<OperatorQueries.GetOperatorQuery, Result<Operator>>
 {
 
-    private readonly IReportingManager Manager;
+    private readonly IMerchantReportingService ReportingService;
 
-    public OperatorRequestHandler(IReportingManager manager) {
-        this.Manager = manager;
+    public OperatorRequestHandler(IMerchantReportingService reportingService) {
+        this.ReportingService = reportingService;
     }
 
     public async Task<Result<List<Operator>>> Handle(OperatorQueries.GetOperatorsQuery request,
                                                      CancellationToken cancellationToken) {
-        return await this.Manager.GetOperators(request, cancellationToken);
+        return await this.ReportingService.GetOperators(request, cancellationToken);
     }
 
     public async Task<Result<Operator>> Handle(OperatorQueries.GetOperatorQuery request,
                                                CancellationToken cancellationToken) {
-        return await this.Manager.GetOperator(request, cancellationToken);
+        return await this.ReportingService.GetOperator(request, cancellationToken);
     }
 }
