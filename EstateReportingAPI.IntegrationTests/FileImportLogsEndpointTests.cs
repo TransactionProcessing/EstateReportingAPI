@@ -45,7 +45,7 @@ namespace EstateReportingAPI.IntegrationTests
             actual.FileId.ShouldBe(fileId);
             actual.FileName.ShouldBe(fileName);
             actual.FileProfile.ShouldBe(fileProfileId.ToString());
-            actual.DateTimeUploaded.ShouldBe(uploadedAt, TimeSpan.FromSeconds(1));
+            actual.DateTimeUploaded.ShouldBe(ToUkDateTimeOffset(uploadedAt), TimeSpan.FromSeconds(1));
             actual.UserId.ShouldBe(userId);
             actual.UploadedBy.ShouldBe(uploadedBy);
             actual.MerchantId.ShouldBe(merchantId);
@@ -98,7 +98,7 @@ namespace EstateReportingAPI.IntegrationTests
 
             var match = list.Single();
             match.FileImportLogId.ShouldBe(sourceLog.FileImportLogId);
-            match.ImportLogDateTime.ShouldBe(sourceLog.ImportLogDateTime, TimeSpan.FromSeconds(1));
+            match.ImportLogDateTime.ShouldBe(ToUkDateTimeOffset(sourceLog.ImportLogDateTime), TimeSpan.FromSeconds(1));
             match.FileDetailsList.Count.ShouldBe(1);
 
             var fileDetail = match.FileDetailsList.Single();
@@ -146,7 +146,7 @@ namespace EstateReportingAPI.IntegrationTests
             var sourceLine = this.context.FileLines.Single(x => x.FileId == fileId);
 
             item.FileImportLogId.ShouldBe(sourceLog.FileImportLogId);
-            item.ImportLogDateTime.ShouldBe(sourceLog.ImportLogDateTime, TimeSpan.FromSeconds(1));
+            item.ImportLogDateTime.ShouldBe(ToUkDateTimeOffset(sourceLog.ImportLogDateTime), TimeSpan.FromSeconds(1));
             item.FileDetailsList.Count.ShouldBe(1);
 
             var fileDetail = item.FileDetailsList.Single();
@@ -192,7 +192,7 @@ namespace EstateReportingAPI.IntegrationTests
             var sourceLine = this.context.FileLines.Single(x => x.FileId == fileId);
 
             item.FileImportLogId.ShouldBe(sourceLog.FileImportLogId);
-            item.ImportLogDateTime.ShouldBe(sourceLog.ImportLogDateTime, TimeSpan.FromSeconds(1));
+            item.ImportLogDateTime.ShouldBe(ToUkDateTimeOffset(sourceLog.ImportLogDateTime), TimeSpan.FromSeconds(1));
             item.FileDetailsList.Count.ShouldBe(1);
 
             var fileDetail = item.FileDetailsList.Single();
@@ -277,7 +277,7 @@ namespace EstateReportingAPI.IntegrationTests
 
             var match = list.Single();
             match.FileImportLogId.ShouldBe(sourceLog.FileImportLogId);
-            match.ImportLogDateTime.ShouldBe(sourceLog.ImportLogDateTime, TimeSpan.FromSeconds(1));
+            match.ImportLogDateTime.ShouldBe(ToUkDateTimeOffset(sourceLog.ImportLogDateTime), TimeSpan.FromSeconds(1));
             match.FileDetailsList.Count.ShouldBe(1);
 
             var fileDetail = match.FileDetailsList.Single();

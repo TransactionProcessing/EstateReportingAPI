@@ -36,6 +36,30 @@ public abstract class ControllerTestsBase : IAsyncLifetime
             .ShouldBe(Math.Round(expected, 4, MidpointRounding.AwayFromZero));
     }
 
+    protected static DateTime GetUkLocalNow()
+    {
+        return TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, GetReportingTimeZone()).DateTime;
+    }
+
+    protected static DateTimeOffset ToUkDateTimeOffset(DateTime localDateTime)
+    {
+        DateTime unspecified = DateTime.SpecifyKind(localDateTime, DateTimeKind.Unspecified);
+        TimeZoneInfo timeZone = GetReportingTimeZone();
+        return new DateTimeOffset(unspecified, timeZone.GetUtcOffset(unspecified));
+    }
+
+    private static TimeZoneInfo GetReportingTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Europe/London");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+        }
+    }
+
     public virtual async ValueTask InitializeAsync()
     {
         IntegrationTestEnvironment environment = await IntegrationTestEnvironment.GetAsync();

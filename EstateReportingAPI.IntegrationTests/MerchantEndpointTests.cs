@@ -283,7 +283,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
     [Fact]
     public async Task MerchantEndpoint_GetMerchantKpis_MerchantKpisReturned()
     {
-        DateTime now = DateTime.Now;
+        DateTime now = GetUkLocalNow();
 
         await this.helper.AddEstate("Test Estate", "Ref1");
         
