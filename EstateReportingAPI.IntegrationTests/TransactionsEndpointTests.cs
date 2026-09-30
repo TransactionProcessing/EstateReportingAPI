@@ -535,10 +535,12 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         transactionDetailReportResponse.Summary.TotalValue.ShouldBe(transactions.Sum(t=> t.TransactionAmount));
         transactionDetailReportResponse.Summary.TotalFees.ShouldBe(0m);
 
-        foreach (Transaction transaction in transactions) {
-            var foundTxn = transactionDetailReportResponse.Transactions.Single(t => t.Id == transaction.TransactionId);
-            AssertTransactionDetailMatches(foundTxn, transaction);
-        }
+        transactionDetailReportResponse.Transactions.Count.ShouldBe(50);
+        transactionDetailReportResponse.Pagination.PageNumber.ShouldBe(1);
+        transactionDetailReportResponse.Pagination.PageSize.ShouldBe(50);
+        transactionDetailReportResponse.Pagination.TotalItems.ShouldBe(transactions.Count);
+        transactionDetailReportResponse.Pagination.TotalPages.ShouldBe((int)Math.Ceiling(transactions.Count / 50m));
+        transactionDetailReportResponse.Transactions.All(t => transactions.Any(source => source.TransactionId == t.Id)).ShouldBeTrue();
     }
 
     [Fact]
@@ -608,11 +610,12 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         transactionDetailReportResponse.Summary.TotalValue.ShouldBe(filteredTransactions.Sum(t => t.TransactionAmount));
         transactionDetailReportResponse.Summary.TotalFees.ShouldBe(0m);
 
-        foreach (Transaction transaction in filteredTransactions)
-        {
-            var foundTxn = transactionDetailReportResponse.Transactions.Single(t => t.Id == transaction.TransactionId);
-            AssertTransactionDetailMatches(foundTxn, transaction);
-        }
+        transactionDetailReportResponse.Transactions.Count.ShouldBe(50);
+        transactionDetailReportResponse.Pagination.PageNumber.ShouldBe(1);
+        transactionDetailReportResponse.Pagination.PageSize.ShouldBe(50);
+        transactionDetailReportResponse.Pagination.TotalItems.ShouldBe(filteredTransactions.Count());
+        transactionDetailReportResponse.Pagination.TotalPages.ShouldBe((int)Math.Ceiling(filteredTransactions.Count() / 50m));
+        transactionDetailReportResponse.Transactions.All(t => filteredTransactions.Any(source => source.TransactionId == t.Id)).ShouldBeTrue();
     }
 
     [Fact]
@@ -682,11 +685,12 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         transactionDetailReportResponse.Summary.TotalValue.ShouldBe(filteredTransactions.Sum(t => t.TransactionAmount));
         transactionDetailReportResponse.Summary.TotalFees.ShouldBe(0m);
 
-        foreach (Transaction transaction in filteredTransactions)
-        {
-            var foundTxn = transactionDetailReportResponse.Transactions.Single(t => t.Id == transaction.TransactionId);
-            AssertTransactionDetailMatches(foundTxn, transaction);
-        }
+        transactionDetailReportResponse.Transactions.Count.ShouldBe(50);
+        transactionDetailReportResponse.Pagination.PageNumber.ShouldBe(1);
+        transactionDetailReportResponse.Pagination.PageSize.ShouldBe(50);
+        transactionDetailReportResponse.Pagination.TotalItems.ShouldBe(filteredTransactions.Count());
+        transactionDetailReportResponse.Pagination.TotalPages.ShouldBe((int)Math.Ceiling(filteredTransactions.Count() / 50m));
+        transactionDetailReportResponse.Transactions.All(t => filteredTransactions.Any(source => source.TransactionId == t.Id)).ShouldBeTrue();
     }
 
     [Fact]
@@ -755,11 +759,12 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         transactionDetailReportResponse.Summary.TotalValue.ShouldBe(filteredTransactions.Sum(t => t.TransactionAmount));
         transactionDetailReportResponse.Summary.TotalFees.ShouldBe(0m);
 
-        foreach (Transaction transaction in filteredTransactions)
-        {
-            var foundTxn = transactionDetailReportResponse.Transactions.Single(t => t.Id == transaction.TransactionId);
-            AssertTransactionDetailMatches(foundTxn, transaction);
-        }
+        transactionDetailReportResponse.Transactions.Count.ShouldBe(50);
+        transactionDetailReportResponse.Pagination.PageNumber.ShouldBe(1);
+        transactionDetailReportResponse.Pagination.PageSize.ShouldBe(50);
+        transactionDetailReportResponse.Pagination.TotalItems.ShouldBe(filteredTransactions.Count());
+        transactionDetailReportResponse.Pagination.TotalPages.ShouldBe((int)Math.Ceiling(filteredTransactions.Count() / 50m));
+        transactionDetailReportResponse.Transactions.All(t => filteredTransactions.Any(source => source.TransactionId == t.Id)).ShouldBeTrue();
     }
 
 
@@ -1675,9 +1680,10 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         }
 
         DateOnly.Parse(GetPropertyCaseInsensitive(document.RootElement, "reportDate").GetString()!).ShouldBe(DateOnly.FromDateTime(reportDate));
-        GetPropertyCaseInsensitive(document.RootElement, "pageNumber").GetInt32().ShouldBe(1);
-        GetPropertyCaseInsensitive(document.RootElement, "pageSize").GetInt32().ShouldBe(10);
-        GetPropertyCaseInsensitive(document.RootElement, "totalCount").GetInt32().ShouldBe(2);
+        JsonElement pagination = GetPropertyCaseInsensitive(document.RootElement, "pagination");
+        GetPropertyCaseInsensitive(pagination, "pageNumber").GetInt32().ShouldBe(1);
+        GetPropertyCaseInsensitive(pagination, "pageSize").GetInt32().ShouldBe(10);
+        GetPropertyCaseInsensitive(pagination, "totalItems").GetInt32().ShouldBe(2);
 
         JsonElement items = GetPropertyCaseInsensitive(document.RootElement, "items");
         items.GetArrayLength().ShouldBe(2);
@@ -1726,7 +1732,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         string content = await response.Content.ReadAsStringAsync(CancellationToken.None);
         using JsonDocument document = JsonDocument.Parse(content);
 
-        GetPropertyCaseInsensitive(document.RootElement, "totalCount").GetInt32().ShouldBe(2);
+        JsonElement pagination = GetPropertyCaseInsensitive(document.RootElement, "pagination");
+        GetPropertyCaseInsensitive(pagination, "totalItems").GetInt32().ShouldBe(2);
         JsonElement items = GetPropertyCaseInsensitive(document.RootElement, "items");
         items.GetArrayLength().ShouldBe(1);
         AssertRecentActivityReceiptItemMatches(items[0], transactions[1], product.productName, contract.operatorName, "receipt-002");

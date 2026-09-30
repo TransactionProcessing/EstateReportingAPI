@@ -56,12 +56,24 @@ public static class TransactionHandler {
                                                               [FromBody] TransactionDetailReportRequest request, 
                                                               BusinessLogic.ReportingDatePolicy datePolicy,
                                                               IMediator mediator, CancellationToken cancellationToken) {
+        string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
+                                      request.StartDate.ToDateTime(TimeOnly.MinValue),
+                                      request.EndDate.ToDateTime(TimeOnly.MinValue))
+                                  ?? BusinessLogic.ReportQueryValidation.ValidatePaging(request.PageNumber, request.PageSize)
+                                  ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("merchants", request.Merchants)
+                                  ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("operators", request.Operators)
+                                  ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("products", request.Products);
+        if (validationError != null)
+            return InvalidReportQuery(validationError);
+
         Models.TransactionDetailReportRequest queryRequest = new() {
             Merchants = request.Merchants,
             Operators = request.Operators,
             Products = request.Products,
             StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
-            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue)
+             EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
+             PageNumber = request.PageNumber,
+             PageSize = request.PageSize
         };
 
         var query = new TransactionQueries.TransactionDetailReportQuery(estateContext.EstateId, queryRequest);
@@ -70,6 +82,12 @@ public static class TransactionHandler {
         TransactionDetailReportResponse SuccessFactory (Models.TransactionDetailReportResponse r) =>
             new TransactionDetailReportResponse {
                 Summary = new TransactionDetailSummary { TotalFees = r.Summary.TotalFees, TotalValue = r.Summary.TotalValue, TransactionCount = r.Summary.TransactionCount },
+                 Pagination = new PaginationMetadata {
+                     PageNumber = r.Pagination.PageNumber,
+                     PageSize = r.Pagination.PageSize,
+                     TotalItems = r.Pagination.TotalItems,
+                     TotalPages = r.Pagination.TotalPages
+                 },
                 Transactions = r.Transactions.Select(t => new TransactionDetail {
                         TotalFees = t.TotalFees,
                         DateTime = datePolicy.ToDateTimeOffset(t.DateTime),
@@ -99,17 +117,34 @@ public static class TransactionHandler {
     public static async Task<IResult> TransactionSummaryByMerchantReport(IEstateContext estateContext,
                                                               [FromBody] TransactionSummaryByMerchantRequest request, 
                                                               IMediator mediator, CancellationToken cancellationToken) {
+        string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
+                                      request.StartDate.ToDateTime(TimeOnly.MinValue),
+                                      request.EndDate.ToDateTime(TimeOnly.MinValue))
+                                  ?? BusinessLogic.ReportQueryValidation.ValidatePaging(request.PageNumber, request.PageSize)
+                                  ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("merchants", request.Merchants)
+                                  ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("operators", request.Operators);
+        if (validationError != null)
+            return InvalidReportQuery(validationError);
+
         Models.TransactionSummaryByMerchantRequest queryRequest = new() {
             Merchants = request.Merchants,
             Operators = request.Operators,
             StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
-            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue)
+             EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
+             PageNumber = request.PageNumber,
+             PageSize = request.PageSize
         };
         var query = new TransactionQueries.TransactionSummaryByMerchantQuery(estateContext.EstateId, queryRequest);
         var result = await mediator.Send(query, cancellationToken);
         TransactionSummaryByMerchantResponse SuccessFactory (Models.TransactionSummaryByMerchantResponse r) =>
             new TransactionSummaryByMerchantResponse {
                 Summary = new MerchantDetailSummary { TotalMerchants = r.Summary.TotalMerchants, TotalCount = r.Summary.TotalCount, TotalValue = r.Summary.TotalValue, AverageValue = r.Summary.AverageValue },
+                Pagination = new PaginationMetadata {
+                    PageNumber = r.Pagination.PageNumber,
+                    PageSize = r.Pagination.PageSize,
+                    TotalItems = r.Pagination.TotalItems,
+                    TotalPages = r.Pagination.TotalPages
+                },
                 Merchants = r.Merchants.Select(m => new MerchantDetail {
                         MerchantId = m.MerchantId,
                         MerchantName = m.MerchantName,
@@ -129,14 +164,29 @@ public static class TransactionHandler {
     public static async Task<IResult> ProductPerformanceReport(IEstateContext estateContext,
                                                                [FromQuery] DateOnly startDate,
                                                                [FromQuery] DateOnly endDate,
+                                                               [FromQuery] int? pageNumber,
+                                                               [FromQuery] int? pageSize,
                                                                IMediator mediator,
                                                                CancellationToken cancellationToken) {
-        var query = new TransactionQueries.ProductPerformanceQuery(estateContext.EstateId, startDate.ToDateTime(TimeOnly.MinValue), endDate.ToDateTime(TimeOnly.MinValue));
+        int requestedPageNumber = pageNumber ?? 1;
+        int requestedPageSize = pageSize ?? 50;
+        string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(startDate.ToDateTime(TimeOnly.MinValue), endDate.ToDateTime(TimeOnly.MinValue))
+                                  ?? BusinessLogic.ReportQueryValidation.ValidatePaging(requestedPageNumber, requestedPageSize);
+        if (validationError != null)
+            return InvalidReportQuery(validationError);
+
+        var query = new TransactionQueries.ProductPerformanceQuery(estateContext.EstateId, startDate.ToDateTime(TimeOnly.MinValue), endDate.ToDateTime(TimeOnly.MinValue), requestedPageNumber, requestedPageSize);
         var result = await mediator.Send(query, cancellationToken);
         ProductPerformanceResponse SuccessFactory(Models.ProductPerformanceResponse r) =>
             new ProductPerformanceResponse
             {
                 Summary = new ProductPerformanceSummary { TotalProducts = r.Summary.TotalProducts, TotalCount = r.Summary.TotalCount, TotalValue = r.Summary.TotalValue, AveragePerProduct = r.Summary.AveragePerProduct },
+                 Pagination = new PaginationMetadata {
+                     PageNumber = r.Pagination.PageNumber,
+                     PageSize = r.Pagination.PageSize,
+                     TotalItems = r.Pagination.TotalItems,
+                     TotalPages = r.Pagination.TotalPages
+                 },
                 ProductDetails = r.ProductDetails.Select(p => new ProductPerformanceDetail
                     {
                         ProductId = p.ProductId,
@@ -157,12 +207,23 @@ public static class TransactionHandler {
                                                                          [FromBody] TransactionSummaryByOperatorRequest request,
                                                                          IMediator mediator, CancellationToken cancellationToken)
     {
+        string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
+                                      request.StartDate.ToDateTime(TimeOnly.MinValue),
+                                      request.EndDate.ToDateTime(TimeOnly.MinValue))
+                                  ?? BusinessLogic.ReportQueryValidation.ValidatePaging(request.PageNumber, request.PageSize)
+                                  ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("merchants", request.Merchants)
+                                  ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("operators", request.Operators);
+        if (validationError != null)
+            return InvalidReportQuery(validationError);
+
         Models.TransactionSummaryByOperatorRequest queryRequest = new()
         {
             Merchants = request.Merchants,
             Operators = request.Operators,
             StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
-            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue)
+            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize
         };
         var query = new TransactionQueries.TransactionSummaryByOperatorQuery(estateContext.EstateId, queryRequest);
         var result = await mediator.Send(query, cancellationToken);
@@ -170,6 +231,12 @@ public static class TransactionHandler {
             new TransactionSummaryByOperatorResponse
             {
                 Summary = new OperatorDetailSummary { TotalOperators = r.Summary.TotalOperators, TotalCount = r.Summary.TotalCount, TotalValue = r.Summary.TotalValue, AverageValue = r.Summary.AverageValue },
+                Pagination = new PaginationMetadata {
+                    PageNumber = r.Pagination.PageNumber,
+                    PageSize = r.Pagination.PageSize,
+                    TotalItems = r.Pagination.TotalItems,
+                    TotalPages = r.Pagination.TotalPages
+                },
                 Operators = r.Operators.Select(o => new OperatorDetail
                     {
                         OperatorId = o.OperatorId,
@@ -193,8 +260,17 @@ public static class TransactionHandler {
                                                             IMediator mediator,
                                                             CancellationToken cancellationToken)
     {
-        if (request.StartDate > request.EndDate)
-            return Results.BadRequest("StartDate must be less than or equal to EndDate.");
+        string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
+                                      request.StartDate.ToDateTime(TimeOnly.MinValue),
+                                      request.EndDate.ToDateTime(TimeOnly.MinValue))
+                                  ?? BusinessLogic.ReportQueryValidation.ValidatePaging(request.PageNumber, request.PageSize)
+                                  ?? BusinessLogic.ReportQueryValidation.ValidateTopN(request.TopN);
+        if (validationError != null)
+            return InvalidReportQuery(validationError);
+        if (!Enum.IsDefined(typeof(TransactionMixBreakdown), request.Breakdown))
+            return InvalidReportQuery("breakdown is not supported.");
+        if (!Enum.IsDefined(typeof(TransactionMixMeasure), request.Measure))
+            return InvalidReportQuery("measure is not supported.");
 
         Models.TransactionMixSummaryRequest queryRequest = new()
         {
@@ -203,7 +279,9 @@ public static class TransactionHandler {
             EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
             Breakdown = (Models.TransactionMixBreakdown)request.Breakdown,
             Measure = (Models.TransactionMixMeasure)request.Measure,
-            TopN = request.TopN
+             TopN = request.TopN,
+             PageNumber = request.PageNumber,
+             PageSize = request.PageSize
         };
 
         var query = new TransactionQueries.TransactionMixSummaryQuery(estateContext.EstateId, queryRequest);
@@ -218,6 +296,12 @@ public static class TransactionHandler {
                 Measure = (TransactionMixMeasure)r.Measure,
                 TotalCount = r.TotalCount,
                 TotalValue = r.TotalValue,
+                 Pagination = new PaginationMetadata {
+                     PageNumber = r.Pagination.PageNumber,
+                     PageSize = r.Pagination.PageSize,
+                     TotalItems = r.Pagination.TotalItems,
+                     TotalPages = r.Pagination.TotalPages
+                 },
                 Groups = r.Groups.Select(g => new TransactionMixSummaryGroup
                 {
                     GroupKey = g.GroupKey,
@@ -256,6 +340,10 @@ public static class TransactionHandler {
                                                                   IMediator mediator,
                                                                   CancellationToken cancellationToken)
     {
+        string? validationError = BusinessLogic.ReportQueryValidation.ValidatePaging(request.PageNumber, request.PageSize);
+        if (validationError != null)
+            return InvalidReportQuery(validationError);
+
         Models.GetRecentActivityReceiptReportRequest queryRequest = new()
         {
             ReportDate = request.ReportDate.ToDateTime(TimeOnly.MinValue),
@@ -272,9 +360,12 @@ public static class TransactionHandler {
             new GetRecentActivityReceiptReportResponse
             {
                 ReportDate = r.ReportDate,
-                PageNumber = r.PageNumber,
-                PageSize = r.PageSize,
-                TotalCount = r.TotalCount,
+                Pagination = new PaginationMetadata {
+                    PageNumber = r.Pagination.PageNumber,
+                    PageSize = r.Pagination.PageSize,
+                    TotalItems = r.Pagination.TotalItems,
+                    TotalPages = r.Pagination.TotalPages
+                },
                 Items = r.Items.Select(item => new RecentActivityReceiptItemDto
                 {
                     Reference = item.Reference,
@@ -318,6 +409,12 @@ public static class TransactionHandler {
                                                                       BusinessLogic.ReportingDatePolicy datePolicy,
                                                                       IMediator mediator, CancellationToken cancellationToken)
     {
+        string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
+            request.StartDate.ToDateTime(TimeOnly.MinValue),
+            request.EndDate.ToDateTime(TimeOnly.MinValue));
+        if (validationError != null)
+            return InvalidReportQuery(validationError);
+
         TransactionQueries.MerchantDailyPerformanceSummaryQuery query = new(estateContext.EstateId, new Models.MerchantDailyPerformanceSummaryRequest {
             EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
             MerchantReportingId = request.MerchantReportingId,
@@ -348,5 +445,10 @@ public static class TransactionHandler {
 
         return ResponseFactory.FromResult(result, SuccessFactory);
     }
+
+    private static IResult InvalidReportQuery(string detail) => Results.Problem(
+        statusCode: StatusCodes.Status400BadRequest,
+        title: "Invalid report query",
+        detail: detail);
 }
 

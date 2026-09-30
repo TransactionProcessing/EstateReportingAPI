@@ -7,11 +7,13 @@ public class TransactionDetailReportResponse
 {
     public List<TransactionDetail> Transactions { get; set; }
     public TransactionDetailSummary Summary { get; set; }
+    public PaginationMetadata Pagination { get; set; } = new();
 }
 
 public class ProductPerformanceResponse {
     public List<ProductPerformanceDetail> ProductDetails { get; set; }
     public ProductPerformanceSummary Summary { get; set; }
+    public PaginationMetadata Pagination { get; set; } = new();
 }
 
 public class ProductPerformanceDetail {

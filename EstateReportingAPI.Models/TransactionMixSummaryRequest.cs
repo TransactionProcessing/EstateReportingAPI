@@ -26,4 +26,6 @@ public class TransactionMixSummaryRequest
     public TransactionMixBreakdown Breakdown { get; set; }
     public TransactionMixMeasure Measure { get; set; }
     public int TopN { get; set; } = 5;
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 50;
 }

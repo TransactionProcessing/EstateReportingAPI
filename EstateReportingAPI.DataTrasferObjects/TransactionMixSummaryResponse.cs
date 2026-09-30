@@ -13,6 +13,7 @@ public class TransactionMixSummaryResponse
     public decimal TotalValue { get; set; }
     public List<TransactionMixSummaryGroup> Groups { get; set; } = [];
     public List<TransactionMixSummaryTransaction> Transactions { get; set; } = [];
+    public PaginationMetadata Pagination { get; set; } = new();
 }
 
 public class TransactionMixSummaryGroup

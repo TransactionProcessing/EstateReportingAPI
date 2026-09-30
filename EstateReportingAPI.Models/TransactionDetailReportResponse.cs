@@ -3,4 +3,5 @@
 public class TransactionDetailReportResponse {
     public List<TransactionDetail> Transactions { get; set; }
     public TransactionDetailSummary Summary { get; set; }
+    public PaginationMetadata Pagination { get; set; } = new();
 }

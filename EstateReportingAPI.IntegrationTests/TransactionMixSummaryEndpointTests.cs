@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using EstateReportingAPI.DataTransferObjects;
 using Shared.Serialisation;
 using Shouldly;
+using System.Text.Json;
 using TransactionProcessor.Database.Entities;
 using Xunit;
 
@@ -153,5 +154,9 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
 
         HttpResponseMessage response = await this.Client.SendAsync(requestMessage, CancellationToken.None);
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        string responseContent = await response.Content.ReadAsStringAsync(CancellationToken.None);
+        using JsonDocument problemDocument = JsonDocument.Parse(responseContent);
+        problemDocument.RootElement.GetProperty("detail").GetString().ShouldBe("startDate must be less than or equal to endDate.");
     }
 }
