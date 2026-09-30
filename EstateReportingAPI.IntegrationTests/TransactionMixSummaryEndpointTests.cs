@@ -101,8 +101,8 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
         var request = new TransactionMixSummaryRequest
         {
             MerchantReportingId = 1,
-            StartDate = startDate,
-            EndDate = endDate,
+            StartDate = DateOnly.FromDateTime(startDate),
+            EndDate = DateOnly.FromDateTime(endDate),
             Breakdown = TransactionMixBreakdown.Product,
             Measure = TransactionMixMeasure.Count,
             TopN = 5
@@ -113,8 +113,8 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
 
         result.IsSuccess.ShouldBeTrue();
         result.Data.ShouldNotBeNull();
-        result.Data.FromDate.ShouldBe(startDate);
-        result.Data.ToDate.ShouldBe(endDate);
+        result.Data.FromDate.ShouldBe(DateOnly.FromDateTime(startDate));
+        result.Data.ToDate.ShouldBe(DateOnly.FromDateTime(endDate));
         result.Data.Breakdown.ShouldBe(TransactionMixBreakdown.Product);
         result.Data.Measure.ShouldBe(TransactionMixMeasure.Count);
         result.Data.TotalCount.ShouldBe(3);
@@ -138,8 +138,8 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
         var request = new TransactionMixSummaryRequest
         {
             MerchantReportingId = 1,
-            StartDate = DateTime.Now.Date,
-            EndDate = DateTime.Now.Date.AddDays(-1),
+            StartDate = DateOnly.FromDateTime(DateTime.Now.Date),
+            EndDate = DateOnly.FromDateTime(DateTime.Now.Date.AddDays(-1)),
             Breakdown = TransactionMixBreakdown.Operator,
             Measure = TransactionMixMeasure.Value,
             TopN = 5

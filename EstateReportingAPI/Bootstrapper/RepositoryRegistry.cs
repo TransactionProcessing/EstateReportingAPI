@@ -16,6 +16,7 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 public class RepositoryRegistry : ServiceRegistry{
     public RepositoryRegistry() {
+        this.AddSingleton<ReportingDatePolicy>(_ => new ReportingDatePolicy(TimeProvider.System));
         this.AddSingleton<ITransactionReportingService, TransactionReportingService>();
         this.AddSingleton<IEstateReportingService, EstateReportingService>();
         this.AddSingleton<ISettlementReportingService, SettlementReportingService>();

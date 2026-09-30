@@ -2,8 +2,8 @@ namespace EstateReportingAPI.Models;
 
 public class TransactionMixSummaryResponse
 {
-    public DateTime FromDate { get; set; }
-    public DateTime ToDate { get; set; }
+    public DateOnly FromDate { get; set; }
+    public DateOnly ToDate { get; set; }
     public TransactionMixBreakdown Breakdown { get; set; }
     public TransactionMixMeasure Measure { get; set; }
     public int TotalCount { get; set; }

@@ -4,7 +4,7 @@ namespace EstateReportingAPI.DataTransferObjects;
 
 public class GetRecentActivityReceiptReportRequest
 {
-    public DateTime ReportDate { get; set; }
+    public DateOnly ReportDate { get; set; }
     public int? MerchantReportingId { get; set; }
     public string? SearchText { get; set; }
     public int PageNumber { get; set; } = 1;

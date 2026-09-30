@@ -20,11 +20,13 @@ public interface IEstateReportingService
 public sealed class EstateReportingService : IEstateReportingService
 {
     private readonly IDbContextResolver<EstateManagementContext> Resolver;
+    private readonly ReportingDatePolicy DatePolicy;
     private const string EstateManagementDatabaseName = "TransactionProcessorReadModel";
 
-    public EstateReportingService(IDbContextResolver<EstateManagementContext> resolver)
+    public EstateReportingService(IDbContextResolver<EstateManagementContext> resolver, ReportingDatePolicy? datePolicy = null)
     {
         Resolver = resolver;
+        DatePolicy = datePolicy ?? new ReportingDatePolicy(TimeProvider.System);
     }
 
     public async Task<Result<List<Calendar>>> GetCalendarComparisonDates(CalendarQueries.GetComparisonDatesQuery request,
@@ -32,11 +34,11 @@ public sealed class EstateReportingService : IEstateReportingService
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        DateTime today = DateTime.Today;
+        DateTime today = DatePolicy.Today.ToDateTime(TimeOnly.MinValue);
         DateTime startDate = today.AddYears(-1);
         DateTime endDate = today.AddDays(-1); // yesterday
 
-        var result = await ReportingQueryExecutor.ToListAsync(context.Calendar.Where(c => c.Date >= startDate && c.Date < endDate).OrderByDescending(c => c.Date), cancellationToken, "Error retrieving calendar comparison dates");
+        var result = await ReportingQueryExecutor.ToListAsync(context.Calendar.Where(c => c.Date >= startDate && c.Date <= endDate).OrderByDescending(c => c.Date), cancellationToken, "Error retrieving calendar comparison dates");
 
         if (result.IsFailed)
             return ResultHelpers.CreateFailure(result);
@@ -71,7 +73,7 @@ public sealed class EstateReportingService : IEstateReportingService
         await using EstateManagementContext context = resolvedContext.Context;
 
 
-        var result = await ReportingQueryExecutor.ToListAsync(context.Calendar.Where(c => c.Date <= DateTime.Now.Date), cancellationToken, "Error retrieving calendar dates");
+        var result = await ReportingQueryExecutor.ToListAsync(context.Calendar.Where(c => c.Date <= DatePolicy.Today.ToDateTime(TimeOnly.MinValue)), cancellationToken, "Error retrieving calendar dates");
 
         if (result.IsFailed)
             return ResultHelpers.CreateFailure(result);
@@ -102,7 +104,7 @@ public sealed class EstateReportingService : IEstateReportingService
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        var result = await ReportingQueryExecutor.ToListAsync(context.Calendar.Where(c => c.Date <= DateTime.Now.Date).GroupBy(c => c.Year).Select(y => y.Key), cancellationToken, "Error retrieving calendar years");
+        var result = await ReportingQueryExecutor.ToListAsync(context.Calendar.Where(c => c.Date <= DatePolicy.Today.ToDateTime(TimeOnly.MinValue)).GroupBy(c => c.Year).Select(y => y.Key), cancellationToken, "Error retrieving calendar years");
 
         if (result.IsFailed)
             return ResultHelpers.CreateFailure(result);

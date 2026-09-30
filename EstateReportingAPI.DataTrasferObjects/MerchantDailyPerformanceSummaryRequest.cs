@@ -7,8 +7,8 @@ namespace EstateReportingAPI.DataTransferObjects
     public class MerchantDailyPerformanceSummaryRequest
     {
         public Int32 MerchantReportingId { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
     }
 
     public sealed class MerchantDailyPerformanceSummaryResponse
@@ -40,6 +40,6 @@ namespace EstateReportingAPI.DataTransferObjects
 
         public Decimal Amount { get; set; }
         
-        public DateTime TransactionDateTime { get; set; }
+        public DateTimeOffset TransactionDateTime { get; set; }
     }
 }

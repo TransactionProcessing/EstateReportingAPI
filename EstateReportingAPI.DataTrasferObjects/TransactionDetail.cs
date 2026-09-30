@@ -5,7 +5,7 @@ namespace EstateReportingAPI.DataTransferObjects;
 public class TransactionDetail
 {
     public Guid Id { get; set; }
-    public DateTime DateTime { get; set; }
+    public DateTimeOffset DateTime { get; set; }
     public String Merchant { get; set; }
     public Guid MerchantId { get; set; }
     public Int32 MerchantReportingId { get; set; }
