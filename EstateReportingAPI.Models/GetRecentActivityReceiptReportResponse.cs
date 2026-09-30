@@ -6,10 +6,8 @@ namespace EstateReportingAPI.Models;
 public class GetRecentActivityReceiptReportResponse
 {
     public DateOnly ReportDate { get; set; }
-    public int PageNumber { get; set; }
-    public int PageSize { get; set; }
-    public int TotalCount { get; set; }
     public List<RecentActivityReceiptItemDto> Items { get; set; } = [];
+    public PaginationMetadata Pagination { get; set; } = new();
 }
 
 public class RecentActivityReceiptItemDto

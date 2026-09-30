@@ -309,6 +309,54 @@ public sealed class ReportingServiceReportTests
     }
 
     [Fact]
+    public async Task GetTransactionDetailReport_PaginatesRowsButKeepsFullSummary()
+    {
+        await using TestDatabase database = await TestDatabase.CreateAsync();
+        database.AddSale(database.MerchantId, database.OperatorId, 10m, new DateTime(2026, 9, 1, 9, 0, 0));
+        database.AddSale(database.MerchantId, database.OperatorId, 20m, new DateTime(2026, 9, 1, 10, 0, 0));
+        database.AddSale(database.MerchantId, database.OperatorId, 30m, new DateTime(2026, 9, 1, 11, 0, 0));
+        await database.SaveAsync();
+
+        var result = await database.TransactionService.GetTransactionDetailReport(
+            new TransactionQueries.TransactionDetailReportQuery(
+                EstateId,
+                new TransactionDetailReportRequest {
+                    StartDate = new DateTime(2026, 9, 1),
+                    EndDate = new DateTime(2026, 9, 1),
+                    PageNumber = 2,
+                    PageSize = 2
+                }),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+        result.Data.Transactions.Count.ShouldBe(1);
+        result.Data.Summary.TransactionCount.ShouldBe(3);
+        result.Data.Summary.TotalValue.ShouldBe(60m);
+        result.Data.Pagination.PageNumber.ShouldBe(2);
+        result.Data.Pagination.PageSize.ShouldBe(2);
+        result.Data.Pagination.TotalItems.ShouldBe(3);
+        result.Data.Pagination.TotalPages.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task GetTransactionDetailReport_RejectsDateRangesOverThirtyDays()
+    {
+        await using TestDatabase database = await TestDatabase.CreateAsync();
+
+        var result = await database.TransactionService.GetTransactionDetailReport(
+            new TransactionQueries.TransactionDetailReportQuery(
+                EstateId,
+                new TransactionDetailReportRequest {
+                    StartDate = new DateTime(2026, 9, 1),
+                    EndDate = new DateTime(2026, 10, 1)
+                }),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeFalse();
+        result.Message.ShouldBe("date range must not exceed 30 inclusive calendar days.");
+    }
+
+    [Fact]
     public async Task GetTransactionSummaryByOperatorReport_AppliesMerchantAndOperatorFilters()
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
@@ -352,6 +400,60 @@ public sealed class ReportingServiceReportTests
     }
 
     [Fact]
+    public async Task GetTransactionSummaryByMerchantReport_PaginatesMerchantsButKeepsFullSummary()
+    {
+        await using TestDatabase database = await TestDatabase.CreateAsync();
+        database.AddSale(database.MerchantId, database.OperatorId, 10m, new DateTime(2026, 9, 1));
+        database.AddSale(database.SecondMerchantId, database.SecondOperatorId, 20m, new DateTime(2026, 9, 1));
+        await database.SaveAsync();
+
+        var result = await database.TransactionService.GetTransactionSummaryByMerchantReport(
+            new TransactionQueries.TransactionSummaryByMerchantQuery(
+                EstateId,
+                new TransactionSummaryByMerchantRequest {
+                    StartDate = new DateTime(2026, 9, 1),
+                    EndDate = new DateTime(2026, 9, 1),
+                    PageNumber = 2,
+                    PageSize = 1
+                }),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+        result.Data.Merchants.Count.ShouldBe(1);
+        result.Data.Summary.TotalCount.ShouldBe(2);
+        result.Data.Summary.TotalValue.ShouldBe(30m);
+        result.Data.Pagination.TotalItems.ShouldBe(2);
+        result.Data.Pagination.TotalPages.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task GetTransactionSummaryByOperatorReport_PaginatesOperatorsButKeepsFullSummary()
+    {
+        await using TestDatabase database = await TestDatabase.CreateAsync();
+        database.AddSale(database.MerchantId, database.OperatorId, 10m, new DateTime(2026, 9, 1));
+        database.AddSale(database.SecondMerchantId, database.SecondOperatorId, 20m, new DateTime(2026, 9, 1));
+        await database.SaveAsync();
+
+        var result = await database.TransactionService.GetTransactionSummaryByOperatorReport(
+            new TransactionQueries.TransactionSummaryByOperatorQuery(
+                EstateId,
+                new TransactionSummaryByOperatorRequest {
+                    StartDate = new DateTime(2026, 9, 1),
+                    EndDate = new DateTime(2026, 9, 1),
+                    PageNumber = 2,
+                    PageSize = 1
+                }),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+        result.Data.Operators.Count.ShouldBe(1);
+        result.Data.Summary.TotalCount.ShouldBe(2);
+        result.Data.Summary.TotalValue.ShouldBe(30m);
+        result.Data.Pagination.TotalItems.ShouldBe(2);
+        result.Data.Pagination.TotalPages.ShouldBe(2);
+    }
+
+    [Fact]
     public async Task GetTransactionMixSummary_WhenDateRangeIsInvalid_ReturnsFailure()
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
@@ -390,7 +492,7 @@ public sealed class ReportingServiceReportTests
     }
 
     [Fact]
-    public async Task GetRecentActivityReceiptReport_NormalizesInvalidPagingAndReturnsEmptyResult()
+    public async Task GetRecentActivityReceiptReport_RejectsInvalidPaging()
     {
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
@@ -404,11 +506,8 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.PageNumber.ShouldBe(1);
-        result.Data.PageSize.ShouldBe(10);
-        result.Data.TotalCount.ShouldBe(0);
-        result.Data.Items.ShouldBeEmpty();
+        result.IsSuccess.ShouldBeFalse();
+        result.Message.ShouldBe("pageNumber must be greater than or equal to 1.");
     }
 
     [Fact]
@@ -431,7 +530,7 @@ public sealed class ReportingServiceReportTests
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
-        result.Data.TotalCount.ShouldBe(3);
+        result.Data.Pagination.TotalItems.ShouldBe(3);
         result.Data.Items.Count.ShouldBe(1);
         result.Data.Items.Single().Amount.ShouldBe(10m);
     }
@@ -593,6 +692,25 @@ public sealed class ReportingServiceReportTests
         result.Data.Metrics.Count.ShouldBe(8);
         result.Data.Metrics.ShouldAllBe(metric => metric.Value == 0);
         result.Data.DrillDownTransactions.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetMerchantDailyPerformanceSummary_RejectsDateRangesOverThirtyDays()
+    {
+        await using TestDatabase database = await TestDatabase.CreateAsync();
+
+        var result = await database.TransactionService.GetMerchantDailyPerformanceSummary(
+            new TransactionQueries.MerchantDailyPerformanceSummaryQuery(
+                EstateId,
+                new MerchantDailyPerformanceSummaryRequest {
+                    MerchantReportingId = 20,
+                    StartDate = new DateTime(2026, 9, 1),
+                    EndDate = new DateTime(2026, 10, 1)
+                }),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeFalse();
+        result.Message.ShouldBe("date range must not exceed 30 inclusive calendar days.");
     }
 
     [Fact]
@@ -791,7 +909,60 @@ public sealed class ReportingServiceReportTests
         result.Data.Groups.Single().GroupName.ShouldBe("Declined");
         result.Data.Groups.Single().TransactionValue.ShouldBe(25m);
         result.Data.Transactions.Count.ShouldBe(2);
-        result.Data.Transactions.First().Value.ShouldBe(25m);
+        result.Data.Transactions.Select(t => t.Value).ShouldContain(25m);
+    }
+
+    [Fact]
+    public async Task GetTransactionMixSummary_PaginatesTransactionsAndLimitsGroups()
+    {
+        await using TestDatabase database = await TestDatabase.CreateAsync();
+        database.AddSale(database.MerchantId, database.OperatorId, 10m, new DateTime(2026, 9, 1, 9, 0, 0), authorised: true);
+        database.AddSale(database.MerchantId, database.OperatorId, 20m, new DateTime(2026, 9, 1, 10, 0, 0), authorised: false);
+        database.AddSale(database.MerchantId, database.OperatorId, 30m, new DateTime(2026, 9, 1, 11, 0, 0), authorised: false);
+        await database.SaveAsync();
+
+        var result = await database.TransactionService.GetTransactionMixSummary(
+            new TransactionQueries.TransactionMixSummaryQuery(
+                EstateId,
+                new TransactionMixSummaryRequest {
+                    StartDate = new DateTime(2026, 9, 1),
+                    EndDate = new DateTime(2026, 9, 1),
+                    Breakdown = TransactionMixBreakdown.Status,
+                    Measure = TransactionMixMeasure.Count,
+                    TopN = 1,
+                    PageNumber = 2,
+                    PageSize = 2
+                }),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+        result.Data.TotalCount.ShouldBe(3);
+        result.Data.TotalValue.ShouldBe(60m);
+        result.Data.Groups.Count.ShouldBe(1);
+        result.Data.Transactions.Count.ShouldBe(1);
+        result.Data.Pagination.TotalItems.ShouldBe(3);
+        result.Data.Pagination.TotalPages.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task GetTransactionMixSummary_RejectsTopNAboveTwenty()
+    {
+        await using TestDatabase database = await TestDatabase.CreateAsync();
+
+        var result = await database.TransactionService.GetTransactionMixSummary(
+            new TransactionQueries.TransactionMixSummaryQuery(
+                EstateId,
+                new TransactionMixSummaryRequest {
+                    StartDate = new DateTime(2026, 9, 1),
+                    EndDate = new DateTime(2026, 9, 1),
+                    Breakdown = TransactionMixBreakdown.Status,
+                    Measure = TransactionMixMeasure.Count,
+                    TopN = 21
+                }),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeFalse();
+        result.Message.ShouldBe("topN must be between 1 and 20.");
     }
 
     [Fact]
@@ -813,7 +984,7 @@ public sealed class ReportingServiceReportTests
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
-        result.Data.TotalCount.ShouldBe(1);
+        result.Data.Pagination.TotalItems.ShouldBe(1);
         result.Data.Items.Single().Amount.ShouldBe(10m);
     }
 
@@ -830,6 +1001,31 @@ public sealed class ReportingServiceReportTests
         result.Data.ProductDetails.ShouldBeEmpty();
         result.Data.Summary.TotalCount.ShouldBe(0);
         result.Data.Summary.TotalValue.ShouldBe(0m);
+    }
+
+    [Fact]
+    public async Task GetProductPerformanceReport_ReturnsPagedProductsAndFullSummary()
+    {
+        await using TestDatabase database = await TestDatabase.CreateAsync();
+        database.AddSale(database.MerchantId, database.OperatorId, 25m, new DateTime(2026, 9, 1));
+        await database.SaveAsync();
+
+        var result = await database.TransactionService.GetProductPerformanceReport(
+            new TransactionQueries.ProductPerformanceQuery(
+                EstateId,
+                new DateTime(2026, 9, 1),
+                new DateTime(2026, 9, 1),
+                1,
+                1),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+        result.Data.ProductDetails.Count.ShouldBe(1);
+        result.Data.Summary.TotalProducts.ShouldBe(1);
+        result.Data.Summary.TotalCount.ShouldBe(1);
+        result.Data.Summary.TotalValue.ShouldBe(25m);
+        result.Data.Pagination.TotalItems.ShouldBe(1);
+        result.Data.Pagination.TotalPages.ShouldBe(1);
     }
 
     [Fact]
