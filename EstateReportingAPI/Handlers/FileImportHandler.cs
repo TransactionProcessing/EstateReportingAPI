@@ -34,20 +34,21 @@ public static class FileImportHandler
 {
     public static async Task<IResult> GetFileImportLogList(IEstateContext estateContext,
                                                            [FromQuery] Guid? merchantId,
-                                                           [FromQuery] DateTime startDate,
-                                                           [FromQuery] DateTime endDate,
+                                                           [FromQuery] DateOnly startDate,
+                                                           [FromQuery] DateOnly endDate,
+                                                           BusinessLogic.ReportingDatePolicy datePolicy,
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken)
     {
-        FileImportLogQueries.GetFileImportLogListQuery query = new(estateContext.EstateId, merchantId, startDate, endDate);
+        FileImportLogQueries.GetFileImportLogListQuery query = new(estateContext.EstateId, merchantId, startDate.ToDateTime(TimeOnly.MinValue), endDate.ToDateTime(TimeOnly.MinValue));
         Result<List<FileImportLog>> result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => r.Select(m => new DataTransferObjects.FileImportLog
         {
             FileImportLogId = m.FileImportLogId,
-            ImportLogDateTime = m.ImportLogDateTime,
+            ImportLogDateTime = datePolicy.ToDateTimeOffset(m.ImportLogDateTime),
             FileDetailsList = m.FileDetailsList.Select(fd => new DataTransferObjects.FileDetails {
-                DateTimeUploaded = fd.DateTimeUploaded,
+                DateTimeUploaded = datePolicy.ToDateTimeOffset(fd.DateTimeUploaded),
                 FileId = fd.FileId,
                 FileName = fd.FileName,
                 FileProfile = fd.FileProfile,
@@ -67,6 +68,7 @@ public static class FileImportHandler
     public static async Task<IResult> GetFileImportLog(IEstateContext estateContext,
                                                        [FromRoute] Guid fileImportLogId,
                                                            [FromQuery] Guid? merchantId,
+                                                            BusinessLogic.ReportingDatePolicy datePolicy,
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken)
     {
@@ -76,10 +78,10 @@ public static class FileImportHandler
         return ResponseFactory.FromResult(result, r => new DataTransferObjects.FileImportLog
         {
             FileImportLogId = r.FileImportLogId,
-            ImportLogDateTime = r.ImportLogDateTime,
+            ImportLogDateTime = datePolicy.ToDateTimeOffset(r.ImportLogDateTime),
             FileDetailsList = r.FileDetailsList.Select(fd => new DataTransferObjects.FileDetails
             {
-                DateTimeUploaded = fd.DateTimeUploaded,
+                DateTimeUploaded = datePolicy.ToDateTimeOffset(fd.DateTimeUploaded),
                 FileId = fd.FileId,
                 FileName = Path.GetFileName(fd.FileName),
                 FileProfile = fd.FileProfile,

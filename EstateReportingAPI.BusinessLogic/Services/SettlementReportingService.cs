@@ -15,15 +15,20 @@ public interface ISettlementReportingService
 public sealed class SettlementReportingService : ISettlementReportingService
 {
     private readonly IDbContextResolver<EstateManagementContext> Resolver;
+    private readonly ReportingDatePolicy DatePolicy;
     private const string EstateManagementDatabaseName = "TransactionProcessorReadModel";
-    public SettlementReportingService(IDbContextResolver<EstateManagementContext> resolver) => Resolver = resolver;
+    public SettlementReportingService(IDbContextResolver<EstateManagementContext> resolver, ReportingDatePolicy? datePolicy = null)
+    {
+        Resolver = resolver;
+        DatePolicy = datePolicy ?? new ReportingDatePolicy(TimeProvider.System);
+    }
 
     public async Task<Result<TodaysSettlement>> GetTodaysSettlement(SettlementQueries.TodaysSettlementQuery request,
                                                                     CancellationToken cancellationToken) {
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> todaySettlementData = this.BuildTodaySettlementQuery(context, DateTime.Now);
+        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> todaySettlementData = this.BuildTodaySettlementQuery(context, DatePolicy.Today.ToDateTime(TimeOnly.MinValue));
         IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> comparisonSettlementData = this.BuildComparisonSettlementQuery(context, request.ComparisonDate);
         
         DatabaseProjections.SettlementGroupProjection todaySettlement = await this.GetSettlementSummary(todaySettlementData, cancellationToken);

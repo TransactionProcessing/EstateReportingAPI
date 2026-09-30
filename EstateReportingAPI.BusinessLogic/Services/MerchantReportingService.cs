@@ -42,11 +42,13 @@ public interface IMerchantReportingService
 public sealed class MerchantReportingService : IMerchantReportingService
 {
     private readonly IDbContextResolver<EstateManagementContext> Resolver;
+    private readonly ReportingDatePolicy DatePolicy;
     private const string EstateManagementDatabaseName = "TransactionProcessorReadModel";
 
-    public MerchantReportingService(IDbContextResolver<EstateManagementContext> resolver)
+    public MerchantReportingService(IDbContextResolver<EstateManagementContext> resolver, ReportingDatePolicy? datePolicy = null)
     {
         Resolver = resolver;
+        DatePolicy = datePolicy ?? new ReportingDatePolicy(TimeProvider.System);
     }
 
     private static async Task<Result<T>> ExecuteQuerySafeSum<T>(IQueryable query,
@@ -367,7 +369,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var merchants = merchantsQueryResult.Data;
 
-        DateTime now = DateTime.Now;
+        DateTime now = DatePolicy.LocalNow;
 
         Int32 merchantsWithSaleInLastHour = (from m in merchants where m.LastSale >= now.AddHours(-1) && m.LastSale <= now select m).Count();
 

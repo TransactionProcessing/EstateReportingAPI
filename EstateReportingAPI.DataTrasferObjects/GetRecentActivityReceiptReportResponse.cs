@@ -5,7 +5,7 @@ namespace EstateReportingAPI.DataTransferObjects;
 
 public class GetRecentActivityReceiptReportResponse
 {
-    public DateTime ReportDate { get; set; }
+    public DateOnly ReportDate { get; set; }
     public int PageNumber { get; set; }
     public int PageSize { get; set; }
     public int TotalCount { get; set; }
@@ -20,6 +20,6 @@ public class RecentActivityReceiptItemDto
     public string? Operator { get; set; }
     public string? Status { get; set; }
     public decimal Amount { get; set; }
-    public DateTime TransactionDateTime { get; set; }
+    public DateTimeOffset TransactionDateTime { get; set; }
     public string? ReceiptReference { get; set; }
 }

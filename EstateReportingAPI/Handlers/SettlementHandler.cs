@@ -9,10 +9,10 @@ namespace EstateReportingAPI.Handlers;
 
 public static class SettlementHandler {
     public static async Task<IResult> TodaysSettlements(IEstateContext estateContext,
-                                                        [FromQuery] DateTime comparisonDate,
+                                                        [FromQuery] DateOnly comparisonDate,
                                                         IMediator mediator,
                                                         CancellationToken cancellationToken) {
-        var query = new SettlementQueries.TodaysSettlementQuery(estateContext.EstateId, comparisonDate);
+        var query = new SettlementQueries.TodaysSettlementQuery(estateContext.EstateId, comparisonDate.ToDateTime(TimeOnly.MinValue));
         var result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => new TodaysSettlement() {

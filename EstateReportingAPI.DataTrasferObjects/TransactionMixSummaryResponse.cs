@@ -5,8 +5,8 @@ namespace EstateReportingAPI.DataTransferObjects;
 
 public class TransactionMixSummaryResponse
 {
-    public DateTime FromDate { get; set; }
-    public DateTime ToDate { get; set; }
+    public DateOnly FromDate { get; set; }
+    public DateOnly ToDate { get; set; }
     public TransactionMixBreakdown Breakdown { get; set; }
     public TransactionMixMeasure Measure { get; set; }
     public int TotalCount { get; set; }
@@ -26,7 +26,7 @@ public class TransactionMixSummaryGroup
 public class TransactionMixSummaryTransaction
 {
     public Guid Id { get; set; }
-    public DateTime DateTime { get; set; }
+    public DateTimeOffset DateTime { get; set; }
     public string? Merchant { get; set; }
     public Guid MerchantId { get; set; }
     public int MerchantReportingId { get; set; }

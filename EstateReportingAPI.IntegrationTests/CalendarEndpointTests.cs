@@ -37,7 +37,7 @@ namespace EstateReportingAPI.IntegrationTests {
             List<DateTime> expectedDates = datesInYear.Where(d => d <= DateTime.Now.Date.AddDays(-1)).ToList();
             dates.ShouldNotBeNull();
             foreach (DateTime date in expectedDates) {
-                dates.Select(d => d.Date).Contains(date.Date).ShouldBeTrue();
+                dates.Select(d => d.Date).Contains(DateOnly.FromDateTime(date.Date)).ShouldBeTrue();
             }
 
             dates.Select(d => d.Description).Contains("Yesterday").ShouldBeTrue();

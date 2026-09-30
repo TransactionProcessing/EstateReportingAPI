@@ -33,7 +33,7 @@ public sealed class FileImportReportingService : IFileImportReportingService
                         join m in context.Merchants on f.MerchantId equals m.MerchantId into mJoin
                         from m in mJoin.DefaultIfEmpty()
                         join fl in context.FileLines on f.FileId equals fl.FileId
-                        where fil.ImportLogDate >= request.StartDate && fil.ImportLogDate <= request.EndDate
+                        where fil.ImportLogDate >= request.StartDate.Date && fil.ImportLogDate < request.EndDate.Date.AddDays(1)
                               && (request.MerchantId == null || f.MerchantId == request.MerchantId)
                         select new FileImportFlatData {
                             FileImportLogId = fil.FileImportLogId,

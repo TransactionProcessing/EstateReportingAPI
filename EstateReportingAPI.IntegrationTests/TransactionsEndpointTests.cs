@@ -90,7 +90,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         actual.Product.ShouldBe(expectedProduct);
         actual.Status.ShouldBe(source.IsAuthorised ? "Successful" : "Failed");
         actual.Amount.ShouldBe(source.TransactionAmount);
-        actual.TransactionDateTime.ShouldBe(source.TransactionDateTime);
+        actual.TransactionDateTime.ShouldBe(ToUkDateTimeOffset(source.TransactionDateTime));
     }
 
     private static void AssertRecentActivityReceiptItemMatches(JsonElement actual,
@@ -104,7 +104,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         GetPropertyCaseInsensitive(actual, "operator").GetString().ShouldBe(expectedOperator);
         GetPropertyCaseInsensitive(actual, "status").GetString().ShouldBe(source.IsAuthorised ? "Successful" : "Failed");
         GetPropertyCaseInsensitive(actual, "amount").GetDecimal().ShouldBe(source.TransactionAmount);
-        DateTime.Parse(GetPropertyCaseInsensitive(actual, "transactionDateTime").GetString()!).ShouldBe(source.TransactionDateTime);
+        DateTimeOffset.Parse(GetPropertyCaseInsensitive(actual, "transactionDateTime").GetString()!).ShouldBe(ToUkDateTimeOffset(source.TransactionDateTime));
         GetPropertyCaseInsensitive(actual, "receiptReference").GetString().ShouldBe(expectedReceiptReference);
     }
 
@@ -114,7 +114,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         var product = this.context.ContractProducts.Single(p => p.ContractProductId == source.ContractProductId && p.ContractId == source.ContractId);
 
         actual.Id.ShouldBe(source.TransactionId);
-        actual.DateTime.ShouldBe(source.TransactionDateTime);
+        actual.DateTime.ShouldBe(ToUkDateTimeOffset(source.TransactionDateTime));
         actual.Merchant.ShouldBe(merchant.Name);
         actual.MerchantId.ShouldBe(merchant.MerchantId);
         actual.MerchantReportingId.ShouldBe(merchant.MerchantReportingId);
@@ -515,8 +515,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             
         List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
         TransactionDetailReportRequest request = new TransactionDetailReportRequest {
-            StartDate = orderedDates.First(),
-            EndDate = orderedDates.Last(),
+            StartDate = DateOnly.FromDateTime(orderedDates.First()),
+            EndDate = DateOnly.FromDateTime(orderedDates.Last()),
             Merchants = [],
             Operators = [],
             Products = []
@@ -586,8 +586,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
         TransactionDetailReportRequest request = new TransactionDetailReportRequest
         {
-            StartDate = orderedDates.First(),
-            EndDate = orderedDates.Last(),
+            StartDate = DateOnly.FromDateTime(orderedDates.First()),
+            EndDate = DateOnly.FromDateTime(orderedDates.Last()),
             Merchants = merchantsForFilter.Select(m=> m.MerchantReportingId).ToList(),
             Operators = [],
             Products = []
@@ -660,8 +660,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
         TransactionDetailReportRequest request = new TransactionDetailReportRequest
         {
-            StartDate = orderedDates.First(),
-            EndDate = orderedDates.Last(),
+            StartDate = DateOnly.FromDateTime(orderedDates.First()),
+            EndDate = DateOnly.FromDateTime(orderedDates.Last()),
             Merchants = [],
             Operators = operatorsForFilter.Select(o=> o.OperatorReportingId).ToList(),
             Products = []
@@ -733,8 +733,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
         TransactionDetailReportRequest request = new TransactionDetailReportRequest
         {
-            StartDate = orderedDates.First(),
-            EndDate = orderedDates.Last(),
+            StartDate = DateOnly.FromDateTime(orderedDates.First()),
+            EndDate = DateOnly.FromDateTime(orderedDates.Last()),
             Merchants = [],
             Operators = [],
             Products = productsForFilter.Select(c => c.contractProductReportingId).ToList(),
@@ -856,8 +856,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
         TransactionDetailReportRequest request = new TransactionDetailReportRequest
         {
-            StartDate = orderedDates.First(),
-            EndDate = orderedDates.Last(),
+            StartDate = DateOnly.FromDateTime(orderedDates.First()),
+            EndDate = DateOnly.FromDateTime(orderedDates.Last()),
             Merchants = [],
             Operators = [],
             Products = []
@@ -994,8 +994,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         List<DateTime> orderedDates = transactionDates.OrderBy(x => x).ToList();
         TransactionDetailReportRequest request = new TransactionDetailReportRequest
         {
-            StartDate = orderedDates.First(),
-            EndDate = orderedDates.Last(),
+            StartDate = DateOnly.FromDateTime(orderedDates.First()),
+            EndDate = DateOnly.FromDateTime(orderedDates.Last()),
             Merchants = [],
             Operators = [],
             Products = []
@@ -1300,8 +1300,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         MerchantDailyPerformanceSummaryRequest request = new()
         {
             MerchantReportingId = merchant.MerchantReportingId,
-            StartDate = transactionDate,
-            EndDate = transactionDate
+            StartDate = DateOnly.FromDateTime(transactionDate),
+            EndDate = DateOnly.FromDateTime(transactionDate)
         };
 
         var result = await this.CreateAndSendHttpRequestMessage<MerchantDailyPerformanceSummaryResponse>(
@@ -1435,8 +1435,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         MerchantDailyPerformanceSummaryRequest request = new()
         {
             MerchantReportingId = merchant.MerchantReportingId,
-            StartDate = transactionDate,
-            EndDate = transactionDate
+            StartDate = DateOnly.FromDateTime(transactionDate),
+            EndDate = DateOnly.FromDateTime(transactionDate)
         };
 
         var result = await this.CreateAndSendHttpRequestMessage<MerchantDailyPerformanceSummaryResponse>(
@@ -1500,8 +1500,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         MerchantDailyPerformanceSummaryRequest request = new()
         {
             MerchantReportingId = merchant.MerchantReportingId,
-            StartDate = transactionDate,
-            EndDate = transactionDate
+            StartDate = DateOnly.FromDateTime(transactionDate),
+            EndDate = DateOnly.FromDateTime(transactionDate)
         };
 
         var result = await this.CreateAndSendHttpRequestMessage<MerchantDailyPerformanceSummaryResponse>(
@@ -1530,8 +1530,8 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
         MerchantDailyPerformanceSummaryRequest request = new()
         {
-            StartDate = startDate,
-            EndDate = endDate,
+            StartDate = DateOnly.FromDateTime(startDate),
+            EndDate = DateOnly.FromDateTime(endDate),
             MerchantReportingId = merchant.MerchantReportingId
         };
 
@@ -1629,7 +1629,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         await this.helper.RunHistoricTransactionsSummaryProcessing(reportDate);
 
         var payload = JsonSerializer.Serialize(new Dictionary<string, object?> {
-            ["report_date"] = reportDate,
+            ["report_date"] = reportDate.ToString("yyyy-MM-dd"),
             ["merchant_reporting_id"] = merchant.MerchantReportingId,
             ["search_text"] = null,
             ["page_number"] = 1,
@@ -1674,7 +1674,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             throw new KeyNotFoundException($"Property '{propertyName}' was not found.");
         }
 
-        DateTime.Parse(GetPropertyCaseInsensitive(document.RootElement, "reportDate").GetString()!).Date.ShouldBe(reportDate);
+        DateOnly.Parse(GetPropertyCaseInsensitive(document.RootElement, "reportDate").GetString()!).ShouldBe(DateOnly.FromDateTime(reportDate));
         GetPropertyCaseInsensitive(document.RootElement, "pageNumber").GetInt32().ShouldBe(1);
         GetPropertyCaseInsensitive(document.RootElement, "pageSize").GetInt32().ShouldBe(10);
         GetPropertyCaseInsensitive(document.RootElement, "totalCount").GetInt32().ShouldBe(2);
@@ -1708,7 +1708,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         await this.helper.RunHistoricTransactionsSummaryProcessing(reportDate);
 
         var payload = JsonSerializer.Serialize(new Dictionary<string, object?> {
-            ["report_date"] = reportDate,
+            ["report_date"] = reportDate.ToString("yyyy-MM-dd"),
             ["merchant_reporting_id"] = merchant.MerchantReportingId,
             ["search_text"] = "receipt",
             ["page_number"] = 1,

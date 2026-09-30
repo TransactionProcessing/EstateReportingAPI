@@ -14,11 +14,11 @@ public static class TransactionHandler {
     public static async Task<IResult> TodaysSales(IEstateContext estateContext,
                                                   [FromQuery] int? merchantReportingId,
                                                   [FromQuery] int? operatorReportingId,
-                                                  [FromQuery] DateTime comparisonDate,
+                                                  [FromQuery] DateOnly comparisonDate,
                                                   IMediator mediator,
                                                   CancellationToken cancellationToken)
     {
-        var query = new TransactionQueries.TodaysSalesQuery(estateContext.EstateId, merchantReportingId.GetValueOrDefault(), operatorReportingId.GetValueOrDefault(), comparisonDate);
+        var query = new TransactionQueries.TodaysSalesQuery(estateContext.EstateId, merchantReportingId.GetValueOrDefault(), operatorReportingId.GetValueOrDefault(), comparisonDate.ToDateTime(TimeOnly.MinValue));
         var result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => new TodaysSales
@@ -33,12 +33,12 @@ public static class TransactionHandler {
     }
 
     public static async Task<IResult> TodaysFailedSales(IEstateContext estateContext,
-                                                        [FromQuery] DateTime comparisonDate,
+                                                        [FromQuery] DateOnly comparisonDate,
                                                         [FromQuery] string responseCode,
                                                         IMediator mediator,
                                                         CancellationToken cancellationToken)
     {
-        var query = new TransactionQueries.TodaysFailedSales(estateContext.EstateId, comparisonDate, responseCode);
+        var query = new TransactionQueries.TodaysFailedSales(estateContext.EstateId, comparisonDate.ToDateTime(TimeOnly.MinValue), responseCode);
         var result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => new TodaysSales
@@ -54,13 +54,14 @@ public static class TransactionHandler {
 
     public static async Task<IResult> TransactionDetailReport(IEstateContext estateContext,
                                                               [FromBody] TransactionDetailReportRequest request, 
+                                                              BusinessLogic.ReportingDatePolicy datePolicy,
                                                               IMediator mediator, CancellationToken cancellationToken) {
         Models.TransactionDetailReportRequest queryRequest = new() {
             Merchants = request.Merchants,
             Operators = request.Operators,
             Products = request.Products,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate
+            StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
+            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue)
         };
 
         var query = new TransactionQueries.TransactionDetailReportQuery(estateContext.EstateId, queryRequest);
@@ -71,7 +72,7 @@ public static class TransactionHandler {
                 Summary = new TransactionDetailSummary { TotalFees = r.Summary.TotalFees, TotalValue = r.Summary.TotalValue, TransactionCount = r.Summary.TransactionCount },
                 Transactions = r.Transactions.Select(t => new TransactionDetail {
                         TotalFees = t.TotalFees,
-                        DateTime = t.DateTime,
+                        DateTime = datePolicy.ToDateTimeOffset(t.DateTime),
                         Id = t.Id,
                         Merchant = t.Merchant,
                         Operator = t.Operator,
@@ -101,8 +102,8 @@ public static class TransactionHandler {
         Models.TransactionSummaryByMerchantRequest queryRequest = new() {
             Merchants = request.Merchants,
             Operators = request.Operators,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate
+            StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
+            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue)
         };
         var query = new TransactionQueries.TransactionSummaryByMerchantQuery(estateContext.EstateId, queryRequest);
         var result = await mediator.Send(query, cancellationToken);
@@ -126,11 +127,11 @@ public static class TransactionHandler {
     }
 
     public static async Task<IResult> ProductPerformanceReport(IEstateContext estateContext,
-                                                               [FromQuery] DateTime startDate,
-                                                               [FromQuery] DateTime endDate,
+                                                               [FromQuery] DateOnly startDate,
+                                                               [FromQuery] DateOnly endDate,
                                                                IMediator mediator,
                                                                CancellationToken cancellationToken) {
-        var query = new TransactionQueries.ProductPerformanceQuery(estateContext.EstateId, startDate, endDate);
+        var query = new TransactionQueries.ProductPerformanceQuery(estateContext.EstateId, startDate.ToDateTime(TimeOnly.MinValue), endDate.ToDateTime(TimeOnly.MinValue));
         var result = await mediator.Send(query, cancellationToken);
         ProductPerformanceResponse SuccessFactory(Models.ProductPerformanceResponse r) =>
             new ProductPerformanceResponse
@@ -160,8 +161,8 @@ public static class TransactionHandler {
         {
             Merchants = request.Merchants,
             Operators = request.Operators,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate
+            StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
+            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue)
         };
         var query = new TransactionQueries.TransactionSummaryByOperatorQuery(estateContext.EstateId, queryRequest);
         var result = await mediator.Send(query, cancellationToken);
@@ -188,6 +189,7 @@ public static class TransactionHandler {
 
     public static async Task<IResult> TransactionMixSummary(IEstateContext estateContext,
                                                             [FromBody] TransactionMixSummaryRequest request,
+                                                            BusinessLogic.ReportingDatePolicy datePolicy,
                                                             IMediator mediator,
                                                             CancellationToken cancellationToken)
     {
@@ -197,8 +199,8 @@ public static class TransactionHandler {
         Models.TransactionMixSummaryRequest queryRequest = new()
         {
             MerchantReportingId = request.MerchantReportingId,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
+            StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
+            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
             Breakdown = (Models.TransactionMixBreakdown)request.Breakdown,
             Measure = (Models.TransactionMixMeasure)request.Measure,
             TopN = request.TopN
@@ -226,7 +228,7 @@ public static class TransactionHandler {
                 Transactions = r.Transactions.Select(t => new TransactionMixSummaryTransaction
                 {
                     Id = t.Id,
-                    DateTime = t.DateTime,
+                    DateTime = datePolicy.ToDateTimeOffset(t.DateTime),
                     Merchant = t.Merchant,
                     MerchantId = t.MerchantId,
                     MerchantReportingId = t.MerchantReportingId,
@@ -250,12 +252,13 @@ public static class TransactionHandler {
 
     public static async Task<IResult> RecentActivityReceiptReport(IEstateContext estateContext,
                                                                   [FromBody] GetRecentActivityReceiptReportRequest request,
+                                                                  BusinessLogic.ReportingDatePolicy datePolicy,
                                                                   IMediator mediator,
                                                                   CancellationToken cancellationToken)
     {
         Models.GetRecentActivityReceiptReportRequest queryRequest = new()
         {
-            ReportDate = request.ReportDate,
+            ReportDate = request.ReportDate.ToDateTime(TimeOnly.MinValue),
             MerchantReportingId = request.MerchantReportingId,
             SearchText = request.SearchText,
             PageNumber = request.PageNumber,
@@ -280,7 +283,7 @@ public static class TransactionHandler {
                     Operator = item.Operator,
                     Status = item.Status,
                     Amount = item.Amount,
-                    TransactionDateTime = item.TransactionDateTime,
+                    TransactionDateTime = datePolicy.ToDateTimeOffset(item.TransactionDateTime),
                     ReceiptReference = item.ReceiptReference
                 }).ToList()
             };
@@ -289,11 +292,11 @@ public static class TransactionHandler {
     }
 
     public static async Task<IResult> TodaysSalesByHour(IEstateContext estateContext,
-                                                        [FromQuery] DateTime comparisonDate,
+                                                        [FromQuery] DateOnly comparisonDate,
                                                         IMediator mediator,
                                                         CancellationToken cancellationToken)
     {
-        var query = new TransactionQueries.TodaysSalesByHour(estateContext.EstateId, comparisonDate);
+        var query = new TransactionQueries.TodaysSalesByHour(estateContext.EstateId, comparisonDate.ToDateTime(TimeOnly.MinValue));
         var result = await mediator.Send(query, cancellationToken);
 
         List<DataTransferObjects.TodaysSalesByHour> SuccessFactory(List<Models.TodaysSalesByHour> r) =>
@@ -312,12 +315,13 @@ public static class TransactionHandler {
 
     public static async Task<IResult> MerchantDailyPerformanceSummary(IEstateContext estateContext,
                                                                       [FromBody] MerchantDailyPerformanceSummaryRequest request,
+                                                                      BusinessLogic.ReportingDatePolicy datePolicy,
                                                                       IMediator mediator, CancellationToken cancellationToken)
     {
         TransactionQueries.MerchantDailyPerformanceSummaryQuery query = new(estateContext.EstateId, new Models.MerchantDailyPerformanceSummaryRequest {
-            EndDate = request.EndDate,
+            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
             MerchantReportingId = request.MerchantReportingId,
-            StartDate = request.StartDate
+            StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue)
         });
         Result<Models.MerchantDailyPerformanceSummaryResponse> result = await mediator.Send(query, cancellationToken);
 
@@ -338,7 +342,7 @@ public static class TransactionHandler {
                     Product = $"{transaction.Operator} {transaction.Product}",
                     Status = transaction.Status,
                     Amount = transaction.Amount,
-                    TransactionDateTime = transaction.TransactionDateTime
+                    TransactionDateTime = datePolicy.ToDateTimeOffset(transaction.TransactionDateTime)
                 }).ToList() ?? []
             };
 
