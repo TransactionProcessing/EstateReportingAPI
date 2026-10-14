@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace EstateReportingAPI.Common
 {
@@ -117,22 +118,39 @@ namespace EstateReportingAPI.Common
             EstateContext estateContext,
             Guid? headerEstateId)
         {
-            string? estateClaim = httpContext.User.FindFirst("estateId")?.Value;
+            bool isUserToken = httpContext.User.HasClaim(claim => claim.Type == ClaimTypes.NameIdentifier);
 
-            if (Guid.TryParse(estateClaim, out Guid authenticatedEstateId) == false ||
-                authenticatedEstateId == Guid.Empty)
+            if (isUserToken)
             {
-                httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
-                return;
-            }
+                string? estateClaim = httpContext.User.FindFirst("estateId")?.Value;
 
-            if (headerEstateId.HasValue && headerEstateId.Value != authenticatedEstateId)
+                if (!Guid.TryParse(estateClaim, out Guid authenticatedEstateId) ||
+                    authenticatedEstateId == Guid.Empty)
+                {
+                    httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return;
+                }
+
+                if (headerEstateId.HasValue &&
+                    headerEstateId.Value != authenticatedEstateId)
+                {
+                    httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return;
+                }
+
+                estateContext.SetEstate(authenticatedEstateId);
+            }
+            else
             {
-                httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
-                return;
-            }
+                // Client-credentials token: tenant comes from the trusted ACL header.
+                if (!headerEstateId.HasValue)
+                {
+                    httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return;
+                }
 
-            estateContext.SetEstate(authenticatedEstateId);
+                estateContext.SetEstate(headerEstateId.Value);
+            }
 
             await _next(httpContext);
         }
