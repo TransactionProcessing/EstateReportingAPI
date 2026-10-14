@@ -51,7 +51,7 @@ internal sealed class IntegrationTestEnvironment
             TestDockerHelper dockerHelper = new();
             dockerHelper.Logger = logger;
 
-            await dockerHelper.StartContainersForScenarioRun(ScenarioName, DockerServices.SqlServer);
+            await dockerHelper.StartContainersForScenarioRun(ScenarioName, DockerServices.SqlServer, CancellationToken.None);
 
             int sqlPort = dockerHelper.GetSqlPort()
                 ?? throw new InvalidOperationException("SQL Server container did not expose port 1433.");
