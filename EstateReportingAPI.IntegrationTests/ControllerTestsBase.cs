@@ -188,7 +188,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
 
 
 public class TestDockerHelper : DockerHelper{
-    public override async Task CreateSubscriptions(){
+    public override async Task CreateSubscriptions(CancellationToken cancellationToken){
         // Nothing here
     }
 
