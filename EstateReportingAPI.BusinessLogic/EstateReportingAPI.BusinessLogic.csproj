@@ -11,6 +11,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" />
     <PackageReference Include="Shared" />
     <PackageReference Include="Shared.Results" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="TransactionProcessor.Database" />
   </ItemGroup>
 

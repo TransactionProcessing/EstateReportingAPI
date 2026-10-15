@@ -38,6 +38,7 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+		<PackageReference Include="System.Security.Cryptography.Pkcs" />
 		<PackageReference Include="TransactionProcessor.Database" />
 		<PackageReference Include="Sentry.AspNetCore" />
 	</ItemGroup>

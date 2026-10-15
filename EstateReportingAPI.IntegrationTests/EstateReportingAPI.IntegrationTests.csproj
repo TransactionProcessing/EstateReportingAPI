@@ -9,7 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="SharpCompress" />
+    <PackageReference Include="SSH.NET" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
       <PackageReference Include="TransactionProcessor.Database" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />

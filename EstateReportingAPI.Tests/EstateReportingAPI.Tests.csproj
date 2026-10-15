@@ -21,6 +21,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="TransactionProcessor.Database" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio">
