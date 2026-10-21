@@ -1,4 +1,4 @@
-﻿using HealthMonitoring.Client;
+using HealthMonitoring.Client;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.Configuration;
@@ -18,10 +18,10 @@ namespace EstateReportingAPI.Bootstrapper{
 
     [ExcludeFromCodeCoverage]
     public class MiddlewareRegistry : ServiceRegistry{
-        public MiddlewareRegistry(IConfiguration configuration)
+        public MiddlewareRegistry(IConfiguration configuration, IHostEnvironment environment)
         {
             this.ConfigureHealthChecks(configuration);
-            this.ConfigureAuthentication(configuration);
+            this.ConfigureAuthentication(configuration, environment);
             this.ConfigureControllers();
             this.ConfigureMiddlewareLogging(configuration);
             this.ConfigureJsonOptions();
@@ -92,8 +92,8 @@ namespace EstateReportingAPI.Bootstrapper{
             }
         }
         
-        private void ConfigureAuthentication(IConfiguration configuration){
-            bool inTestMode = configuration.GetValue("InTestMode", false);
+        private void ConfigureAuthentication(IConfiguration configuration, IHostEnvironment environment){
+            bool inTestMode = environment.IsEnvironment("IntegrationTest") || configuration.GetValue("InTestMode", false);
             if (!inTestMode){
                 this.AddAuthentication(options =>
                 {
@@ -184,3 +184,4 @@ namespace EstateReportingAPI.Bootstrapper{
         }
     }
 }
+

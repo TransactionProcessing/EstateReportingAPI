@@ -86,7 +86,7 @@ public partial class Program
         }
         builder.Host.UseLamar((context, services) =>
         {
-            services.IncludeRegistry(new MiddlewareRegistry(configuration));
+            services.IncludeRegistry(new MiddlewareRegistry(configuration, context.HostingEnvironment));
             services.IncludeRegistry(new RepositoryRegistry(configuration, context.HostingEnvironment));
             services.IncludeRegistry(new MediatorRegistry(configuration));
             services.IncludeRegistry(new SerialiserRegistry());
