@@ -237,7 +237,8 @@ internal static class OpenApiExamplesTransformer
             || type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong))
         {
             string name = propertyName.ToLowerInvariant();
-            long value = name.Contains("page") && name.Contains("number") ? 1
+            long value = name.Contains("page") && name.Contains("size") ? 50
+                : name.Contains("page") && name.Contains("number") ? 1
                 : name.Contains("year") ? 2026
                 : name.Contains("hour") ? 10
                 : name.Contains("count") || name.Contains("total") ? 3
@@ -288,3 +289,4 @@ internal static class OpenApiExamplesTransformer
         }
     }
 }
+
