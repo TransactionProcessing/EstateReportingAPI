@@ -86,9 +86,9 @@ public partial class Program
         }
         builder.Host.UseLamar((context, services) =>
         {
-            services.IncludeRegistry(new MiddlewareRegistry(context.Configuration));
-            services.IncludeRegistry(new RepositoryRegistry(context.Configuration, context.HostingEnvironment));
-            services.IncludeRegistry(new MediatorRegistry(context.Configuration));
+            services.IncludeRegistry(new MiddlewareRegistry(configuration));
+            services.IncludeRegistry(new RepositoryRegistry(configuration, context.HostingEnvironment));
+            services.IncludeRegistry(new MediatorRegistry(configuration));
             services.IncludeRegistry(new SerialiserRegistry());
         });
     }
@@ -136,3 +136,4 @@ public partial class Program
         app.UseApiDefaults();
     }
 }
+
