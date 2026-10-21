@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using EstateReportingAPI;
 using Shared.IntegrationTesting.TestContainers;
 using Shared.Serialisation;
 using SimpleResults;
@@ -69,7 +70,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         
         String dbConnString = GetLocalConnectionString($"TransactionProcessorReadModel-{this.TestId}");
 
-        this.factory = new CustomWebApplicationFactory<Startup>(dbConnString);
+        this.factory = new CustomWebApplicationFactory<Program>(dbConnString);
         this.factory.DefaultEstateId = this.TestId;
         this.Client = this.factory.CreateClient();
         
@@ -99,10 +100,21 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     protected abstract Task SetupStandingData();
 
     protected HttpClient Client;
-    protected CustomWebApplicationFactory<Startup> factory;
+    protected CustomWebApplicationFactory<Program> factory;
 
     protected Guid TestId;
 
+    protected static string Serialize<T>(T value)
+    {
+        IStringSerialiser serialiser = new SystemTextJsonSerializer(SystemTextJsonSerializer.GetDefaultJsonSerializerOptions());
+        return serialiser.Serialize(value);
+    }
+
+    private static T Deserialize<T>(string json)
+    {
+        IStringSerialiser serialiser = new SystemTextJsonSerializer(SystemTextJsonSerializer.GetDefaultJsonSerializerOptions());
+        return serialiser.Deserialize<T>(json);
+    }
     internal async Task<Result<T?>> CreateAndSendHttpRequestMessage<T>(String url, CancellationToken cancellationToken)
     {
         HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
@@ -114,7 +126,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         String content = await result.Content.ReadAsStringAsync(cancellationToken);
         content.ShouldNotBeNull();
 
-        return Result.Success(StringSerialiser.Deserialise<T>(content));
+        return Result.Success(Deserialize<T>(content));
     }
 
     internal async Task<Result<T?>> CreateAndSendHttpRequestMessage<T>(String url, String payload, CancellationToken cancellationToken)
@@ -131,7 +143,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         String content = await result.Content.ReadAsStringAsync(cancellationToken);
         content.ShouldNotBeNull();
 
-        return Result.Success(StringSerialiser.Deserialise<T>(content));
+        return Result.Success(Deserialize<T>(content));
     }
     
     //public static IContainer DatabaseServerContainer;
@@ -201,3 +213,5 @@ public class TestDockerHelper : DockerHelper{
         return sqlContainer.Item2.GetMappedPublicPort(1433);
     }
 }
+
+

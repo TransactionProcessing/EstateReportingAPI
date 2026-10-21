@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using System.ComponentModel;
 using EstateReportingAPI.Common;
 using EstateReportingAPI.Models;
 using MediatR;
@@ -66,7 +67,7 @@ public static class ContractHandler {
     }
 
     public static async Task<IResult> GetContract(IEstateContext estateContext,
-                                                  [FromRoute] Guid contractId,
+                                                  [FromRoute, Description("Unique identifier of the contract.")] Guid contractId,
                                                   IMediator mediator,
                                                   CancellationToken cancellationToken)
     {

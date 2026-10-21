@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using EstateReportingAPI;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using TransactionProcessor.Database.Contexts;
@@ -22,15 +23,13 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.TestHost;
 
-public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup> where TStartup : class
+public class CustomWebApplicationFactory<TEntryPoint> : WebApplicationFactory<TEntryPoint> where TEntryPoint : class
 {
     private string DatabaseConnectionString;
 
     public CustomWebApplicationFactory(string databaseConnectionString)
     {
         DatabaseConnectionString = databaseConnectionString;
-        Environment.SetEnvironmentVariable("InTestMode", "true");
-        Environment.SetEnvironmentVariable("AppSettings__DisableAuthorisation", "true");
     }
 
     public string DefaultUserId { get; set; } = "1";
@@ -38,6 +37,16 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("IntegrationTest");
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["InTestMode"] = "true",
+                ["AppSettings:DisableAuthorisation"] = "true"
+            });
+        });
+
         builder.ConfigureServices(containerBuilder =>
         {
             var createcontext = new EstateManagementContext(DatabaseConnectionString);
@@ -157,3 +166,4 @@ public class TestAuthHandler : AuthenticationHandler<TestAuthHandlerOptions>
         return Task.FromResult(result);
     }
 }
+

@@ -65,9 +65,13 @@ namespace EstateReportingAPI.Common
             await HandleUnauthenticatedRequestAsync(httpContext, estateContext, headerEstateId);
         }
 
-        private static bool IsAnonymousEndpoint(HttpContext httpContext)
-        {
-            return httpContext.GetEndpoint()?.Metadata.GetMetadata<IAllowAnonymous>() != null;
+        private static bool IsAnonymousEndpoint(HttpContext httpContext) {
+            if (httpContext.GetEndpoint()?.Metadata.GetMetadata<IAllowAnonymous>() != null)
+                return true;
+
+            PathString path = httpContext.Request.Path;
+            return path.Equals("/scalar/", StringComparison.OrdinalIgnoreCase)
+                   || path.StartsWithSegments("/openapi", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool TryGetHeaderEstateId(HttpContext httpContext, out Guid? estateId)

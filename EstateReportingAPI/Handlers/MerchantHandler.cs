@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using System.ComponentModel;
 using EstateReportingAPI.Common;
 using EstateReportingAPI.Models;
 using MediatR;
@@ -45,11 +46,11 @@ public static class MerchantHandler {
     }
 
     public static async Task<IResult> GetMerchants(IEstateContext estateContext,
-                                                   [FromQuery] String? name,
-                                                   [FromQuery] String? reference,
-                                                   [FromQuery] Int32? settlementSchedule,
-                                                   [FromQuery] String? region,
-                                                   [FromQuery] String? postCode,
+                                                   [FromQuery, Description("Optional merchant name filter.")] String? name,
+                                                   [FromQuery, Description("Optional merchant reference filter.")] String? reference,
+                                                   [FromQuery, Description("Optional settlement schedule identifier filter.")] Int32? settlementSchedule,
+                                                   [FromQuery, Description("Optional region filter.")] String? region,
+                                                   [FromQuery, Description("Optional postal code filter.")] String? postCode,
                                                    IMediator mediator,
                                                    CancellationToken cancellationToken) {
         // Build the query options
@@ -80,7 +81,7 @@ public static class MerchantHandler {
     }
 
     public static async Task<IResult> GetMerchant(IEstateContext estateContext,
-                                                  [FromRoute] Guid merchantId,
+                                                  [FromRoute, Description("Unique identifier of the merchant.")] Guid merchantId,
                                                   IMediator mediator,
                                                   CancellationToken cancellationToken) {
         // Build the query options
@@ -110,7 +111,7 @@ public static class MerchantHandler {
     }
 
     public static async Task<IResult> GetMerchantOperators(IEstateContext estateContext,
-                                                           [FromRoute] Guid merchantId,
+                                                           [FromRoute, Description("Unique identifier of the merchant.")] Guid merchantId,
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken) {
         MerchantQueries.GetMerchantOperatorsQuery query = new(estateContext.EstateId, merchantId);
@@ -129,7 +130,7 @@ public static class MerchantHandler {
 
 
     public static async Task<IResult> GetMerchantContracts(IEstateContext estateContext,
-                                                           [FromRoute] Guid merchantId,
+                                                           [FromRoute, Description("Unique identifier of the merchant.")] Guid merchantId,
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken) {
         MerchantQueries.GetMerchantContractsQuery query = new(estateContext.EstateId, merchantId);
@@ -152,7 +153,7 @@ public static class MerchantHandler {
     }
 
     public static async Task<IResult> GetMerchantDevices(IEstateContext estateContext,
-                                                         [FromRoute] Guid merchantId,
+                                                         [FromRoute, Description("Unique identifier of the merchant.")] Guid merchantId,
                                                          IMediator mediator,
                                                          CancellationToken cancellationToken) {
         MerchantQueries.GetMerchantDevicesQuery query = new(estateContext.EstateId, merchantId);
@@ -162,7 +163,7 @@ public static class MerchantHandler {
     }
 
     public static async Task<IResult> GetMerchantOpeningHours(IEstateContext estateContext,
-                                                              [FromRoute] Guid merchantId,
+                                                              [FromRoute, Description("Unique identifier of the merchant.")] Guid merchantId,
                                                               IMediator mediator,
                                                               CancellationToken cancellationToken) {
         MerchantQueries.GetMerchantOpeningHoursQuery query = new(estateContext.EstateId, merchantId);
@@ -172,8 +173,8 @@ public static class MerchantHandler {
     }
 
     public static async Task<IResult> GetMerchantSchedule(IEstateContext estateContext,
-                                                          [FromRoute] Guid merchantId,
-                                                          [FromRoute] Int32 year,
+                                                          [FromRoute, Description("Unique identifier of the merchant.")] Guid merchantId,
+                                                          [FromRoute, Description("Schedule year (for example, 2026).") ] Int32 year,
                                                           IMediator mediator,
                                                           CancellationToken cancellationToken) {
         MerchantQueries.GetMerchantScheduleQuery query = new(estateContext.EstateId, merchantId, year);

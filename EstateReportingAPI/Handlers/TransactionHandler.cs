@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using System.ComponentModel;
 using EstateReportingAPI.Common;
 using EstateReportingAPI.DataTransferObjects;
 using MediatR;
@@ -12,9 +13,9 @@ namespace EstateReportingAPI.Handlers;
 
 public static class TransactionHandler {
     public static async Task<IResult> TodaysSales(IEstateContext estateContext,
-                                                  [FromQuery] int? merchantReportingId,
-                                                  [FromQuery] int? operatorReportingId,
-                                                  [FromQuery] DateOnly comparisonDate,
+                                                  [FromQuery, Description("Optional merchant reporting identifier used to limit results to one merchant.")] int? merchantReportingId,
+                                                  [FromQuery, Description("Optional operator reporting identifier used to limit results to one operator.")] int? operatorReportingId,
+                                                  [FromQuery, Description("Date used to compare today's sales with the corresponding day (YYYY-MM-DD).") ] DateOnly comparisonDate,
                                                   IMediator mediator,
                                                   CancellationToken cancellationToken)
     {
@@ -33,8 +34,8 @@ public static class TransactionHandler {
     }
 
     public static async Task<IResult> TodaysFailedSales(IEstateContext estateContext,
-                                                        [FromQuery] DateOnly comparisonDate,
-                                                        [FromQuery] string responseCode,
+                                                        [FromQuery, Description("Date used to compare failed sales with the corresponding day (YYYY-MM-DD).") ] DateOnly comparisonDate,
+                                                        [FromQuery, Description("Response code used to filter failed transactions.")] string responseCode,
                                                         IMediator mediator,
                                                         CancellationToken cancellationToken)
     {
@@ -162,10 +163,10 @@ public static class TransactionHandler {
     }
 
     public static async Task<IResult> ProductPerformanceReport(IEstateContext estateContext,
-                                                               [FromQuery] DateOnly startDate,
-                                                               [FromQuery] DateOnly endDate,
-                                                               [FromQuery] int? pageNumber,
-                                                               [FromQuery] int? pageSize,
+                                                               [FromQuery, Description("Inclusive first date in the report period (YYYY-MM-DD).") ] DateOnly startDate,
+                                                               [FromQuery, Description("Inclusive last date in the report period (YYYY-MM-DD).") ] DateOnly endDate,
+                                                               [FromQuery, Description("One-based page number. Defaults to 1.")] int? pageNumber,
+                                                               [FromQuery, Description("Maximum results per page. Defaults to 50.")] int? pageSize,
                                                                IMediator mediator,
                                                                CancellationToken cancellationToken) {
         int requestedPageNumber = pageNumber ?? 1;
@@ -383,7 +384,7 @@ public static class TransactionHandler {
     }
 
     public static async Task<IResult> TodaysSalesByHour(IEstateContext estateContext,
-                                                        [FromQuery] DateOnly comparisonDate,
+                                                        [FromQuery, Description("Date used to compare hourly sales with the corresponding day (YYYY-MM-DD).") ] DateOnly comparisonDate,
                                                         IMediator mediator,
                                                         CancellationToken cancellationToken)
     {

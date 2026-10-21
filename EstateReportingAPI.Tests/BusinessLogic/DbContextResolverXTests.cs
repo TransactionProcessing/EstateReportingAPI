@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
 using Shared.EntityFramework;
-using Shared.General;
 using Shouldly;
 using TransactionProcessor.Database.Contexts;
 using Xunit;
@@ -25,11 +25,8 @@ public class DbContextResolverXTests
             })
             .Build();
 
-        ConfigurationReader.Initialise(configuration);
-
         using ServiceProvider rootProvider = new ServiceCollection().BuildServiceProvider();
-        DbContextResolverX<EstateManagementContext> resolver =
-            new(rootProvider, configuration, new QueryTimingInterceptor());
+        DbContextResolver<EstateManagementContext> resolver = new(rootProvider, configuration);
 
         using ResolvedDbContext<EstateManagementContext> resolvedContext =
             resolver.Resolve("TransactionProcessorReadModel", "estate-123");

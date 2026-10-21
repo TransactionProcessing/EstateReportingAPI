@@ -1,7 +1,7 @@
-﻿using EstateReportingAPI.DataTransferObjects;
+using Microsoft.Extensions.Configuration;
+using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.Handlers;
 using Shared.Extensions;
-using Shared.General;
 
 namespace EstateReportingAPI.Endpoints;
 
@@ -9,20 +9,24 @@ public static class OperatorEndpoints
 {
     private const string BaseRoute = "api/operators";
 
-    public static void MapOperatorEndpoints(this IEndpointRouteBuilder app)
+    public static void MapOperatorEndpoints(this IEndpointRouteBuilder app, IConfiguration configuration)
     {
         RouteGroupBuilder group = app.MapGroup(BaseRoute)
             .WithTags("Operators");
 
-        Boolean disableAuthorisation = ConfigurationReader.GetValueOrDefault<Boolean>("AppSettings", "DisableAuthorisation", false);
+        Boolean disableAuthorisation = configuration.GetValue("AppSettings:DisableAuthorisation", false);
         if (disableAuthorisation == false) {
             group = group.RequireAuthorization();
         }
 
         group.MapGet("/", OperatorHandler.GetOperators)
-            .WithStandardProduces<List<Operator>>();
+            .WithSummary("List operators")
+            .WithDescription("Returns operators available to the current estate.")
+            .WithApiResponse<List<Operator>>();
 
         group.MapGet("/{operatorId}", OperatorHandler.GetOperator)
-            .WithStandardProduces<Operator>();
+            .WithSummary("Get an operator")
+            .WithDescription("Returns details for the specified operator.")
+            .WithApiResponse<Operator>();
     }
 }
