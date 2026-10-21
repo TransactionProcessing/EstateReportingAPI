@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using System.ComponentModel;
 using EstateReportingAPI.Common;
 using EstateReportingAPI.Models;
 using MediatR;
@@ -27,7 +28,7 @@ public static class OperatorHandler {
     }
 
     public static async Task<IResult> GetOperator(IEstateContext estateContext,
-                                                  [FromRoute] Guid operatorId,
+                                                  [FromRoute, Description("Unique identifier of the operator.")] Guid operatorId,
                                                   IMediator mediator,
                                                   CancellationToken cancellationToken)
     {

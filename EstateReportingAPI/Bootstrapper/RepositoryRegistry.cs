@@ -9,13 +9,15 @@ using Lamar;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Shared.EntityFramework;
 using Shared.General;
 using System.Diagnostics.CodeAnalysis;
 
 [ExcludeFromCodeCoverage]
 public class RepositoryRegistry : ServiceRegistry{
-    public RepositoryRegistry() {
+    public RepositoryRegistry(IConfiguration configuration, IHostEnvironment environment) {
         this.AddSingleton<ReportingDatePolicy>(_ => new ReportingDatePolicy(TimeProvider.System));
         this.AddSingleton<ITransactionReportingService, TransactionReportingService>();
         this.AddSingleton<IEstateReportingService, EstateReportingService>();
@@ -24,23 +26,17 @@ public class RepositoryRegistry : ServiceRegistry{
         this.AddSingleton<IMerchantReportingService, MerchantReportingService>();
 
         this.AddSingleton<DbCommandInterceptor, QueryTimingInterceptor>();
-        this.AddSingleton(typeof(IDbContextResolver<>), typeof(DbContextResolverX<>));
+        this.AddSingleton(typeof(IDbContextResolver<>), typeof(DbContextResolver<>));
 
-        if (Startup.WebHostEnvironment.IsEnvironment("IntegrationTest") || Startup.Configuration.GetValue<Boolean>("ServiceOptions:UseInMemoryDatabase") == true) {
+        if (environment.IsEnvironment("IntegrationTest") || configuration.GetValue<Boolean>("ServiceOptions:UseInMemoryDatabase")) {
             this.AddDbContext<EstateManagementContext>(builder => { builder.UseInMemoryDatabase("TransactionProcessorReadModel"); });
         }
         else {
-            SqlServerRetryOptions retryOptions;
-            try {
-                retryOptions = ConfigurationReader.GetSection<SqlServerRetryOptions>("AppSettings:SqlServerRetry");
-            }
-            catch (KeyNotFoundException) {
-                retryOptions = null;
-            }
+            SqlServerRetryOptions? retryOptions = configuration.GetSection("AppSettings:SqlServerRetry").Get<SqlServerRetryOptions>();
 
             if (retryOptions != null) {
                 this.AddDbContext<EstateManagementContext>(options => {
-                    options.UseSharedSqlServer<EstateManagementContext>(ConfigurationReader.GetConnectionString("TransactionProcessorReadModel"), retry => {
+                    options.UseSharedSqlServer<EstateManagementContext>(configuration.GetConnectionString("TransactionProcessorReadModel")!, retry => {
                         retry.AdditionalTransientErrorNumbers = retryOptions.AdditionalTransientErrorNumbers;
                         retry.MaxRetryCount = retryOptions.MaxRetryCount;
                         retry.MaxRetryDelay = retryOptions.MaxRetryDelay;
@@ -48,7 +44,7 @@ public class RepositoryRegistry : ServiceRegistry{
                 });
             }
             else {
-                this.AddDbContext<EstateManagementContext>(options => { options.UseSqlServer(ConfigurationReader.GetConnectionString("TransactionProcessorReadModel"), retry => { retry.EnableRetryOnFailure(); }); });
+                this.AddDbContext<EstateManagementContext>(options => { options.UseSqlServer(configuration.GetConnectionString("TransactionProcessorReadModel")!, retry => { retry.EnableRetryOnFailure(); }); });
 
             }
         }

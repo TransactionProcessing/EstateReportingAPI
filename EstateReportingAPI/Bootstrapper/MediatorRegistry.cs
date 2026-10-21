@@ -5,15 +5,15 @@ using MediatR;
 using SimpleResults;
 using System.Diagnostics.CodeAnalysis;
 using EstateReportingAPI.BusinessLogic.Queries;
-using Shared.General;
+using Microsoft.Extensions.Configuration;
 
 namespace EstateReportingAPI.Bootstrapper;
 
 [ExcludeFromCodeCoverage]
 public class MediatorRegistry : ServiceRegistry {
-    public MediatorRegistry() {
+    public MediatorRegistry(IConfiguration configuration) {
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(EstateRequestHandler).Assembly));
-        this.AddSingleton<Func<String, String>>(container => (serviceName) => ConfigurationReader.GetBaseServerUri(serviceName).OriginalString);
+        this.AddSingleton<Func<String, String>>(_ => serviceName => new Uri(configuration[$"AppSettings:{serviceName}"]!).OriginalString);
     }
 }
 

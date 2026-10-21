@@ -1,7 +1,7 @@
-﻿using EstateReportingAPI.DataTransferObjects;
+using Microsoft.Extensions.Configuration;
+using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.Handlers;
 using Shared.Extensions;
-using Shared.General;
 
 namespace EstateReportingAPI.Endpoints;
 
@@ -9,21 +9,27 @@ public static class ContractEndpoints
 {
     private const string BaseRoute = "api/contracts";
 
-    public static void MapContractEndpoints(this IEndpointRouteBuilder app)
+    public static void MapContractEndpoints(this IEndpointRouteBuilder app, IConfiguration configuration)
     {
         RouteGroupBuilder group = app.MapGroup(BaseRoute)
             .WithTags("Contracts");
 
-        Boolean disableAuthorisation = ConfigurationReader.GetValueOrDefault<Boolean>("AppSettings", "DisableAuthorisation", false);
+        Boolean disableAuthorisation = configuration.GetValue("AppSettings:DisableAuthorisation", false);
         if (disableAuthorisation == false) {
             group = group.RequireAuthorization();
         }
 
         group.MapGet("/recent", ContractHandler.GetRecentContracts)
-            .WithStandardProduces<List<Contract>>();
+            .WithSummary("List recently created contracts")
+            .WithDescription("Returns the most recently created contracts for the current estate.")
+            .WithApiResponse<List<Contract>>();
         group.MapGet("/", ContractHandler.GetContracts)
-            .WithStandardProduces<List<Contract>>();
+            .WithSummary("List contracts")
+            .WithDescription("Returns contracts and their configured products and transaction fees for the current estate.")
+            .WithApiResponse<List<Contract>>();
         group.MapGet("/{contractId}", ContractHandler.GetContract)
-            .WithStandardProduces<List<Contract>>();
+            .WithSummary("Get a contract")
+            .WithDescription("Returns the specified contract, including its products and transaction fees.")
+            .WithApiResponse<Contract>();
     }
 }

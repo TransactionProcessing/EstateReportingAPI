@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using System.ComponentModel;
 using EstateReportingAPI.Common;
 using EstateReportingAPI.Models;
 using MediatR;
@@ -33,9 +34,9 @@ public static class FileProfileConfigurationHandler
 public static class FileImportHandler
 {
     public static async Task<IResult> GetFileImportLogList(IEstateContext estateContext,
-                                                           [FromQuery] Guid? merchantId,
-                                                           [FromQuery] DateOnly startDate,
-                                                           [FromQuery] DateOnly endDate,
+                                                           [FromQuery, Description("Optional merchant identifier used to filter import logs.")] Guid? merchantId,
+                                                           [FromQuery, Description("Inclusive first date in the import log period (YYYY-MM-DD).") ] DateOnly startDate,
+                                                           [FromQuery, Description("Inclusive last date in the import log period (YYYY-MM-DD).") ] DateOnly endDate,
                                                            BusinessLogic.ReportingDatePolicy datePolicy,
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken)
@@ -66,8 +67,8 @@ public static class FileImportHandler
     }
 
     public static async Task<IResult> GetFileImportLog(IEstateContext estateContext,
-                                                       [FromRoute] Guid fileImportLogId,
-                                                           [FromQuery] Guid? merchantId,
+                                                       [FromRoute, Description("Unique identifier of the file import log.")] Guid fileImportLogId,
+                                                           [FromQuery, Description("Optional merchant identifier used to filter the import log.")] Guid? merchantId,
                                                             BusinessLogic.ReportingDatePolicy datePolicy,
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken)

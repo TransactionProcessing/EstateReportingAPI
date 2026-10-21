@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -522,7 +522,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = []
         };
 
-        String payload = StringSerialiser.Serialise(request);
+        String payload = Serialize(request);
 
 
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
@@ -595,7 +595,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = []
         };
 
-        String payload = StringSerialiser.Serialise(request);
+        String payload = Serialize(request);
             
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
@@ -670,7 +670,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = []
         };
 
-        String payload = StringSerialiser.Serialise(request);
+        String payload = Serialize(request);
 
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
@@ -744,7 +744,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = productsForFilter.Select(c => c.contractProductReportingId).ToList(),
         };
 
-        String payload = StringSerialiser.Serialise(request);
+        String payload = Serialize(request);
 
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
@@ -868,7 +868,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = []
         };
 
-        String payload = StringSerialiser.Serialise(request);
+        String payload = Serialize(request);
             
         var result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.TransactionSummaryByMerchantResponse>($"{this.BaseRoute}/transactionsummarybymerchantreport", payload, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
@@ -1006,7 +1006,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Products = []
         };
 
-        String payload = StringSerialiser.Serialise(request);
+        String payload = Serialize(request);
 
         var result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.TransactionSummaryByOperatorResponse>($"{this.BaseRoute}/transactionsummarybyoperatorreport", payload, CancellationToken.None);
         result.IsSuccess.ShouldBeTrue();
@@ -1311,7 +1311,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
         var result = await this.CreateAndSendHttpRequestMessage<MerchantDailyPerformanceSummaryResponse>(
             $"{this.BaseRoute}/merchantdailyperformancesummary",
-            StringSerialiser.Serialise(request),
+            Serialize(request),
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -1446,7 +1446,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
         var result = await this.CreateAndSendHttpRequestMessage<MerchantDailyPerformanceSummaryResponse>(
             $"{this.BaseRoute}/merchantdailyperformancesummary",
-            StringSerialiser.Serialise(request),
+            Serialize(request),
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -1511,7 +1511,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
         var result = await this.CreateAndSendHttpRequestMessage<MerchantDailyPerformanceSummaryResponse>(
             $"{this.BaseRoute}/merchantdailyperformancesummary",
-            StringSerialiser.Serialise(request),
+            Serialize(request),
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -1739,3 +1739,4 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         AssertRecentActivityReceiptItemMatches(items[0], transactions[1], product.productName, contract.operatorName, "receipt-002");
     }
 }
+

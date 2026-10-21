@@ -1,12 +1,16 @@
-﻿using HealthMonitoring.Client;
+using HealthMonitoring.Client;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Shared.Middleware;
+using TransactionProcessing.ApiDefaults;
 
 namespace EstateReportingAPI.Bootstrapper{
     using EstateReportingAPI.Common;
     using Lamar;
     using Microsoft.Extensions.Diagnostics.HealthChecks;
     using OpenIddict.Validation.AspNetCore;
-    using Shared.General;
     using Shared.Serialisation;
     using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
@@ -14,16 +18,53 @@ namespace EstateReportingAPI.Bootstrapper{
 
     [ExcludeFromCodeCoverage]
     public class MiddlewareRegistry : ServiceRegistry{
-        public MiddlewareRegistry()
+        public MiddlewareRegistry(IConfiguration configuration, IHostEnvironment environment)
         {
-            this.ConfigureHealthChecks();
-            this.ConfigureAuthentication();
+            this.ConfigureHealthChecks(configuration);
+            this.ConfigureAuthentication(configuration, environment);
             this.ConfigureControllers();
-            this.ConfigureMiddlewareLogging();
+            this.ConfigureMiddlewareLogging(configuration);
             this.ConfigureJsonOptions();
-            this.AddHealthMonitoringRegistration(Startup.Configuration);
+            this.AddHealthMonitoringRegistration(configuration);
             this.AddScoped<EstateContext>();
             this.AddScoped<IEstateContext>(sp => sp.GetRequiredService<EstateContext>());
+            this.Configure<ApiDefaultsOptions>(options =>
+            {
+                options.Title = "Estate Reporting";
+                options.Description = "API providing a variety of reporting facilities consumed by various reporting applications";
+            });
+            this.AddApiVersioning(options =>
+            {
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+                options.DefaultApiVersion = ApiVersions.V1;
+                options.AssumeDefaultVersionWhenUnspecified = false;
+                options.ReportApiVersions = true;
+            }).AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            }).AddOpenApi(options =>
+            {
+                options.Document.AddSchemaTransformer((schema, context, _) =>
+                {
+                    XmlDocumentationSchemaTransformer.Apply(schema, context);
+                    return Task.CompletedTask;
+                });
+                options.Document.AddOperationTransformer((operation, context, _) =>
+                {
+                    OpenApiExamplesTransformer.Apply(operation, context);
+                    return Task.CompletedTask;
+                });
+                options.Document.AddDocumentTransformer((document, context, _) =>
+                {
+                    ApiDefaultsOptions metadata = context.ApplicationServices
+                        .GetRequiredService<IOptions<ApiDefaultsOptions>>()
+                        .Value;
+                    document.Info.Title = metadata.Title;
+                    document.Info.Description = metadata.Description;
+                    return Task.CompletedTask;
+                });
+            });
 
         }
 
@@ -34,8 +75,8 @@ namespace EstateReportingAPI.Bootstrapper{
             });
         }
 
-        private void ConfigureHealthChecks(){
-            var connectionStringSection = Startup.Configuration.GetSection("ConnectionStrings");
+        private void ConfigureHealthChecks(IConfiguration configuration){
+            var connectionStringSection = configuration.GetSection("ConnectionStrings");
             if (connectionStringSection.Exists() == false)
             {
                 this.AddHealthChecks();
@@ -43,7 +84,7 @@ namespace EstateReportingAPI.Bootstrapper{
             else
             {
                 this.AddHealthChecks().AddSqlServer(
-                    connectionString: ConfigurationReader.GetConnectionString("HealthCheck"),
+                    connectionString: configuration.GetConnectionString("HealthCheck"),
                     healthQuery: "SELECT 1;",
                     name: "Read Model Server",
                     failureStatus: HealthStatus.Degraded,
@@ -51,9 +92,9 @@ namespace EstateReportingAPI.Bootstrapper{
             }
         }
         
-        private void ConfigureAuthentication(){
-            String? inTestMode = Environment.GetEnvironmentVariable("InTestMode");
-            if (String.Compare(inTestMode, Boolean.TrueString, StringComparison.InvariantCultureIgnoreCase) != 0){
+        private void ConfigureAuthentication(IConfiguration configuration, IHostEnvironment environment){
+            bool inTestMode = environment.IsEnvironment("IntegrationTest") || configuration.GetValue("InTestMode", false);
+            if (!inTestMode){
                 this.AddAuthentication(options =>
                 {
                     options.DefaultScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
@@ -62,7 +103,7 @@ namespace EstateReportingAPI.Bootstrapper{
                     .AddValidation(options =>
                     {
                         // Same as your Authority
-                        options.SetIssuer(new Uri(ConfigurationReader.GetValue("SecurityConfiguration", "Authority")));
+                        options.SetIssuer(new Uri(configuration["SecurityConfiguration:Authority"]!));
 
                         // Enables discovery and HTTP backchannel support
                         options.UseSystemNetHttp()
@@ -77,7 +118,7 @@ namespace EstateReportingAPI.Bootstrapper{
                         options.UseAspNetCore();
 
                         // Optionally set expected audience(s):
-                        options.AddAudiences(ConfigurationReader.GetValue("SecurityConfiguration", "ApiName"));
+                        options.AddAudiences(configuration["SecurityConfiguration:ApiName"]!);
 
                     });
 
@@ -92,10 +133,10 @@ namespace EstateReportingAPI.Bootstrapper{
             this.AddMvcCore().AddApplicationPart(assembly).AddControllersAsServices();
         }
 
-        private void ConfigureMiddlewareLogging(){
-            bool logRequests = ConfigurationReader.GetValueOrDefault<Boolean>("MiddlewareLogging", "LogRequests", true);
-            bool logResponses = ConfigurationReader.GetValueOrDefault<Boolean>("MiddlewareLogging", "LogResponses", true);
-            LogLevel middlewareLogLevel = ConfigurationReader.GetValueOrDefault<LogLevel>("MiddlewareLogging", "MiddlewareLogLevel", LogLevel.Warning);
+        private void ConfigureMiddlewareLogging(IConfiguration configuration){
+            bool logRequests = configuration.GetValue("MiddlewareLogging:LogRequests", true);
+            bool logResponses = configuration.GetValue("MiddlewareLogging:LogResponses", true);
+            LogLevel middlewareLogLevel = configuration.GetValue("MiddlewareLogging:MiddlewareLogLevel", LogLevel.Warning);
 
             RequestResponseMiddlewareLoggingConfig config =
                 new RequestResponseMiddlewareLoggingConfig(middlewareLogLevel, logRequests, logResponses);
@@ -121,8 +162,8 @@ namespace EstateReportingAPI.Bootstrapper{
         public SerialiserRegistry()
         {
             this.AddSingleton<IStringSerialiser, SystemTextJsonSerializer>();
-            this.AddSingleton<Func<Object, String>>(_ => obj => StringSerialiser.Serialise(obj));
-            this.AddSingleton<Func<String, Type, Object>>(_ => (str, type) => StringSerialiser.DeserializeObject<Object>(str, type));
+            this.AddSingleton<Func<Object, String>>(container => obj => container.GetRequiredService<IStringSerialiser>().Serialize(obj));
+            this.AddSingleton<Func<String, Type, Object>>(container => (json, type) => container.GetRequiredService<IStringSerialiser>().DeserializeObject<Object>(json, type));
 
             var serialiserSettings = SystemTextJsonSerializer.GetDefaultJsonSerializerOptions();
 
@@ -143,3 +184,4 @@ namespace EstateReportingAPI.Bootstrapper{
         }
     }
 }
+

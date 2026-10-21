@@ -5,7 +5,6 @@ using Io.Cucumber.Messages.Types;
 using Microsoft.AspNetCore.Mvc;
 using Shouldly;
 using SimpleResults;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;

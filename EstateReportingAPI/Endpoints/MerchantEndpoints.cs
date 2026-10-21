@@ -1,8 +1,8 @@
-﻿using EstateReportingAPI.DataTransferObjects;
+using Microsoft.Extensions.Configuration;
+using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.DataTrasferObjects;
 using EstateReportingAPI.Handlers;
 using Shared.Extensions;
-using Shared.General;
 
 namespace EstateReportingAPI.Endpoints;
 
@@ -10,33 +10,51 @@ public static class MerchantEndpoints
 {
     private const string BaseRoute = "api/merchants";
 
-    public static void MapMerchantEndpoints(this IEndpointRouteBuilder app)
+    public static void MapMerchantEndpoints(this IEndpointRouteBuilder app, IConfiguration configuration)
     {
         RouteGroupBuilder group = app.MapGroup(BaseRoute)
             .WithTags("Merchants");
 
-        Boolean disableAuthorisation = ConfigurationReader.GetValueOrDefault<Boolean>("AppSettings", "DisableAuthorisation", false);
+        Boolean disableAuthorisation = configuration.GetValue("AppSettings:DisableAuthorisation", false);
         if (disableAuthorisation == false) {
             group = group.RequireAuthorization();
         }
 
         group.MapGet("/kpis", MerchantHandler.GetMerchantKpis)
-            .WithStandardProduces<List<ComparisonDate>>();
+            .WithSummary("Get merchant performance indicators")
+            .WithDescription("Returns merchant activity counts for the current estate, including recent and absent sales.")
+            .WithApiResponse<MerchantKpi>();
         group.MapGet("/recent", MerchantHandler.GetRecentMerchants)
-            .WithStandardProduces<List<Merchant>>();
+            .WithSummary("List recently created merchants")
+            .WithDescription("Returns the most recently created merchants for the current estate.")
+            .WithApiResponse<List<Merchant>>();
         group.MapGet("/", MerchantHandler.GetMerchants)
-            .WithStandardProduces<List<Merchant>>();
+            .WithSummary("List merchants")
+            .WithDescription("Returns merchants belonging to the current estate.")
+            .WithApiResponse<List<Merchant>>();
         group.MapGet("/{merchantId}", MerchantHandler.GetMerchant)
-            .WithStandardProduces<Merchant>();
+            .WithSummary("Get a merchant")
+            .WithDescription("Returns details for the specified merchant.")
+            .WithApiResponse<Merchant>();
         group.MapGet("/{merchantId}/operators", MerchantHandler.GetMerchantOperators)
-            .WithStandardProduces<List<MerchantOperator>>();
+            .WithSummary("List a merchant's operators")
+            .WithDescription("Returns the operators configured for the specified merchant.")
+            .WithApiResponse<List<MerchantOperator>>();
         group.MapGet("/{merchantId}/contracts", MerchantHandler.GetMerchantContracts)
-            .WithStandardProduces<List<MerchantContract>>();
+            .WithSummary("List a merchant's contracts")
+            .WithDescription("Returns the contracts and products configured for the specified merchant.")
+            .WithApiResponse<List<MerchantContract>>();
         group.MapGet("/{merchantId}/devices", MerchantHandler.GetMerchantDevices)
-            .WithStandardProduces<List<MerchantDevice>>();
+            .WithSummary("List a merchant's devices")
+            .WithDescription("Returns the devices configured for the specified merchant.")
+            .WithApiResponse<List<MerchantDevice>>();
         group.MapGet("/{merchantId}/openinghours", MerchantHandler.GetMerchantOpeningHours)
-            .WithStandardProduces<List<MerchantOpeningHour>>();
+            .WithSummary("Get a merchant's opening hours")
+            .WithDescription("Returns the opening and closing times configured for each day for the specified merchant.")
+            .WithApiResponse<List<MerchantOpeningHour>>();
         group.MapGet("/{merchantId}/schedule/{year}", MerchantHandler.GetMerchantSchedule)
-            .WithStandardProduces<MerchantScheduleResponse>();
+            .WithSummary("Get a merchant's schedule")
+            .WithDescription("Returns the closed days for each month of the specified year for the merchant.")
+            .WithApiResponse<MerchantScheduleResponse>();
     }
 }

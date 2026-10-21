@@ -1,4 +1,5 @@
 ﻿using EstateReportingAPI.BusinessLogic.Queries;
+using System.ComponentModel;
 using EstateReportingAPI.Common;
 using EstateReportingAPI.DataTransferObjects;
 using MediatR;
@@ -9,7 +10,7 @@ namespace EstateReportingAPI.Handlers;
 
 public static class SettlementHandler {
     public static async Task<IResult> TodaysSettlements(IEstateContext estateContext,
-                                                        [FromQuery] DateOnly comparisonDate,
+                                                        [FromQuery, Description("Date used to compare today's settlements with the corresponding day (YYYY-MM-DD).") ] DateOnly comparisonDate,
                                                         IMediator mediator,
                                                         CancellationToken cancellationToken) {
         var query = new SettlementQueries.TodaysSettlementQuery(estateContext.EstateId, comparisonDate.ToDateTime(TimeOnly.MinValue));

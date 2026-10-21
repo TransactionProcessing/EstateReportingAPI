@@ -109,7 +109,7 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
             TopN = 5
         };
 
-        String payload = StringSerialiser.Serialise(request);
+        String payload = Serialize(request);
         var result = await this.CreateAndSendHttpRequestMessage<TransactionMixSummaryResponse>($"{BaseRoute}/transactionmixsummary", payload, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -146,7 +146,7 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
             TopN = 5
         };
 
-        String payload = StringSerialiser.Serialise(request);
+        String payload = Serialize(request);
         HttpRequestMessage requestMessage = new(HttpMethod.Post, $"{BaseRoute}/transactionmixsummary");
         requestMessage.Headers.Add("estateId", this.TestId.ToString());
         requestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Test");
@@ -160,3 +160,4 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
         problemDocument.RootElement.GetProperty("detail").GetString().ShouldBe("startDate must be less than or equal to endDate.");
     }
 }
+
