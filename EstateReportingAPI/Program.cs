@@ -22,6 +22,10 @@ namespace EstateReportingAPI;
 [ExcludeFromCodeCoverage]
 public partial class Program
 {
+    protected Program()
+    {
+    }
+
     public static void Main(string[] args)
     {
         ConfigureLogging();

@@ -23,14 +23,24 @@ internal static class XmlDocumentationSchemaTransformer
         }
 
         MemberInfo? member = context.JsonPropertyInfo?.AttributeProvider as MemberInfo;
-        Assembly documentationAssembly = member?.DeclaringType?.Assembly ?? type.Assembly;
+        Assembly documentationAssembly = GetDocumentationAssembly(member, type);
         IReadOnlyDictionary<string, string> documentation = DocumentationByAssembly.GetOrAdd(documentationAssembly, LoadDocumentation);
-        string? memberId = member is not null ? GetMemberId(member) : $"T:{GetTypeName(type)}";
+        string? memberId = GetDocumentationMemberId(member, type);
 
         if (memberId is not null && documentation.TryGetValue(memberId, out string? summary))
         {
             schema.Description = summary;
         }
+    }
+
+    private static Assembly GetDocumentationAssembly(MemberInfo? member, Type type)
+    {
+        return member?.DeclaringType?.Assembly ?? type.Assembly;
+    }
+
+    private static string? GetDocumentationMemberId(MemberInfo? member, Type type)
+    {
+        return member is not null ? GetMemberId(member) : $"T:{GetTypeName(type)}";
     }
 
     private static IReadOnlyDictionary<string, string> LoadDocumentation(Assembly assembly)
@@ -94,3 +104,4 @@ internal static class XmlDocumentationSchemaTransformer
         return string.IsNullOrWhiteSpace(text) ? null : text;
     }
 }
+

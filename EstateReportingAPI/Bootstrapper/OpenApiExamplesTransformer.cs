@@ -13,6 +13,8 @@ namespace EstateReportingAPI.Bootstrapper;
 /// </summary>
 internal static class OpenApiExamplesTransformer
 {
+    private const string JsonMediaType = "application/json";
+
     public static void Apply(OpenApiOperation operation, OpenApiOperationTransformerContext context)
     {
         AddParameterExamples(operation, context);
@@ -146,7 +148,7 @@ internal static class OpenApiExamplesTransformer
         Type? bodyType = context.Description.ParameterDescriptions
             .FirstOrDefault(parameter => parameter.Source?.Id == "Body")?
             .ModelMetadata?.ModelType;
-        if (bodyType is null || !operation.RequestBody.Content.TryGetValue("application/json", out OpenApiMediaType? mediaType))
+        if (bodyType is null || !operation.RequestBody.Content.TryGetValue(JsonMediaType, out OpenApiMediaType? mediaType))
         {
             return;
         }
@@ -164,7 +166,7 @@ internal static class OpenApiExamplesTransformer
             return;
         }
 
-        if (response.Content.TryGetValue("application/json", out OpenApiMediaType? mediaType))
+        if (response.Content.TryGetValue(JsonMediaType, out OpenApiMediaType? mediaType))
         {
             mediaType.Example ??= CreateExample(successResponse.Type, "response");
         }
@@ -172,78 +174,13 @@ internal static class OpenApiExamplesTransformer
 
     private static JsonNode? CreateExample(Type type, string propertyName, int depth = 0)
     {
-        Type? nullableType = Nullable.GetUnderlyingType(type);
-        if (nullableType is not null)
-        {
-            type = nullableType;
-        }
+        type = Nullable.GetUnderlyingType(type) ?? type;
 
-        if (type == typeof(string))
+        if (TryCreateStringExample(type, propertyName, out JsonNode? example)
+            || TryCreateDateTimeExample(type, out example)
+            || TryCreateOtherScalarExample(type, propertyName, out example))
         {
-            string name = propertyName.ToLowerInvariant();
-            string value = name switch
-            {
-                var n when n.Contains("email") => "alex@example.com",
-                var n when n.Contains("status") => "Authorised",
-                var n when n.Contains("type") => "Sale",
-                var n when n.Contains("reference") => "REF-20261021-0042",
-                var n when n.Contains("description") => "Example description",
-                var n when n.Contains("name") || n.Contains("product") || n.Contains("merchant") || n.Contains("operator") => "Example " + propertyName,
-                var n when n.Contains("address") || n.Contains("town") || n.Contains("region") || n.Contains("country") || n.Contains("postcode") => "Example value",
-                _ => "Example value"
-            };
-            return JsonValue.Create(value);
-        }
-
-        if (type == typeof(Guid))
-        {
-            return JsonValue.Create("c6e8c2ba-bb6d-4fe5-aad9-62444fc13a70");
-        }
-
-        if (type == typeof(DateOnly))
-        {
-            return JsonValue.Create("2026-10-21");
-        }
-
-        if (type == typeof(DateTime) || type == typeof(DateTimeOffset))
-        {
-            return JsonValue.Create("2026-10-21T10:32:15+01:00");
-        }
-
-        if (type == typeof(TimeOnly) || type == typeof(TimeSpan))
-        {
-            return JsonValue.Create("09:00:00");
-        }
-
-        if (type == typeof(bool))
-        {
-            return JsonValue.Create(true);
-        }
-
-        if (type.IsEnum)
-        {
-            string enumValue = propertyName.Contains("measure", StringComparison.OrdinalIgnoreCase)
-                ? "Value"
-                : Enum.GetNames(type).FirstOrDefault() ?? "Unknown";
-            return JsonValue.Create(enumValue);
-        }
-
-        if (type == typeof(decimal) || type == typeof(double) || type == typeof(float))
-        {
-            return JsonValue.Create(18.50m);
-        }
-
-        if (type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long)
-            || type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong))
-        {
-            string name = propertyName.ToLowerInvariant();
-            long value = name.Contains("page") && name.Contains("size") ? 50
-                : name.Contains("page") && name.Contains("number") ? 1
-                : name.Contains("year") ? 2026
-                : name.Contains("hour") ? 10
-                : name.Contains("count") || name.Contains("total") ? 3
-                : 1001;
-            return JsonValue.Create(value);
+            return example;
         }
 
         if (type.IsArray)
@@ -251,7 +188,7 @@ internal static class OpenApiExamplesTransformer
             return new JsonArray(CreateExample(type.GetElementType()!, propertyName, depth + 1));
         }
 
-        if (type != typeof(string) && typeof(IEnumerable).IsAssignableFrom(type) && type.IsGenericType)
+        if (typeof(IEnumerable).IsAssignableFrom(type) && type.IsGenericType)
         {
             return new JsonArray(CreateExample(type.GetGenericArguments()[0], propertyName, depth + 1));
         }
@@ -261,9 +198,127 @@ internal static class OpenApiExamplesTransformer
             return null;
         }
 
+        return CreateObjectExample(type, depth);
+    }
+
+    private static bool TryCreateStringExample(Type type, string propertyName, out JsonNode? example)
+    {
+        if (type != typeof(string))
+        {
+            example = null;
+            return false;
+        }
+
+        string name = propertyName.ToLowerInvariant();
+        string value = name switch
+        {
+            var n when n.Contains("email") => "alex@example.com",
+            var n when n.Contains("status") => "Authorised",
+            var n when n.Contains("type") => "Sale",
+            var n when n.Contains("reference") => "REF-20261021-0042",
+            var n when n.Contains("description") => "Example description",
+            var n when HasNameToken(n) => "Example " + propertyName,
+            _ => "Example value"
+        };
+        example = JsonValue.Create(value);
+        return true;
+    }
+
+    private static bool HasNameToken(string name)
+    {
+        return name.Contains("name") || name.Contains("product") || name.Contains("merchant") || name.Contains("operator");
+    }
+
+    private static bool TryCreateDateTimeExample(Type type, out JsonNode? example)
+    {
+        if (type == typeof(Guid))
+        {
+            example = JsonValue.Create("c6e8c2ba-bb6d-4fe5-aad9-62444fc13a70");
+            return true;
+        }
+
+        if (type == typeof(DateOnly))
+        {
+            example = JsonValue.Create("2026-10-21");
+            return true;
+        }
+
+        if (type == typeof(DateTime) || type == typeof(DateTimeOffset))
+        {
+            example = JsonValue.Create("2026-10-21T10:32:15+01:00");
+            return true;
+        }
+
+        if (type == typeof(TimeOnly) || type == typeof(TimeSpan))
+        {
+            example = JsonValue.Create("09:00:00");
+            return true;
+        }
+
+        example = null;
+        return false;
+    }
+
+    private static bool TryCreateOtherScalarExample(Type type, string propertyName, out JsonNode? example)
+    {
+        if (type == typeof(bool))
+        {
+            example = JsonValue.Create(true);
+            return true;
+        }
+
+        if (type.IsEnum)
+        {
+            string enumValue = propertyName.Contains("measure", StringComparison.OrdinalIgnoreCase)
+                ? "Value"
+                : Enum.GetNames(type).FirstOrDefault() ?? "Unknown";
+            example = JsonValue.Create(enumValue);
+            return true;
+        }
+
+        if (IsDecimalType(type))
+        {
+            example = JsonValue.Create(18.50m);
+            return true;
+        }
+
+        if (IsIntegerType(type))
+        {
+            example = JsonValue.Create(CreateIntegerExample(propertyName));
+            return true;
+        }
+
+        example = null;
+        return false;
+    }
+
+    private static bool IsDecimalType(Type type)
+    {
+        return type == typeof(decimal) || type == typeof(double) || type == typeof(float);
+    }
+
+    private static bool IsIntegerType(Type type)
+    {
+        return type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long)
+            || type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong);
+    }
+
+    private static long CreateIntegerExample(string propertyName)
+    {
+        string name = propertyName.ToLowerInvariant();
+        return name.Contains("page") && name.Contains("size") ? 50
+            : name.Contains("page") && name.Contains("number") ? 1
+            : name.Contains("year") ? 2026
+            : name.Contains("hour") ? 10
+            : name.Contains("count") || name.Contains("total") ? 3
+            : 1001;
+    }
+
+    private static JsonObject CreateObjectExample(Type type, int depth)
+    {
         JsonObject result = new();
         foreach (PropertyInfo property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                     .Where(property => property.CanRead && property.GetIndexParameters().Length == 0))
+                     .Where(IsExampleProperty))
         {
             string jsonName = JsonNamingPolicy.SnakeCaseLower.ConvertName(property.Name);
             result[jsonName] = CreateExample(property.PropertyType, property.Name, depth + 1);
@@ -272,9 +327,14 @@ internal static class OpenApiExamplesTransformer
         return result;
     }
 
+    private static bool IsExampleProperty(PropertyInfo property)
+    {
+        return property.CanRead && property.GetIndexParameters().Length == 0;
+    }
+
     private static void SetRequestExample(OpenApiOperation operation, string json)
     {
-        if (operation.RequestBody?.Content.TryGetValue("application/json", out OpenApiMediaType? mediaType) == true)
+        if (operation.RequestBody?.Content.TryGetValue(JsonMediaType, out OpenApiMediaType? mediaType) == true)
         {
             mediaType.Example = JsonNode.Parse(json);
         }
@@ -283,7 +343,7 @@ internal static class OpenApiExamplesTransformer
     private static void SetResponseExample(OpenApiOperation operation, string json)
     {
         if (operation.Responses.TryGetValue("200", out IOpenApiResponse response)
-            && response.Content.TryGetValue("application/json", out OpenApiMediaType? mediaType))
+            && response.Content.TryGetValue(JsonMediaType, out OpenApiMediaType? mediaType))
         {
             mediaType.Example = JsonNode.Parse(json);
         }
