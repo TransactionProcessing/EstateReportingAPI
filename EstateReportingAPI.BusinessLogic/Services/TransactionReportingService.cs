@@ -262,37 +262,16 @@ public sealed class TransactionReportingService : ITransactionReportingService
             query = query.Where(q => request.Request.Operators.Contains(q.OperatorReportingId));
 
         var finalQuery = BuildMerchantTransactionFinalQuery(query);
-
-        var merchantCountResult = await ReportingQueryExecutor.CountAsync(finalQuery, cancellationToken, "Error counting transaction summary by merchant report rows");
-        if (merchantCountResult.IsFailed)
-            return ResultHelpers.CreateFailure(merchantCountResult);
-        var totalCountResult = await ReportingQueryExecutor.SumAsync(finalQuery.Select(q => (int?)q.TotalCount), cancellationToken, "Error summing transaction summary by merchant counts");
-        if (totalCountResult.IsFailed)
-            return ResultHelpers.CreateFailure(totalCountResult);
-        var totalValueResult = await ReportingQueryExecutor.SumAsync(finalQuery.Select(q => (decimal?)q.TotalValue), cancellationToken, "Error summing transaction summary by merchant values");
-        if (totalValueResult.IsFailed)
-            return ResultHelpers.CreateFailure(totalValueResult);
-        var queryResult = await ReportingQueryExecutor.ToListAsync(
-            finalQuery
-                .OrderBy(q => string.IsNullOrWhiteSpace(q.MerchantName) ? "Unknown Merchant" : q.MerchantName)
-                .ThenBy(q => q.MerchantReportingId)
-                .ThenBy(q => q.MerchantId)
-                .Skip((int)((long)(request.Request.PageNumber - 1) * request.Request.PageSize))
-                .Take(request.Request.PageSize),
-            cancellationToken,
-            "Error retrieving transaction summary by merchant report");
-
-        if (queryResult.IsFailed)
-            return ResultHelpers.CreateFailure(queryResult);
-
-        var queryResults = queryResult.Data;
-
-        int totalCount = totalCountResult.Data ?? 0;
-        int totalMerchants = merchantCountResult.Data;
+        var reportDataResult = await LoadMerchantSummaryReportDataAsync(finalQuery, request.Request, cancellationToken);
+        if (reportDataResult.IsFailed)
+            return ResultHelpers.CreateFailure(reportDataResult);
+        var reportData = reportDataResult.Data;
+        int totalCount = reportData.TotalCount;
+        int totalMerchants = reportData.TotalMerchants;
         int totalPages = totalMerchants == 0 ? 0 : (int)Math.Ceiling((double)totalMerchants / request.Request.PageSize);
 
         return new TransactionSummaryByMerchantResponse {
-            Merchants = queryResults.Select(q => new MerchantDetail {
+            Merchants = reportData.Merchants.Select(q => new MerchantDetail {
                 MerchantId = q.MerchantId,
                 MerchantReportingId = q.MerchantReportingId,
                 MerchantName = string.IsNullOrWhiteSpace(q.MerchantName) ? $"Unknown Merchant ({q.MerchantReportingId})" : q.MerchantName,
@@ -305,8 +284,8 @@ public sealed class TransactionReportingService : ITransactionReportingService
             }).ToList(),
             Summary = new MerchantDetailSummary {
                 TotalCount = totalCount,
-                TotalValue = totalValueResult.Data ?? 0m,
-                AverageValue = SafeDivide(totalValueResult.Data ?? 0m, totalCount),
+                TotalValue = reportData.TotalValue,
+                AverageValue = SafeDivide(reportData.TotalValue, totalCount),
                 TotalMerchants = totalMerchants
             },
             Pagination = new PaginationMetadata {
@@ -316,6 +295,40 @@ public sealed class TransactionReportingService : ITransactionReportingService
                 TotalPages = totalPages
             }
         };
+    }
+
+    private static async Task<Result<MerchantSummaryReportData>> LoadMerchantSummaryReportDataAsync(
+        IQueryable<MerchantTransactionFinalProjection> query,
+        Models.TransactionSummaryByMerchantRequest request,
+        CancellationToken cancellationToken) {
+        var merchantCountResult = await ReportingQueryExecutor.CountAsync(query, cancellationToken, "Error counting transaction summary by merchant report rows");
+        if (merchantCountResult.IsFailed)
+            return ResultHelpers.CreateFailure(merchantCountResult);
+
+        var totalCountResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (int?)q.TotalCount), cancellationToken, "Error summing transaction summary by merchant counts");
+        if (totalCountResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalCountResult);
+
+        var totalValueResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (decimal?)q.TotalValue), cancellationToken, "Error summing transaction summary by merchant values");
+        if (totalValueResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalValueResult);
+
+        var merchantResult = await ReportingQueryExecutor.ToListAsync(
+            query.OrderBy(q => string.IsNullOrWhiteSpace(q.MerchantName) ? "Unknown Merchant" : q.MerchantName)
+                .ThenBy(q => q.MerchantReportingId)
+                .ThenBy(q => q.MerchantId)
+                .Skip((int)((long)(request.PageNumber - 1) * request.PageSize))
+                .Take(request.PageSize),
+            cancellationToken,
+            "Error retrieving transaction summary by merchant report");
+        if (merchantResult.IsFailed)
+            return ResultHelpers.CreateFailure(merchantResult);
+
+        return Result.Success(new MerchantSummaryReportData(
+            merchantResult.Data,
+            merchantCountResult.Data,
+            totalCountResult.Data ?? 0,
+            totalValueResult.Data ?? 0m));
     }
 
     private static IQueryable<MerchantTransactionGroupProjection> BuildMerchantTransactionBaseQuery(EstateManagementContext context,
@@ -372,40 +385,53 @@ public sealed class TransactionReportingService : ITransactionReportingService
         var baseQuery = BuildOperatorTransactionBaseQuery(context, request);
         var finalQuery = BuildOperatorFinalSummaryQuery(baseQuery);
 
-        var operatorCountResult = await ReportingQueryExecutor.CountAsync(finalQuery, cancellationToken, "Error counting transaction summary by operator report rows");
-        if (operatorCountResult.IsFailed)
-            return ResultHelpers.CreateFailure(operatorCountResult);
-        var totalCountResult = await ReportingQueryExecutor.SumAsync(finalQuery.Select(q => (int?)q.TotalCount), cancellationToken, "Error summing transaction summary by operator counts");
-        if (totalCountResult.IsFailed)
-            return ResultHelpers.CreateFailure(totalCountResult);
-        var totalValueResult = await ReportingQueryExecutor.SumAsync(finalQuery.Select(q => (decimal?)q.TotalValue), cancellationToken, "Error summing transaction summary by operator values");
-        if (totalValueResult.IsFailed)
-            return ResultHelpers.CreateFailure(totalValueResult);
-        var queryResult = await ReportingQueryExecutor.ToListAsync(
-            finalQuery
-                .OrderBy(q => string.IsNullOrWhiteSpace(q.OperatorName) ? "Unknown Operator" : q.OperatorName)
-                .ThenBy(q => q.OperatorReportingId)
-                .ThenBy(q => q.OperatorId)
-                .Skip((int)((long)(request.Request.PageNumber - 1) * request.Request.PageSize))
-                .Take(request.Request.PageSize),
-            cancellationToken,
-            "Error retrieving transaction summary by operator report");
-
-        if (queryResult.IsFailed)
-            return ResultHelpers.CreateFailure(queryResult);
-
-        var queryResults = queryResult.Data;
-
-        int totalCount = totalCountResult.Data ?? 0;
-        int totalOperators = operatorCountResult.Data;
+        var reportDataResult = await LoadOperatorSummaryReportDataAsync(finalQuery, request.Request, cancellationToken);
+        if (reportDataResult.IsFailed)
+            return ResultHelpers.CreateFailure(reportDataResult);
+        var reportData = reportDataResult.Data;
+        int totalOperators = reportData.TotalOperators;
         int totalPages = totalOperators == 0 ? 0 : (int)Math.Ceiling((double)totalOperators / request.Request.PageSize);
-        return BuildOperatorSummaryResponse(queryResults, totalCount, totalValueResult.Data ?? 0m, totalOperators,
+        return BuildOperatorSummaryResponse(reportData.Operators, reportData.TotalCount, reportData.TotalValue, totalOperators,
             new PaginationMetadata {
                 PageNumber = request.Request.PageNumber,
                 PageSize = request.Request.PageSize,
                 TotalItems = totalOperators,
                 TotalPages = totalPages
             });
+    }
+
+    private static async Task<Result<OperatorSummaryReportData>> LoadOperatorSummaryReportDataAsync(
+        IQueryable<OperatorSummaryData> query,
+        Models.TransactionSummaryByOperatorRequest request,
+        CancellationToken cancellationToken) {
+        var operatorCountResult = await ReportingQueryExecutor.CountAsync(query, cancellationToken, "Error counting transaction summary by operator report rows");
+        if (operatorCountResult.IsFailed)
+            return ResultHelpers.CreateFailure(operatorCountResult);
+
+        var totalCountResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (int?)q.TotalCount), cancellationToken, "Error summing transaction summary by operator counts");
+        if (totalCountResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalCountResult);
+
+        var totalValueResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (decimal?)q.TotalValue), cancellationToken, "Error summing transaction summary by operator values");
+        if (totalValueResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalValueResult);
+
+        var operatorResult = await ReportingQueryExecutor.ToListAsync(
+            query.OrderBy(q => string.IsNullOrWhiteSpace(q.OperatorName) ? "Unknown Operator" : q.OperatorName)
+                .ThenBy(q => q.OperatorReportingId)
+                .ThenBy(q => q.OperatorId)
+                .Skip((int)((long)(request.PageNumber - 1) * request.PageSize))
+                .Take(request.PageSize),
+            cancellationToken,
+            "Error retrieving transaction summary by operator report");
+        if (operatorResult.IsFailed)
+            return ResultHelpers.CreateFailure(operatorResult);
+
+        return Result.Success(new OperatorSummaryReportData(
+            operatorResult.Data,
+            operatorCountResult.Data,
+            totalCountResult.Data ?? 0,
+            totalValueResult.Data ?? 0m));
     }
 
     private static IQueryable<OperatorTransactionData> BuildOperatorTransactionBaseQuery(EstateManagementContext context,
@@ -503,44 +529,18 @@ public sealed class TransactionReportingService : ITransactionReportingService
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        var grandTotalAmountQuery = (from t in context.Transactions where t.TransactionType == "Sale" && t.TransactionDate >= request.StartDate.Date && t.TransactionDate < request.EndDate.Date.AddDays(1) select t.TransactionAmount);
-        var grandTotalAmountResult = await ReportingQueryExecutor.SumAsync<decimal>(grandTotalAmountQuery, cancellationToken);
-        if (grandTotalAmountResult.IsFailed)
-            return ResultHelpers.CreateFailure(grandTotalAmountResult);
-        var grandTotalAmount = grandTotalAmountResult.Data;
-
-        var query = BuildProductPerformanceQuery(context, request.StartDate, request.EndDate, grandTotalAmount);
-        var productCountResult = await ReportingQueryExecutor.CountAsync(query, cancellationToken, "Error counting product performance rows");
-        if (productCountResult.IsFailed)
-            return ResultHelpers.CreateFailure(productCountResult);
-        var totalCountResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (int?)q.TransactionCount), cancellationToken, "Error summing product performance counts");
-        if (totalCountResult.IsFailed)
-            return ResultHelpers.CreateFailure(totalCountResult);
-        var totalValueResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (decimal?)q.TotalAmount), cancellationToken, "Error summing product performance values");
-        if (totalValueResult.IsFailed)
-            return ResultHelpers.CreateFailure(totalValueResult);
-        var queryResult = await ReportingQueryExecutor.ToListAsync(
-            query
-                .OrderBy(q => string.IsNullOrWhiteSpace(q.ProductName) ? "Unknown Product" : q.ProductName)
-                .ThenBy(q => q.ContractReportingId)
-                .ThenBy(q => q.ContractProductReportingId)
-                .ThenBy(q => q.ContractProductId)
-                .Skip((int)((long)(request.PageNumber - 1) * request.PageSize))
-                .Take(request.PageSize),
-            cancellationToken,
-            "Error retrieving product performance report");
-        if (queryResult.IsFailed)
-            return ResultHelpers.CreateFailure(queryResult);
-        var queryResults = queryResult.Data;
-
-        int totalProducts = productCountResult.Data;
-        int totalCount = totalCountResult.Data ?? 0;
+        var reportDataResult = await LoadProductPerformanceReportDataAsync(context, request, cancellationToken);
+        if (reportDataResult.IsFailed)
+            return ResultHelpers.CreateFailure(reportDataResult);
+        var reportData = reportDataResult.Data;
+        int totalProducts = reportData.TotalProducts;
+        int totalCount = reportData.TotalCount;
         int totalPages = totalProducts == 0 ? 0 : (int)Math.Ceiling((double)totalProducts / request.PageSize);
         return Result.Success(BuildProductPerformanceResponse(
-            queryResults,
+            reportData.Products,
             totalProducts,
             totalCount,
-            totalValueResult.Data ?? 0m,
+            reportData.TotalValue,
             new PaginationMetadata {
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize,
@@ -549,20 +549,68 @@ public sealed class TransactionReportingService : ITransactionReportingService
             }));
     }
 
+    private static async Task<Result<ProductPerformanceReportData>> LoadProductPerformanceReportDataAsync(
+        EstateManagementContext context,
+        TransactionQueries.ProductPerformanceQuery request,
+        CancellationToken cancellationToken) {
+        var grandTotalAmountQuery = from t in context.Transactions
+            where t.TransactionType == "Sale" && t.TransactionDate >= request.StartDate.Date && t.TransactionDate < request.EndDate.Date.AddDays(1)
+            select t.TransactionAmount;
+        var grandTotalAmountResult = await ReportingQueryExecutor.SumAsync<decimal>(grandTotalAmountQuery, cancellationToken);
+        if (grandTotalAmountResult.IsFailed)
+            return ResultHelpers.CreateFailure(grandTotalAmountResult);
+
+        var query = BuildProductPerformanceQuery(context, request.StartDate, request.EndDate, grandTotalAmountResult.Data);
+        var totalsResult = await LoadProductPerformanceTotalsAsync(query, cancellationToken);
+        if (totalsResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalsResult);
+
+        var productsResult = await ReportingQueryExecutor.ToListAsync(
+            query.OrderBy(q => string.IsNullOrWhiteSpace(q.ProductName) ? "Unknown Product" : q.ProductName)
+                .ThenBy(q => q.ContractReportingId)
+                .ThenBy(q => q.ContractProductReportingId)
+                .ThenBy(q => q.ContractProductId)
+                .Skip((int)((long)(request.PageNumber - 1) * request.PageSize))
+                .Take(request.PageSize),
+            cancellationToken,
+            "Error retrieving product performance report");
+        if (productsResult.IsFailed)
+            return ResultHelpers.CreateFailure(productsResult);
+
+        return Result.Success(new ProductPerformanceReportData(
+            productsResult.Data,
+            totalsResult.Data.TotalProducts,
+            totalsResult.Data.TotalCount,
+            totalsResult.Data.TotalValue));
+    }
+
+    private static async Task<Result<ProductPerformanceTotals>> LoadProductPerformanceTotalsAsync(
+        IQueryable<ProductPerformanceItemData> query,
+        CancellationToken cancellationToken) {
+        var productCountResult = await ReportingQueryExecutor.CountAsync(query, cancellationToken, "Error counting product performance rows");
+        if (productCountResult.IsFailed)
+            return ResultHelpers.CreateFailure(productCountResult);
+
+        var totalCountResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (int?)q.TransactionCount), cancellationToken, "Error summing product performance counts");
+        if (totalCountResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalCountResult);
+
+        var totalValueResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (decimal?)q.TotalAmount), cancellationToken, "Error summing product performance values");
+        if (totalValueResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalValueResult);
+
+        return Result.Success(new ProductPerformanceTotals(
+            productCountResult.Data,
+            totalCountResult.Data ?? 0,
+            totalValueResult.Data ?? 0m));
+    }
+
     public async Task<Result<TransactionMixSummaryResponse>> GetTransactionMixSummary(TransactionQueries.TransactionMixSummaryQuery request,
                                                                                       CancellationToken cancellationToken)
     {
-        string? validationError = ReportQueryValidation.ValidateDateRange(request.Request.StartDate, request.Request.EndDate)
-                                  ?? ReportQueryValidation.ValidatePaging(request.Request.PageNumber, request.Request.PageSize)
-                                  ?? ReportQueryValidation.ValidateTopN(request.Request.TopN);
+        string? validationError = ValidateTransactionMixRequest(request.Request);
         if (validationError != null)
             return Result.Failure(validationError);
-
-        if (!Enum.IsDefined(typeof(TransactionMixBreakdown), request.Request.Breakdown))
-            return Result.Failure("Unsupported transaction mix breakdown.");
-
-        if (!Enum.IsDefined(typeof(TransactionMixMeasure), request.Request.Measure))
-            return Result.Failure("Unsupported transaction mix measure.");
 
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
@@ -577,6 +625,38 @@ public sealed class TransactionReportingService : ITransactionReportingService
         };
 
         var query = ApplyTransactionDetailFilters(BuildTransactionDetailBaseQuery(context, detailRequest), detailRequest);
+        var reportDataResult = await LoadTransactionMixReportDataAsync(query, request.Request, cancellationToken);
+        if (reportDataResult.IsFailed)
+            return ResultHelpers.CreateFailure(reportDataResult);
+        var reportData = reportDataResult.Data;
+        int totalCount = reportData.TotalCount;
+        int totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / request.Request.PageSize);
+        return Result.Success(BuildTransactionMixSummaryResponse(
+            reportData.Transactions,
+            reportData.Groups,
+            request.Request,
+            totalCount,
+            reportData.TotalValue,
+            new PaginationMetadata {
+                PageNumber = request.Request.PageNumber,
+                PageSize = request.Request.PageSize,
+                TotalItems = totalCount,
+                TotalPages = totalPages
+            }));
+    }
+
+    private static string? ValidateTransactionMixRequest(TransactionMixSummaryRequest request) {
+        return ReportQueryValidation.ValidateDateRange(request.StartDate, request.EndDate)
+               ?? ReportQueryValidation.ValidatePaging(request.PageNumber, request.PageSize)
+               ?? ReportQueryValidation.ValidateTopN(request.TopN)
+               ?? (Enum.IsDefined(typeof(TransactionMixBreakdown), request.Breakdown) ? null : "Unsupported transaction mix breakdown.")
+               ?? (Enum.IsDefined(typeof(TransactionMixMeasure), request.Measure) ? null : "Unsupported transaction mix measure.");
+    }
+
+    private static async Task<Result<TransactionMixReportData>> LoadTransactionMixReportDataAsync(
+        IQueryable<TransactionDetailQueryResult> query,
+        TransactionMixSummaryRequest request,
+        CancellationToken cancellationToken) {
         var totalCountResult = await ReportingQueryExecutor.CountAsync(query, cancellationToken, "Error counting transaction mix summary rows");
         if (totalCountResult.IsFailed)
             return ResultHelpers.CreateFailure(totalCountResult);
@@ -585,44 +665,46 @@ public sealed class TransactionReportingService : ITransactionReportingService
         if (totalValueResult.IsFailed)
             return ResultHelpers.CreateFailure(totalValueResult);
 
-        IQueryable<TransactionMixGroupQueryResult> groupQuery = BuildTransactionMixGroupQuery(query, request.Request.Breakdown);
-        IQueryable<TransactionMixGroupQueryResult> orderedGroupQuery = request.Request.Breakdown switch {
-            TransactionMixBreakdown.Product or TransactionMixBreakdown.Operator => request.Request.Measure == TransactionMixMeasure.Count
-                ? groupQuery.OrderByDescending(g => g.TransactionCount).ThenBy(g => g.GroupName).ThenBy(g => g.NumericKey)
-                : groupQuery.OrderByDescending(g => g.TransactionValue).ThenBy(g => g.GroupName).ThenBy(g => g.NumericKey),
-            TransactionMixBreakdown.TransactionType or TransactionMixBreakdown.Status => request.Request.Measure == TransactionMixMeasure.Count
-                ? groupQuery.OrderByDescending(g => g.TransactionCount).ThenBy(g => g.GroupName).ThenBy(g => g.TextKey)
-                : groupQuery.OrderByDescending(g => g.TransactionValue).ThenBy(g => g.GroupName).ThenBy(g => g.TextKey),
-            _ => throw new ArgumentOutOfRangeException(nameof(request.Request.Breakdown), request.Request.Breakdown, null)
-        };
-        var groupResult = await ReportingQueryExecutor.ToListAsync(orderedGroupQuery.Take(request.Request.TopN), cancellationToken, "Error retrieving transaction mix groups");
+        IQueryable<TransactionMixGroupQueryResult> groupQuery = BuildTransactionMixGroupQuery(query, request.Breakdown);
+        var groupResult = await ReportingQueryExecutor.ToListAsync(BuildOrderedTransactionMixGroupQuery(groupQuery, request).Take(request.TopN), cancellationToken,
+            "Error retrieving transaction mix groups");
         if (groupResult.IsFailed)
             return ResultHelpers.CreateFailure(groupResult);
 
-        var pageQuery = query
-            .OrderByDescending(q => q.TransactionDateTime)
-            .ThenByDescending(q => q.TransactionId)
-            .Skip((int)((long)(request.Request.PageNumber - 1) * request.Request.PageSize))
-            .Take(request.Request.PageSize);
-        var pageResult = await ReportingQueryExecutor.ToListAsync(pageQuery, cancellationToken, "Error retrieving transaction mix summary transactions");
-
+        var pageResult = await ReportingQueryExecutor.ToListAsync(BuildTransactionMixPageQuery(query, request), cancellationToken,
+            "Error retrieving transaction mix summary transactions");
         if (pageResult.IsFailed)
             return ResultHelpers.CreateFailure(pageResult);
 
-        int totalCount = totalCountResult.Data;
-        int totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / request.Request.PageSize);
-        return Result.Success(BuildTransactionMixSummaryResponse(
+        return Result.Success(new TransactionMixReportData(
             pageResult.Data,
             groupResult.Data,
-            request.Request,
-            totalCount,
-            totalValueResult.Data ?? 0m,
-            new PaginationMetadata {
-                PageNumber = request.Request.PageNumber,
-                PageSize = request.Request.PageSize,
-                TotalItems = totalCount,
-                TotalPages = totalPages
-            }));
+            totalCountResult.Data,
+            totalValueResult.Data ?? 0m));
+    }
+
+    private static IOrderedQueryable<TransactionMixGroupQueryResult> BuildOrderedTransactionMixGroupQuery(
+        IQueryable<TransactionMixGroupQueryResult> groupQuery,
+        TransactionMixSummaryRequest request) {
+        return request.Breakdown switch {
+            TransactionMixBreakdown.Product or TransactionMixBreakdown.Operator => request.Measure == TransactionMixMeasure.Count
+                ? groupQuery.OrderByDescending(g => g.TransactionCount).ThenBy(g => g.GroupName).ThenBy(g => g.NumericKey)
+                : groupQuery.OrderByDescending(g => g.TransactionValue).ThenBy(g => g.GroupName).ThenBy(g => g.NumericKey),
+            TransactionMixBreakdown.TransactionType or TransactionMixBreakdown.Status => request.Measure == TransactionMixMeasure.Count
+                ? groupQuery.OrderByDescending(g => g.TransactionCount).ThenBy(g => g.GroupName).ThenBy(g => g.TextKey)
+                : groupQuery.OrderByDescending(g => g.TransactionValue).ThenBy(g => g.GroupName).ThenBy(g => g.TextKey),
+            _ => throw new ArgumentOutOfRangeException(nameof(request.Breakdown), request.Breakdown, null)
+        };
+    }
+
+    private static IQueryable<TransactionDetailQueryResult> BuildTransactionMixPageQuery(
+        IQueryable<TransactionDetailQueryResult> query,
+        TransactionMixSummaryRequest request) {
+        return query
+            .OrderByDescending(q => q.TransactionDateTime)
+            .ThenByDescending(q => q.TransactionId)
+            .Skip((int)((long)(request.PageNumber - 1) * request.PageSize))
+            .Take(request.PageSize);
     }
 
     public async Task<Result<GetRecentActivityReceiptReportResponse>> GetRecentActivityReceiptReport(TransactionQueries.GetRecentActivityReceiptReportQuery request,
@@ -1241,6 +1323,35 @@ public sealed class TransactionReportingService : ITransactionReportingService
             public int TransactionCount { get; init; }
             public decimal TransactionValue { get; init; }
         }
+
+        private sealed record MerchantSummaryReportData(
+            List<MerchantTransactionFinalProjection> Merchants,
+            int TotalMerchants,
+            int TotalCount,
+            decimal TotalValue);
+
+        private sealed record OperatorSummaryReportData(
+            List<OperatorSummaryData> Operators,
+            int TotalOperators,
+            int TotalCount,
+            decimal TotalValue);
+
+        private sealed record ProductPerformanceReportData(
+            List<ProductPerformanceItemData> Products,
+            int TotalProducts,
+            int TotalCount,
+            decimal TotalValue);
+
+        private sealed record ProductPerformanceTotals(
+            int TotalProducts,
+            int TotalCount,
+            decimal TotalValue);
+
+        private sealed record TransactionMixReportData(
+            List<TransactionDetailQueryResult> Transactions,
+            List<TransactionMixGroupQueryResult> Groups,
+            int TotalCount,
+            decimal TotalValue);
 
         private sealed class OperatorTransactionData {
             public Guid MerchantId { get; init; }
