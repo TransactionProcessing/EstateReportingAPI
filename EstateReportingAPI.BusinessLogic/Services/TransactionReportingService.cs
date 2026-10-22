@@ -561,17 +561,9 @@ public sealed class TransactionReportingService : ITransactionReportingService
             return ResultHelpers.CreateFailure(grandTotalAmountResult);
 
         var query = BuildProductPerformanceQuery(context, request.StartDate, request.EndDate, grandTotalAmountResult.Data);
-        var productCountResult = await ReportingQueryExecutor.CountAsync(query, cancellationToken, "Error counting product performance rows");
-        if (productCountResult.IsFailed)
-            return ResultHelpers.CreateFailure(productCountResult);
-
-        var totalCountResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (int?)q.TransactionCount), cancellationToken, "Error summing product performance counts");
-        if (totalCountResult.IsFailed)
-            return ResultHelpers.CreateFailure(totalCountResult);
-
-        var totalValueResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (decimal?)q.TotalAmount), cancellationToken, "Error summing product performance values");
-        if (totalValueResult.IsFailed)
-            return ResultHelpers.CreateFailure(totalValueResult);
+        var totalsResult = await LoadProductPerformanceTotalsAsync(query, cancellationToken);
+        if (totalsResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalsResult);
 
         var productsResult = await ReportingQueryExecutor.ToListAsync(
             query.OrderBy(q => string.IsNullOrWhiteSpace(q.ProductName) ? "Unknown Product" : q.ProductName)
@@ -587,6 +579,27 @@ public sealed class TransactionReportingService : ITransactionReportingService
 
         return Result.Success(new ProductPerformanceReportData(
             productsResult.Data,
+            totalsResult.Data.TotalProducts,
+            totalsResult.Data.TotalCount,
+            totalsResult.Data.TotalValue));
+    }
+
+    private static async Task<Result<ProductPerformanceTotals>> LoadProductPerformanceTotalsAsync(
+        IQueryable<ProductPerformanceItemData> query,
+        CancellationToken cancellationToken) {
+        var productCountResult = await ReportingQueryExecutor.CountAsync(query, cancellationToken, "Error counting product performance rows");
+        if (productCountResult.IsFailed)
+            return ResultHelpers.CreateFailure(productCountResult);
+
+        var totalCountResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (int?)q.TransactionCount), cancellationToken, "Error summing product performance counts");
+        if (totalCountResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalCountResult);
+
+        var totalValueResult = await ReportingQueryExecutor.SumAsync(query.Select(q => (decimal?)q.TotalAmount), cancellationToken, "Error summing product performance values");
+        if (totalValueResult.IsFailed)
+            return ResultHelpers.CreateFailure(totalValueResult);
+
+        return Result.Success(new ProductPerformanceTotals(
             productCountResult.Data,
             totalCountResult.Data ?? 0,
             totalValueResult.Data ?? 0m));
@@ -1325,6 +1338,11 @@ public sealed class TransactionReportingService : ITransactionReportingService
 
         private sealed record ProductPerformanceReportData(
             List<ProductPerformanceItemData> Products,
+            int TotalProducts,
+            int TotalCount,
+            decimal TotalValue);
+
+        private sealed record ProductPerformanceTotals(
             int TotalProducts,
             int TotalCount,
             decimal TotalValue);
