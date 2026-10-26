@@ -46,7 +46,8 @@ internal sealed class IntegrationTestEnvironment
 
             NlogLogger logger = new();
             logger.Initialise(LogManager.GetLogger(ScenarioName), ScenarioName);
-            LogManager.AddHiddenAssembly(typeof(NlogLogger).Assembly);
+            LogManager.Setup().SetupLogFactory(setup =>
+                setup.AddCallSiteHiddenAssembly(typeof(NlogLogger).Assembly));
 
             TestDockerHelper dockerHelper = new();
             dockerHelper.Logger = logger;
