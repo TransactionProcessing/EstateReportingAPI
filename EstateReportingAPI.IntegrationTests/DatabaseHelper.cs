@@ -926,12 +926,12 @@ public class DatabaseHelper{
         }
         directiories = directiories.OrderBy(d => d).ToArray();
 
-        foreach (String directiory in directiories)
+        foreach (String directory in directiories)
         {
-            String[] sqlFiles = Directory.GetFiles(directiory, "*.sql");
+            String[] sqlFiles = Directory.GetFiles(directory, "*.sql");
             foreach (String sqlFile in sqlFiles.OrderBy(x => x))
             {
-                Logger.LogDebug($"About to create Stored Procedure [{sqlFile}]");
+                Logger.LogDebug("About to create Stored Procedure [{sqlFile}]", sqlFile);
                 String sql = System.IO.File.ReadAllText(sqlFile);
 
                 // Check here is we need to replace a Database Name
@@ -943,7 +943,7 @@ public class DatabaseHelper{
                 // Create the new view using the original sql from file
                 await this.Context.Database.ExecuteSqlRawAsync(sql, cancellationToken);
 
-                Logger.LogDebug($"Created Stored Procedure [{sqlFile}] successfully.");
+                Logger.LogDebug("Created Stored Procedure [{sqlFile}] successfully.", sqlFile);
             }
         }
     }

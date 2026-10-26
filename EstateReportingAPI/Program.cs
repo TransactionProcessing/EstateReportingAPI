@@ -74,25 +74,24 @@ public partial class Program
                 ["HealthMonitoring:Service:Version"] = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "0.0.0.0"
             });
 
-        IConfiguration configuration = builder.Configuration;
-        SharedLibraryCompatibility.InitializeConfiguration((IConfigurationRoot)builder.Configuration);
-        if (configuration.GetSection("SentryConfiguration").Exists() && !builder.Environment.IsDevelopment())
+        Shared.General.ConfigurationReader.Initialise(builder.Configuration);
+        if (builder.Configuration.GetSection("SentryConfiguration").Exists() && !builder.Environment.IsDevelopment())
         {
             builder.WebHost.UseSentry(options =>
             {
-                options.Dsn = configuration["SentryConfiguration:Dsn"];
+                options.Dsn = builder.Configuration["SentryConfiguration:Dsn"];
                 options.SendDefaultPii = true;
                 options.MaxRequestBodySize = RequestSize.Always;
-                options.CaptureBlockingCalls = configuration.GetValue("SentryConfiguration:CaptureBlockingCalls", false);
-                options.IncludeActivityData = configuration.GetValue("SentryConfiguration:IncludeActivityData", false);
+                options.CaptureBlockingCalls = builder.Configuration.GetValue("SentryConfiguration:CaptureBlockingCalls", false);
+                options.IncludeActivityData = builder.Configuration.GetValue("SentryConfiguration:IncludeActivityData", false);
                 options.Release = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
             });
         }
         builder.Host.UseLamar((context, services) =>
         {
-            services.IncludeRegistry(new MiddlewareRegistry(configuration, context.HostingEnvironment));
-            services.IncludeRegistry(new RepositoryRegistry(configuration, context.HostingEnvironment));
-            services.IncludeRegistry(new MediatorRegistry(configuration));
+            services.IncludeRegistry(new MiddlewareRegistry(builder.Configuration, context.HostingEnvironment));
+            services.IncludeRegistry(new RepositoryRegistry(builder.Configuration, context.HostingEnvironment));
+            services.IncludeRegistry(new MediatorRegistry(builder.Configuration));
             services.IncludeRegistry(new SerialiserRegistry());
         });
     }
@@ -104,9 +103,12 @@ public partial class Program
             app.UseDeveloperExceptionPage();
         }
 
-        ILogger logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("EstateManagement");
-        SharedLibraryCompatibility.InitializeLogging(logger);
-        ((IConfigurationRoot)app.Configuration).LogConfiguration(message => logger.LogWarning("{ConfigurationMessage}", message));
+        LogManager.Setup().LoadConfigurationFromFile("NLog.config");
+        NLog.Logger logger = LogManager.GetLogger("EstateReporting");
+        Shared.Logger.Logger.Initialise(logger, "EstateReporting");
+
+        IConfigurationRoot appConfiguration = (IConfigurationRoot)app.Configuration;
+        appConfiguration.LogConfiguration(Shared.Logger.Logger.LogWarning);
 
         app.UseMiddleware<TenantMiddleware>();
         app.AddRequestResponseLogging();
