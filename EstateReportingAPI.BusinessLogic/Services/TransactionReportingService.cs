@@ -1,17 +1,11 @@
 using EstateReportingAPI.BusinessLogic.Queries;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.DynamicLinq;
 using SimpleResults;
-using System;
-using System.Linq;
-using System.Threading;
 using TransactionProcessor.Database.Contexts;
-using TransactionProcessor.Database.Entities;
 using TransactionProcessor.Database.Entities.Summary;
 using Shared.EntityFramework;
 using Shared.Results;
 using EstateReportingAPI.Models;
-using MerchantBalanceProjectionState = TransactionProcessor.ProjectionEngine.Database.Database.Entities.MerchantBalanceProjectionState;
 
 namespace EstateReportingAPI.BusinessLogic.Services;
 
