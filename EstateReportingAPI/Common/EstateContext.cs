@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using OpenIddict.Abstractions;
 using System.Security.Claims;
 
 namespace EstateReportingAPI.Common
@@ -21,22 +22,18 @@ namespace EstateReportingAPI.Common
         }
     }
 
-    public sealed class EstateContextMiddleware
-    {
+    public sealed class EstateContextMiddleware {
         private readonly RequestDelegate _next;
 
-        public EstateContextMiddleware(RequestDelegate next)
-        {
+        public EstateContextMiddleware(RequestDelegate next) {
             _next = next;
         }
 
         public async Task InvokeAsync(
             HttpContext httpContext,
             EstateContext estateContext,
-            IConfiguration configuration)
-        {
-            if (IsAnonymousEndpoint(httpContext))
-            {
+            IConfiguration configuration) {
+            if (IsAnonymousEndpoint(httpContext)) {
                 await _next(httpContext);
                 return;
             }
@@ -44,20 +41,17 @@ namespace EstateReportingAPI.Common
             bool disableAuthorisation = configuration.GetValue<Boolean>("AppSettings:DisableAuthorisation");
             bool isAuthenticated = httpContext.User.Identity?.IsAuthenticated == true;
 
-            if (isAuthenticated == false && disableAuthorisation == false)
-            {
+            if (isAuthenticated == false && disableAuthorisation == false) {
                 httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 return;
             }
 
-            if (TryGetHeaderEstateId(httpContext, out Guid? headerEstateId) == false)
-            {
+            if (TryGetHeaderEstateId(httpContext, out Guid? headerEstateId) == false) {
                 httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
                 return;
             }
 
-            if (isAuthenticated)
-            {
+            if (isAuthenticated) {
                 await HandleAuthenticatedRequestAsync(httpContext, estateContext, headerEstateId);
                 return;
             }
@@ -74,27 +68,22 @@ namespace EstateReportingAPI.Common
                    || path.StartsWithSegments("/openapi", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static bool TryGetHeaderEstateId(HttpContext httpContext, out Guid? estateId)
-        {
+        private static bool TryGetHeaderEstateId(HttpContext httpContext, out Guid? estateId) {
             estateId = null;
 
-            if (httpContext.Request.Headers.TryGetValue("estateId", out var headerValues) == false)
-            {
+            if (httpContext.Request.Headers.TryGetValue("estateId", out var headerValues) == false) {
                 return true;
             }
 
-            if (headerValues.Count != 1)
-            {
+            if (headerValues.Count != 1) {
                 return false;
             }
 
-            if (Guid.TryParse(headerValues[0], out Guid parsedEstateId) == false)
-            {
+            if (Guid.TryParse(headerValues[0], out Guid parsedEstateId) == false) {
                 return false;
             }
 
-            if (parsedEstateId == Guid.Empty)
-            {
+            if (parsedEstateId == Guid.Empty) {
                 return false;
             }
 
@@ -105,10 +94,8 @@ namespace EstateReportingAPI.Common
         private async Task HandleUnauthenticatedRequestAsync(
             HttpContext httpContext,
             EstateContext estateContext,
-            Guid? headerEstateId)
-        {
-            if (headerEstateId.HasValue == false)
-            {
+            Guid? headerEstateId) {
+            if (headerEstateId.HasValue == false) {
                 httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
                 return;
             }
@@ -117,38 +104,38 @@ namespace EstateReportingAPI.Common
             await _next(httpContext);
         }
 
-        private async Task HandleAuthenticatedRequestAsync(
-            HttpContext httpContext,
-            EstateContext estateContext,
-            Guid? headerEstateId)
-        {
-            bool isUserToken = httpContext.User.HasClaim(claim => claim.Type == ClaimTypes.NameIdentifier);
+        private async Task HandleAuthenticatedRequestAsync(HttpContext httpContext,
+                                                           EstateContext estateContext,
+                                                           Guid? headerEstateId) {
+            Boolean hasClientTypeClaim = httpContext.User.HasClaim(claim => claim.Type == "client_type");
+            if (hasClientTypeClaim == false) {
+                httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return;
+            }
 
-            if (isUserToken)
-            {
+            Boolean isUserToken = httpContext.User.GetClaim("client_type") switch {
+                                      "user" => true,
+                                      _ => false
+                                  };
+
+            if (isUserToken) {
                 string? estateClaim = httpContext.User.FindFirst("estateId")?.Value;
 
-                if (!Guid.TryParse(estateClaim, out Guid authenticatedEstateId) ||
-                    authenticatedEstateId == Guid.Empty)
-                {
+                if (!Guid.TryParse(estateClaim, out Guid authenticatedEstateId) || authenticatedEstateId == Guid.Empty) {
                     httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
                     return;
                 }
 
-                if (headerEstateId.HasValue &&
-                    headerEstateId.Value != authenticatedEstateId)
-                {
+                if (headerEstateId.HasValue && headerEstateId.Value != authenticatedEstateId) {
                     httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
                     return;
                 }
 
                 estateContext.SetEstate(authenticatedEstateId);
             }
-            else
-            {
+            else {
                 // Client-credentials token: tenant comes from the trusted ACL header.
-                if (!headerEstateId.HasValue)
-                {
+                if (!headerEstateId.HasValue) {
                     httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
                     return;
                 }

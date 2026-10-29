@@ -78,6 +78,44 @@ public class EstateEndpointTests : ControllerTestsBase {
     }
 
     [Fact]
+    public async Task EstateEndpoint_MissingClientTypeClaim_ReturnsForbidden()
+    {
+        using HttpResponseMessage response = await SendEstateRequest(omitClientTypeClaim: true);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_UserClientType_UsesEstateClaim()
+    {
+        await this.helper.AddEstate("Test Estate", "Ref1");
+
+        using HttpResponseMessage response = await SendEstateRequest(clientType: "user");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_ClientCredentialsClientType_UsesEstateHeader()
+    {
+        await this.helper.AddEstate("Test Estate", "Ref1");
+
+        using HttpResponseMessage response = await SendEstateRequest(
+            estateHeader: this.TestId.ToString(),
+            clientType: "client");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task EstateEndpoint_ClientCredentialsClientTypeWithoutEstateHeader_ReturnsForbidden()
+    {
+        using HttpResponseMessage response = await SendEstateRequest(clientType: "client");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task EstateEndpoint_DifferentEstateHeader_ReturnsForbidden()
     {
         using HttpResponseMessage response = await SendEstateRequest(Guid.NewGuid().ToString());
@@ -156,7 +194,9 @@ public class EstateEndpointTests : ControllerTestsBase {
         string? estateHeader = null,
         bool omitEstateClaim = false,
         string? estateClaim = null,
-        string? estateClaimType = null)
+        string? estateClaimType = null,
+        string? clientType = null,
+        bool omitClientTypeClaim = false)
     {
         using HttpRequestMessage request = new(HttpMethod.Get, this.BaseRoute);
         request.Headers.Authorization = new AuthenticationHeaderValue("Test");
@@ -172,6 +212,12 @@ public class EstateEndpointTests : ControllerTestsBase {
 
         if (estateClaimType != null)
             request.Headers.Add(TestAuthHandler.EstateClaimType, estateClaimType);
+
+        if (clientType != null)
+            request.Headers.Add(TestAuthHandler.ClientType, clientType);
+
+        if (omitClientTypeClaim)
+            request.Headers.Add(TestAuthHandler.OmitClientTypeClaim, "true");
 
         return await this.Client.SendAsync(request);
     }
