@@ -63,11 +63,11 @@ public partial class Program
         builder.Configuration.SetBasePath(basePath)
             .AddJsonFile("hosting.json", optional: true)
             .AddJsonFile($"hosting.{builder.Environment.EnvironmentName}.json", optional: true)
-            .AddJsonFile("/home/txnproc/config/appsettings.json", optional: true, reloadOnChange: true)
-            .AddJsonFile($"/home/txnproc/config/appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-            .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-            .AddJsonFile("/home/txnproc/config/appsettings.local.json", optional: true, reloadOnChange: true)
+            .AddJsonFile("/home/txnproc/config/appsettings.json", optional: true)
+            .AddJsonFile($"/home/txnproc/config/appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+            .AddJsonFile("/home/txnproc/config/appsettings.local.json", optional: true)
             .AddEnvironmentVariables()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
