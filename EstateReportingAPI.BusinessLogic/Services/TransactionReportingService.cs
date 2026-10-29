@@ -106,13 +106,6 @@ public sealed class TransactionReportingService : ITransactionReportingService
         return Result.Success(response);
     }
 
-    private Int32 SafeDivide(Int32 number,
-                             Int32 divisor) {
-        if (divisor == 0) return number;
-
-        return number / divisor;
-    }
-
     private Decimal SafeDivide(Decimal number,
                                Int32 divisor) {
         if (divisor == 0) return number;
@@ -1177,10 +1170,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
                 .OrderByDescending(x => x.SalesCount)
                 .ThenBy(x => x.ProductName)
                 .FirstOrDefault();
-
-            if (topProduct == null)
-                return null;
-
+        
             return new MetricItem {
                 Title = "Top Product Sales Count",
                 Value = topProduct.SalesCount,
