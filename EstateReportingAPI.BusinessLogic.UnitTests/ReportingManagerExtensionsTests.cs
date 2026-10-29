@@ -1,5 +1,6 @@
 using EstateReportingAPI.BusinessLogic;
 using EstateReportingAPI.Models;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using TransactionProcessor.Database.Contexts;
@@ -11,6 +12,42 @@ namespace EstateReportingAPI.BusinessLogic.UnitTests;
 
 public sealed class ReportingQueryExtensionsTests
 {
+    [Fact]
+    public void TodayTransactionGroupings_ExecuteAgainstRelationalKeylessProjection()
+    {
+        using var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<EstateManagementContext>()
+            .UseSqlite(connection)
+            .Options;
+        using var context = new EstateManagementContext(options);
+        context.Database.ExecuteSqlRaw("CREATE TABLE TodayTransactions (MerchantReportingId INTEGER NOT NULL, OperatorReportingId INTEGER NOT NULL, ContractProductReportingId INTEGER NOT NULL, TransactionAmount TEXT NOT NULL)");
+        context.Database.ExecuteSqlRaw("CREATE TABLE Merchant (MerchantReportingId INTEGER NOT NULL, Name TEXT NOT NULL)");
+        context.Database.ExecuteSqlRaw("CREATE TABLE Operator (OperatorReportingId INTEGER NOT NULL, Name TEXT NOT NULL)");
+        context.Database.ExecuteSqlRaw("CREATE TABLE ContractProduct (ContractProductReportingId INTEGER NOT NULL, ProductName TEXT NOT NULL)");
+        context.Database.ExecuteSqlRaw("INSERT INTO Merchant VALUES (20, 'Merchant A'), (21, 'Merchant B')");
+        context.Database.ExecuteSqlRaw("INSERT INTO Operator VALUES (10, 'Operator A'), (11, 'Operator B')");
+        context.Database.ExecuteSqlRaw("INSERT INTO ContractProduct VALUES (40, 'Product A'), (41, 'Product B')");
+
+        context.Database.ExecuteSqlRaw("""
+            INSERT INTO TodayTransactions (MerchantReportingId, OperatorReportingId, ContractProductReportingId, TransactionAmount)
+            VALUES (20, 10, 40, 10.00), (20, 10, 40, 15.50), (21, 11, 41, 7.25)
+            """);
+
+        var transactions = context.TodayTransactions;
+        transactions.ApplyMerchantGrouping(context).ToList().OrderBy(x => x.DimensionName).Select(x => (x.DimensionName, x.SalesValue))
+            .ShouldBe(new[] { ("Merchant A", 25.5m), ("Merchant B", 7.25m) });
+        transactions.ApplyOperatorGrouping(context).ToList().OrderBy(x => x.DimensionName).Select(x => (x.DimensionName, x.SalesValue))
+            .ShouldBe(new[] { ("Operator A", 25.5m), ("Operator B", 7.25m) });
+        transactions.ApplyProductGrouping(context).ToList().OrderBy(x => x.DimensionName).Select(x => (x.DimensionName, x.SalesValue))
+            .ShouldBe(new[] { ("Product A", 25.5m), ("Product B", 7.25m) });
+
+        context.Database.ExecuteSqlRaw("DELETE FROM TodayTransactions");
+        transactions.ApplyMerchantGrouping(context).ShouldBeEmpty();
+        transactions.ApplyOperatorGrouping(context).ShouldBeEmpty();
+        transactions.ApplyProductGrouping(context).ShouldBeEmpty();
+    }
+
     [Fact]
     public void TodayTransactionFilters_HandleEmptyAndSelectedValues()
     {
