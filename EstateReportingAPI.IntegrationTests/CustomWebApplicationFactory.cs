@@ -105,6 +105,9 @@ public class TestAuthHandler : AuthenticationHandler<TestAuthHandlerOptions>
     public const string OmitEstateClaim = "Test-Omit-Estate-Claim";
     public const string EstateClaim = "Test-Estate-Claim";
     public const string EstateClaimType = "Test-Estate-Claim-Type";
+    public const string ClientType = "Test-Client-Type";
+    public const string OmitClientTypeClaim = "Test-Omit-Client-Type-Claim";
+    public const string ClientTypeClaim = "client_type";
 
     public const string AuthenticationScheme = "Test";
     private readonly string _defaultUserId;
@@ -153,6 +156,15 @@ public class TestAuthHandler : AuthenticationHandler<TestAuthHandlerOptions>
                 : "estateId";
 
             claims.Add(new Claim(estateClaimType, estateClaim));
+        }
+
+        if (Context.Request.Headers.ContainsKey(OmitClientTypeClaim) == false)
+        {
+            string clientType = Context.Request.Headers.TryGetValue(ClientType, out var requestedClientType)
+                ? requestedClientType.ToString()
+                : "user";
+
+            claims.Add(new Claim(ClientTypeClaim, clientType));
         }
 
         // TODO: Add as many claims as you need here

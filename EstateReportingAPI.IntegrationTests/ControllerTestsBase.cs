@@ -151,7 +151,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
     public static (String usename, String password) SqlCredentials = ("sa", "thisisalongpassword123!");
 
     public String GetLocalConnectionString(String databaseName) {
-        return $"server=localhost,{this.SqlPort};database={databaseName};user id={SqlCredentials.usename};password={SqlCredentials.password};Encrypt=false";
+        return $"server=127.0.0.1,{this.SqlPort};database={databaseName};user id={SqlCredentials.usename};password={SqlCredentials.password};Encrypt=false";
     }
 
     //internal async Task StartSqlContainer(){
