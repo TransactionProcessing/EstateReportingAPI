@@ -80,7 +80,7 @@ public class DatabaseHelper{
             FileImportLogId = Guid.NewGuid(),
             EstateId = estateId,
             ImportLogDateTime = importDate,
-            ImportLogDate = importDate.Date
+            ImportLogDate = DateOnly.FromDateTime(importDate.Date)
         };
 
         await this.Context.AddAsync(fil);
@@ -264,7 +264,7 @@ public class DatabaseHelper{
         Transaction transaction = new Transaction
         {
             MerchantId = merchant.MerchantId,
-            TransactionDate = dateTime.Date,
+            TransactionDate = DateOnly.FromDateTime(dateTime.Date),
             TransactionDateTime = dateTime,
             IsCompleted = true,
             AuthorisationCode = "ABCD1234",
@@ -353,7 +353,7 @@ public class DatabaseHelper{
         Transaction transaction = new Transaction
         {
             MerchantId = merchantId,
-            TransactionDate = dateTime.Date,
+            TransactionDate = DateOnly.FromDateTime(dateTime.Date),
             TransactionDateTime = dateTime,
             IsCompleted = true,
             AuthorisationCode = "ABCD1234",
@@ -663,7 +663,7 @@ public class DatabaseHelper{
                 EstateId = estate.EstateId,
                 MerchantId = Guid.NewGuid(),
                 Name = merchant1.merchantName,
-                LastSaleDate = merchant1.lastSaleDateTime.Date,
+                LastSaleDate = DateOnly.FromDateTime(merchant1.lastSaleDateTime.Date),
                 LastSaleDateTime = merchant1.lastSaleDateTime
             };
             await this.Context.Merchants.AddAsync(merchant);
@@ -769,7 +769,7 @@ public class DatabaseHelper{
                                            IsAuthorised = true,
                                            IsCompleted = true,
                                            TransactionAmount = 1.00m,
-                                           TransactionDate = feeCalculatedDateTime.Date,
+                                           TransactionDate = DateOnly.FromDateTime(feeCalculatedDateTime.Date),
                                            TransactionDateTime = feeCalculatedDateTime,
                                            TransactionSource = 1,
                                            TransactionTime = feeCalculatedDateTime.TimeOfDay,
@@ -853,7 +853,7 @@ public class DatabaseHelper{
                                                         EstateId = estateId,
                                                         MerchantId = merchantId,
                                                         ProcessingStartedDateTIme = dateTime,
-                                                        SettlementDate = dateTime,
+                                                        SettlementDate = DateOnly.FromDateTime(dateTime),
                                                         SettlementId = Guid.NewGuid(),
                                                     };
         await this.Context.Settlements.AddAsync(settlementRecord, CancellationToken.None);

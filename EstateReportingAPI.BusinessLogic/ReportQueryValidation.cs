@@ -5,15 +5,12 @@ namespace EstateReportingAPI.BusinessLogic;
 
 public static class ReportQueryValidation
 {
-    public static string? ValidateDateRange(DateTime startDate, DateTime endDate)
+    public static string? ValidateDateRange(DateOnly startDate, DateOnly endDate)
     {
-        DateTime start = startDate.Date;
-        DateTime end = endDate.Date;
-
-        if (start > end)
+        if (startDate > endDate)
             return "startDate must be less than or equal to endDate.";
 
-        if ((end - start).TotalDays + 1 > ReportQueryLimits.MaxDateRangeDays)
+        if ((endDate.DayNumber - startDate.DayNumber) + 1 > ReportQueryLimits.MaxDateRangeDays)
             return "date range must not exceed 30 inclusive calendar days.";
 
         return null;

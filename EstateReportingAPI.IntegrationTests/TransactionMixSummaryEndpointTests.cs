@@ -32,7 +32,7 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
         var product = this.context.ContractProducts.Single(p => p.ContractProductId == source.ContractProductId && p.ContractId == source.ContractId);
 
         actual.Id.ShouldBe(source.TransactionId);
-        actual.DateTime.ShouldBe(ToUkDateTimeOffset(source.TransactionDateTime));
+        actual.DateTime.ShouldBe(source.TransactionDateTime);
         actual.Merchant.ShouldBe(merchant.Name);
         actual.MerchantId.ShouldBe(merchant.MerchantId);
         actual.MerchantReportingId.ShouldBe(merchant.MerchantReportingId);

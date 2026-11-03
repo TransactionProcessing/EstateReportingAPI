@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-
 namespace EstateReportingAPI.Models;
 
 public class GetRecentActivityReceiptReportResponse
@@ -18,6 +16,6 @@ public class RecentActivityReceiptItemDto
     public string? Operator { get; set; }
     public string? Status { get; set; }
     public decimal Amount { get; set; }
-    public DateTime TransactionDateTime { get; set; }
+    public DateTimeOffset TransactionDateTime { get; set; }
     public string? ReceiptReference { get; set; }
 }

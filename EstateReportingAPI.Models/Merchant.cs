@@ -9,7 +9,7 @@ public class Merchant
     public String Reference { get; set; }
     public Decimal Balance { get; set; }
     public Int32 SettlementSchedule { get; set; }
-    public DateTime CreatedDateTime { get; set; }
+    public DateTimeOffset CreatedDateTime { get; set; }
 
     public Guid AddressId { get; set; }
     public String AddressLine1 { get; set; }

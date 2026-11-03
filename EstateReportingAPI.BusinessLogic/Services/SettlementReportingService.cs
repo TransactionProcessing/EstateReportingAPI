@@ -28,7 +28,7 @@ public sealed class SettlementReportingService : ISettlementReportingService
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> todaySettlementData = this.BuildTodaySettlementQuery(context, DatePolicy.Today.ToDateTime(TimeOnly.MinValue));
+        IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> todaySettlementData = this.BuildTodaySettlementQuery(context, DatePolicy.Today);
         IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> comparisonSettlementData = this.BuildComparisonSettlementQuery(context, request.ComparisonDate);
         
         DatabaseProjections.SettlementGroupProjection todaySettlement = await this.GetSettlementSummary(todaySettlementData, cancellationToken);
@@ -87,14 +87,14 @@ public sealed class SettlementReportingService : ISettlementReportingService
         }
 
         private IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> BuildTodaySettlementQuery(EstateManagementContext context,
-                                                                                                               DateTime settlementDate) {
+                                                                                                               DateOnly settlementDate) {
             IQueryable<DatabaseProjections.TodaySettlementTransactionProjection> settlementData = from s in context.Settlements join f in context.MerchantSettlementFees on s.SettlementId equals f.SettlementId join t in context.TodayTransactions on f.TransactionId equals t.TransactionId where s.SettlementDate == settlementDate select new DatabaseProjections.TodaySettlementTransactionProjection { Fee = f, Txn = t };
             return settlementData;
         }
 
         private IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> BuildComparisonSettlementQuery(EstateManagementContext context,
-                                                                                                                         DateTime settlementDate) {
-            IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> settlementData = from s in context.Settlements join f in context.MerchantSettlementFees on s.SettlementId equals f.SettlementId join t in context.TransactionHistory on f.TransactionId equals t.TransactionId where s.SettlementDate == settlementDate.Date select new DatabaseProjections.ComparisonSettlementTransactionProjection { Fee = f, Txn = t };
+                                                                                                                         DateOnly settlementDate) {
+            IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> settlementData = from s in context.Settlements join f in context.MerchantSettlementFees on s.SettlementId equals f.SettlementId join t in context.TransactionHistory on f.TransactionId equals t.TransactionId where s.SettlementDate == settlementDate select new DatabaseProjections.ComparisonSettlementTransactionProjection { Fee = f, Txn = t };
             return settlementData;
         }
 }

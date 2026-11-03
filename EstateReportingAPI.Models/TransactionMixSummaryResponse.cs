@@ -24,7 +24,7 @@ public class TransactionMixSummaryGroup
 public class TransactionMixSummaryTransaction
 {
     public Guid Id { get; set; }
-    public DateTime DateTime { get; set; }
+    public DateTimeOffset DateTime { get; set; }
     public string? Merchant { get; set; }
     public Guid MerchantId { get; set; }
     public int MerchantReportingId { get; set; }

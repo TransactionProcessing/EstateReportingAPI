@@ -42,7 +42,7 @@ namespace EstateReportingAPI.BusinessLogic.UnitTests
             await context.Database.EnsureCreatedAsync();
 
             await context.Calendar.AddRangeAsync(new Calendar{
-                                                      Date = new DateTime(2023, 1, 1),
+                                                      Date = new DateOnly(2023, 1, 1),
                                                       DayOfWeek = "Monday",
                                                       DayOfWeekShort = "Mon",
                                                       MonthNameLong = "January",
@@ -53,7 +53,7 @@ namespace EstateReportingAPI.BusinessLogic.UnitTests
                                                   },
                                                  new Calendar
                                                  {
-                                                     Date = new DateTime(2022, 1, 1),
+                                                     Date = new DateOnly(2022, 1, 1),
                                                      DayOfWeek = "Monday",
                                                      DayOfWeekShort = "Mon",
                                                      MonthNameLong = "January",
@@ -64,7 +64,7 @@ namespace EstateReportingAPI.BusinessLogic.UnitTests
                                                  },
                                                  new Calendar
                                                  {
-                                                     Date = new DateTime(2021, 1, 1),
+                                                     Date = new DateOnly(2021, 1, 1),
                                                      DayOfWeek = "Monday",
                                                      DayOfWeekShort = "Mon",
                                                      MonthNameLong = "January",

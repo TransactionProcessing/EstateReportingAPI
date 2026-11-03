@@ -58,8 +58,8 @@ public static class TransactionHandler {
                                                               BusinessLogic.ReportingDatePolicy datePolicy,
                                                               IMediator mediator, CancellationToken cancellationToken) {
         string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
-                                      request.StartDate.ToDateTime(TimeOnly.MinValue),
-                                      request.EndDate.ToDateTime(TimeOnly.MinValue))
+                                      request.StartDate,
+                                      request.EndDate)
                                   ?? BusinessLogic.ReportQueryValidation.ValidatePaging(request.PageNumber, request.PageSize)
                                   ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("merchants", request.Merchants)
                                   ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("operators", request.Operators)
@@ -71,8 +71,8 @@ public static class TransactionHandler {
             Merchants = request.Merchants,
             Operators = request.Operators,
             Products = request.Products,
-            StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
-             EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
+            StartDate = request.StartDate,
+             EndDate = request.EndDate,
              PageNumber = request.PageNumber,
              PageSize = request.PageSize
         };
@@ -91,7 +91,7 @@ public static class TransactionHandler {
                  },
                 Transactions = r.Transactions.Select(t => new TransactionDetail {
                         TotalFees = t.TotalFees,
-                        DateTime = datePolicy.ToDateTimeOffset(t.DateTime),
+                        DateTime = t.DateTime,
                         Id = t.Id,
                         Merchant = t.Merchant,
                         Operator = t.Operator,
@@ -119,8 +119,8 @@ public static class TransactionHandler {
                                                               [FromBody] TransactionSummaryByMerchantRequest request, 
                                                               IMediator mediator, CancellationToken cancellationToken) {
         string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
-                                      request.StartDate.ToDateTime(TimeOnly.MinValue),
-                                      request.EndDate.ToDateTime(TimeOnly.MinValue))
+                                      request.StartDate,
+                                      request.EndDate)
                                   ?? BusinessLogic.ReportQueryValidation.ValidatePaging(request.PageNumber, request.PageSize)
                                   ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("merchants", request.Merchants)
                                   ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("operators", request.Operators);
@@ -130,8 +130,8 @@ public static class TransactionHandler {
         Models.TransactionSummaryByMerchantRequest queryRequest = new() {
             Merchants = request.Merchants,
             Operators = request.Operators,
-            StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
-             EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
+            StartDate = request.StartDate,
+             EndDate = request.EndDate,
              PageNumber = request.PageNumber,
              PageSize = request.PageSize
         };
@@ -171,12 +171,12 @@ public static class TransactionHandler {
                                                                CancellationToken cancellationToken) {
         int requestedPageNumber = pageNumber ?? 1;
         int requestedPageSize = pageSize ?? 50;
-        string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(startDate.ToDateTime(TimeOnly.MinValue), endDate.ToDateTime(TimeOnly.MinValue))
+        string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(startDate, endDate)
                                   ?? BusinessLogic.ReportQueryValidation.ValidatePaging(requestedPageNumber, requestedPageSize);
         if (validationError != null)
             return InvalidReportQuery(validationError);
 
-        var query = new TransactionQueries.ProductPerformanceQuery(estateContext.EstateId, startDate.ToDateTime(TimeOnly.MinValue), endDate.ToDateTime(TimeOnly.MinValue), requestedPageNumber, requestedPageSize);
+        var query = new TransactionQueries.ProductPerformanceQuery(estateContext.EstateId, startDate, endDate, requestedPageNumber, requestedPageSize);
         var result = await mediator.Send(query, cancellationToken);
         ProductPerformanceResponse SuccessFactory(Models.ProductPerformanceResponse r) =>
             new ProductPerformanceResponse
@@ -209,8 +209,8 @@ public static class TransactionHandler {
                                                                          IMediator mediator, CancellationToken cancellationToken)
     {
         string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
-                                      request.StartDate.ToDateTime(TimeOnly.MinValue),
-                                      request.EndDate.ToDateTime(TimeOnly.MinValue))
+                                      request.StartDate,
+                                      request.EndDate)
                                   ?? BusinessLogic.ReportQueryValidation.ValidatePaging(request.PageNumber, request.PageSize)
                                   ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("merchants", request.Merchants)
                                   ?? BusinessLogic.ReportQueryValidation.ValidateFilterList("operators", request.Operators);
@@ -221,8 +221,8 @@ public static class TransactionHandler {
         {
             Merchants = request.Merchants,
             Operators = request.Operators,
-            StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
-            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
+            StartDate = request.StartDate,
+            EndDate = request.EndDate,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize
         };
@@ -262,8 +262,8 @@ public static class TransactionHandler {
                                                             CancellationToken cancellationToken)
     {
         string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
-                                      request.StartDate.ToDateTime(TimeOnly.MinValue),
-                                      request.EndDate.ToDateTime(TimeOnly.MinValue))
+                                      request.StartDate,
+                                      request.EndDate)
                                   ?? BusinessLogic.ReportQueryValidation.ValidatePaging(request.PageNumber, request.PageSize)
                                   ?? BusinessLogic.ReportQueryValidation.ValidateTopN(request.TopN);
         if (validationError != null)
@@ -276,8 +276,8 @@ public static class TransactionHandler {
         Models.TransactionMixSummaryRequest queryRequest = new()
         {
             MerchantReportingId = request.MerchantReportingId,
-            StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue),
-            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
+            StartDate = request.StartDate,
+            EndDate = request.EndDate,
             Breakdown = (Models.TransactionMixBreakdown)request.Breakdown,
             Measure = (Models.TransactionMixMeasure)request.Measure,
              TopN = request.TopN,
@@ -313,7 +313,7 @@ public static class TransactionHandler {
                 Transactions = r.Transactions.Select(t => new TransactionMixSummaryTransaction
                 {
                     Id = t.Id,
-                    DateTime = datePolicy.ToDateTimeOffset(t.DateTime),
+                    DateTime = t.DateTime,
                     Merchant = t.Merchant,
                     MerchantId = t.MerchantId,
                     MerchantReportingId = t.MerchantReportingId,
@@ -375,7 +375,7 @@ public static class TransactionHandler {
                     Operator = item.Operator,
                     Status = item.Status,
                     Amount = item.Amount,
-                    TransactionDateTime = datePolicy.ToDateTimeOffset(item.TransactionDateTime),
+                    TransactionDateTime = item.TransactionDateTime,
                     ReceiptReference = item.ReceiptReference
                 }).ToList()
             };
@@ -411,15 +411,15 @@ public static class TransactionHandler {
                                                                       IMediator mediator, CancellationToken cancellationToken)
     {
         string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
-            request.StartDate.ToDateTime(TimeOnly.MinValue),
-            request.EndDate.ToDateTime(TimeOnly.MinValue));
+            request.StartDate,
+            request.EndDate);
         if (validationError != null)
             return InvalidReportQuery(validationError);
 
         TransactionQueries.MerchantDailyPerformanceSummaryQuery query = new(estateContext.EstateId, new Models.MerchantDailyPerformanceSummaryRequest {
-            EndDate = request.EndDate.ToDateTime(TimeOnly.MinValue),
+            EndDate = request.EndDate,
             MerchantReportingId = request.MerchantReportingId,
-            StartDate = request.StartDate.ToDateTime(TimeOnly.MinValue)
+            StartDate = request.StartDate
         });
         Result<Models.MerchantDailyPerformanceSummaryResponse> result = await mediator.Send(query, cancellationToken);
 
@@ -440,7 +440,7 @@ public static class TransactionHandler {
                     Product = $"{transaction.Operator} {transaction.Product}",
                     Status = transaction.Status,
                     Amount = transaction.Amount,
-                    TransactionDateTime = datePolicy.ToDateTimeOffset(transaction.TransactionDateTime)
+                    TransactionDateTime = transaction.TransactionDateTime
                 }).ToList() ?? []
             };
 

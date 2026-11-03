@@ -194,7 +194,7 @@ public sealed class ReportingQueryExtensionsTests
             ContractId = contractId,
             ContractProductId = productId,
             TransactionType = "Sale",
-            TransactionDate = new DateTime(2026, 9, 1),
+            TransactionDate = new DateOnly(2026, 9, 1),
             TransactionDateTime = new DateTime(2026, 9, 1),
             TransactionTime = TimeSpan.Zero,
             TransactionAmount = 10m,

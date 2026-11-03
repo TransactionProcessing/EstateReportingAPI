@@ -13,7 +13,7 @@ public static class SettlementHandler {
                                                         [FromQuery, Description("Date used to compare today's settlements with the corresponding day (YYYY-MM-DD).") ] DateOnly comparisonDate,
                                                         IMediator mediator,
                                                         CancellationToken cancellationToken) {
-        var query = new SettlementQueries.TodaysSettlementQuery(estateContext.EstateId, comparisonDate.ToDateTime(TimeOnly.MinValue));
+        var query = new SettlementQueries.TodaysSettlementQuery(estateContext.EstateId, comparisonDate);
         var result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => new TodaysSettlement() {

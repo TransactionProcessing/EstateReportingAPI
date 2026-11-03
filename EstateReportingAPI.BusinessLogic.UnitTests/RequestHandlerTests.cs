@@ -21,7 +21,7 @@ public sealed class RequestHandlerTests
     {
         var manager = new ISettlementReportingServiceImposter();
         var expected = Result.Success(new TodaysSettlement());
-        var request = new SettlementQueries.TodaysSettlementQuery(Guid.NewGuid(), DateTime.Today);
+        var request = new SettlementQueries.TodaysSettlementQuery(Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today));
         var cancellationToken = new CancellationTokenSource().Token;
         manager.GetTodaysSettlement(Arg<SettlementQueries.TodaysSettlementQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(expected));
@@ -152,7 +152,7 @@ public sealed class RequestHandlerTests
     public async Task FileImportLogRequestHandler_ForwardsRequest()
     {
         var manager = new IFileImportReportingServiceImposter();
-        var request = new FileImportLogQueries.GetFileImportLogListQuery(Guid.NewGuid(), null, DateTime.Today, DateTime.Today);
+        var request = new FileImportLogQueries.GetFileImportLogListQuery(Guid.NewGuid(), null, DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
         manager.GetFileImportLogList(Arg<FileImportLogQueries.GetFileImportLogListQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new List<FileImportLog>())));
 
@@ -334,7 +334,7 @@ public sealed class RequestHandlerTests
     public async Task TransactionRequestHandler_ForwardsRequest()
     {
         var manager = new ITransactionReportingServiceImposter();
-        var request = new TransactionQueries.ProductPerformanceQuery(Guid.NewGuid(), DateTime.Today, DateTime.Today);
+        var request = new TransactionQueries.ProductPerformanceQuery(Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
         manager.GetProductPerformanceReport(Arg<TransactionQueries.ProductPerformanceQuery>.Any(), Arg<CancellationToken>.Any())
             .Returns(Task.FromResult(Result.Success(new ProductPerformanceResponse())));
 

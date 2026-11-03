@@ -10,8 +10,8 @@ public sealed class ReportQueryValidationTests
     public void ValidateDateRange_AllowsThirtyInclusiveDays()
     {
         ReportQueryValidation.ValidateDateRange(
-                new DateTime(2026, 9, 1),
-                new DateTime(2026, 9, 30))
+                new DateOnly(2026, 9, 1),
+                new DateOnly(2026, 9, 30))
             .ShouldBeNull();
     }
 
@@ -19,8 +19,8 @@ public sealed class ReportQueryValidationTests
     public void ValidateDateRange_RejectsMoreThanThirtyInclusiveDays()
     {
         ReportQueryValidation.ValidateDateRange(
-                new DateTime(2026, 9, 1),
-                new DateTime(2026, 10, 1))
+                new DateOnly(2026, 9, 1),
+                new DateOnly(2026, 10, 1))
             .ShouldBe("date range must not exceed 30 inclusive calendar days.");
     }
 
@@ -28,8 +28,8 @@ public sealed class ReportQueryValidationTests
     public void ValidateDateRange_RejectsReversedDates()
     {
         ReportQueryValidation.ValidateDateRange(
-                new DateTime(2026, 9, 2),
-                new DateTime(2026, 9, 1))
+                new DateOnly(2026, 9, 2),
+                new DateOnly(2026, 9, 1))
             .ShouldBe("startDate must be less than or equal to endDate.");
     }
 

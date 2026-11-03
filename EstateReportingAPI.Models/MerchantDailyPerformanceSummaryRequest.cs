@@ -7,8 +7,8 @@ namespace EstateReportingAPI.Models
     public class MerchantDailyPerformanceSummaryRequest
     {
         public Int32 MerchantReportingId { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
     }
 
     public class MerchantDailyPerformanceSummaryResponse {
@@ -39,6 +39,6 @@ namespace EstateReportingAPI.Models
 
         public Decimal Amount { get; set; }
 
-        public DateTime TransactionDateTime { get; set; }
+        public DateTimeOffset TransactionDateTime { get; set; }
     }
 }
