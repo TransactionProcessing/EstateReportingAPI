@@ -90,7 +90,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         actual.Product.ShouldBe(expectedProduct);
         actual.Status.ShouldBe(source.IsAuthorised ? "Successful" : "Failed");
         actual.Amount.ShouldBe(source.TransactionAmount);
-        actual.TransactionDateTime.ShouldBe(ToUkDateTimeOffset(source.TransactionDateTime));
+        actual.TransactionDateTime.ShouldBe(source.TransactionDateTime);
     }
 
     private static void AssertRecentActivityReceiptItemMatches(JsonElement actual,
@@ -104,7 +104,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         GetPropertyCaseInsensitive(actual, "operator").GetString().ShouldBe(expectedOperator);
         GetPropertyCaseInsensitive(actual, "status").GetString().ShouldBe(source.IsAuthorised ? "Successful" : "Failed");
         GetPropertyCaseInsensitive(actual, "amount").GetDecimal().ShouldBe(source.TransactionAmount);
-        DateTimeOffset.Parse(GetPropertyCaseInsensitive(actual, "transactionDateTime").GetString()!).ShouldBe(ToUkDateTimeOffset(source.TransactionDateTime));
+        DateTimeOffset.Parse(GetPropertyCaseInsensitive(actual, "transactionDateTime").GetString()!).ShouldBe(source.TransactionDateTime);
         GetPropertyCaseInsensitive(actual, "receiptReference").GetString().ShouldBe(expectedReceiptReference);
     }
 
@@ -114,7 +114,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         var product = this.context.ContractProducts.Single(p => p.ContractProductId == source.ContractProductId && p.ContractId == source.ContractId);
 
         actual.Id.ShouldBe(source.TransactionId);
-        actual.DateTime.ShouldBe(ToUkDateTimeOffset(source.TransactionDateTime));
+        actual.DateTime.ShouldBe(source.TransactionDateTime);
         actual.Merchant.ShouldBe(merchant.Name);
         actual.MerchantId.ShouldBe(merchant.MerchantId);
         actual.MerchantReportingId.ShouldBe(merchant.MerchantReportingId);
@@ -1210,16 +1210,16 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         await this.helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         var todaysReadModelRows = await this.context.TodayTransactions
-            .Where(t => t.TransactionDate == todaysDateTime.Date)
-            .Select(t => new { t.TransactionDateTime, t.Hour })
-            .ToListAsync();
+            .Where(t => t.TransactionDate == DateOnly.FromDateTime(todaysDateTime.Date))
+                                                     .Select(t => new { t.TransactionDateTime, t.Hour })
+                                                     .ToListAsync();
         todaysReadModelRows.ShouldNotBeEmpty();
         todaysReadModelRows.ShouldAllBe(x => x.Hour == x.TransactionDateTime.Hour);
 
         var comparisonReadModelRows = await this.context.TransactionHistory
-            .Where(t => t.TransactionDate == comparisonDate.Date)
-            .Select(t => new { t.TransactionDateTime, t.Hour })
-            .ToListAsync();
+            .Where(t => t.TransactionDate == DateOnly.FromDateTime(comparisonDate.Date))
+                                                     .Select(t => new { t.TransactionDateTime, t.Hour })
+                                                     .ToListAsync();
         comparisonReadModelRows.ShouldNotBeEmpty();
         comparisonReadModelRows.ShouldAllBe(x => x.Hour == x.TransactionDateTime.Hour);
 

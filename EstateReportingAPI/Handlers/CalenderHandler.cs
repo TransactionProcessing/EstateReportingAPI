@@ -32,7 +32,7 @@ public static class CalenderHandler
 
             int orderValue = 3;
             foreach (Calendar d in r)
-                response.Add(new ComparisonDate { Date = DateOnly.FromDateTime(d.Date), Description = d.Date.ToString("yyyy-MM-dd"), OrderValue = orderValue++ });
+                response.Add(new ComparisonDate { Date = d.Date, Description = d.Date.ToString("yyyy-MM-dd"), OrderValue = orderValue++ });
 
             return response.OrderBy(d => d.OrderValue);
         });

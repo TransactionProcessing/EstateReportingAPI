@@ -168,7 +168,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
             // left join Settlements (msf may be null)
             join s in context.Settlements on msf.SettlementId equals s.SettlementId into sJoin
             from s in sJoin.DefaultIfEmpty()
-            where t.TransactionType != "Logon" && t.TransactionDate >= request.StartDate.Date && t.TransactionDate < request.EndDate.Date.AddDays(1)
+            where t.TransactionType != "Logon" && t.TransactionDate >= request.StartDate && t.TransactionDate < request.EndDate.AddDays(1)
             select new TransactionDetailQueryResult {
                 TransactionId = t.TransactionId,
                 TransactionDateTime = t.TransactionDateTime,
@@ -336,12 +336,12 @@ public sealed class TransactionReportingService : ITransactionReportingService
     }
 
     private static IQueryable<MerchantTransactionGroupProjection> BuildMerchantTransactionBaseQuery(EstateManagementContext context,
-                                                                                                    DateTime startDate,
-                                                                                                    DateTime endDate) {
+                                                                                                    DateOnly startDate,
+                                                                                                    DateOnly endDate) {
         return from t in context.Transactions
             join m in context.Merchants on t.MerchantId equals m.MerchantId
             join o in context.Operators on t.OperatorId equals o.OperatorId
-            where t.TransactionType == "Sale" && t.TransactionDate >= startDate.Date && t.TransactionDate < endDate.Date.AddDays(1)
+            where t.TransactionType == "Sale" && t.TransactionDate >= startDate && t.TransactionDate < endDate.AddDays(1)
             group t by new { t.MerchantId, m.MerchantReportingId, MerchantName = m.Name, t.OperatorId, o.OperatorReportingId }
             into g
             select new MerchantTransactionGroupProjection {
@@ -443,7 +443,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
         IQueryable<OperatorTransactionData> query = from t in context.Transactions
                                                     join m in context.Merchants on t.MerchantId equals m.MerchantId
                                                     join o in context.Operators on t.OperatorId equals o.OperatorId
-                                                    where t.TransactionType == "Sale" && t.TransactionDate >= request.Request.StartDate.Date && t.TransactionDate < request.Request.EndDate.Date.AddDays(1)
+                                                    where t.TransactionType == "Sale" && t.TransactionDate >= request.Request.StartDate && t.TransactionDate < request.Request.EndDate.AddDays(1)
                                                     group t by new {
                                                                        t.MerchantId,
                                                                        m.MerchantReportingId,
@@ -558,7 +558,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
         TransactionQueries.ProductPerformanceQuery request,
         CancellationToken cancellationToken) {
         IQueryable<Decimal> grandTotalAmountQuery = from t in context.Transactions
-                                                    where t.TransactionType == "Sale" && t.TransactionDate >= request.StartDate.Date && t.TransactionDate < request.EndDate.Date.AddDays(1)
+                                                    where t.TransactionType == "Sale" && t.TransactionDate >= request.StartDate && t.TransactionDate < request.EndDate.AddDays(1)
                                                     select t.TransactionAmount;
         Result<Decimal> grandTotalAmountResult = await ReportingQueryExecutor.SumAsync<decimal>(grandTotalAmountQuery, cancellationToken);
         if (grandTotalAmountResult.IsFailed)
@@ -755,7 +755,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
             join m in context.Merchants on t.MerchantId equals m.MerchantId
             join o in context.Operators on t.OperatorId equals o.OperatorId
             join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
-            where t.TransactionDate == parameters.ReportDate.ToDateTime(TimeOnly.MinValue)
+            where t.TransactionDate == parameters.ReportDate
             select new RecentActivityReceiptQueryResult {
                 TransactionId = t.TransactionId,
                 TransactionDateTime = t.TransactionDateTime,
@@ -833,13 +833,13 @@ public sealed class TransactionReportingService : ITransactionReportingService
     }
 
     private static IQueryable<ProductPerformanceItemData> BuildProductPerformanceQuery(EstateManagementContext context,
-                                                                                        DateTime startDate,
-                                                                                        DateTime endDate,
+                                                                                       DateOnly startDate,
+                                                                                       DateOnly endDate,
                                                                                        decimal grandTotalAmount) {
         return from t in context.Transactions
             join cp in context.ContractProducts on new { t.ContractProductId, t.ContractId } equals new { cp.ContractProductId, cp.ContractId }
             join c in context.Contracts on t.ContractId equals c.ContractId
-            where t.TransactionType == "Sale" && t.TransactionDate >= startDate.Date && t.TransactionDate < endDate.Date.AddDays(1)
+            where t.TransactionType == "Sale" && t.TransactionDate >= startDate && t.TransactionDate < endDate.AddDays(1)
             group t by new { cp.ProductName, cp.ContractProductId, cp.ContractProductReportingId, c.ContractId, c.ContractReportingId }
             into g
             select new ProductPerformanceItemData {
@@ -929,8 +929,8 @@ public sealed class TransactionReportingService : ITransactionReportingService
     {
         return new TransactionMixSummaryResponse
         {
-            FromDate = DateOnly.FromDateTime(request.StartDate),
-            ToDate = DateOnly.FromDateTime(request.EndDate),
+            FromDate = request.StartDate,
+            ToDate = request.EndDate,
             Breakdown = request.Breakdown,
             Measure = request.Measure,
             TotalCount = totalCount,
@@ -1024,11 +1024,9 @@ public sealed class TransactionReportingService : ITransactionReportingService
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
 
-        DateTime startDate = request.Request.StartDate.Date;
-        DateTime endDate = request.Request.EndDate.Date;
-        int dayCount = Math.Max((endDate - startDate).Days + 1, 1);
+        int dayCount = Math.Max((request.Request.EndDate.DayNumber - request.Request.StartDate.DayNumber) + 1, 1);
 
-        Result<List<MerchantDailyPerformanceGroupProjection>> groupedTransactionsResult = await LoadMerchantDailyPerformanceGroups(context, request, startDate, endDate, cancellationToken);
+        Result<List<MerchantDailyPerformanceGroupProjection>> groupedTransactionsResult = await LoadMerchantDailyPerformanceGroups(context, request, request.Request.StartDate, request.Request.EndDate, cancellationToken);
         if (groupedTransactionsResult.IsFailed)
             return ResultHelpers.CreateFailure(groupedTransactionsResult);
 
@@ -1039,7 +1037,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
 
         List<MetricItem> metrics = BuildMerchantDailyPerformanceMetrics(groupedTransactions, dayCount);
 
-        Result<List<MerchantDailyPerformanceRecentSaleProjection>> recentSalesResult = await LoadMerchantDailyPerformanceRecentSales(context, request, startDate, endDate, cancellationToken);
+        Result<List<MerchantDailyPerformanceRecentSaleProjection>> recentSalesResult = await LoadMerchantDailyPerformanceRecentSales(context, request, request.Request.StartDate, request.Request.EndDate, cancellationToken);
         if (recentSalesResult.IsFailed)
             return ResultHelpers.CreateFailure(recentSalesResult);
 
@@ -1050,21 +1048,21 @@ public sealed class TransactionReportingService : ITransactionReportingService
     }
 
         private IQueryable<TodayTransaction> BuildTodaySalesQuery(EstateManagementContext context, DateTime now) {
-             return from t in context.TodayTransactions where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == now.Date && t.TransactionTime <= now.TimeOfDay select t;
+             return from t in context.TodayTransactions where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == DateOnly.FromDateTime(now.Date) && t.TransactionTime <= now.TimeOfDay select t;
         }
 
         private IQueryable<Decimal> BuildTodaysFailedSalesQuery(EstateManagementContext context,
                                                                 String responseCode,
                                                                 DateTime now) {
             return from t in context.TodayTransactions
-                    where t.IsAuthorised == false && t.TransactionType == "Sale" && t.TransactionDate == now.Date && t.TransactionTime <= now.TimeOfDay && t.ResponseCode == responseCode
+                    where t.IsAuthorised == false && t.TransactionType == "Sale" && t.TransactionDate == DateOnly.FromDateTime(now.Date) && t.TransactionTime <= now.TimeOfDay && t.ResponseCode == responseCode
                    select t.TransactionAmount;
         }
 
         private IQueryable<TransactionHistory> BuildComparisonSalesQuery(EstateManagementContext context,
                                                                           DateTime comparisonDate,
                                                                           DateTime now) {
-             return from t in context.TransactionHistory where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == comparisonDate.Date && t.TransactionTime <= now.TimeOfDay select t;
+             return from t in context.TransactionHistory where t.IsAuthorised && t.TransactionType == "Sale" && t.TransactionDate == DateOnly.FromDateTime(comparisonDate.Date) && t.TransactionTime <= now.TimeOfDay select t;
         }
 
         private IQueryable<Decimal> BuildComparisonFailedSalesQuery(EstateManagementContext context,
@@ -1072,7 +1070,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
                                                                     String responseCode,
                                                                     DateTime now) {
             return from t in context.TransactionHistory
-                   where t.IsAuthorised == false && t.TransactionType == "Sale" && t.TransactionDate == comparisonDate.Date && t.TransactionTime <= now.TimeOfDay && t.ResponseCode == responseCode
+                   where t.IsAuthorised == false && t.TransactionType == "Sale" && t.TransactionDate == DateOnly.FromDateTime(comparisonDate.Date) && t.TransactionTime <= now.TimeOfDay && t.ResponseCode == responseCode
                    select t.TransactionAmount;
         }
 
@@ -1117,7 +1115,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
             public String Operator { get; init; }
             public string Status { get; init; }
             public decimal Amount { get; init; }
-            public DateTime TransactionDateTime { get; init; }
+            public DateTimeOffset TransactionDateTime { get; init; }
         }
 
         private static MerchantDailyPerformanceSummaryResponse BuildEmptyMerchantDailyPerformanceSummaryResponse() {
@@ -1195,8 +1193,8 @@ public sealed class TransactionReportingService : ITransactionReportingService
 
         private async Task<Result<List<MerchantDailyPerformanceGroupProjection>>> LoadMerchantDailyPerformanceGroups(EstateManagementContext context,
                                                                                                                    TransactionQueries.MerchantDailyPerformanceSummaryQuery request,
-                                                                                                                   DateTime startDate,
-                                                                                                                   DateTime endDate,
+                                                                                                                   DateOnly startDate,
+                                                                                                                   DateOnly endDate,
                                                                                                                    CancellationToken cancellationToken) {
             IQueryable<MerchantDailyPerformanceGroupProjection> query =
                 from t in context.Transactions
@@ -1206,7 +1204,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
                 from op in opJoin.DefaultIfEmpty()
                 where t.TransactionType == "Sale"
                       && t.TransactionDate >= startDate
-                      && t.TransactionDate < endDate.Date.AddDays(1)
+                      && t.TransactionDate < endDate.AddDays(1)
                       && m.MerchantReportingId == request.Request.MerchantReportingId
                 group t by new
                 {
@@ -1231,8 +1229,8 @@ public sealed class TransactionReportingService : ITransactionReportingService
 
         private async Task<Result<List<MerchantDailyPerformanceRecentSaleProjection>>> LoadMerchantDailyPerformanceRecentSales(EstateManagementContext context,
                                                                                                                                TransactionQueries.MerchantDailyPerformanceSummaryQuery request,
-                                                                                                                               DateTime startDate,
-                                                                                                                               DateTime endDate,
+                                                                                                                               DateOnly startDate,
+                                                                                                                               DateOnly endDate,
                                                                                                                                CancellationToken cancellationToken) {
             IQueryable<MerchantDailyPerformanceRecentSaleProjection> query =
                 (from t in context.Transactions
@@ -1242,7 +1240,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
                  from op in opJoin.DefaultIfEmpty()
                  where t.TransactionType == "Sale"
                        && t.TransactionDate >= startDate
-                       && t.TransactionDate < endDate.Date.AddDays(1)
+                       && t.TransactionDate < endDate.AddDays(1)
                        && m.MerchantReportingId == request.Request.MerchantReportingId
                   orderby t.TransactionDateTime descending, t.TransactionId descending
                  select new MerchantDailyPerformanceRecentSaleProjection
@@ -1272,7 +1270,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
 
         private sealed class RecentActivityReceiptQueryResult {
             public Guid TransactionId { get; init; }
-            public DateTime TransactionDateTime { get; init; }
+            public DateTimeOffset TransactionDateTime { get; init; }
             public int MerchantReportingId { get; init; }
             public string Reference { get; init; }
             public string? TransactionType { get; init; }
@@ -1293,7 +1291,7 @@ public sealed class TransactionReportingService : ITransactionReportingService
 
         private sealed class TransactionDetailQueryResult {
             public Guid TransactionId { get; init; }
-            public DateTime TransactionDateTime { get; init; }
+            public DateTimeOffset TransactionDateTime { get; init; }
             public Guid MerchantId { get; init; }
             public int MerchantReportingId { get; init; }
             public string? MerchantName { get; init; }

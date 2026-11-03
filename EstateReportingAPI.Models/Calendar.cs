@@ -3,7 +3,7 @@
 public class Calendar{
     #region Properties
 
-    public DateTime Date{ get; set; }
+    public DateOnly Date { get; set; }
 
     public String DayOfWeek{ get; set; }
 

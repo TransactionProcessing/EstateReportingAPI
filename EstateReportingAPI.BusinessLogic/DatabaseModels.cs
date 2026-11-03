@@ -6,7 +6,7 @@ internal sealed class MerchantData {
     public Guid MerchantId { get; init; }
     public int MerchantReportingId { get; init; }
     public string? Name { get; init; }
-    public DateTime CreatedDateTime { get; init; }
+    public DateTimeOffset CreatedDateTime { get; init; }
     public string? Reference { get; init; }
     public int SettlementSchedule { get; init; }
     public MerchantAddressData? AddressInfo { get; init; }

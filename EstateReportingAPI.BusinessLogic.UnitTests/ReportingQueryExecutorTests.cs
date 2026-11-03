@@ -70,7 +70,7 @@ public sealed class ReportingQueryExecutorTests
     {
         return new TransactionProcessor.Database.Entities.Calendar
         {
-            Date = date,
+            Date = DateOnly.FromDateTime(date),
             Year = year,
             DayOfWeek = "Monday",
             DayOfWeekShort = "Mon",

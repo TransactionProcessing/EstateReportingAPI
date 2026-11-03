@@ -28,7 +28,7 @@ public sealed class ReportingServiceReportTests
 
         result.IsSuccess.ShouldBeTrue();
         result.Data.Count.ShouldBe(1);
-        result.Data[0].Date.ShouldBe(new DateTime(2026, 9, 1));
+        result.Data[0].Date.ShouldBe(new DateOnly(2026, 9, 1));
     }
 
     [Fact]
@@ -168,7 +168,7 @@ public sealed class ReportingServiceReportTests
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
         var result = await database.FileImportService.GetFileImportLogList(
-            new FileImportLogQueries.GetFileImportLogListQuery(EstateId, null, DateTime.Today.AddDays(-1), DateTime.Today),
+            new FileImportLogQueries.GetFileImportLogListQuery(EstateId, null, DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), DateOnly.FromDateTime(DateTime.Today)),
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -183,7 +183,7 @@ public sealed class ReportingServiceReportTests
         await database.SaveAsync();
 
         var result = await database.FileImportService.GetFileImportLogList(
-            new FileImportLogQueries.GetFileImportLogListQuery(EstateId, null, DateTime.Today.AddDays(-1), DateTime.Today),
+            new FileImportLogQueries.GetFileImportLogListQuery(EstateId, null, DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), DateOnly.FromDateTime(DateTime.Today)),
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -245,8 +245,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionSummaryByMerchantQuery(
                 EstateId,
                 new TransactionSummaryByMerchantRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1)
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1)
                 }),
             CancellationToken.None);
 
@@ -268,8 +268,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionSummaryByOperatorQuery(
                 EstateId,
                 new TransactionSummaryByOperatorRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1)
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1)
                 }),
             CancellationToken.None);
 
@@ -295,8 +295,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionDetailReportQuery(
                 EstateId,
                 new TransactionDetailReportRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1),
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1),
                     Merchants = [20],
                     Products = [40],
                     Operators = [10]
@@ -321,8 +321,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionDetailReportQuery(
                 EstateId,
                 new TransactionDetailReportRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1),
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1),
                     PageNumber = 2,
                     PageSize = 2
                 }),
@@ -347,8 +347,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionDetailReportQuery(
                 EstateId,
                 new TransactionDetailReportRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 10, 1)
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 10, 1)
                 }),
             CancellationToken.None);
 
@@ -368,8 +368,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionSummaryByOperatorQuery(
                 EstateId,
                 new TransactionSummaryByOperatorRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1),
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1),
                     Merchants = [20],
                     Operators = [10]
                 }),
@@ -388,8 +388,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionSummaryByMerchantQuery(
                 EstateId,
                 new TransactionSummaryByMerchantRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1)
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1)
                 }),
             CancellationToken.None);
 
@@ -411,8 +411,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionSummaryByMerchantQuery(
                 EstateId,
                 new TransactionSummaryByMerchantRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1),
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1),
                     PageNumber = 2,
                     PageSize = 1
                 }),
@@ -438,8 +438,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionSummaryByOperatorQuery(
                 EstateId,
                 new TransactionSummaryByOperatorRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1),
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1),
                     PageNumber = 2,
                     PageSize = 1
                 }),
@@ -462,8 +462,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionMixSummaryQuery(
                 EstateId,
                 new TransactionMixSummaryRequest {
-                    StartDate = new DateTime(2026, 9, 2),
-                    EndDate = new DateTime(2026, 9, 1),
+                    StartDate = new DateOnly(2026, 9, 2),
+                    EndDate = new DateOnly(2026, 9, 1),
                     Breakdown = TransactionMixBreakdown.Product,
                     Measure = TransactionMixMeasure.Count
                 }),
@@ -481,8 +481,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionMixSummaryQuery(
                 EstateId,
                 new TransactionMixSummaryRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1),
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1),
                     Breakdown = (TransactionMixBreakdown)999,
                     Measure = TransactionMixMeasure.Count
                 }),
@@ -548,8 +548,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionDetailReportQuery(
                 EstateId,
                 new TransactionDetailReportRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1)
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1)
                 }),
             CancellationToken.None);
 
@@ -574,8 +574,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionDetailReportQuery(
                 EstateId,
                 new TransactionDetailReportRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 2)
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 2)
                 }),
             CancellationToken.None);
 
@@ -590,7 +590,7 @@ public sealed class ReportingServiceReportTests
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
         var result = await database.SettlementService.GetTodaysSettlement(
-            new SettlementQueries.TodaysSettlementQuery(EstateId, DateTime.Today.AddDays(-1)),
+            new SettlementQueries.TodaysSettlementQuery(EstateId, DateOnly.FromDateTime(DateTime.Today.AddDays(-1))),
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -654,8 +654,8 @@ public sealed class ReportingServiceReportTests
                 EstateId,
                 new MerchantDailyPerformanceSummaryRequest {
                     MerchantReportingId = 20,
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 2)
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 2)
                 }),
             CancellationToken.None);
 
@@ -683,8 +683,8 @@ public sealed class ReportingServiceReportTests
                 EstateId,
                 new MerchantDailyPerformanceSummaryRequest {
                     MerchantReportingId = 20,
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 2)
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 2)
                 }),
             CancellationToken.None);
 
@@ -704,8 +704,8 @@ public sealed class ReportingServiceReportTests
                 EstateId,
                 new MerchantDailyPerformanceSummaryRequest {
                     MerchantReportingId = 20,
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 10, 1)
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 10, 1)
                 }),
             CancellationToken.None);
 
@@ -763,7 +763,7 @@ public sealed class ReportingServiceReportTests
         await database.SaveAsync();
 
         var result = await database.TransactionService.GetProductPerformanceReport(
-            new TransactionQueries.ProductPerformanceQuery(EstateId, new DateTime(2026, 9, 1), new DateTime(2026, 9, 1)),
+            new TransactionQueries.ProductPerformanceQuery(EstateId, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 1)),
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -894,8 +894,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionMixSummaryQuery(
                 EstateId,
                 new TransactionMixSummaryRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1),
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1),
                     Breakdown = TransactionMixBreakdown.Status,
                     Measure = TransactionMixMeasure.Value,
                     TopN = 1
@@ -925,8 +925,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionMixSummaryQuery(
                 EstateId,
                 new TransactionMixSummaryRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1),
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1),
                     Breakdown = TransactionMixBreakdown.Status,
                     Measure = TransactionMixMeasure.Count,
                     TopN = 1,
@@ -953,8 +953,8 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TransactionMixSummaryQuery(
                 EstateId,
                 new TransactionMixSummaryRequest {
-                    StartDate = new DateTime(2026, 9, 1),
-                    EndDate = new DateTime(2026, 9, 1),
+                    StartDate = new DateOnly(2026, 9, 1),
+                    EndDate = new DateOnly(2026, 9, 1),
                     Breakdown = TransactionMixBreakdown.Status,
                     Measure = TransactionMixMeasure.Count,
                     TopN = 21
@@ -994,7 +994,7 @@ public sealed class ReportingServiceReportTests
         await using TestDatabase database = await TestDatabase.CreateAsync();
 
         var result = await database.TransactionService.GetProductPerformanceReport(
-            new TransactionQueries.ProductPerformanceQuery(EstateId, new DateTime(2026, 9, 1), new DateTime(2026, 9, 1)),
+            new TransactionQueries.ProductPerformanceQuery(EstateId, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 1)),
             CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -1013,8 +1013,8 @@ public sealed class ReportingServiceReportTests
         var result = await database.TransactionService.GetProductPerformanceReport(
             new TransactionQueries.ProductPerformanceQuery(
                 EstateId,
-                new DateTime(2026, 9, 1),
-                new DateTime(2026, 9, 1),
+                new DateOnly(2026, 9, 1),
+                new DateOnly(2026, 9, 1),
                 1,
                 1),
             CancellationToken.None);
@@ -1151,7 +1151,7 @@ public sealed class ReportingServiceReportTests
                 ContractId = ContractId,
                 ContractProductId = ProductId,
                 TransactionType = "Sale",
-                TransactionDate = date.Date,
+                TransactionDate = DateOnly.FromDateTime(date.Date),
                 TransactionDateTime = date,
                 TransactionTime = date.TimeOfDay,
                 TransactionAmount = amount,
@@ -1256,7 +1256,7 @@ public sealed class ReportingServiceReportTests
         public void AddCalendar(DateTime date)
         {
             seedContext.Calendar.Add(new Db.Calendar {
-                Date = date,
+                Date = DateOnly.FromDateTime(date),
                 DayOfWeek = date.DayOfWeek.ToString(),
                 DayOfWeekShort = date.DayOfWeek.ToString()[..3],
                 MonthNameLong = date.ToString("MMMM"),
@@ -1295,7 +1295,7 @@ public sealed class ReportingServiceReportTests
             seedContext.FileImportLogs.Add(new Db.FileImportLog {
                 FileImportLogId = logId,
                 EstateId = EstateId,
-                ImportLogDate = DateTime.Today,
+                ImportLogDate = DateOnly.FromDateTime(DateTime.Today),
                 ImportLogDateTime = DateTime.Today.AddHours(1)
             });
             seedContext.EstateSecurityUsers.Add(new Db.EstateSecurityUser {
@@ -1329,7 +1329,7 @@ public sealed class ReportingServiceReportTests
                 SettlementId = settlementId,
                 EstateId = EstateId,
                 MerchantId = MerchantId,
-                SettlementDate = new DateTime(2026, 9, 1),
+                SettlementDate = new DateOnly(2026, 9, 1),
                 ProcessingStarted = true,
                 IsCompleted = true,
                 ProcessingStartedDateTIme = new DateTime(2026, 9, 1)

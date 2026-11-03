@@ -11,7 +11,7 @@ namespace EstateReportingAPI.IntegrationTests
     public static class Extensions{
         public static Calendar ToCalendar(this DateTime date){
             return new Calendar{
-                                   Date = date,
+                                   Date = DateOnly.FromDateTime(date),
                                    DayOfWeek = date.DayOfWeek.ToString(),
                                    DayOfWeekShort = date.DayOfWeek.ToString().Substring(0, 3),
                                    YearWeekNumber = $"{date.Year}{date.GetWeekNumber().ToString().PadLeft(2, '0')}",

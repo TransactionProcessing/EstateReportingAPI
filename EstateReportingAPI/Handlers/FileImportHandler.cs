@@ -41,15 +41,15 @@ public static class FileImportHandler
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken)
     {
-        FileImportLogQueries.GetFileImportLogListQuery query = new(estateContext.EstateId, merchantId, startDate.ToDateTime(TimeOnly.MinValue), endDate.ToDateTime(TimeOnly.MinValue));
+        FileImportLogQueries.GetFileImportLogListQuery query = new(estateContext.EstateId, merchantId, startDate, endDate);
         Result<List<FileImportLog>> result = await mediator.Send(query, cancellationToken);
 
         return ResponseFactory.FromResult(result, r => r.Select(m => new DataTransferObjects.FileImportLog
         {
             FileImportLogId = m.FileImportLogId,
-            ImportLogDateTime = datePolicy.ToDateTimeOffset(m.ImportLogDateTime),
+            ImportLogDateTime = m.ImportLogDateTime,
             FileDetailsList = m.FileDetailsList.Select(fd => new DataTransferObjects.FileDetails {
-                DateTimeUploaded = datePolicy.ToDateTimeOffset(fd.DateTimeUploaded),
+                DateTimeUploaded = fd.DateTimeUploaded,
                 FileId = fd.FileId,
                 FileName = fd.FileName,
                 FileProfile = fd.FileProfile,
@@ -79,10 +79,10 @@ public static class FileImportHandler
         return ResponseFactory.FromResult(result, r => new DataTransferObjects.FileImportLog
         {
             FileImportLogId = r.FileImportLogId,
-            ImportLogDateTime = datePolicy.ToDateTimeOffset(r.ImportLogDateTime),
+            ImportLogDateTime = r.ImportLogDateTime,
             FileDetailsList = r.FileDetailsList.Select(fd => new DataTransferObjects.FileDetails
             {
-                DateTimeUploaded = datePolicy.ToDateTimeOffset(fd.DateTimeUploaded),
+                DateTimeUploaded = fd.DateTimeUploaded,
                 FileId = fd.FileId,
                 FileName = Path.GetFileName(fd.FileName),
                 FileProfile = fd.FileProfile,

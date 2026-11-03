@@ -21,7 +21,7 @@ namespace EstateReportingAPI.DataTransferObjects{
         /// <summary>The settlement schedule value.</summary>
         public Int32 SettlementSchedule { get; set; }
         /// <summary>The created date time value.</summary>
-        public DateTime CreatedDateTime { get; set; }
+        public DateTimeOffset CreatedDateTime { get; set; }
 
         /// <summary>The address id value.</summary>
 

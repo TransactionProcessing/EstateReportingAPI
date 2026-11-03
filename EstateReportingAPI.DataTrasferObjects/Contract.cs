@@ -103,7 +103,7 @@ public class EstateUser
     /// <summary>The email address value.</summary>
     public string? EmailAddress { get; set; }
     /// <summary>The created date time value.</summary>
-    public DateTime CreatedDateTime { get; set; }
+    public DateTimeOffset CreatedDateTime { get; set; }
 }
 
 /// <summary>API data model describing estate operator information.</summary>
