@@ -148,12 +148,13 @@ internal static class OpenApiExamplesTransformer
         Type? bodyType = context.Description.ParameterDescriptions
             .FirstOrDefault(parameter => parameter.Source?.Id == "Body")?
             .ModelMetadata?.ModelType;
-        if (bodyType is null || !operation.RequestBody.Content.TryGetValue(JsonMediaType, out OpenApiMediaType? mediaType))
+        if (bodyType is null || !operation.RequestBody.Content.TryGetValue(JsonMediaType, out IOpenApiMediaType? mediaType)
+            || mediaType is not OpenApiMediaType mutableMediaType)
         {
             return;
         }
 
-        mediaType.Example ??= CreateExample(bodyType, "request");
+        mutableMediaType.Example ??= CreateExample(bodyType, "request");
     }
 
     private static void AddSuccessResponseExample(OpenApiOperation operation, OpenApiOperationTransformerContext context)
@@ -166,9 +167,10 @@ internal static class OpenApiExamplesTransformer
             return;
         }
 
-        if (response.Content.TryGetValue(JsonMediaType, out OpenApiMediaType? mediaType))
+        if (response.Content.TryGetValue(JsonMediaType, out IOpenApiMediaType? mediaType)
+            && mediaType is OpenApiMediaType mutableMediaType)
         {
-            mediaType.Example ??= CreateExample(successResponse.Type, "response");
+            mutableMediaType.Example ??= CreateExample(successResponse.Type, "response");
         }
     }
 
@@ -334,18 +336,20 @@ internal static class OpenApiExamplesTransformer
 
     private static void SetRequestExample(OpenApiOperation operation, string json)
     {
-        if (operation.RequestBody?.Content.TryGetValue(JsonMediaType, out OpenApiMediaType? mediaType) == true)
+        if (operation.RequestBody?.Content.TryGetValue(JsonMediaType, out IOpenApiMediaType? mediaType) == true
+            && mediaType is OpenApiMediaType mutableMediaType)
         {
-            mediaType.Example = JsonNode.Parse(json);
+            mutableMediaType.Example = JsonNode.Parse(json);
         }
     }
 
     private static void SetResponseExample(OpenApiOperation operation, string json)
     {
         if (operation.Responses.TryGetValue("200", out IOpenApiResponse response)
-            && response.Content.TryGetValue(JsonMediaType, out OpenApiMediaType? mediaType))
+            && response.Content.TryGetValue(JsonMediaType, out IOpenApiMediaType? mediaType)
+            && mediaType is OpenApiMediaType mutableMediaType)
         {
-            mediaType.Example = JsonNode.Parse(json);
+            mutableMediaType.Example = JsonNode.Parse(json);
         }
     }
 }

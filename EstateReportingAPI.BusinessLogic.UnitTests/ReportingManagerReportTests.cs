@@ -4,7 +4,7 @@ using Imposter.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Shared.EntityFramework;
+using TransactionProcessing.Shared.EntityFramework;
 using TransactionProcessor.Database.Contexts;
 using Db = TransactionProcessor.Database.Entities;
 using BalanceState = TransactionProcessor.ProjectionEngine.Database.Database.Entities.MerchantBalanceProjectionState;

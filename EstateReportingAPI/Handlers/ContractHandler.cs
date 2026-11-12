@@ -4,19 +4,19 @@ using EstateReportingAPI.Common;
 using EstateReportingAPI.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Results.Web;
-using SimpleResults;
+using TransactionProcessing.UnionResults.AspNetCore;
+using TransactionProcessing.UnionResults;
 
 namespace EstateReportingAPI.Handlers;
 
 public static class ContractHandler {
-    public static async Task<IResult> GetRecentContracts(IEstateContext estateContext,
+    public static async Task<Result<List<DataTransferObjects.Contract>>> GetRecentContracts(IEstateContext estateContext,
                                                          IMediator mediator,
                                                          CancellationToken cancellationToken)
     {
         ContractQueries.GetRecentContractsQuery query = new ContractQueries.GetRecentContractsQuery(estateContext.EstateId);
         Result<List<Contract>> result = await mediator.Send(query, cancellationToken);
-        return ResponseFactory.FromResult(result, r => r.Select(m => new DataTransferObjects.Contract
+        return result.Map(r => r.Select(m => new DataTransferObjects.Contract
         {
             EstateReportingId = m.EstateReportingId,
             ContractId = m.ContractId,
@@ -29,13 +29,13 @@ public static class ContractHandler {
         }).ToList());
     }
 
-    public static async Task<IResult> GetContracts(IEstateContext estateContext,
+    public static async Task<Result<List<DataTransferObjects.Contract>>> GetContracts(IEstateContext estateContext,
                                                    IMediator mediator,
                                                    CancellationToken cancellationToken)
     {
         ContractQueries.GetContractsQuery query = new ContractQueries.GetContractsQuery(estateContext.EstateId);
         Result<List<Contract>> result = await mediator.Send(query, cancellationToken);
-        return ResponseFactory.FromResult(result, r => r.Select(m => new DataTransferObjects.Contract
+        return result.Map(r => r.Select(m => new DataTransferObjects.Contract
         {
             EstateReportingId = m.EstateReportingId,
             ContractId = m.ContractId,
@@ -66,14 +66,14 @@ public static class ContractHandler {
         }).ToList());
     }
 
-    public static async Task<IResult> GetContract(IEstateContext estateContext,
+    public static async Task<Result<DataTransferObjects.Contract>> GetContract(IEstateContext estateContext,
                                                   [FromRoute, Description("Unique identifier of the contract.")] Guid contractId,
                                                   IMediator mediator,
                                                   CancellationToken cancellationToken)
     {
         ContractQueries.GetContractQuery query = new ContractQueries.GetContractQuery(estateContext.EstateId, contractId);
         Result<Contract> result = await mediator.Send(query, cancellationToken);
-        return ResponseFactory.FromResult(result, r => new DataTransferObjects.Contract
+        return result.Map(r => new DataTransferObjects.Contract
         {
             EstateReportingId = r.EstateReportingId,
             ContractId = r.ContractId,

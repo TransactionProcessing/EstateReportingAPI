@@ -1,9 +1,9 @@
 using EstateReportingAPI.BusinessLogic.Queries;
 using EstateReportingAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using TransactionProcessor.Database.Contexts;
-using Shared.EntityFramework;
+using TransactionProcessing.Shared.EntityFramework;
 
 namespace EstateReportingAPI.BusinessLogic.Services;
 
@@ -46,7 +46,7 @@ public sealed class SettlementReportingService : ISettlementReportingService
             TodaysPendingSettlementValue = todaySettlement.UnSettledValue
         };
 
-        return response;
+        return Result.Success(response);
     }
     private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
                                                                                            CancellationToken cancellationToken) {

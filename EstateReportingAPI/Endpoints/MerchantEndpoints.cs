@@ -2,7 +2,8 @@ using Microsoft.Extensions.Configuration;
 using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.DataTrasferObjects;
 using EstateReportingAPI.Handlers;
-using Shared.Extensions;
+using TransactionProcessing.Shared.Extensions;
+using TransactionProcessing.UnionResults.AspNetCore;
 
 namespace EstateReportingAPI.Endpoints;
 
@@ -13,7 +14,8 @@ public static class MerchantEndpoints
     public static void MapMerchantEndpoints(this IEndpointRouteBuilder app, IConfiguration configuration)
     {
         RouteGroupBuilder group = app.MapGroup(BaseRoute)
-            .WithTags("Merchants");
+            .WithTags("Merchants")
+            .AddUnionResultFilter();
 
         Boolean disableAuthorisation = configuration.GetValue("AppSettings:DisableAuthorisation", false);
         if (disableAuthorisation == false) {

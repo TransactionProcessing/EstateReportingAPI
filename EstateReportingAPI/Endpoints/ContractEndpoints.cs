@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.Handlers;
-using Shared.Extensions;
+using TransactionProcessing.Shared.Extensions;
+using TransactionProcessing.UnionResults.AspNetCore;
 
 namespace EstateReportingAPI.Endpoints;
 
@@ -12,7 +13,8 @@ public static class ContractEndpoints
     public static void MapContractEndpoints(this IEndpointRouteBuilder app, IConfiguration configuration)
     {
         RouteGroupBuilder group = app.MapGroup(BaseRoute)
-            .WithTags("Contracts");
+            .WithTags("Contracts")
+            .AddUnionResultFilter();
 
         Boolean disableAuthorisation = configuration.GetValue("AppSettings:DisableAuthorisation", false);
         if (disableAuthorisation == false) {

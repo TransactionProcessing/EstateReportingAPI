@@ -1,10 +1,9 @@
-using Azure.Core;
 using EstateReportingAPI.BusinessLogic.Queries;
 using EstateReportingAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using Shared.EntityFramework;
-using Shared.Results;
-using SimpleResults;
+using TransactionProcessing.Shared.EntityFramework;
+
+using TransactionProcessing.UnionResults;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities.Summary;
 
@@ -237,14 +236,14 @@ public sealed class TransactionReportingService : ITransactionReportingService
         if (validationError != null)
             return Result.Failure(validationError);
 
-        return Result.Success();
+        return Result<String>.NoContent();
     }
 
     public async Task<Result<TransactionSummaryByMerchantResponse>> GetTransactionSummaryByMerchantReport(TransactionQueries.TransactionSummaryByMerchantQuery request,
                                                                                                           CancellationToken cancellationToken) {
         Result<String>? validationError = ValidateRequest(request);
-        if (validationError.IsFailed)
-            return ResultHelpers.CreateFailure(validationError);
+        if (validationError is { IsFailed: true })
+            return ResultHelpers.CreateFailure(validationError.Value);
 
         using ResolvedDbContext<EstateManagementContext>? resolvedContext = Resolver.Resolve(EstateManagementDatabaseName, request.EstateId.ToString());
         await using EstateManagementContext context = resolvedContext.Context;
@@ -395,13 +394,13 @@ public sealed class TransactionReportingService : ITransactionReportingService
         OperatorSummaryReportData reportData = reportDataResult.Data;
         int totalOperators = reportData.TotalOperators;
         int totalPages = totalOperators == 0 ? 0 : (int)Math.Ceiling((double)totalOperators / request.Request.PageSize);
-        return BuildOperatorSummaryResponse(reportData.Operators, reportData.TotalCount, reportData.TotalValue, totalOperators,
+        return Result.Success(BuildOperatorSummaryResponse(reportData.Operators, reportData.TotalCount, reportData.TotalValue, totalOperators,
             new PaginationMetadata {
                 PageNumber = request.Request.PageNumber,
                 PageSize = request.Request.PageSize,
                 TotalItems = totalOperators,
                 TotalPages = totalPages
-            });
+            }));
     }
 
     private static async Task<Result<OperatorSummaryReportData>> LoadOperatorSummaryReportDataAsync(

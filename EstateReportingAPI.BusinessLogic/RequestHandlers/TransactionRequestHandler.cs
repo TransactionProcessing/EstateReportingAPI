@@ -2,7 +2,7 @@
 using EstateReportingAPI.BusinessLogic.Services;
 using EstateReportingAPI.Models;
 using MediatR;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace EstateReportingAPI.BusinessLogic.RequestHandlers;
 

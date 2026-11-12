@@ -17,7 +17,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Shared.EntityFramework;
+using TransactionProcessing.Shared.EntityFramework;
 using Shouldly;
 using System.Security.Claims;
 using System.Text.Encodings.Web;

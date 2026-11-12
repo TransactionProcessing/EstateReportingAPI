@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EstateReportingAPI.DataTransferObjects;
-using Shared.Serialisation;
+using TransactionProcessing.Shared.Serialisation;
 using Shouldly;
 using System.Text.Json;
 using TransactionProcessor.Database.Entities;

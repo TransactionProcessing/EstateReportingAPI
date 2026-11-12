@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Shared.EntityFramework;
-using Shared.General;
+using TransactionProcessing.Shared.EntityFramework;
+using TransactionProcessing.Shared.General;
 using System.Diagnostics.CodeAnalysis;
 
 [ExcludeFromCodeCoverage]

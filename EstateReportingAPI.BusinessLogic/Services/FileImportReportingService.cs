@@ -1,10 +1,10 @@
 using EstateReportingAPI.BusinessLogic.Queries;
 using EstateReportingAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using TransactionProcessor.Database.Contexts;
-using Shared.EntityFramework;
-using Shared.Results;
+using TransactionProcessing.Shared.EntityFramework;
+
 
 namespace EstateReportingAPI.BusinessLogic.Services;
 
@@ -126,7 +126,7 @@ public sealed class FileImportReportingService : IFileImportReportingService
         var flatItems = flatResult.Data;
 
         if (flatItems.Count == 0)
-            return Result.NotFound();
+            return Result.NotFound("No file import logs found.");
 
         var fileImportLogs = flatItems
             .GroupBy(x => new { x.FileImportLogId, x.ImportLogDateTime })

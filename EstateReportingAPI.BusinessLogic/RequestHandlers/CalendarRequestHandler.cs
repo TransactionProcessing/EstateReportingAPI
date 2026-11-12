@@ -2,8 +2,8 @@
 using EstateReportingAPI.BusinessLogic.Services;
 using EstateReportingAPI.Models;
 using MediatR;
-using Shared.Results;
-using SimpleResults;
+
+using TransactionProcessing.UnionResults;
 
 namespace EstateReportingAPI.BusinessLogic.RequestHandlers;
 public class CalendarRequestHandler : IRequestHandler<CalendarQueries.GetAllDatesQuery, Result<List<Calendar>>>,

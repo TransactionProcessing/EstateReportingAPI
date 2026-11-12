@@ -3,10 +3,10 @@ using TransactionProcessor.Database.Entities;
 using EstateReportingAPI.BusinessLogic.Queries;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Shared.EntityFramework;
+using TransactionProcessing.Shared.EntityFramework;
 using Imposter.Abstractions;
 
-[assembly: GenerateImposter(typeof(Shared.EntityFramework.IDbContextResolver<EstateManagementContext>))]
+[assembly: GenerateImposter(typeof(TransactionProcessing.Shared.EntityFramework.IDbContextResolver<EstateManagementContext>))]
 
 namespace EstateReportingAPI.BusinessLogic.UnitTests
 {

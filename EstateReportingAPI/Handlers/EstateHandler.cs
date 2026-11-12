@@ -3,20 +3,20 @@ using EstateReportingAPI.Common;
 using EstateReportingAPI.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Results.Web;
-using SimpleResults;
+using TransactionProcessing.UnionResults.AspNetCore;
+using TransactionProcessing.UnionResults;
 
 namespace EstateReportingAPI.Handlers;
 
 public static class EstateHandler {
-    public static async Task<IResult> GetEstate(IEstateContext estateContext,
+    public static async Task<Result<DataTransferObjects.Estate>> GetEstate(IEstateContext estateContext,
                                                 IMediator mediator,
                                                 CancellationToken cancellationToken)
     {
         EstateQueries.GetEstateQuery query = new EstateQueries.GetEstateQuery(estateContext.EstateId);
         Result<Estate> result = await mediator.Send(query, cancellationToken);
 
-        return ResponseFactory.FromResult(result, r => {
+        return result.Map(r => {
             DataTransferObjects.Estate estate = new DataTransferObjects.Estate {
                 EstateId = r.EstateId,
                 EstateName = r.EstateName,
@@ -61,15 +61,15 @@ public static class EstateHandler {
         });
     }
 
-    public static async Task<IResult> GetOperators(IEstateContext estateContext,
+    public static async Task<Result<List<DataTransferObjects.EstateOperator>>> GetOperators(IEstateContext estateContext,
                                                    IMediator mediator,
                                                    CancellationToken cancellationToken)
     {
         EstateQueries.GetEstateOperatorsQuery query = new EstateQueries.GetEstateOperatorsQuery(estateContext.EstateId);
         Result<List<Models.EstateOperator>> result = await mediator.Send(query, cancellationToken);
 
-        return ResponseFactory.FromResult(result, r => {
-            List<EstateOperator> operators = new();
+        return result.Map(r => {
+            List<DataTransferObjects.EstateOperator> operators = new();
 
             foreach (Models.EstateOperator estateOperator in r) {
                 operators.Add(new() {

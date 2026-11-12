@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.Handlers;
-using Shared.Extensions;
+using TransactionProcessing.Shared.Extensions;
+using TransactionProcessing.UnionResults.AspNetCore;
 
 namespace EstateReportingAPI.Endpoints;
 
@@ -9,7 +10,7 @@ public static class SettlementEndpoints {
     private const string BaseRoute = "api/settlements";
 
     public static void MapSettlementEndpoints(this IEndpointRouteBuilder app, IConfiguration configuration) {
-        RouteGroupBuilder group = app.MapGroup(BaseRoute).WithTags("Settlements");
+        RouteGroupBuilder group = app.MapGroup(BaseRoute).WithTags("Settlements").AddUnionResultFilter();
 
         Boolean disableAuthorisation = configuration.GetValue("AppSettings:DisableAuthorisation", false);
         if (disableAuthorisation == false) {

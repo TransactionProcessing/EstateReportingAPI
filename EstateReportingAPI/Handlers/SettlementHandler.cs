@@ -4,19 +4,20 @@ using EstateReportingAPI.Common;
 using EstateReportingAPI.DataTransferObjects;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Results.Web;
+using TransactionProcessing.UnionResults;
+using TransactionProcessing.UnionResults.AspNetCore;
 
 namespace EstateReportingAPI.Handlers;
 
 public static class SettlementHandler {
-    public static async Task<IResult> TodaysSettlements(IEstateContext estateContext,
+    public static async Task<Result<DataTransferObjects.TodaysSettlement>> TodaysSettlements(IEstateContext estateContext,
                                                         [FromQuery, Description("Date used to compare today's settlements with the corresponding day (YYYY-MM-DD).") ] DateOnly comparisonDate,
                                                         IMediator mediator,
                                                         CancellationToken cancellationToken) {
         var query = new SettlementQueries.TodaysSettlementQuery(estateContext.EstateId, comparisonDate);
         var result = await mediator.Send(query, cancellationToken);
 
-        return ResponseFactory.FromResult(result, r => new TodaysSettlement() {
+        return result.Map(r => new TodaysSettlement() {
             ComparisonPendingSettlementCount = r.ComparisonPendingSettlementCount,
             ComparisonPendingSettlementValue = r.ComparisonPendingSettlementValue,
             ComparisonSettlementCount = r.ComparisonSettlementCount,

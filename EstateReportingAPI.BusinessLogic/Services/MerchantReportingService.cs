@@ -1,15 +1,15 @@
 using EstateReportingAPI.BusinessLogic.Queries;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.DynamicLinq;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using System;
 using System.Linq;
 using System.Threading;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
 using TransactionProcessor.Database.Entities.Summary;
-using Shared.EntityFramework;
-using Shared.Results;
+using TransactionProcessing.Shared.EntityFramework;
+
 using EstateReportingAPI.Models;
 using Contract = EstateReportingAPI.Models.Contract;
 using Merchant = EstateReportingAPI.Models.Merchant;
@@ -134,7 +134,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var baseContracts = baseContractsResult.Data;
         if (!baseContracts.Any())
-            return new List<Contract>();
+            return Result.Success(new List<Contract>());
 
         var contractIds = baseContracts.Select(b => b.ContractId).ToList();
         var productsResult = await LoadProductsAsync(context, contractIds, cancellationToken, "Error retrieving contracts - Step 2");
@@ -296,7 +296,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
             });
         }
 
-        return response;
+        return Result.Success(response);
     }
 
 
@@ -778,7 +778,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
         }
         response.Year = request.Year;
 
-        return response;
+        return Result.Success(response);
     }
 
         private static async Task<Result<List<ContractProductData>>> LoadProductsAsync(EstateManagementContext context,

@@ -1,7 +1,7 @@
 using EstateReportingAPI.BusinessLogic;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using TransactionProcessor.Database.Contexts;
 
 namespace EstateReportingAPI.BusinessLogic.UnitTests;

@@ -2,7 +2,7 @@
 using EstateReportingAPI.Models;
 using Lamar;
 using MediatR;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using System.Diagnostics.CodeAnalysis;
 using EstateReportingAPI.BusinessLogic.Queries;
 using Microsoft.Extensions.Configuration;
