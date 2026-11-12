@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using EstateReportingAPI.DataTrasferObjects;
 using EstateReportingAPI.Handlers;
-using Shared.Extensions;
+using TransactionProcessing.Shared.Extensions;
+using TransactionProcessing.UnionResults.AspNetCore;
 
 namespace EstateReportingAPI.Endpoints;
 
@@ -13,7 +14,8 @@ public static class CalendarEndpoints
         
 
         RouteGroupBuilder group = app.MapGroup(BaseRoute)
-            .WithTags("Calendars");
+            .WithTags("Calendars")
+            .AddUnionResultFilter();
 
         Boolean disableAuthorisation = configuration.GetValue("AppSettings:DisableAuthorisation", false);
         if (disableAuthorisation == false) {

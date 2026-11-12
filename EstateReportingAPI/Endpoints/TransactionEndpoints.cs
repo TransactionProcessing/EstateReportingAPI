@@ -1,8 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.Handlers;
-using Shared.Extensions;
-using Shared.Middleware;
+using TransactionProcessing.Shared.Extensions;
+using TransactionProcessing.Shared.Middleware;
+using TransactionProcessing.UnionResults.AspNetCore;
 
 namespace EstateReportingAPI.Endpoints;
 
@@ -12,7 +13,8 @@ public static class TransactionEndpoints
     public static void MapTransactionEndpoints(this IEndpointRouteBuilder app, IConfiguration configuration)
     {
         RouteGroupBuilder group = app.MapGroup(BaseRoute)
-            .WithTags("Transactions");
+            .WithTags("Transactions")
+            .AddUnionResultFilter();
 
         Boolean disableAuthorisation = configuration.GetValue("AppSettings:DisableAuthorisation", false);
         if (disableAuthorisation == false) {
@@ -30,7 +32,7 @@ public static class TransactionEndpoints
         group.MapPost("transactiondetailreport", TransactionHandler.TransactionDetailReport)
             .WithSummary("Get a transaction detail report")
             .WithDescription("Returns paginated transaction details and aggregate totals for the requested date range and optional operator, merchant, and product filters.")
-            .WithStandardProduces<TransactionDetailReportResponse, ErrorResponse>();
+            .ProducesUnionResult<TransactionDetailReportResponse>();
         group.MapPost("transactionsummarybymerchantreport", TransactionHandler.TransactionSummaryByMerchantReport)
             .WithSummary("Get a transaction summary by merchant")
             .WithDescription("Returns per-merchant transaction totals and an overall summary for the requested date range and optional filters.")
@@ -46,7 +48,7 @@ public static class TransactionEndpoints
         group.MapPost("transactionmixsummary", TransactionHandler.TransactionMixSummary)
             .WithSummary("Get a transaction mix summary")
             .WithDescription("Groups transactions by the requested dimension and measure, with optional merchant filtering, top-N selection, and pagination.")
-            .WithStandardProduces<TransactionMixSummaryResponse, ErrorResponse>();
+            .ProducesUnionResult<TransactionMixSummaryResponse>();
         group.MapPost("recentactivityreceiptreport", TransactionHandler.RecentActivityReceiptReport)
             .WithSummary("Get recent transaction activity and receipt references")
             .WithDescription("Returns paginated transactions for a report date, optionally filtered by merchant and search text.")

@@ -4,15 +4,15 @@ using EstateReportingAPI.Common;
 using EstateReportingAPI.DataTransferObjects;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Results.Web;
-using SimpleResults;
+using TransactionProcessing.UnionResults.AspNetCore;
+using TransactionProcessing.UnionResults;
 using TransactionProcessor.Database.Entities.Summary;
 using TodaysSales = EstateReportingAPI.Models.TodaysSales;
 
 namespace EstateReportingAPI.Handlers;
 
 public static class TransactionHandler {
-    public static async Task<IResult> TodaysSales(IEstateContext estateContext,
+    public static async Task<Result<TodaysSales>> TodaysSales(IEstateContext estateContext,
                                                   [FromQuery, Description("Optional merchant reporting identifier used to limit results to one merchant.")] int? merchantReportingId,
                                                   [FromQuery, Description("Optional operator reporting identifier used to limit results to one operator.")] int? operatorReportingId,
                                                   [FromQuery, Description("Date used to compare today's sales with the corresponding day (YYYY-MM-DD).") ] DateOnly comparisonDate,
@@ -22,7 +22,7 @@ public static class TransactionHandler {
         var query = new TransactionQueries.TodaysSalesQuery(estateContext.EstateId, merchantReportingId.GetValueOrDefault(), operatorReportingId.GetValueOrDefault(), comparisonDate.ToDateTime(TimeOnly.MinValue));
         var result = await mediator.Send(query, cancellationToken);
 
-        return ResponseFactory.FromResult(result, r => new TodaysSales
+        return result.Map(r => new TodaysSales
         {
             ComparisonSalesCount = r.ComparisonSalesCount,
             ComparisonSalesValue = r.ComparisonSalesValue,
@@ -33,7 +33,7 @@ public static class TransactionHandler {
         });
     }
 
-    public static async Task<IResult> TodaysFailedSales(IEstateContext estateContext,
+    public static async Task<Result<TodaysSales>> TodaysFailedSales(IEstateContext estateContext,
                                                         [FromQuery, Description("Date used to compare failed sales with the corresponding day (YYYY-MM-DD).") ] DateOnly comparisonDate,
                                                         [FromQuery, Description("Response code used to filter failed transactions.")] string responseCode,
                                                         IMediator mediator,
@@ -42,7 +42,7 @@ public static class TransactionHandler {
         var query = new TransactionQueries.TodaysFailedSales(estateContext.EstateId, comparisonDate.ToDateTime(TimeOnly.MinValue), responseCode);
         var result = await mediator.Send(query, cancellationToken);
 
-        return ResponseFactory.FromResult(result, r => new TodaysSales
+        return result.Map(r => new TodaysSales
         {
             ComparisonSalesCount = r.ComparisonSalesCount,
             ComparisonSalesValue = r.ComparisonSalesValue,
@@ -53,7 +53,7 @@ public static class TransactionHandler {
         });
     }
 
-    public static async Task<IResult> TransactionDetailReport(IEstateContext estateContext,
+    public static async Task<Result<TransactionDetailReportResponse>> TransactionDetailReport(IEstateContext estateContext,
                                                               [FromBody] TransactionDetailReportRequest request, 
                                                               BusinessLogic.ReportingDatePolicy datePolicy,
                                                               IMediator mediator, CancellationToken cancellationToken) {
@@ -112,10 +112,10 @@ public static class TransactionHandler {
                     .ToList()
             };
 
-        return ResponseFactory.FromResult(result, SuccessFactory);
+        return result.Map(SuccessFactory);
     }
 
-    public static async Task<IResult> TransactionSummaryByMerchantReport(IEstateContext estateContext,
+    public static async Task<Result<TransactionSummaryByMerchantResponse>> TransactionSummaryByMerchantReport(IEstateContext estateContext,
                                                               [FromBody] TransactionSummaryByMerchantRequest request, 
                                                               IMediator mediator, CancellationToken cancellationToken) {
         string? validationError = BusinessLogic.ReportQueryValidation.ValidateDateRange(
@@ -159,10 +159,10 @@ public static class TransactionHandler {
                     })
                     .ToList()
             };
-        return ResponseFactory.FromResult(result, SuccessFactory);
+        return result.Map(SuccessFactory);
     }
 
-    public static async Task<IResult> ProductPerformanceReport(IEstateContext estateContext,
+    public static async Task<Result<ProductPerformanceResponse>> ProductPerformanceReport(IEstateContext estateContext,
                                                                [FromQuery, Description("Inclusive first date in the report period (YYYY-MM-DD).") ] DateOnly startDate,
                                                                [FromQuery, Description("Inclusive last date in the report period (YYYY-MM-DD).") ] DateOnly endDate,
                                                                [FromQuery, Description("One-based page number. Defaults to 1.")] int? pageNumber,
@@ -201,10 +201,10 @@ public static class TransactionHandler {
                     })
                     .ToList()
             };
-        return ResponseFactory.FromResult(result, SuccessFactory);
+        return result.Map(SuccessFactory);
     }
 
-    public static async Task<IResult> TransactionSummaryByOperatorReport(IEstateContext estateContext,
+    public static async Task<Result<TransactionSummaryByOperatorResponse>> TransactionSummaryByOperatorReport(IEstateContext estateContext,
                                                                          [FromBody] TransactionSummaryByOperatorRequest request,
                                                                          IMediator mediator, CancellationToken cancellationToken)
     {
@@ -252,10 +252,10 @@ public static class TransactionHandler {
                     })
                     .ToList()
             };
-        return ResponseFactory.FromResult(result, SuccessFactory);
+        return result.Map(SuccessFactory);
     }
 
-    public static async Task<IResult> TransactionMixSummary(IEstateContext estateContext,
+    public static async Task<Result<TransactionMixSummaryResponse>> TransactionMixSummary(IEstateContext estateContext,
                                                             [FromBody] TransactionMixSummaryRequest request,
                                                             BusinessLogic.ReportingDatePolicy datePolicy,
                                                             IMediator mediator,
@@ -332,10 +332,10 @@ public static class TransactionHandler {
                 }).ToList()
             };
 
-        return ResponseFactory.FromResult(result, SuccessFactory);
+        return result.Map(SuccessFactory);
     }
 
-    public static async Task<IResult> RecentActivityReceiptReport(IEstateContext estateContext,
+    public static async Task<Result<GetRecentActivityReceiptReportResponse>> RecentActivityReceiptReport(IEstateContext estateContext,
                                                                   [FromBody] GetRecentActivityReceiptReportRequest request,
                                                                   BusinessLogic.ReportingDatePolicy datePolicy,
                                                                   IMediator mediator,
@@ -380,10 +380,10 @@ public static class TransactionHandler {
                 }).ToList()
             };
 
-        return ResponseFactory.FromResult(result, SuccessFactory);
+        return result.Map(SuccessFactory);
     }
 
-    public static async Task<IResult> TodaysSalesByHour(IEstateContext estateContext,
+    public static async Task<Result<List<DataTransferObjects.TodaysSalesByHour>>> TodaysSalesByHour(IEstateContext estateContext,
                                                         [FromQuery, Description("Date used to compare hourly sales with the corresponding day (YYYY-MM-DD).") ] DateOnly comparisonDate,
                                                         IMediator mediator,
                                                         CancellationToken cancellationToken)
@@ -402,10 +402,10 @@ public static class TransactionHandler {
             }).ToList();    
 
 
-        return ResponseFactory.FromResult(result, SuccessFactory);
+        return result.Map(SuccessFactory);
     }
 
-    public static async Task<IResult> MerchantDailyPerformanceSummary(IEstateContext estateContext,
+    public static async Task<Result<MerchantDailyPerformanceSummaryResponse>> MerchantDailyPerformanceSummary(IEstateContext estateContext,
                                                                       [FromBody] MerchantDailyPerformanceSummaryRequest request,
                                                                       BusinessLogic.ReportingDatePolicy datePolicy,
                                                                       IMediator mediator, CancellationToken cancellationToken)
@@ -444,12 +444,9 @@ public static class TransactionHandler {
                 }).ToList() ?? []
             };
 
-        return ResponseFactory.FromResult(result, SuccessFactory);
+        return result.Map(SuccessFactory);
     }
 
-    private static IResult InvalidReportQuery(string detail) => Results.Problem(
-        statusCode: StatusCodes.Status400BadRequest,
-        title: "Invalid report query",
-        detail: detail);
+    private static Error InvalidReportQuery(string detail) => Error.Validation(detail);
 }
 

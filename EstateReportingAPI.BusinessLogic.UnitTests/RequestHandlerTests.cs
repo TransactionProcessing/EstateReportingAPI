@@ -4,7 +4,7 @@ using EstateReportingAPI.BusinessLogic.Services;
 using EstateReportingAPI.Models;
 using Imposter.Abstractions;
 using Shouldly;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 [assembly: GenerateImposter(typeof(IMerchantReportingService))]
 [assembly: GenerateImposter(typeof(ITransactionReportingService))]

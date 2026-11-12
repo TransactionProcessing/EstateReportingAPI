@@ -2,10 +2,10 @@ using EstateReportingAPI.BusinessLogic.Queries;
 using EstateReportingAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.DynamicLinq;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using TransactionProcessor.Database.Contexts;
-using Shared.EntityFramework;
-using Shared.Results;
+using TransactionProcessing.Shared.EntityFramework;
+
 
 namespace EstateReportingAPI.BusinessLogic.Services;
 
@@ -181,6 +181,6 @@ public sealed class EstateReportingService : IEstateReportingService
             Contracts = contracts.Select(c => new Models.EstateContract { ContractId = c.ContractId, Name = c.Description, }).ToList()
         };
 
-        return result;
+        return Result.Success(result);
 }
 }

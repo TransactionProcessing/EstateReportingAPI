@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EstateReportingAPI.DataTransferObjects;
 using Shouldly;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using Xunit;
 
 namespace EstateReportingAPI.IntegrationTests;

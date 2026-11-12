@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.DynamicLinq;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 
 namespace EstateReportingAPI.BusinessLogic;
 

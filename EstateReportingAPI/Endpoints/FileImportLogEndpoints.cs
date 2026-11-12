@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using EstateReportingAPI.DataTransferObjects;
 using EstateReportingAPI.Handlers;
-using Shared.Extensions;
+using TransactionProcessing.Shared.Extensions;
+using TransactionProcessing.UnionResults.AspNetCore;
 
 namespace EstateReportingAPI.Endpoints;
 
@@ -11,7 +12,7 @@ public static class FileImportLogEndpoints
 
     public static void MapFileImportLogEndpoints(this IEndpointRouteBuilder app, IConfiguration configuration)
     {
-        RouteGroupBuilder group = app.MapGroup(BaseRoute).WithTags("File Import Logs");
+        RouteGroupBuilder group = app.MapGroup(BaseRoute).WithTags("File Import Logs").AddUnionResultFilter();
 
         Boolean disableAuthorisation = configuration.GetValue("AppSettings:DisableAuthorisation", false);
         if (disableAuthorisation == false)
@@ -37,7 +38,7 @@ public static class FileProfileConfigurationEndpoints
 
     public static void MapFileProfileConfigurationEndpoints(this IEndpointRouteBuilder app, IConfiguration configuration)
     {
-        RouteGroupBuilder group = app.MapGroup(BaseRoute).WithTags("File Profile Configurations");
+        RouteGroupBuilder group = app.MapGroup(BaseRoute).WithTags("File Profile Configurations").AddUnionResultFilter();
 
         Boolean disableAuthorisation = configuration.GetValue("AppSettings:DisableAuthorisation", false);
         if (disableAuthorisation == false)

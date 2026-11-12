@@ -1,6 +1,6 @@
 ﻿using EstateReportingAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using Shared.EntityFramework;
+using TransactionProcessing.Shared.EntityFramework;
 using System;
 using System.Collections.Generic;
 using System.Linq;

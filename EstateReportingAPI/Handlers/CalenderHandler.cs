@@ -5,14 +5,14 @@ using EstateReportingAPI.DataTrasferObjects;
 using EstateReportingAPI.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Results.Web;
-using SimpleResults;
+using TransactionProcessing.UnionResults.AspNetCore;
+using TransactionProcessing.UnionResults;
 
 namespace EstateReportingAPI.Handlers;
 
 public static class CalenderHandler
 {
-    public static async Task<IResult> GetCalendarComparisonDates(IEstateContext estateContext,
+    public static async Task<Result<List<ComparisonDate>>> GetCalendarComparisonDates(IEstateContext estateContext,
                                                                   ReportingDatePolicy datePolicy,
                                                                   IMediator mediator,
                                                                   CancellationToken cancellationToken)
@@ -20,7 +20,7 @@ public static class CalenderHandler
         CalendarQueries.GetComparisonDatesQuery query = new(estateContext.EstateId);
         Result<List<Calendar>> result = await mediator.Send(query, cancellationToken);
 
-        return ResponseFactory.FromResult(result, r =>
+        return result.Map(r =>
         {
             DateTime today = datePolicy.Today.ToDateTime(TimeOnly.MinValue);
             List<ComparisonDate> response = new()
@@ -34,7 +34,7 @@ public static class CalenderHandler
             foreach (Calendar d in r)
                 response.Add(new ComparisonDate { Date = d.Date, Description = d.Date.ToString("yyyy-MM-dd"), OrderValue = orderValue++ });
 
-            return response.OrderBy(d => d.OrderValue);
+            return response.OrderBy(d => d.OrderValue).ToList();
         });
     }
 }

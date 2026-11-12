@@ -3,9 +3,9 @@ using System.Diagnostics;
 using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
-using Shared.IntegrationTesting;
-using Shared.IntegrationTesting.TestContainers;
-using Shared.Logger;
+using TransactionProcessing.Shared.IntegrationTesting;
+using TransactionProcessing.Shared.IntegrationTesting.TestContainers;
+using TransactionProcessing.Shared.Logger;
 using NLog;
 
 namespace EstateReportingAPI.IntegrationTests;

@@ -5,9 +5,9 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using EstateReportingAPI;
-using Shared.IntegrationTesting.TestContainers;
-using Shared.Serialisation;
-using SimpleResults;
+using TransactionProcessing.Shared.IntegrationTesting.TestContainers;
+using TransactionProcessing.Shared.Serialisation;
+using TransactionProcessing.UnionResults;
 using TransactionProcessor.Database.Contexts;
 using TransactionProcessor.Database.Entities;
 
@@ -16,8 +16,8 @@ namespace EstateReportingAPI.IntegrationTests;
 using System.Net.Http.Headers;
 using System.Text;
 using NLog;
-using Shared.IntegrationTesting;
-using Shared.Logger;
+using TransactionProcessing.Shared.IntegrationTesting;
+using TransactionProcessing.Shared.Logger;
 using Shouldly;
 using Xunit;
 

@@ -4,7 +4,7 @@ using EstateReportingAPI.Models;
 using Io.Cucumber.Messages.Types;
 using Microsoft.AspNetCore.Mvc;
 using Shouldly;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;

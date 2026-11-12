@@ -1,6 +1,6 @@
 ﻿using EstateReportingAPI.Models;
 using MediatR;
-using SimpleResults;
+using TransactionProcessing.UnionResults;
 using System.Diagnostics.CodeAnalysis;
 
 namespace EstateReportingAPI.BusinessLogic.Queries;

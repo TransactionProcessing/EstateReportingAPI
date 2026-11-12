@@ -3,7 +3,7 @@ using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using Shared.Middleware;
+using TransactionProcessing.Shared.Middleware;
 using TransactionProcessing.ApiDefaults;
 
 namespace EstateReportingAPI.Bootstrapper{
@@ -11,7 +11,7 @@ namespace EstateReportingAPI.Bootstrapper{
     using Lamar;
     using Microsoft.Extensions.Diagnostics.HealthChecks;
     using OpenIddict.Validation.AspNetCore;
-    using Shared.Serialisation;
+    using TransactionProcessing.Shared.Serialisation;
     using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
     using System.Text.Json;

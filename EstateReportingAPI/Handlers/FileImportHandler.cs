@@ -4,21 +4,21 @@ using EstateReportingAPI.Common;
 using EstateReportingAPI.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Results.Web;
-using SimpleResults;
+using TransactionProcessing.UnionResults.AspNetCore;
+using TransactionProcessing.UnionResults;
 
 namespace EstateReportingAPI.Handlers;
 
 public static class FileProfileConfigurationHandler
 {
-    public static async Task<IResult> GetFileProfileConfigurationList(IEstateContext estateContext,
+    public static async Task<Result<List<DataTransferObjects.FileProfileConfiguration>>> GetFileProfileConfigurationList(IEstateContext estateContext,
                                                            IMediator mediator,
                                                            CancellationToken cancellationToken)
     {
         FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery query = new(estateContext.EstateId);
         Result<List<FileProfileConfiguration>> result = await mediator.Send(query, cancellationToken);
 
-        return ResponseFactory.FromResult(result, r => r.Select(m => new DataTransferObjects.FileProfileConfiguration()
+        return result.Map(r => r.Select(m => new DataTransferObjects.FileProfileConfiguration()
         {
             FileFormatHandler = m.FileFormatHandler,
             FileProfileId = m.FileProfileId,
@@ -33,7 +33,7 @@ public static class FileProfileConfigurationHandler
 
 public static class FileImportHandler
 {
-    public static async Task<IResult> GetFileImportLogList(IEstateContext estateContext,
+    public static async Task<Result<List<DataTransferObjects.FileImportLog>>> GetFileImportLogList(IEstateContext estateContext,
                                                            [FromQuery, Description("Optional merchant identifier used to filter import logs.")] Guid? merchantId,
                                                            [FromQuery, Description("Inclusive first date in the import log period (YYYY-MM-DD).") ] DateOnly startDate,
                                                            [FromQuery, Description("Inclusive last date in the import log period (YYYY-MM-DD).") ] DateOnly endDate,
@@ -44,7 +44,7 @@ public static class FileImportHandler
         FileImportLogQueries.GetFileImportLogListQuery query = new(estateContext.EstateId, merchantId, startDate, endDate);
         Result<List<FileImportLog>> result = await mediator.Send(query, cancellationToken);
 
-        return ResponseFactory.FromResult(result, r => r.Select(m => new DataTransferObjects.FileImportLog
+        return result.Map(r => r.Select(m => new DataTransferObjects.FileImportLog
         {
             FileImportLogId = m.FileImportLogId,
             ImportLogDateTime = m.ImportLogDateTime,
@@ -66,7 +66,7 @@ public static class FileImportHandler
         }).ToList());
     }
 
-    public static async Task<IResult> GetFileImportLog(IEstateContext estateContext,
+    public static async Task<Result<DataTransferObjects.FileImportLog>> GetFileImportLog(IEstateContext estateContext,
                                                        [FromRoute, Description("Unique identifier of the file import log.")] Guid fileImportLogId,
                                                            [FromQuery, Description("Optional merchant identifier used to filter the import log.")] Guid? merchantId,
                                                             BusinessLogic.ReportingDatePolicy datePolicy,
@@ -76,7 +76,7 @@ public static class FileImportHandler
         FileImportLogQueries.GetFileImportLogQuery query = new(estateContext.EstateId, merchantId, fileImportLogId);
         Result<FileImportLog> result = await mediator.Send(query, cancellationToken);
 
-        return ResponseFactory.FromResult(result, r => new DataTransferObjects.FileImportLog
+        return result.Map(r => new DataTransferObjects.FileImportLog
         {
             FileImportLogId = r.FileImportLogId,
             ImportLogDateTime = r.ImportLogDateTime,

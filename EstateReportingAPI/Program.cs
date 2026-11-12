@@ -9,12 +9,13 @@ using Microsoft.Extensions.Configuration;
 using NLog;
 using NLog.Extensions.Logging;
 using Sentry.Extensibility;
-using Shared.Extensions;
-using Shared.Logger;
-using Shared.Middleware;
+using TransactionProcessing.Shared.Extensions;
+using TransactionProcessing.Shared.Logger;
+using TransactionProcessing.Shared.Middleware;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using TransactionProcessing.ApiDefaults;
+using TransactionProcessing.UnionResults.AspNetCore;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace EstateReportingAPI;
@@ -45,7 +46,7 @@ public partial class Program
             b.SetupLogFactory(setup =>
             {
                 setup.AddCallSiteHiddenAssembly(typeof(NlogLogger).Assembly);
-                setup.AddCallSiteHiddenAssembly(typeof(Shared.Logger.Logger).Assembly);
+                setup.AddCallSiteHiddenAssembly(typeof(TransactionProcessing.Shared.Logger.Logger).Assembly);
                 setup.AddCallSiteHiddenAssembly(typeof(TenantMiddleware).Assembly);
             });
             b.LoadConfigurationFromFile(nlogConfigPath);
@@ -55,6 +56,7 @@ public partial class Program
     private static void ConfigureHost(WebApplicationBuilder builder)
     {
         builder.Host.UseWindowsService();
+        builder.Services.AddUnionResults();
         builder.Logging.AddConsole();
         builder.Logging.AddNLog();
         builder.WebHost.UseKestrel();
@@ -74,7 +76,7 @@ public partial class Program
                 ["HealthMonitoring:Service:Version"] = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "0.0.0.0"
             });
 
-        Shared.General.ConfigurationReader.Initialise(builder.Configuration);
+        TransactionProcessing.Shared.General.ConfigurationReader.Initialise(builder.Configuration);
         if (builder.Configuration.GetSection("SentryConfiguration").Exists() && !builder.Environment.IsDevelopment())
         {
             builder.WebHost.UseSentry(options =>
@@ -105,10 +107,10 @@ public partial class Program
 
         LogManager.Setup().LoadConfigurationFromFile("NLog.config");
         NLog.Logger logger = LogManager.GetLogger("EstateReporting");
-        Shared.Logger.Logger.Initialise(logger, "EstateReporting");
+        TransactionProcessing.Shared.Logger.Logger.Initialise(logger, "EstateReporting");
 
         IConfigurationRoot appConfiguration = (IConfigurationRoot)app.Configuration;
-        appConfiguration.LogConfiguration(Shared.Logger.Logger.LogWarning);
+        appConfiguration.LogConfiguration(TransactionProcessing.Shared.Logger.Logger.LogWarning);
 
         app.UseMiddleware<TenantMiddleware>();
         app.AddRequestResponseLogging();
@@ -132,7 +134,7 @@ public partial class Program
         app.MapHealthChecks("health", new HealthCheckOptions
         {
             Predicate = _ => true,
-            ResponseWriter = Shared.HealthChecks.HealthCheckMiddleware.WriteResponse
+            ResponseWriter = TransactionProcessing.Shared.HealthChecks.HealthCheckMiddleware.WriteResponse
         }).AllowAnonymous();
         app.MapHealthChecks("healthui", new HealthCheckOptions
         {
