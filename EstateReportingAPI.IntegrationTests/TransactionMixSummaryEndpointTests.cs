@@ -157,7 +157,7 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
 
         string responseContent = await response.Content.ReadAsStringAsync(CancellationToken.None);
         using JsonDocument problemDocument = JsonDocument.Parse(responseContent);
-        problemDocument.RootElement.GetProperty("detail").GetString().ShouldBe("startDate must be less than or equal to endDate.");
+        problemDocument.RootElement.GetProperty("title").GetString().ShouldBe("startDate must be less than or equal to endDate.");
     }
 }
 
