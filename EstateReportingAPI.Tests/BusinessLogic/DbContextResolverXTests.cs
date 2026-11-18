@@ -1,13 +1,10 @@
-using EstateReportingAPI.BusinessLogic;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
-using Shared.EntityFramework;
 using Shouldly;
+using TransactionProcessing.Shared.EntityFramework;
 using TransactionProcessor.Database.Contexts;
 using Xunit;
 

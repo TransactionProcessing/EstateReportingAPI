@@ -1,6 +1,6 @@
 ﻿using System;
-using Shared.Web;
 using Shouldly;
+using TransactionProcessing.Shared.Web;
 using Xunit;
 
 namespace EstateReportingAPI.Tests.General;
