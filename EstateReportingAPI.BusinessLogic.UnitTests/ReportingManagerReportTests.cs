@@ -1,3 +1,4 @@
+using TransactionProcessing.UnionResults;
 using EstateReportingAPI.BusinessLogic.Queries;
 using EstateReportingAPI.Models;
 using Imposter.Abstractions;
@@ -26,9 +27,9 @@ public sealed class ReportingServiceReportTests
         var result = await database.EstateService.GetCalendarComparisonDates(
             new CalendarQueries.GetComparisonDatesQuery(EstateId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Count.ShouldBe(1);
-        result.Data[0].Date.ShouldBe(new DateOnly(2026, 9, 1));
+        var response = result.ShouldBeSuccess();
+        response.Count.ShouldBe(1);
+        response[0].Date.ShouldBe(new DateOnly(2026, 9, 1));
     }
 
     [Fact]
@@ -41,8 +42,7 @@ public sealed class ReportingServiceReportTests
         var result = await database.EstateService.GetCalendarDates(
             new CalendarQueries.GetAllDatesQuery(EstateId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Count.ShouldBe(1);
+        result.ShouldBeSuccess().Count.ShouldBe(1);
     }
 
     [Fact]
@@ -55,12 +55,12 @@ public sealed class ReportingServiceReportTests
         var result = await database.MerchantService.GetContract(
             new ContractQueries.GetContractQuery(EstateId, database.ContractId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ContractId.ShouldBe(database.ContractId);
-        result.Data.Products.Count.ShouldBe(1);
-        result.Data.Products[0].TransactionFees.Count.ShouldBe(2);
-        result.Data.Products[0].TransactionFees.Select(fee => fee.Description).ShouldContain("Enabled fee");
-        result.Data.Products[0].TransactionFees.Select(fee => fee.Description).ShouldContain("Disabled fee");
+        var response = result.ShouldBeSuccess();
+        response.ContractId.ShouldBe(database.ContractId);
+        response.Products.Count.ShouldBe(1);
+        response.Products[0].TransactionFees.Count.ShouldBe(2);
+        response.Products[0].TransactionFees.Select(fee => fee.Description).ShouldContain("Enabled fee");
+        response.Products[0].TransactionFees.Select(fee => fee.Description).ShouldContain("Disabled fee");
     }
 
     [Fact]
@@ -71,9 +71,9 @@ public sealed class ReportingServiceReportTests
         var result = await database.MerchantService.GetRecentContracts(
             new ContractQueries.GetRecentContractsQuery(EstateId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Count.ShouldBe(1);
-        result.Data[0].ContractId.ShouldBe(database.ContractId);
+        var response = result.ShouldBeSuccess();
+        response.Count.ShouldBe(1);
+        response[0].ContractId.ShouldBe(database.ContractId);
     }
 
     [Fact]
@@ -86,11 +86,11 @@ public sealed class ReportingServiceReportTests
         var result = await database.EstateService.GetEstate(
             new EstateQueries.GetEstateQuery(EstateId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.EstateId.ShouldBe(EstateId);
-        result.Data.Merchants.Count.ShouldBe(2);
-        result.Data.Contracts.Count.ShouldBe(1);
-        result.Data.Users.Count.ShouldBe(1);
+        var response = result.ShouldBeSuccess();
+        response.EstateId.ShouldBe(EstateId);
+        response.Merchants.Count.ShouldBe(2);
+        response.Contracts.Count.ShouldBe(1);
+        response.Users.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -103,9 +103,9 @@ public sealed class ReportingServiceReportTests
         var result = await database.EstateService.GetEstateOperators(
             new EstateQueries.GetEstateOperatorsQuery(EstateId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Count.ShouldBe(1);
-        result.Data[0].OperatorId.ShouldBe(database.OperatorId);
+        var response = result.ShouldBeSuccess();
+        response.Count.ShouldBe(1);
+        response[0].OperatorId.ShouldBe(database.OperatorId);
     }
 
     [Fact]
@@ -119,9 +119,9 @@ public sealed class ReportingServiceReportTests
         var result = await database.MerchantService.GetRecentMerchants(
             new MerchantQueries.GetRecentMerchantsQuery(EstateId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Count.ShouldBe(2);
-        result.Data[0].Balance.ShouldBe(10m);
+        var response = result.ShouldBeSuccess();
+        response.Count.ShouldBe(2);
+        response[0].Balance.ShouldBe(10m);
     }
 
     [Fact]
@@ -134,8 +134,7 @@ public sealed class ReportingServiceReportTests
         var result = await database.MerchantService.GetMerchantsTransactionKpis(
             new MerchantQueries.GetTransactionKpisQuery(EstateId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.MerchantsWithNoSaleInLast7Days.ShouldBe(1);
+        result.ShouldBeSuccess().MerchantsWithNoSaleInLast7Days.ShouldBe(1);
     }
 
     [Fact]
@@ -146,8 +145,7 @@ public sealed class ReportingServiceReportTests
         var result = await database.MerchantService.GetOperators(
             new OperatorQueries.GetOperatorsQuery(EstateId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Count.ShouldBe(2);
+        result.ShouldBeSuccess().Count.ShouldBe(2);
     }
 
     [Fact]
@@ -158,8 +156,7 @@ public sealed class ReportingServiceReportTests
         var result = await database.MerchantService.GetOperator(
             new OperatorQueries.GetOperatorQuery(EstateId, database.OperatorId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.OperatorId.ShouldBe(database.OperatorId);
+        result.ShouldBeSuccess().OperatorId.ShouldBe(database.OperatorId);
     }
 
     [Fact]
@@ -171,8 +168,7 @@ public sealed class ReportingServiceReportTests
             new FileImportLogQueries.GetFileImportLogListQuery(EstateId, null, DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), DateOnly.FromDateTime(DateTime.Today)),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBeEmpty();
+        result.ShouldBeSuccess().ShouldBeEmpty();
     }
 
     [Fact]
@@ -186,11 +182,11 @@ public sealed class ReportingServiceReportTests
             new FileImportLogQueries.GetFileImportLogListQuery(EstateId, null, DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), DateOnly.FromDateTime(DateTime.Today)),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Count.ShouldBe(1);
-        result.Data[0].FileImportLogId.ShouldBe(logId);
-        result.Data[0].FileDetailsList.Count.ShouldBe(1);
-        result.Data[0].FileDetailsList[0].FileLines.Count.ShouldBe(1);
+        var response = result.ShouldBeSuccess();
+        response.Count.ShouldBe(1);
+        response[0].FileImportLogId.ShouldBe(logId);
+        response[0].FileDetailsList.Count.ShouldBe(1);
+        response[0].FileDetailsList[0].FileLines.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -201,7 +197,7 @@ public sealed class ReportingServiceReportTests
         var result = await database.FileImportService.GetFileImportLog(
             new FileImportLogQueries.GetFileImportLogQuery(EstateId, null, Guid.NewGuid()), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeFalse();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]
@@ -214,10 +210,10 @@ public sealed class ReportingServiceReportTests
         var result = await database.FileImportService.GetFileImportLog(
             new FileImportLogQueries.GetFileImportLogQuery(EstateId, null, logId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.FileImportLogId.ShouldBe(logId);
-        result.Data.FileDetailsList.Count.ShouldBe(1);
-        result.Data.FileDetailsList[0].FileLines.Count.ShouldBe(1);
+        var response = result.ShouldBeSuccess();
+        response.FileImportLogId.ShouldBe(logId);
+        response.FileDetailsList.Count.ShouldBe(1);
+        response.FileDetailsList[0].FileLines.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -228,8 +224,7 @@ public sealed class ReportingServiceReportTests
         var result = await database.FileImportService.GetFileProfileConfigurationList(
             new FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery(EstateId), CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBeEmpty();
+        result.ShouldBeSuccess().ShouldBeEmpty();
     }
 
     [Fact]
@@ -250,9 +245,9 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Merchants.Single().AverageValue.ShouldBe(30m);
-        result.Data.Summary.AverageValue.ShouldBe(20m);
+        var response = result.ShouldBeSuccess();
+        response.Merchants.Single().AverageValue.ShouldBe(30m);
+        response.Summary.AverageValue.ShouldBe(20m);
     }
 
     [Fact]
@@ -273,8 +268,7 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        var summary = result.Data.Operators.Single();
+        var summary = result.ShouldBeSuccess().Operators.Single();
         summary.TotalCount.ShouldBe(3);
         summary.TotalValue.ShouldBe(60m);
         summary.AuthorisedCount.ShouldBe(2);
@@ -303,9 +297,9 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Summary.TransactionCount.ShouldBe(1);
-        result.Data.Summary.TotalValue.ShouldBe(10m);
+        var response = result.ShouldBeSuccess();
+        response.Summary.TransactionCount.ShouldBe(1);
+        response.Summary.TotalValue.ShouldBe(10m);
     }
 
     [Fact]
@@ -328,14 +322,14 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Transactions.Count.ShouldBe(1);
-        result.Data.Summary.TransactionCount.ShouldBe(3);
-        result.Data.Summary.TotalValue.ShouldBe(60m);
-        result.Data.Pagination.PageNumber.ShouldBe(2);
-        result.Data.Pagination.PageSize.ShouldBe(2);
-        result.Data.Pagination.TotalItems.ShouldBe(3);
-        result.Data.Pagination.TotalPages.ShouldBe(2);
+        var response = result.ShouldBeSuccess();
+        response.Transactions.Count.ShouldBe(1);
+        response.Summary.TransactionCount.ShouldBe(3);
+        response.Summary.TotalValue.ShouldBe(60m);
+        response.Pagination.PageNumber.ShouldBe(2);
+        response.Pagination.PageSize.ShouldBe(2);
+        response.Pagination.TotalItems.ShouldBe(3);
+        response.Pagination.TotalPages.ShouldBe(2);
     }
 
     [Fact]
@@ -352,8 +346,8 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeFalse();
-        result.Message.ShouldBe("date range must not exceed 30 inclusive calendar days.");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrorMessage().ShouldBe("date range must not exceed 30 inclusive calendar days.");
     }
 
     [Fact]
@@ -375,8 +369,7 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Operators.Single().TotalValue.ShouldBe(10m);
+        result.ShouldBeSuccess().Operators.Single().TotalValue.ShouldBe(10m);
     }
 
     [Fact]
@@ -393,10 +386,10 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Merchants.ShouldBeEmpty();
-        result.Data.Summary.TotalCount.ShouldBe(0);
-        result.Data.Summary.TotalValue.ShouldBe(0m);
+        var response = result.ShouldBeSuccess();
+        response.Merchants.ShouldBeEmpty();
+        response.Summary.TotalCount.ShouldBe(0);
+        response.Summary.TotalValue.ShouldBe(0m);
     }
 
     [Fact]
@@ -418,12 +411,12 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Merchants.Count.ShouldBe(1);
-        result.Data.Summary.TotalCount.ShouldBe(2);
-        result.Data.Summary.TotalValue.ShouldBe(30m);
-        result.Data.Pagination.TotalItems.ShouldBe(2);
-        result.Data.Pagination.TotalPages.ShouldBe(2);
+        var response = result.ShouldBeSuccess();
+        response.Merchants.Count.ShouldBe(1);
+        response.Summary.TotalCount.ShouldBe(2);
+        response.Summary.TotalValue.ShouldBe(30m);
+        response.Pagination.TotalItems.ShouldBe(2);
+        response.Pagination.TotalPages.ShouldBe(2);
     }
 
     [Fact]
@@ -445,12 +438,12 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Operators.Count.ShouldBe(1);
-        result.Data.Summary.TotalCount.ShouldBe(2);
-        result.Data.Summary.TotalValue.ShouldBe(30m);
-        result.Data.Pagination.TotalItems.ShouldBe(2);
-        result.Data.Pagination.TotalPages.ShouldBe(2);
+        var response = result.ShouldBeSuccess();
+        response.Operators.Count.ShouldBe(1);
+        response.Summary.TotalCount.ShouldBe(2);
+        response.Summary.TotalValue.ShouldBe(30m);
+        response.Pagination.TotalItems.ShouldBe(2);
+        response.Pagination.TotalPages.ShouldBe(2);
     }
 
     [Fact]
@@ -469,7 +462,7 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeFalse();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]
@@ -488,7 +481,7 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeFalse();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]
@@ -506,8 +499,8 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeFalse();
-        result.Message.ShouldBe("pageNumber must be greater than or equal to 1.");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrorMessage().ShouldBe("pageNumber must be greater than or equal to 1.");
     }
 
     [Fact]
@@ -529,10 +522,10 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Pagination.TotalItems.ShouldBe(3);
-        result.Data.Items.Count.ShouldBe(1);
-        result.Data.Items.Single().Amount.ShouldBe(10m);
+        var response = result.ShouldBeSuccess();
+        response.Pagination.TotalItems.ShouldBe(3);
+        response.Items.Count.ShouldBe(1);
+        response.Items.Single().Amount.ShouldBe(10m);
     }
 
     [Fact]
@@ -553,12 +546,12 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Summary.TransactionCount.ShouldBe(2);
-        result.Data.Summary.TotalValue.ShouldBe(30m);
-        result.Data.Summary.TotalFees.ShouldBe(0.5m);
-        result.Data.Transactions.Sum(t => t.TotalFees).ShouldBe(0.5m);
-        result.Data.Transactions.ShouldContain(t => t.TotalFees == 0m);
+        var response = result.ShouldBeSuccess();
+        response.Summary.TransactionCount.ShouldBe(2);
+        response.Summary.TotalValue.ShouldBe(30m);
+        response.Summary.TotalFees.ShouldBe(0.5m);
+        response.Transactions.Sum(t => t.TotalFees).ShouldBe(0.5m);
+        response.Transactions.ShouldContain(t => t.TotalFees == 0m);
     }
 
     [Fact]
@@ -579,9 +572,9 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Summary.TransactionCount.ShouldBe(2);
-        result.Data.Summary.TotalValue.ShouldBe(30m);
+        var response = result.ShouldBeSuccess();
+        response.Summary.TransactionCount.ShouldBe(2);
+        response.Summary.TotalValue.ShouldBe(30m);
     }
 
     [Fact]
@@ -593,13 +586,13 @@ public sealed class ReportingServiceReportTests
             new SettlementQueries.TodaysSettlementQuery(EstateId, DateOnly.FromDateTime(DateTime.Today.AddDays(-1))),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.TodaysSettlementCount.ShouldBe(0);
-        result.Data.TodaysPendingSettlementCount.ShouldBe(0);
-        result.Data.ComparisonSettlementCount.ShouldBe(0);
-        result.Data.ComparisonPendingSettlementCount.ShouldBe(0);
-        result.Data.TodaysSettlementValue.ShouldBe(0m);
-        result.Data.ComparisonSettlementValue.ShouldBe(0m);
+        var response = result.ShouldBeSuccess();
+        response.TodaysSettlementCount.ShouldBe(0);
+        response.TodaysPendingSettlementCount.ShouldBe(0);
+        response.ComparisonSettlementCount.ShouldBe(0);
+        response.ComparisonPendingSettlementCount.ShouldBe(0);
+        response.TodaysSettlementValue.ShouldBe(0m);
+        response.ComparisonSettlementValue.ShouldBe(0m);
     }
 
     [Fact]
@@ -612,13 +605,13 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TodaysSalesQuery(EstateId, 20, 10, comparisonDate),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.TodaysSalesCount.ShouldBe(0);
-        result.Data.TodaysSalesValue.ShouldBe(0m);
-        result.Data.TodaysAverageSalesValue.ShouldBe(0m);
-        result.Data.ComparisonSalesCount.ShouldBe(0);
-        result.Data.ComparisonSalesValue.ShouldBe(0m);
-        result.Data.ComparisonAverageSalesValue.ShouldBe(0m);
+        var response = result.ShouldBeSuccess();
+        response.TodaysSalesCount.ShouldBe(0);
+        response.TodaysSalesValue.ShouldBe(0m);
+        response.TodaysAverageSalesValue.ShouldBe(0m);
+        response.ComparisonSalesCount.ShouldBe(0);
+        response.ComparisonSalesValue.ShouldBe(0m);
+        response.ComparisonAverageSalesValue.ShouldBe(0m);
     }
 
     [Fact]
@@ -631,13 +624,13 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TodaysFailedSales(EstateId, comparisonDate, "1000"),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.TodaysSalesCount.ShouldBe(0);
-        result.Data.TodaysSalesValue.ShouldBe(0m);
-        result.Data.TodaysAverageSalesValue.ShouldBe(0m);
-        result.Data.ComparisonSalesCount.ShouldBe(0);
-        result.Data.ComparisonSalesValue.ShouldBe(0m);
-        result.Data.ComparisonAverageSalesValue.ShouldBe(0m);
+        var response = result.ShouldBeSuccess();
+        response.TodaysSalesCount.ShouldBe(0);
+        response.TodaysSalesValue.ShouldBe(0m);
+        response.TodaysAverageSalesValue.ShouldBe(0m);
+        response.ComparisonSalesCount.ShouldBe(0);
+        response.ComparisonSalesValue.ShouldBe(0m);
+        response.ComparisonAverageSalesValue.ShouldBe(0m);
     }
 
     [Fact]
@@ -659,18 +652,18 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Metrics.Count.ShouldBe(9);
-        result.Data.Metrics.Single(m => m.Title == "Total Sales Count").Value.ShouldBe(3);
-        result.Data.Metrics.Single(m => m.Title == "Total Sales Value").Value.ShouldBe(60m);
-        result.Data.Metrics.Single(m => m.Title == "Successful Sales Count").Value.ShouldBe(2);
-        result.Data.Metrics.Single(m => m.Title == "Failed Sales Count").Value.ShouldBe(1);
-        result.Data.Metrics.Single(m => m.Title == "Average Sales Count").Value.ShouldBe(1.5m);
-        result.Data.Metrics.Single(m => m.Title == "Average Sales Value").Value.ShouldBe(20m);
-        result.Data.Metrics.Single(m => m.Title == "Top Product Sales Count").Value.ShouldBe(3);
-        result.Data.DrillDownTransactions.Count.ShouldBe(3);
-        result.Data.DrillDownTransactions.First().Amount.ShouldBe(30m);
-        result.Data.DrillDownTransactions.First().Status.ShouldBe("Successful");
+        var response = result.ShouldBeSuccess();
+        response.Metrics.Count.ShouldBe(9);
+        response.Metrics.Single(m => m.Title == "Total Sales Count").Value.ShouldBe(3);
+        response.Metrics.Single(m => m.Title == "Total Sales Value").Value.ShouldBe(60m);
+        response.Metrics.Single(m => m.Title == "Successful Sales Count").Value.ShouldBe(2);
+        response.Metrics.Single(m => m.Title == "Failed Sales Count").Value.ShouldBe(1);
+        response.Metrics.Single(m => m.Title == "Average Sales Count").Value.ShouldBe(1.5m);
+        response.Metrics.Single(m => m.Title == "Average Sales Value").Value.ShouldBe(20m);
+        response.Metrics.Single(m => m.Title == "Top Product Sales Count").Value.ShouldBe(3);
+        response.DrillDownTransactions.Count.ShouldBe(3);
+        response.DrillDownTransactions.First().Amount.ShouldBe(30m);
+        response.DrillDownTransactions.First().Status.ShouldBe("Successful");
     }
 
     [Fact]
@@ -688,10 +681,10 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Metrics.Count.ShouldBe(8);
-        result.Data.Metrics.ShouldAllBe(metric => metric.Value == 0);
-        result.Data.DrillDownTransactions.ShouldBeEmpty();
+        var response = result.ShouldBeSuccess();
+        response.Metrics.Count.ShouldBe(8);
+        response.Metrics.ShouldAllBe(metric => metric.Value == 0);
+        response.DrillDownTransactions.ShouldBeEmpty();
     }
 
     [Fact]
@@ -709,8 +702,8 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeFalse();
-        result.Message.ShouldBe("date range must not exceed 30 inclusive calendar days.");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrorMessage().ShouldBe("date range must not exceed 30 inclusive calendar days.");
     }
 
     [Fact]
@@ -727,9 +720,9 @@ public sealed class ReportingServiceReportTests
                 new MerchantQueries.MerchantQueryOptions("Merchant 1", "M1", 2, "Region", "P1")),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Count.ShouldBe(1);
-        result.Data.Single().Name.ShouldBe("Merchant 1");
+        var response = result.ShouldBeSuccess();
+        response.Count.ShouldBe(1);
+        response.Single().Name.ShouldBe("Merchant 1");
     }
 
     [Fact]
@@ -744,14 +737,14 @@ public sealed class ReportingServiceReportTests
             new MerchantQueries.GetMerchantQuery(EstateId, database.MerchantId),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Name.ShouldBe("Merchant 1");
-        result.Data.Reference.ShouldBe("M1");
-        result.Data.Balance.ShouldBe(123.45m);
-        result.Data.AddressLine1.ShouldBe("Address 1");
-        result.Data.ContactName.ShouldBe("Contact 1");
-        result.Data.ContactEmail.ShouldBe("one@example.test");
-        result.Data.SettlementSchedule.ShouldBe(2);
+        var response = result.ShouldBeSuccess();
+        response.Name.ShouldBe("Merchant 1");
+        response.Reference.ShouldBe("M1");
+        response.Balance.ShouldBe(123.45m);
+        response.AddressLine1.ShouldBe("Address 1");
+        response.ContactName.ShouldBe("Contact 1");
+        response.ContactEmail.ShouldBe("one@example.test");
+        response.SettlementSchedule.ShouldBe(2);
     }
 
     [Fact]
@@ -766,15 +759,15 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.ProductPerformanceQuery(EstateId, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 1)),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ProductDetails.Count.ShouldBe(1);
-        result.Data.ProductDetails.Single().ProductName.ShouldBe("Product 1");
-        result.Data.ProductDetails.Single().TransactionCount.ShouldBe(2);
-        result.Data.ProductDetails.Single().TransactionValue.ShouldBe(40m);
-        result.Data.Summary.TotalCount.ShouldBe(2);
-        result.Data.Summary.TotalValue.ShouldBe(40m);
-        result.Data.Summary.AveragePerProduct.ShouldBe(40m);
-        result.Data.Summary.TotalProducts.ShouldBe(1);
+        var response = result.ShouldBeSuccess();
+        response.ProductDetails.Count.ShouldBe(1);
+        response.ProductDetails.Single().ProductName.ShouldBe("Product 1");
+        response.ProductDetails.Single().TransactionCount.ShouldBe(2);
+        response.ProductDetails.Single().TransactionValue.ShouldBe(40m);
+        response.Summary.TotalCount.ShouldBe(2);
+        response.Summary.TotalValue.ShouldBe(40m);
+        response.Summary.AveragePerProduct.ShouldBe(40m);
+        response.Summary.TotalProducts.ShouldBe(1);
     }
 
     [Fact]
@@ -787,8 +780,8 @@ public sealed class ReportingServiceReportTests
         var operators = await database.MerchantService.GetMerchantOperators(
             new MerchantQueries.GetMerchantOperatorsQuery(EstateId, database.MerchantId), CancellationToken.None);
 
-        operators.IsSuccess.ShouldBeTrue();
-        operators.Data.Single().OperatorName.ShouldBe("Merchant Operator");
+        operators.IsSuccess().ShouldBeTrue();
+        operators.ShouldBeSuccess().Single().OperatorName.ShouldBe("Merchant Operator");
     }
 
     [Fact]
@@ -801,9 +794,9 @@ public sealed class ReportingServiceReportTests
         var contracts = await database.MerchantService.GetMerchantContracts(
             new MerchantQueries.GetMerchantContractsQuery(EstateId, database.MerchantId), CancellationToken.None);
 
-        contracts.IsSuccess.ShouldBeTrue();
-        contracts.Data.Single().ContractName.ShouldBe("Contract 1");
-        contracts.Data.Single().ContractProducts.Single().ProductName.ShouldBe("Product 1");
+        contracts.IsSuccess().ShouldBeTrue();
+        contracts.ShouldBeSuccess().Single().ContractName.ShouldBe("Contract 1");
+        contracts.ShouldBeSuccess().Single().ContractProducts.Single().ProductName.ShouldBe("Product 1");
     }
 
     [Fact]
@@ -816,8 +809,8 @@ public sealed class ReportingServiceReportTests
         var devices = await database.MerchantService.GetMerchantDevices(
             new MerchantQueries.GetMerchantDevicesQuery(EstateId, database.MerchantId), CancellationToken.None);
 
-        devices.IsSuccess.ShouldBeTrue();
-        devices.Data.Single().DeviceIdentifier.ShouldBe("device-1");
+        devices.IsSuccess().ShouldBeTrue();
+        devices.ShouldBeSuccess().Single().DeviceIdentifier.ShouldBe("device-1");
     }
 
     [Fact]
@@ -830,9 +823,9 @@ public sealed class ReportingServiceReportTests
         var openingHours = await database.MerchantService.GetMerchantOpeningHours(
             new MerchantQueries.GetMerchantOpeningHoursQuery(EstateId, database.MerchantId), CancellationToken.None);
 
-        openingHours.IsSuccess.ShouldBeTrue();
-        openingHours.Data.Count.ShouldBe(7);
-        openingHours.Data.Single(x => x.DayOfWeek == DayOfWeek.Monday).OpeningTime.ShouldBe("08:00");
+        openingHours.IsSuccess().ShouldBeTrue();
+        openingHours.ShouldBeSuccess().Count.ShouldBe(7);
+        openingHours.ShouldBeSuccess().Single(x => x.DayOfWeek == DayOfWeek.Monday).OpeningTime.ShouldBe("08:00");
     }
 
     [Fact]
@@ -845,9 +838,9 @@ public sealed class ReportingServiceReportTests
         var schedule = await database.MerchantService.GetMerchantSchedule(
             new MerchantQueries.GetMerchantScheduleQuery(EstateId, database.MerchantId, 2026), CancellationToken.None);
 
-        schedule.IsSuccess.ShouldBeTrue();
-        schedule.Data.Year.ShouldBe(2026);
-        schedule.Data.Months.Single().ClosedDays.ShouldBe([1, 15]);
+        schedule.IsSuccess().ShouldBeTrue();
+        schedule.ShouldBeSuccess().Year.ShouldBe(2026);
+        schedule.ShouldBeSuccess().Months.Single().ClosedDays.ShouldBe([1, 15]);
     }
 
     [Fact]
@@ -859,8 +852,7 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.TodaysSalesByHour(EstateId, DateTime.Today.AddDays(-1)),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldBeEmpty();
+        result.ShouldBeSuccess().ShouldBeEmpty();
     }
 
     [Fact]
@@ -874,8 +866,7 @@ public sealed class ReportingServiceReportTests
             new ContractQueries.GetContractsQuery(EstateId),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        var contract = result.Data.Single();
+        var contract = result.ShouldBeSuccess().Single();
         contract.OperatorName.ShouldBe("Operator 1");
         contract.Products.Single().ProductName.ShouldBe("Product 1");
         contract.Products.Single().TransactionFees.Count.ShouldBe(1);
@@ -902,14 +893,14 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.TotalCount.ShouldBe(2);
-        result.Data.TotalValue.ShouldBe(35m);
-        result.Data.Groups.Count.ShouldBe(1);
-        result.Data.Groups.Single().GroupName.ShouldBe("Declined");
-        result.Data.Groups.Single().TransactionValue.ShouldBe(25m);
-        result.Data.Transactions.Count.ShouldBe(2);
-        result.Data.Transactions.Select(t => t.Value).ShouldContain(25m);
+        var response = result.ShouldBeSuccess();
+        response.TotalCount.ShouldBe(2);
+        response.TotalValue.ShouldBe(35m);
+        response.Groups.Count.ShouldBe(1);
+        response.Groups.Single().GroupName.ShouldBe("Declined");
+        response.Groups.Single().TransactionValue.ShouldBe(25m);
+        response.Transactions.Count.ShouldBe(2);
+        response.Transactions.Select(t => t.Value).ShouldContain(25m);
     }
 
     [Fact]
@@ -935,13 +926,13 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.TotalCount.ShouldBe(3);
-        result.Data.TotalValue.ShouldBe(60m);
-        result.Data.Groups.Count.ShouldBe(1);
-        result.Data.Transactions.Count.ShouldBe(1);
-        result.Data.Pagination.TotalItems.ShouldBe(3);
-        result.Data.Pagination.TotalPages.ShouldBe(2);
+        var response = result.ShouldBeSuccess();
+        response.TotalCount.ShouldBe(3);
+        response.TotalValue.ShouldBe(60m);
+        response.Groups.Count.ShouldBe(1);
+        response.Transactions.Count.ShouldBe(1);
+        response.Pagination.TotalItems.ShouldBe(3);
+        response.Pagination.TotalPages.ShouldBe(2);
     }
 
     [Fact]
@@ -961,8 +952,8 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeFalse();
-        result.Message.ShouldBe("topN must be between 1 and 20.");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrorMessage().ShouldBe("topN must be between 1 and 20.");
     }
 
     [Fact]
@@ -983,9 +974,9 @@ public sealed class ReportingServiceReportTests
                 }),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.Pagination.TotalItems.ShouldBe(1);
-        result.Data.Items.Single().Amount.ShouldBe(10m);
+        var response = result.ShouldBeSuccess();
+        response.Pagination.TotalItems.ShouldBe(1);
+        response.Items.Single().Amount.ShouldBe(10m);
     }
 
     [Fact]
@@ -997,10 +988,10 @@ public sealed class ReportingServiceReportTests
             new TransactionQueries.ProductPerformanceQuery(EstateId, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 1)),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ProductDetails.ShouldBeEmpty();
-        result.Data.Summary.TotalCount.ShouldBe(0);
-        result.Data.Summary.TotalValue.ShouldBe(0m);
+        var response = result.ShouldBeSuccess();
+        response.ProductDetails.ShouldBeEmpty();
+        response.Summary.TotalCount.ShouldBe(0);
+        response.Summary.TotalValue.ShouldBe(0m);
     }
 
     [Fact]
@@ -1019,13 +1010,13 @@ public sealed class ReportingServiceReportTests
                 1),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ProductDetails.Count.ShouldBe(1);
-        result.Data.Summary.TotalProducts.ShouldBe(1);
-        result.Data.Summary.TotalCount.ShouldBe(1);
-        result.Data.Summary.TotalValue.ShouldBe(25m);
-        result.Data.Pagination.TotalItems.ShouldBe(1);
-        result.Data.Pagination.TotalPages.ShouldBe(1);
+        var response = result.ShouldBeSuccess();
+        response.ProductDetails.Count.ShouldBe(1);
+        response.Summary.TotalProducts.ShouldBe(1);
+        response.Summary.TotalCount.ShouldBe(1);
+        response.Summary.TotalValue.ShouldBe(25m);
+        response.Pagination.TotalItems.ShouldBe(1);
+        response.Pagination.TotalPages.ShouldBe(1);
     }
 
     [Fact]
@@ -1037,7 +1028,7 @@ public sealed class ReportingServiceReportTests
             new MerchantQueries.GetMerchantsQuery(EstateId, new MerchantQueries.MerchantQueryOptions("", "", null, "", "")),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeFalse();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]
@@ -1052,7 +1043,7 @@ public sealed class ReportingServiceReportTests
             new MerchantQueries.GetMerchantsQuery(EstateId, new MerchantQueries.MerchantQueryOptions("", "", null, "", "")),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeFalse();
+        result.IsSuccess().ShouldBeFalse();
     }
 
     private sealed class TestDatabase : IAsyncDisposable

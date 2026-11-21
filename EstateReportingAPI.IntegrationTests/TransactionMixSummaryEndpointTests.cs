@@ -112,23 +112,23 @@ public class TransactionMixSummaryEndpointTests : ControllerTestsBase
         String payload = Serialize(request);
         var result = await this.CreateAndSendHttpRequestMessage<TransactionMixSummaryResponse>($"{BaseRoute}/transactionmixsummary", payload, CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-        result.Data.ShouldNotBeNull();
-        result.Data.FromDate.ShouldBe(DateOnly.FromDateTime(startDate));
-        result.Data.ToDate.ShouldBe(DateOnly.FromDateTime(endDate));
-        result.Data.Breakdown.ShouldBe(TransactionMixBreakdown.Product);
-        result.Data.Measure.ShouldBe(TransactionMixMeasure.Count);
-        result.Data.TotalCount.ShouldBe(3);
-        result.Data.TotalValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
-        result.Data.Groups.Count.ShouldBe(1);
-        result.Data.Groups[0].GroupKey.ShouldBe(product.contractProductReportingId.ToString());
-        result.Data.Groups[0].GroupName.ShouldBe(product.productName);
-        result.Data.Groups[0].TransactionCount.ShouldBe(3);
-        result.Data.Groups[0].TransactionValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
-        result.Data.Transactions.Count.ShouldBe(3);
+        var response = result.ShouldBeSuccess();
+        response.ShouldNotBeNull();
+        response.FromDate.ShouldBe(DateOnly.FromDateTime(startDate));
+        response.ToDate.ShouldBe(DateOnly.FromDateTime(endDate));
+        response.Breakdown.ShouldBe(TransactionMixBreakdown.Product);
+        response.Measure.ShouldBe(TransactionMixMeasure.Count);
+        response.TotalCount.ShouldBe(3);
+        response.TotalValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+        response.Groups.Count.ShouldBe(1);
+        response.Groups[0].GroupKey.ShouldBe(product.contractProductReportingId.ToString());
+        response.Groups[0].GroupName.ShouldBe(product.productName);
+        response.Groups[0].TransactionCount.ShouldBe(3);
+        response.Groups[0].TransactionValue.ShouldBe(transactions.Sum(t => t.TransactionAmount));
+        response.Transactions.Count.ShouldBe(3);
         foreach (var transaction in transactions)
         {
-            var responseTransaction = result.Data.Transactions.Single(t => t.Id == transaction.TransactionId);
+            var responseTransaction = response.Transactions.Single(t => t.Id == transaction.TransactionId);
             AssertTransactionMixSummaryTransactionMatches(responseTransaction, transaction);
         }
     }

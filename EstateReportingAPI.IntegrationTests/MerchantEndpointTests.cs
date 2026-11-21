@@ -49,8 +49,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
         }
 
         Result<List<Merchant>> result = await this.CreateAndSendHttpRequestMessage<List<Merchant>>($"{this.BaseRoute}", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var merchants = result.Data;
+        var merchants = result.ShouldBeSuccess();
 
         merchants.ShouldNotBeNull();
         merchants.Count.ShouldBe(10);
@@ -70,8 +69,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
             ("Contact 1", "1@2.com", "123456"));
 
         Result<Merchant> result = await this.CreateAndSendHttpRequestMessage<Merchant>($"{this.BaseRoute}/{merchantId}", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var merchant = result.Data;
+        var merchant = result.ShouldBeSuccess();
 
         merchant.ShouldNotBeNull();
         AssertMerchantMatchesDatabase(merchant, merchantId);
@@ -89,8 +87,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
         }
 
         Result<List<Merchant>> result = await this.CreateAndSendHttpRequestMessage<List<Merchant>>($"{this.BaseRoute}/recent", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var merchants = result.Data;
+        var merchants = result.ShouldBeSuccess();
 
         merchants.ShouldNotBeNull();
         merchants.Count.ShouldBe(3);
@@ -113,8 +110,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
             ("Contact 1", "1@2.com", "123456"), operators: ["Safaricom", "Voucher"]);
 
         Result<List<MerchantOperator>> result = await this.CreateAndSendHttpRequestMessage<List<MerchantOperator>>($"{this.BaseRoute}/{merchantId}/operators", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var merchantOperators = result.Data;
+        var merchantOperators = result.ShouldBeSuccess();
 
         merchantOperators.ShouldNotBeNull();
         merchantOperators.Count.ShouldBe(2);
@@ -150,8 +146,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
             ["Safaricom Contract", "Healthcare Centre 1 Contract"]);
 
         Result<List<MerchantContract>> result = await this.CreateAndSendHttpRequestMessage<List<MerchantContract>>($"{this.BaseRoute}/{merchantId}/contracts", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var merchantContracts = result.Data;
+        var merchantContracts = result.ShouldBeSuccess();
 
         merchantContracts.ShouldNotBeNull();
         merchantContracts.Count.ShouldBe(2);
@@ -183,8 +178,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
 
         Result<List<MerchantDevice>> result = await this.CreateAndSendHttpRequestMessage<List<MerchantDevice>>($"{this.BaseRoute}/{merchantId}/devices", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var merchantDevices = result.Data;
+        var merchantDevices = result.ShouldBeSuccess();
 
         merchantDevices.ShouldNotBeNull();
         merchantDevices.Count.ShouldBe(1);
@@ -215,8 +209,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
             openingHours:openingHours);
         
         Result<List<MerchantOpeningHour>> result = await this.CreateAndSendHttpRequestMessage<List<MerchantOpeningHour>>($"{this.BaseRoute}/{merchantId}/openinghours", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var merchantOpeningHours = result.Data;
+        var merchantOpeningHours = result.ShouldBeSuccess();
 
         merchantOpeningHours.ShouldNotBeNull();
         merchantOpeningHours.Count.ShouldBe(7);
@@ -267,8 +260,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
 
         Result<MerchantScheduleResponse> result = await this.CreateAndSendHttpRequestMessage<MerchantScheduleResponse>($"{this.BaseRoute}/{merchantId}/schedule/2026", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var merchantSchedule = result.Data;
+        var merchantSchedule = result.ShouldBeSuccess();
 
         merchantSchedule.ShouldNotBeNull();
         merchantSchedule.Year.ShouldBe(2026);
@@ -307,8 +299,7 @@ public class MerchantEndpointTests : ControllerTestsBase {
             ("Contact 1", "1@2.com", "123456"), devices: ["123456"]);
 
         Result<MerchantKpi> result = await this.CreateAndSendHttpRequestMessage<MerchantKpi>($"{this.BaseRoute}/kpis", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var merchantKpis = result.Data;
+        var merchantKpis = result.ShouldBeSuccess();
 
         merchantKpis.MerchantsWithSaleInLastHour.ShouldBe(2);
         merchantKpis.MerchantsWithNoSaleToday.ShouldBe(3);

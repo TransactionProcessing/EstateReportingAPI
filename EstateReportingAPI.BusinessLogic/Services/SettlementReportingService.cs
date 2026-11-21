@@ -46,7 +46,7 @@ public sealed class SettlementReportingService : ISettlementReportingService
             TodaysPendingSettlementValue = todaySettlement.UnSettledValue
         };
 
-        return Result.Success(response);
+        return Results.Ok(response);
     }
     private async Task<DatabaseProjections.SettlementGroupProjection> GetSettlementSummary(IQueryable<DatabaseProjections.ComparisonSettlementTransactionProjection> query,
                                                                                            CancellationToken cancellationToken) {

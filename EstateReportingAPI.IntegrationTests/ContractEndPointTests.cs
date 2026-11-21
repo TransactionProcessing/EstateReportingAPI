@@ -90,9 +90,7 @@ public class ContractEndPointTests : ControllerTestsBase {
 
         Result<List<Contract>> result = await this.CreateAndSendHttpRequestMessage<List<Contract>>($"{this.BaseRoute}/recent", CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-
-        List<Contract> contracts = result.Data;
+        List<Contract> contracts = result.ShouldBeSuccess();
         contracts.Count.ShouldBe(3);
         AssertContractMatchesDatabase(contracts.Single(c => c.Description == "Healthcare Centre 1 Contract"), contracts.Single(c => c.Description == "Healthcare Centre 1 Contract").ContractId, false);
         AssertContractMatchesDatabase(contracts.Single(c => c.Description == "PataPawa PostPay Contract"), contracts.Single(c => c.Description == "PataPawa PostPay Contract").ContractId, false);
@@ -124,9 +122,7 @@ public class ContractEndPointTests : ControllerTestsBase {
 
         Result<List<Contract>> result = await this.CreateAndSendHttpRequestMessage<List<Contract>>($"{this.BaseRoute}", CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-
-        List<Contract> contracts = result.Data;
+        List<Contract> contracts = result.ShouldBeSuccess();
         contracts.Count.ShouldBe(4);
         AssertContractMatchesDatabase(contracts.Single(c => c.Description == "Safaricom Contract"), contracts.Single(c => c.Description == "Safaricom Contract").ContractId, true);
         AssertContractMatchesDatabase(contracts.Single(c => c.Description == "Healthcare Centre 1 Contract"), contracts.Single(c => c.Description == "Healthcare Centre 1 Contract").ContractId, true);
@@ -158,9 +154,7 @@ public class ContractEndPointTests : ControllerTestsBase {
 
         Result<Contract> result = await this.CreateAndSendHttpRequestMessage<Contract>($"{this.BaseRoute}/{ppprepayContractId}", CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-
-        Contract contract = result.Data;
+        Contract contract = result.ShouldBeSuccess();
         contract.ShouldNotBeNull();
         AssertContractMatchesDatabase(contract, ppprepayContractId, true);
     }

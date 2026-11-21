@@ -56,11 +56,11 @@ public sealed class MerchantReportingService : IMerchantReportingService
                                                                 string contextMessage = null) {
         try {
             T item = await query.SumAsync(cancellationToken);
-            return Result.Success(item);
+            return Results.Ok(item);
         }
         catch (Exception ex) {
             string msg = contextMessage == null ? $"Error executing query: {ex.Message}" : $"{contextMessage}: {ex.Message}";
-            return Result.Failure(msg);
+            return new Error(ErrorType.Failure, msg);
         }
     }
 
@@ -69,11 +69,11 @@ public sealed class MerchantReportingService : IMerchantReportingService
                                                                          string contextMessage = null) {
         try {
             List<T> items = await query.ToListAsync(cancellationToken);
-            return Result.Success(items);
+            return Results.Ok(items);
         }
         catch (Exception ex) {
             string msg = contextMessage == null ? $"Error executing query: {ex.Message}" : $"{contextMessage}: {ex.Message}";
-            return Result.Failure(msg);
+            return new Error(ErrorType.Failure, msg);
         }
     }
 
@@ -82,11 +82,11 @@ public sealed class MerchantReportingService : IMerchantReportingService
                                                                  string contextMessage = null) {
         try {
             int count = await query.CountAsync(cancellationToken);
-            return Result.Success(count);
+            return Results.Ok(count);
         }
         catch (Exception ex) {
             string msg = contextMessage == null ? $"Error executing query: {ex.Message}" : $"{contextMessage}: {ex.Message}";
-            return Result.Failure(msg);
+            return new Error(ErrorType.Failure, msg);
         }
     }
 
@@ -97,13 +97,13 @@ public sealed class MerchantReportingService : IMerchantReportingService
             T item = await query.SingleOrDefaultAsync(cancellationToken);
 
             if (EqualityComparer<T>.Default.Equals(item, default(T)))
-                return Result.NotFound(contextMessage);
+                return new Error(ErrorType.NotFound, contextMessage ?? "No matching record found.");
 
-            return Result.Success(item);
+            return Results.Ok(item);
         }
         catch (Exception ex) {
             string msg = contextMessage == null ? $"Error executing query: {ex.Message}" : $"{contextMessage}: {ex.Message}";
-            return Result.Failure(msg);
+            return new Error(ErrorType.Failure, msg);
         }
     }
 
@@ -129,24 +129,24 @@ public sealed class MerchantReportingService : IMerchantReportingService
             }).OrderByDescending(x => x.Description);
 
         var baseContractsResult = await ExecuteQuerySafeToList(baseContractsQuery, cancellationToken, "Error retrieving contracts - Step 1");
-        if (baseContractsResult.IsFailed)
-            return ResultHelpers.CreateFailure(baseContractsResult);
+        if (!baseContractsResult.TryGetSuccess(out var baseContractsResultValue))
+            return new ErrorList(baseContractsResult.GetErrors());
 
-        var baseContracts = baseContractsResult.Data;
+        var baseContracts = baseContractsResultValue;
         if (!baseContracts.Any())
-            return Result.Success(new List<Contract>());
+            return Results.Ok(new List<Contract>());
 
         var contractIds = baseContracts.Select(b => b.ContractId).ToList();
         var productsResult = await LoadProductsAsync(context, contractIds, cancellationToken, "Error retrieving contracts - Step 2");
-        if (productsResult.IsFailed)
-            return ResultHelpers.CreateFailure(productsResult);
+        if (!productsResult.TryGetSuccess(out var productsResultValue))
+            return new ErrorList(productsResult.GetErrors());
 
-        var productIds = productsResult.Data.Select(p => p.ContractProductId).ToList();
+        var productIds = productsResultValue.Select(p => p.ContractProductId).ToList();
         var feesResult = await LoadFeesAsync(context, productIds, cancellationToken, "Error retrieving contracts - Step 3");
-        if (feesResult.IsFailed)
-            return ResultHelpers.CreateFailure(feesResult);
+        if (!feesResult.TryGetSuccess(out var feesResultValue))
+            return new ErrorList(feesResult.GetErrors());
 
-        return Result.Success(BuildContracts(baseContracts, productsResult.Data, feesResult.Data));
+        return Results.Ok(BuildContracts(baseContracts, productsResultValue, feesResultValue));
     }
 
     public async Task<Result<Contract>> GetContract(ContractQueries.GetContractQuery request,
@@ -173,18 +173,18 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var baseContractQueryResult = await ExecuteQuerySafeSingleOrDefault(baseContractQuery, cancellationToken, "Error retrieving contract - Step 1");
 
-        if (baseContractQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(baseContractQueryResult);
+        if (!baseContractQueryResult.TryGetSuccess(out var baseContractQueryResultValue))
+            return new ErrorList(baseContractQueryResult.GetErrors());
 
-        var baseContract = baseContractQueryResult.Data;
+        var baseContract = baseContractQueryResultValue;
 
         // Steps 2 & 3: load products and fees, then assemble
         var productsResult = await this.LoadProductsWithFees(context, baseContract.ContractId, cancellationToken);
 
-        if (productsResult.IsFailed)
-            return ResultHelpers.CreateFailure(productsResult);
+        if (!productsResult.TryGetSuccess(out var productsResultValue))
+            return new ErrorList(productsResult.GetErrors());
 
-        return Result.Success(new Contract {
+        return Results.Ok(new Contract {
             EstateReportingId = baseContract.EstateReportingId,
             ContractId = baseContract.ContractId,
             ContractReportingId = baseContract.ContractReportingId,
@@ -193,7 +193,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
             OperatorName = baseContract.OperatorName,
             OperatorId = baseContract.OperatorId,
             OperatorReportingId = baseContract.OperatorReportingId,
-            Products = productsResult.Data
+            Products = productsResultValue
         });
     }
 
@@ -212,10 +212,10 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var productsQueryResult = await ExecuteQuerySafeToList(productsQuery, cancellationToken, "Error retrieving contract - Step 2");
 
-        if (productsQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(productsQueryResult);
+        if (!productsQueryResult.TryGetSuccess(out var productsQueryResultValue))
+            return new ErrorList(productsQueryResult.GetErrors());
 
-        var products = productsQueryResult.Data;
+        var products = productsQueryResultValue;
         var productIds = products.Select(p => p.ContractProductId).ToList();
 
         var feesQuery = context.ContractProductTransactionFees.Where(tf => productIds.Contains(tf.ContractProductId)).Select(tf => new {
@@ -230,13 +230,13 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var feesQueryResult = await ExecuteQuerySafeToList(feesQuery, cancellationToken, "Error retrieving contract - Step 3");
 
-        if (feesQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(feesQueryResult);
+        if (!feesQueryResult.TryGetSuccess(out var feesQueryResultValue))
+            return new ErrorList(feesQueryResult.GetErrors());
 
-        var fees = feesQueryResult.Data;
+        var fees = feesQueryResultValue;
         var feesLookup = fees.ToLookup(f => f.ContractProductId);
 
-        return Result.Success(products.Select(p => new Models.ContractProduct {
+        return Results.Ok(products.Select(p => new Models.ContractProduct {
             ContractId = p.ContractId,
             ProductId = p.ContractProductId,
             DisplayText = p.DisplayText,
@@ -279,11 +279,11 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var result = await ExecuteQuerySafeToList(contractsQuery, cancellationToken, "Error retrieving recent contracts");
 
-        if (result.IsFailed)
-            return ResultHelpers.CreateFailure(result);
+        if (!result.TryGetSuccess(out var resultValue))
+            return new ErrorList(result.GetErrors());
 
         List<Contract> response = new List<Contract>();
-        foreach (var contract in result.Data) {
+        foreach (var contract in resultValue) {
             response.Add(new Contract {
                 EstateId = contract.EstateId,
                 EstateReportingId = contract.EstateReportingId,
@@ -296,7 +296,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
             });
         }
 
-        return Result.Success(response);
+        return Results.Ok(response);
     }
 
 
@@ -323,10 +323,10 @@ public sealed class MerchantReportingService : IMerchantReportingService
         }).OrderByDescending(m => m.CreatedDateTime).Take(3);
 
         var recentMerchantsResult = await ExecuteQuerySafeToList(merchantsQuery, cancellationToken, "Error retrieving recent merchants");
-        if (recentMerchantsResult.IsFailed)
-            return ResultHelpers.CreateFailure(recentMerchantsResult);
+        if (!recentMerchantsResult.TryGetSuccess(out var recentMerchantsResultValue))
+            return new ErrorList(recentMerchantsResult.GetErrors());
 
-        List<Merchant> merchantList = recentMerchantsResult.Data.Select(merchant => {
+        List<Merchant> merchantList = recentMerchantsResultValue.Select(merchant => {
             Merchant model = new() {
                 MerchantId = merchant.MerchantId,
                 Name = merchant.Name,
@@ -354,7 +354,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
             return model;
         }).ToList();
 
-        return Result.Success(merchantList);
+        return Results.Ok(merchantList);
     }
 
     public async Task<Result<MerchantKpi>> GetMerchantsTransactionKpis(MerchantQueries.GetTransactionKpisQuery request,
@@ -364,10 +364,10 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var merchantsQuery = context.MerchantBalanceProjectionState.Select(m => new { m.MerchantName, m.LastSale });
         var merchantsQueryResult = await ExecuteQuerySafeToList(merchantsQuery, cancellationToken, "Error retrieving merchants for KPI's");
-        if (merchantsQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(merchantsQueryResult);
+        if (!merchantsQueryResult.TryGetSuccess(out var merchantsQueryResultValue))
+            return new ErrorList(merchantsQueryResult.GetErrors());
 
-        var merchants = merchantsQueryResult.Data;
+        var merchants = merchantsQueryResultValue;
 
         DateTime now = DatePolicy.LocalNow;
 
@@ -379,7 +379,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         MerchantKpi response = new() { MerchantsWithSaleInLastHour = merchantsWithSaleInLastHour, MerchantsWithNoSaleToday = merchantsWithNoSaleToday, MerchantsWithNoSaleInLast7Days = merchantsWithNoSaleInLast7Days };
 
-        return Result.Success(response);
+        return Results.Ok(response);
     }
 
     public async Task<Result<List<Operator>>> GetOperators(OperatorQueries.GetOperatorsQuery request,
@@ -399,11 +399,11 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var operatorResult = await ExecuteQuerySafeToList(operatorQuery, cancellationToken, "Error retrieving operator");
 
-        if (operatorResult.IsFailed)
-            return ResultHelpers.CreateFailure(operatorResult);
+        if (!operatorResult.TryGetSuccess(out var operatorResultValue))
+            return new ErrorList(operatorResult.GetErrors());
 
         List<Operator> operators = new List<Operator>();
-        foreach (var op in operatorResult.Data) {
+        foreach (var op in operatorResultValue) {
             operators.Add(new Operator {
                 Name = op.Name,
                 EstateReportingId = op.EstateReportingId,
@@ -414,7 +414,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
             });
         }
 
-        return Result.Success(operators);
+        return Results.Ok(operators);
     }
 
     public async Task<Result<List<MerchantOpeningHour>>> GetMerchantOpeningHours(MerchantQueries.GetMerchantOpeningHoursQuery request,
@@ -443,19 +443,19 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var openingHoursResult = await ExecuteQuerySafeSingleOrDefault(openingHoursQuery, cancellationToken, "Error retrieving merchant opening hours");
 
-        if (openingHoursResult.IsFailed)
-            return ResultHelpers.CreateFailure(openingHoursResult);
+        if (!openingHoursResult.TryGetSuccess(out var openingHoursResultValue))
+            return new ErrorList(openingHoursResult.GetErrors());
 
         List<MerchantOpeningHour> openingHours = new List<MerchantOpeningHour>();
-        openingHours.Add(new MerchantOpeningHour {OpeningTime = openingHoursResult.Data.SundayOpen, ClosingTime = openingHoursResult.Data.SundayClose, DayOfWeek = DayOfWeek.Sunday, MerchantId = request.MerchantId});
-        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.MondayOpen, ClosingTime = openingHoursResult.Data.MondayClose, DayOfWeek = DayOfWeek.Monday, MerchantId = request.MerchantId });
-        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.TuesdayOpen, ClosingTime = openingHoursResult.Data.TuesdayClose, DayOfWeek = DayOfWeek.Tuesday, MerchantId = request.MerchantId });
-        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.WednesdayOpen, ClosingTime = openingHoursResult.Data.WednesdayClose, DayOfWeek = DayOfWeek.Wednesday, MerchantId = request.MerchantId });
-        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.ThursdayOpen, ClosingTime = openingHoursResult.Data.ThursdayClose, DayOfWeek = DayOfWeek.Thursday, MerchantId = request.MerchantId });
-        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.FridayOpen, ClosingTime = openingHoursResult.Data.FridayClose, DayOfWeek = DayOfWeek.Friday, MerchantId = request.MerchantId });
-        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResult.Data.SaturdayOpen, ClosingTime = openingHoursResult.Data.SaturdayClose, DayOfWeek = DayOfWeek.Saturday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour {OpeningTime = openingHoursResultValue.SundayOpen, ClosingTime = openingHoursResultValue.SundayClose, DayOfWeek = DayOfWeek.Sunday, MerchantId = request.MerchantId});
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResultValue.MondayOpen, ClosingTime = openingHoursResultValue.MondayClose, DayOfWeek = DayOfWeek.Monday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResultValue.TuesdayOpen, ClosingTime = openingHoursResultValue.TuesdayClose, DayOfWeek = DayOfWeek.Tuesday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResultValue.WednesdayOpen, ClosingTime = openingHoursResultValue.WednesdayClose, DayOfWeek = DayOfWeek.Wednesday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResultValue.ThursdayOpen, ClosingTime = openingHoursResultValue.ThursdayClose, DayOfWeek = DayOfWeek.Thursday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResultValue.FridayOpen, ClosingTime = openingHoursResultValue.FridayClose, DayOfWeek = DayOfWeek.Friday, MerchantId = request.MerchantId });
+        openingHours.Add(new MerchantOpeningHour { OpeningTime = openingHoursResultValue.SaturdayOpen, ClosingTime = openingHoursResultValue.SaturdayClose, DayOfWeek = DayOfWeek.Saturday, MerchantId = request.MerchantId });
 
-        return Result.Success(openingHours);
+        return Results.Ok(openingHours);
     }
 
     public async Task<Result<Operator>> GetOperator(OperatorQueries.GetOperatorQuery request,
@@ -476,19 +476,19 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var operatorResult = await ExecuteQuerySafeSingleOrDefault(operatorQuery, cancellationToken, "Error retrieving operator");
 
-        if (operatorResult.IsFailed)
-            return ResultHelpers.CreateFailure(operatorResult);
+        if (!operatorResult.TryGetSuccess(out var operatorResultValue))
+            return new ErrorList(operatorResult.GetErrors());
 
         var @operator = new Operator {
-            Name = operatorResult.Data.Name,
-            EstateReportingId = operatorResult.Data.EstateReportingId,
-            OperatorId = operatorResult.Data.OperatorId,
-            OperatorReportingId = operatorResult.Data.OperatorReportingId,
-            RequireCustomMerchantNumber = operatorResult.Data.RequireCustomMerchantNumber,
-            RequireCustomTerminalNumber = operatorResult.Data.RequireCustomTerminalNumber
+            Name = operatorResultValue.Name,
+            EstateReportingId = operatorResultValue.EstateReportingId,
+            OperatorId = operatorResultValue.OperatorId,
+            OperatorReportingId = operatorResultValue.OperatorReportingId,
+            RequireCustomMerchantNumber = operatorResultValue.RequireCustomMerchantNumber,
+            RequireCustomTerminalNumber = operatorResultValue.RequireCustomTerminalNumber
         };
 
-        return Result.Success(@operator);
+        return Results.Ok(@operator);
     }
 
     public async Task<Result<List<Merchant>>> GetMerchants(MerchantQueries.GetMerchantsQuery request,
@@ -500,28 +500,28 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var queryResults = await ExecuteQuerySafeToList(merchantWithAddresses, cancellationToken, "Error retrieving merchants");
 
-        if (queryResults.IsFailed)
-            return ResultHelpers.CreateFailure(queryResults);
+        if (!queryResults.TryGetSuccess(out var queryResultsValue))
+            return new ErrorList(queryResults.GetErrors());
 
-        var merchants = queryResults.Data;
+        var merchants = queryResultsValue;
 
         var merchantBalancesQuery  = context.MerchantBalanceProjectionState.Where(mb => merchants.Select(m => m.Merchant.MerchantId).Contains(mb.MerchantId));
 
         var balanceQueryResults = await ExecuteQuerySafeToList(merchantBalancesQuery, cancellationToken, "Error retrieving merchant balances");
 
-        if (balanceQueryResults.IsFailed)
-            return ResultHelpers.CreateFailure(balanceQueryResults);
+        if (!balanceQueryResults.TryGetSuccess(out var balanceQueryResultsValue))
+            return new ErrorList(balanceQueryResults.GetErrors());
 
         try {
-            Dictionary<Guid, decimal> balanceLookup = BuildMerchantBalanceLookup(balanceQueryResults.Data);
+            Dictionary<Guid, decimal> balanceLookup = BuildMerchantBalanceLookup(balanceQueryResultsValue);
             List<Merchant> response = merchants.Select(merchant =>
                                                            ModelFactory.ConvertFrom(merchant, GetMerchantBalance(balanceLookup, merchant.Merchant.MerchantId)))
                                                .ToList();
 
-            return Result.Success(response);
+            return Results.Ok(response);
         }
         catch (InvalidOperationException ex) {
-            return Result.Failure(ex.Message);
+            return new Error(ErrorType.Failure, ex.Message);
         }
     }
 
@@ -531,17 +531,17 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         IQueryable<MerchantData> merchantQuery = BuildMerchantQuery(context, request.MerchantId);
         Result<MerchantData> merchantQueryResult = await ExecuteQuerySafeSingleOrDefault(merchantQuery, cancellationToken, "Error getting merchant");
-        if (merchantQueryResult.IsFailed) {
-            return ResultHelpers.CreateFailure(merchantQueryResult);
+        if (!merchantQueryResult.TryGetSuccess(out var merchantQueryResultValue)) {
+            return new ErrorList(merchantQueryResult.GetErrors());
         }
 
         Result<List<MerchantOpeningHours>> openingHoursQueryResult = await ExecuteQuerySafeToList(context.MerchantOpeningHours.Where(m => m.MerchantId == request.MerchantId), cancellationToken, "Error getting merchant opening hours");
-        if (openingHoursQueryResult.IsFailed) return ResultHelpers.CreateFailure(openingHoursQueryResult);
+        if (!openingHoursQueryResult.TryGetSuccess(out var openingHoursQueryResultValue)) return new ErrorList(openingHoursQueryResult.GetErrors());
 
         Result<MerchantBalanceProjectionState> merchantStateQueryResult = await ExecuteQuerySafeSingleOrDefault(context.MerchantBalanceProjectionState.Where(ms => ms.MerchantId == request.MerchantId), cancellationToken, "Error getting merchant state");
-        if (merchantStateQueryResult.IsFailed) return ResultHelpers.CreateFailure(merchantStateQueryResult);
+        if (!merchantStateQueryResult.TryGetSuccess(out var merchantStateQueryResultValue)) return new ErrorList(merchantStateQueryResult.GetErrors());
 
-        return Result.Success(ModelFactory.ConvertFrom(merchantQueryResult.Data, merchantStateQueryResult.Data.Balance, openingHoursQueryResult.Data));
+        return Results.Ok(ModelFactory.ConvertFrom(merchantQueryResultValue, merchantStateQueryResultValue.Balance, openingHoursQueryResultValue));
     }
 
     private static IQueryable<MerchantData> BuildMerchantQuery(EstateManagementContext context,
@@ -641,10 +641,10 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var merchantOperatorsQueryResult = await ExecuteQuerySafeToList(merchantOperatorsQuery, cancellationToken, "Error getting merchant devices");
 
-        if (merchantOperatorsQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(merchantOperatorsQueryResult);
+        if (!merchantOperatorsQueryResult.TryGetSuccess(out var merchantOperatorsQueryResultValue))
+            return new ErrorList(merchantOperatorsQueryResult.GetErrors());
 
-        var merchantOperators = merchantOperatorsQueryResult.Data;
+        var merchantOperators = merchantOperatorsQueryResultValue;
 
         List<MerchantOperator> result = new();
         foreach (TransactionProcessor.Database.Entities.MerchantOperator merchantOperator in merchantOperators) {
@@ -658,7 +658,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
             });
         }
 
-        return Result.Success(result);
+        return Results.Ok(result);
     }
 
     public async Task<Result<List<MerchantContract>>> GetMerchantContracts(MerchantQueries.GetMerchantContractsQuery request,
@@ -686,10 +686,10 @@ public sealed class MerchantReportingService : IMerchantReportingService
 
         var merchantContractsQueryResult = await ExecuteQuerySafeToList(merchantContractsQuery, cancellationToken, "Error getting merchant devices");
 
-        if (merchantContractsQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(merchantContractsQueryResult);
+        if (!merchantContractsQueryResult.TryGetSuccess(out var merchantContractsQueryResultValue))
+            return new ErrorList(merchantContractsQueryResult.GetErrors());
 
-        var merchantContracts = merchantContractsQueryResult.Data;
+        var merchantContracts = merchantContractsQueryResultValue;
 
         List<MerchantContract> result = new();
         foreach (var merchantContract in merchantContracts) {
@@ -717,7 +717,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
             result.Add(c);
         }
 
-        return Result.Success(result);
+        return Results.Ok(result);
     }
 
 
@@ -729,17 +729,17 @@ public sealed class MerchantReportingService : IMerchantReportingService
         var merchantDevicesQuery = context.MerchantDevices.Where(mo => mo.MerchantId == request.MerchantId);
         var merchantDevicesQueryResult = await ExecuteQuerySafeToList(merchantDevicesQuery, cancellationToken, "Error getting merchant devices");
 
-        if (merchantDevicesQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(merchantDevicesQueryResult);
+        if (!merchantDevicesQueryResult.TryGetSuccess(out var merchantDevicesQueryResultValue))
+            return new ErrorList(merchantDevicesQueryResult.GetErrors());
 
-        var merchantDevices = merchantDevicesQueryResult.Data;
+        var merchantDevices = merchantDevicesQueryResultValue;
 
         List<MerchantDevice> result = new();
         foreach (TransactionProcessor.Database.Entities.MerchantDevice merchantDevice in merchantDevices) {
             result.Add(new MerchantDevice { DeviceId = merchantDevice.DeviceId, DeviceIdentifier = merchantDevice.DeviceIdentifier, IsDeleted = false, MerchantId = merchantDevice.MerchantId });
         }
 
-        return Result.Success(result);
+        return Results.Ok(result);
     }
 
     public async Task<Result<MerchantScheduleResponse>> GetMerchantSchedule(MerchantQueries.GetMerchantScheduleQuery request,
@@ -759,11 +759,11 @@ public sealed class MerchantReportingService : IMerchantReportingService
         };
 
         var merchantScheduleQueryResult = await ExecuteQuerySafeToList(merchantScheduleQuery, cancellationToken, "Error getting merchant schedule");
-        if (merchantScheduleQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(merchantScheduleQueryResult);
+        if (!merchantScheduleQueryResult.TryGetSuccess(out var merchantScheduleQueryResultValue))
+            return new ErrorList(merchantScheduleQueryResult.GetErrors());
 
         MerchantScheduleResponse response = new MerchantScheduleResponse();
-        foreach (var item in merchantScheduleQueryResult.Data) {
+        foreach (var item in merchantScheduleQueryResultValue) {
 
             List<Int32> closedDaysList = item.ClosedDays
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -778,7 +778,7 @@ public sealed class MerchantReportingService : IMerchantReportingService
         }
         response.Year = request.Year;
 
-        return Result.Success(response);
+        return Results.Ok(response);
     }
 
         private static async Task<Result<List<ContractProductData>>> LoadProductsAsync(EstateManagementContext context,

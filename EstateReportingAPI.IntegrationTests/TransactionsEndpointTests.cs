@@ -299,8 +299,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         await this.helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Result<TodaysSales> result = await this.CreateAndSendHttpRequestMessage<TodaysSales>($"{this.BaseRoute}/todayssales?comparisonDate={comparisonDate:yyyy-MM-dd}", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var todaysSales = result.Data;
+        var todaysSales = result.ShouldBeSuccess();
 
         todaysSales.ShouldNotBeNull();
         AssertTodaysSales(todaysSales, todaysTransactions, comparisonDateTransactions);
@@ -353,8 +352,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         await this.helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Result<TodaysSales> result = await this.CreateAndSendHttpRequestMessage<TodaysSales>($"{this.BaseRoute}/todayssales?comparisonDate={comparisonDate:yyyy-MM-dd}&operatorReportingId=1", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var todaysSales = result.Data;
+        var todaysSales = result.ShouldBeSuccess();
 
         var operatorId = await this.helper.GetOperatorId(1, CancellationToken.None);
         AssertTodaysSales(
@@ -410,8 +408,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         await this.helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Result<TodaysSales> result = await this.CreateAndSendHttpRequestMessage<TodaysSales>($"{this.BaseRoute}/todayssales?comparisonDate={comparisonDate:yyyy-MM-dd}&merchantReportingId=1", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var todaysSales = result.Data;
+        var todaysSales = result.ShouldBeSuccess();
 
         var merchantId = await this.helper.GetMerchantId(1, CancellationToken.None);
         AssertTodaysSales(
@@ -472,8 +469,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         await this.helper.RunTodaysTransactionsSummaryProcessing(todaysDateTime.Date);
 
         Result<TodaysSales> result = await this.CreateAndSendHttpRequestMessage<TodaysSales>($"{this.BaseRoute}/todaysfailedsales?comparisonDate={comparisonDate:yyyy-MM-dd}&responseCode=1009", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        DataTransferObjects.TodaysSales? todaysSales = result.Data;
+        DataTransferObjects.TodaysSales? todaysSales = result.ShouldBeSuccess();
 
         todaysSales.ShouldNotBeNull();
         AssertTodaysSales(todaysSales, todaysTransactions, comparisonDateTransactions);
@@ -526,8 +522,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
 
 
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var transactionDetailReportResponse = result.Data;
+        var transactionDetailReportResponse = result.ShouldBeSuccess();
 
         transactionDetailReportResponse.ShouldNotBeNull();
         transactionDetailReportResponse.Summary.ShouldNotBeNull();
@@ -598,8 +593,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         String payload = Serialize(request);
             
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var transactionDetailReportResponse = result.Data;
+        var transactionDetailReportResponse = result.ShouldBeSuccess();
 
         // filter transactions for verification
         var filteredTransactions = transactions.Where(t => merchantsForFilter.Select(m => m.MerchantId).Contains(t.MerchantId));
@@ -673,8 +667,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         String payload = Serialize(request);
 
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var transactionDetailReportResponse = result.Data;
+        var transactionDetailReportResponse = result.ShouldBeSuccess();
 
         // filter transactions for verification
         var filteredTransactions = transactions.Where(t => operatorsForFilter.Select(m => m.OperatorId).Contains(t.OperatorId));
@@ -747,8 +740,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         String payload = Serialize(request);
 
         Result<TransactionDetailReportResponse> result = await this.CreateAndSendHttpRequestMessage<TransactionDetailReportResponse>($"{this.BaseRoute}/transactionDetailReport", payload, CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var transactionDetailReportResponse = result.Data;
+        var transactionDetailReportResponse = result.ShouldBeSuccess();
 
         // filter transactions for verification
         var filteredTransactions = transactions.Where(t => productsForFilter.Select(m => m.productId).Contains(t.ContractProductId));
@@ -871,8 +863,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         String payload = Serialize(request);
             
         var result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.TransactionSummaryByMerchantResponse>($"{this.BaseRoute}/transactionsummarybymerchantreport", payload, CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        DataTransferObjects.TransactionSummaryByMerchantResponse transactionSummaryByMerchantResponse = result.Data;
+        DataTransferObjects.TransactionSummaryByMerchantResponse transactionSummaryByMerchantResponse = result.ShouldBeSuccess();
 
         transactionSummaryByMerchantResponse.ShouldNotBeNull();
         transactionSummaryByMerchantResponse.Summary.ShouldNotBeNull();
@@ -1009,8 +1000,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         String payload = Serialize(request);
 
         var result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.TransactionSummaryByOperatorResponse>($"{this.BaseRoute}/transactionsummarybyoperatorreport", payload, CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        DataTransferObjects.TransactionSummaryByOperatorResponse transactionSummaryByOperatorResponse = result.Data;
+        DataTransferObjects.TransactionSummaryByOperatorResponse transactionSummaryByOperatorResponse = result.ShouldBeSuccess();
 
         transactionSummaryByOperatorResponse.ShouldNotBeNull();
         transactionSummaryByOperatorResponse.Summary.ShouldNotBeNull();
@@ -1071,8 +1061,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         await this.helper.AddTransactionsX(transactions);
 
         var result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.ProductPerformanceResponse>($"{this.BaseRoute}/productperformancereport?startDate={DateTime.Now.Date.AddDays(-3):yyyy-MM-dd}&endDate={DateTime.Now.Date:yyyy-MM-dd}",  CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var productPerformanceResponse= result.Data;
+        var productPerformanceResponse= result.ShouldBeSuccess();
 
         productPerformanceResponse.ShouldNotBeNull();
         productPerformanceResponse.Summary.ShouldNotBeNull();
@@ -1224,8 +1213,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
         comparisonReadModelRows.ShouldAllBe(x => x.Hour == x.TransactionDateTime.Hour);
 
         var result = await this.CreateAndSendHttpRequestMessage<List<DataTransferObjects.TodaysSalesByHour>>($"{this.BaseRoute}/todayssalesbyhour?comparisondate={comparisonDate:yyyy-MM-dd}", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var todaysSalesByHour = result.Data;
+        var todaysSalesByHour = result.ShouldBeSuccess();
         todaysSalesByHour.ShouldNotBeNull();
 
         var expectedHours = todaysTransactions
@@ -1314,9 +1302,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Serialize(request),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-
-        MerchantDailyPerformanceSummaryResponse response = result.Data;
+        MerchantDailyPerformanceSummaryResponse response = result.ShouldBeSuccess();
         response.ShouldNotBeNull();
         response.Metrics.ShouldNotBeNull();
         response.DrillDownTransactions.ShouldNotBeNull();
@@ -1449,9 +1435,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Serialize(request),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-
-        MerchantDailyPerformanceSummaryResponse response = result.Data;
+        MerchantDailyPerformanceSummaryResponse response = result.ShouldBeSuccess();
         response.ShouldNotBeNull();
         response.Metrics.ShouldNotBeNull();
         response.DrillDownTransactions.ShouldNotBeNull();
@@ -1514,9 +1498,7 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             Serialize(request),
             CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-
-        MerchantDailyPerformanceSummaryResponse response = result.Data;
+        MerchantDailyPerformanceSummaryResponse response = result.ShouldBeSuccess();
         response.ShouldNotBeNull();
         response.Metrics.ShouldNotBeNull();
 
@@ -1546,9 +1528,9 @@ public class TransactionsEndpointTests : ControllerTestsBase {
             payload,
             CancellationToken.None);
 
-        result.IsFailed.ShouldBeFalse(result.ToString());
+        result.IsSuccess().ShouldBeTrue(result.ToString());
 
-        MerchantDailyPerformanceSummaryResponse response = result.Data;
+        MerchantDailyPerformanceSummaryResponse response = result.ShouldBeSuccess();
         response.Metrics.Count.ShouldBe(8);
         response.DrillDownTransactions.Count.ShouldBe(0);
 

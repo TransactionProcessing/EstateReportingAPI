@@ -22,9 +22,7 @@ public class EstateEndpointTests : ControllerTestsBase {
 
         Result<Estate> result = await this.CreateAndSendHttpRequestMessage<Estate>($"{this.BaseRoute}", CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-
-        Estate estate = result.Data;
+        Estate estate = result.ShouldBeSuccess();
         estate.ShouldNotBeNull();
         estate.EstateName.ShouldBe("Test Estate");
         estate.Reference.ShouldBe("Ref1");
@@ -49,9 +47,7 @@ public class EstateEndpointTests : ControllerTestsBase {
 
         Result<List<EstateOperator>> result = await this.CreateAndSendHttpRequestMessage<List<EstateOperator>>($"{this.BaseRoute}/operators", CancellationToken.None);
 
-        result.IsSuccess.ShouldBeTrue();
-
-        List<EstateOperator> estateOperators = result.Data;
+        List<EstateOperator> estateOperators = result.ShouldBeSuccess();
         estateOperators.Count.ShouldBe(2);
         estateOperators.Single(e => e.Name == "Safaricom").OperatorId.ShouldBe(this.context.Operators.Single(o => o.Name == "Safaricom").OperatorId);
         estateOperators.Single(e => e.Name == "Voucher").OperatorId.ShouldBe(this.context.Operators.Single(o => o.Name == "Voucher").OperatorId);

@@ -13,11 +13,11 @@ public static class ReportingQueryExecutor
         try
         {
             T item = await query.SumAsync(cancellationToken);
-            return Result.Success(item);
+            return Results.Ok(item);
         }
         catch (Exception ex)
         {
-            return Result.Failure(BuildErrorMessage(ex, contextMessage));
+            return new Error(ErrorType.Failure, BuildErrorMessage(ex, contextMessage));
         }
     }
 
@@ -28,11 +28,11 @@ public static class ReportingQueryExecutor
         try
         {
             List<T> items = await query.ToListAsync(cancellationToken);
-            return Result.Success(items);
+            return Results.Ok(items);
         }
         catch (Exception ex)
         {
-            return Result.Failure(BuildErrorMessage(ex, contextMessage));
+            return new Error(ErrorType.Failure, BuildErrorMessage(ex, contextMessage));
         }
     }
 
@@ -43,11 +43,11 @@ public static class ReportingQueryExecutor
         try
         {
             int count = await query.CountAsync(cancellationToken);
-            return Result.Success(count);
+            return Results.Ok(count);
         }
         catch (Exception ex)
         {
-            return Result.Failure(BuildErrorMessage(ex, contextMessage));
+            return new Error(ErrorType.Failure, BuildErrorMessage(ex, contextMessage));
         }
     }
 
@@ -60,13 +60,13 @@ public static class ReportingQueryExecutor
             T item = await query.SingleOrDefaultAsync(cancellationToken);
 
             if (EqualityComparer<T>.Default.Equals(item, default))
-                return Result.NotFound(contextMessage);
+                return new Error(ErrorType.NotFound, contextMessage ?? "No matching record found.");
 
-            return Result.Success(item);
+            return Results.Ok(item);
         }
         catch (Exception ex)
         {
-            return Result.Failure(BuildErrorMessage(ex, contextMessage));
+            return new Error(ErrorType.Failure, BuildErrorMessage(ex, contextMessage));
         }
     }
 

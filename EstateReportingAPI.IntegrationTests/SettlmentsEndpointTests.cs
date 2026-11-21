@@ -135,8 +135,7 @@ public class SettlmentsEndpointTests : ControllerTestsBase {
 
 
         var result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.TodaysSettlement>($"{this.BaseRoute}/todayssettlements?comparisondate={DateTime.Now.AddDays(-1):yyyy-MM-dd}", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var todaysSettlement = result.Data;
+        var todaysSettlement = result.ShouldBeSuccess();
         todaysSettlement.ShouldNotBeNull();
         todaysSettlement.ComparisonSettlementCount.ShouldBe(overallComparisonSettlementTransactionCount);
         todaysSettlement.ComparisonSettlementValue.ShouldBe(comparisonOverallTotals.Sum(c => c.settlementFees));
