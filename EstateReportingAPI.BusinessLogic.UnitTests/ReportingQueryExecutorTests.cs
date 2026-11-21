@@ -26,10 +26,10 @@ public sealed class ReportingQueryExecutorTests
         Result<TransactionProcessor.Database.Entities.Calendar> single = await ReportingQueryExecutor.SingleOrDefaultAsync(
             context.Calendar.Where(calendar => calendar.Year == 2025), CancellationToken.None, "Calendar not found");
 
-        list.Data.ShouldBe([2025, 2026]);
-        count.Data.ShouldBe(2);
-        sum.Data.ShouldBe(4051);
-        single.Data.Year.ShouldBe(2025);
+        list.ShouldBeSuccess().ShouldBe([2025, 2026]);
+        count.ShouldBeSuccess().ShouldBe(2);
+        sum.ShouldBeSuccess().ShouldBe(4051);
+        single.ShouldBeSuccess().Year.ShouldBe(2025);
     }
 
     [Fact]
@@ -40,8 +40,9 @@ public sealed class ReportingQueryExecutorTests
         Result<TransactionProcessor.Database.Entities.Calendar> result = await ReportingQueryExecutor.SingleOrDefaultAsync(
             context.Calendar, CancellationToken.None, "Calendar not found");
 
-        result.IsSuccess.ShouldBeFalse();
-        result.Message.ShouldBe("Calendar not found");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors().ShouldHaveSingleItem().ErrorType.ShouldBe(ErrorType.NotFound);
+        result.GetErrorMessage().ShouldBe("Calendar not found");
     }
 
     [Fact]
@@ -53,8 +54,9 @@ public sealed class ReportingQueryExecutorTests
         Result<List<TransactionProcessor.Database.Entities.Calendar>> result = await ReportingQueryExecutor.ToListAsync(
             context.Calendar, CancellationToken.None, "Error retrieving calendars");
 
-        result.IsFailed.ShouldBeTrue();
-        result.Message.ShouldContain("Error retrieving calendars");
+        result.IsSuccess().ShouldBeFalse();
+        result.GetErrors().ShouldHaveSingleItem().ErrorType.ShouldBe(ErrorType.Failure);
+        result.GetErrorMessage().ShouldContain("Error retrieving calendars");
     }
 
     private static EstateManagementContext CreateContext()

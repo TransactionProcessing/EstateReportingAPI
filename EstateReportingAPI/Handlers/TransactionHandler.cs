@@ -447,6 +447,6 @@ public static class TransactionHandler {
         return result.Map(SuccessFactory);
     }
 
-    private static Error InvalidReportQuery(string detail) => Error.Validation(detail);
+    private static Error InvalidReportQuery(string detail) => new(ErrorType.Validation, detail);
 }
 

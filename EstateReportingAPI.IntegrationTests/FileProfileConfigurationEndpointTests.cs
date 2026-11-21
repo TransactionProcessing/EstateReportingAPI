@@ -21,8 +21,7 @@ namespace EstateReportingAPI.IntegrationTests
             await this.helper.AddEstate("Test Estate", "Ref1");
 
             var result = await this.CreateAndSendHttpRequestMessage<List<FileProfileConfiguration>>($"{BaseRoute}", CancellationToken.None);
-            result.IsSuccess.ShouldBeTrue();
-            var list = result.Data;
+            var list = result.ShouldBeSuccess();
             list.ShouldNotBeNull();
             list.Count.ShouldBe(0);
         }
@@ -46,8 +45,7 @@ namespace EstateReportingAPI.IntegrationTests
             await this.helper.AddFileProfileConfiguration(profileId, profileName, "C:\\listen", handlerId, requestId, operatorId, "\\n");
 
         var result = await this.CreateAndSendHttpRequestMessage<List<FileProfileConfiguration>>($"{BaseRoute}", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        var list = result.Data;
+        var list = result.ShouldBeSuccess();
         list.ShouldNotBeNull();
         list.Count.ShouldBeGreaterThan(0);
 

@@ -20,12 +20,7 @@ public class CalendarRequestHandler : IRequestHandler<CalendarQueries.GetAllDate
 
         public async Task<Result<List<Calendar>>> Handle(CalendarQueries.GetComparisonDatesQuery request,
                                                          CancellationToken cancellationToken) {
-            Result<List<Calendar>> result = await this.Service.GetCalendarComparisonDates(request, cancellationToken);
-
-            if (result.IsFailed)
-                return ResultHelpers.CreateFailure(result);
-
-            return Result.Success(result.Data);
+            return await this.Service.GetCalendarComparisonDates(request, cancellationToken);
         }
 
         public async Task<Result<List<Int32>>> Handle(CalendarQueries.GetYearsQuery request,

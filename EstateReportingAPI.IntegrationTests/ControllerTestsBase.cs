@@ -126,7 +126,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         String content = await result.Content.ReadAsStringAsync(cancellationToken);
         content.ShouldNotBeNull();
 
-        return Result.Success(Deserialize<T>(content));
+        return Results.Ok(Deserialize<T>(content));
     }
 
     internal async Task<Result<T?>> CreateAndSendHttpRequestMessage<T>(String url, String payload, CancellationToken cancellationToken)
@@ -143,7 +143,7 @@ public abstract class ControllerTestsBase : IAsyncLifetime
         String content = await result.Content.ReadAsStringAsync(cancellationToken);
         content.ShouldNotBeNull();
 
-        return Result.Success(Deserialize<T>(content));
+        return Results.Ok(Deserialize<T>(content));
     }
     
     //public static IContainer DatabaseServerContainer;

@@ -84,10 +84,10 @@ namespace EstateReportingAPI.BusinessLogic.UnitTests
 
             var years = await reportingService.GetCalendarYears(new CalendarQueries.GetYearsQuery(TestData.EstateId), CancellationToken.None);
 
-            years.Data.Count.ShouldBe(3);
-            years.Data.ShouldContain(2021);
-            years.Data.ShouldContain(2022);
-            years.Data.ShouldContain(2023);
+            years.ShouldBeSuccess().Count.ShouldBe(3);
+            years.ShouldBeSuccess().ShouldContain(2021);
+            years.ShouldBeSuccess().ShouldContain(2022);
+            years.ShouldBeSuccess().ShouldContain(2023);
         }
     }
 }

@@ -53,10 +53,10 @@ public sealed class FileImportReportingService : IFileImportReportingService
 
         var flatResult = await ReportingQueryExecutor.ToListAsync(flatQuery, cancellationToken, "Error retrieving file import logs");
 
-        if (flatResult.IsFailed)
-            return ResultHelpers.CreateFailure(flatResult);
+        if (!flatResult.TryGetSuccess(out var flatResultValue))
+            return new ErrorList(flatResult.GetErrors());
 
-        var flatItems = flatResult.Data;
+        var flatItems = flatResultValue;
 
         // assemble hierarchical model
         var fileImportLogs = flatItems
@@ -82,7 +82,7 @@ public sealed class FileImportReportingService : IFileImportReportingService
                     }).ToList()
             }).ToList();
 
-        return Result.Success(fileImportLogs);
+        return Results.Ok(fileImportLogs);
     }
 
     public async Task<Result<FileImportLog>> GetFileImportLog(FileImportLogQueries.GetFileImportLogQuery request,
@@ -120,13 +120,13 @@ public sealed class FileImportReportingService : IFileImportReportingService
 
         var flatResult = await ReportingQueryExecutor.ToListAsync(flatQuery, cancellationToken, "Error retrieving file import logs");
 
-        if (flatResult.IsFailed)
-            return ResultHelpers.CreateFailure(flatResult);
+        if (!flatResult.TryGetSuccess(out var flatResultValue))
+            return new ErrorList(flatResult.GetErrors());
 
-        var flatItems = flatResult.Data;
+        var flatItems = flatResultValue;
 
         if (flatItems.Count == 0)
-            return Result.NotFound("No file import logs found.");
+            return new Error(ErrorType.NotFound, "No file import logs found.");
 
         var fileImportLogs = flatItems
             .GroupBy(x => new { x.FileImportLogId, x.ImportLogDateTime })
@@ -154,7 +154,7 @@ public sealed class FileImportReportingService : IFileImportReportingService
                     }).ToList()
             }).SingleOrDefault();
 
-        return Result.Success(fileImportLogs);
+        return Results.Ok(fileImportLogs);
     }
 
     public async Task<Result<List<FileProfileConfiguration>>> GetFileProfileConfigurationList(FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery request,
@@ -179,10 +179,10 @@ public sealed class FileImportReportingService : IFileImportReportingService
 
         Result<List<FileProfileConfiguration>> result = await ReportingQueryExecutor.ToListAsync(query, cancellationToken, "Error retrieving file import logs");
 
-        if (result.IsFailed)
-            return ResultHelpers.CreateFailure(result);
+        if (!result.TryGetSuccess(out var resultValue))
+            return new ErrorList(result.GetErrors());
 
-        return Result.Success(result.Data);
+        return Results.Ok(resultValue);
     }
         private sealed class FileImportFlatData {
             public Guid FileImportLogId { get; init; }

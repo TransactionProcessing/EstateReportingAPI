@@ -20,8 +20,7 @@ public class OperatorEndpointTests : ControllerTestsBase {
         await this.helper.AddOperator("Test Estate", "Voucher");
 
         Result<List<Operator>> result = await this.CreateAndSendHttpRequestMessage<List<Operator>>($"{this.BaseRoute}", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        List<Operator> operators = result.Data;
+        List<Operator> operators = result.ShouldBeSuccess();
         operators.Count.ShouldBe(2);
         operators.Single(o => o.Name == "Safaricom").ShouldSatisfyAllConditions(x => {
             x.OperatorId.ShouldNotBe(Guid.Empty);
@@ -44,8 +43,7 @@ public class OperatorEndpointTests : ControllerTestsBase {
         await this.helper.AddEstate("Test Estate", "Ref1");
         var operatorId = await this.helper.AddOperator("Test Estate", "Safaricom");
         Result<Operator> result = await this.CreateAndSendHttpRequestMessage<Operator>($"{this.BaseRoute}/{operatorId}", CancellationToken.None);
-        result.IsSuccess.ShouldBeTrue();
-        Operator operatorData = result.Data;
+        Operator operatorData = result.ShouldBeSuccess();
         operatorData.ShouldNotBeNull();
         operatorData.OperatorId.ShouldBe(operatorId);
         operatorData.EstateReportingId.ShouldBeGreaterThan(0);

@@ -59,8 +59,7 @@ namespace EstateReportingAPI.IntegrationTests
             DateTime end = DateTime.Today;
 
             Result<List<FileImportLog>> result = await this.CreateAndSendHttpRequestMessage<List<FileImportLog>>($"{this.BaseRoute}?startDate={start:yyyy-MM-dd}&endDate={end:yyyy-MM-dd}", CancellationToken.None);
-            result.IsSuccess.ShouldBeTrue();
-            var list = result.Data;
+            var list = result.ShouldBeSuccess();
             list.ShouldNotBeNull();
             list.Count.ShouldBe(0);
         }
@@ -87,8 +86,7 @@ namespace EstateReportingAPI.IntegrationTests
             DateTime end = DateTime.Today.AddDays(1);
 
             Result<List<FileImportLog>> result = await this.CreateAndSendHttpRequestMessage<List<FileImportLog>>($"{this.BaseRoute}?merchantId={merchant}&startDate={start:yyyy-MM-dd}&endDate={end:yyyy-MM-dd}", CancellationToken.None);
-            result.IsSuccess.ShouldBeTrue();
-            var list = result.Data;
+            var list = result.ShouldBeSuccess();
             list.ShouldNotBeNull();
             list.Count.ShouldBe(1);
 
@@ -138,8 +136,7 @@ namespace EstateReportingAPI.IntegrationTests
             await this.helper.AddFileLine(fileId, 1, "filterline", "OK");
 
             Result<DataTransferObjects.FileImportLog> result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.FileImportLog>($"{this.BaseRoute}/{filId}?merchantId={merchant}", CancellationToken.None);
-            result.IsSuccess.ShouldBeTrue();
-            var item = result.Data;
+            var item = result.ShouldBeSuccess();
             item.ShouldNotBeNull();
             var sourceLog = this.context.FileImportLogs.Single(x => x.FileImportLogId == filId);
             var sourceFile = this.context.Files.Single(x => x.FileImportLogId == filId);
@@ -184,8 +181,7 @@ namespace EstateReportingAPI.IntegrationTests
             await this.helper.AddFileLine(fileId, 1, "line1data", "OK");
 
             Result<DataTransferObjects.FileImportLog> result = await this.CreateAndSendHttpRequestMessage<DataTransferObjects.FileImportLog>($"{this.BaseRoute}/{filId}", CancellationToken.None);
-            result.IsSuccess.ShouldBeTrue();
-            var item = result.Data;
+            var item = result.ShouldBeSuccess();
             item.ShouldNotBeNull();
             var sourceLog = this.context.FileImportLogs.Single(x => x.FileImportLogId == filId);
             var sourceFile = this.context.Files.Single(x => x.FileImportLogId == filId);
@@ -266,8 +262,7 @@ namespace EstateReportingAPI.IntegrationTests
             DateTime end = DateTime.Today.AddDays(1);
 
             Result<List<FileImportLog>> result = await this.CreateAndSendHttpRequestMessage<List<FileImportLog>>($"{this.BaseRoute}?startDate={start:yyyy-MM-dd}&endDate={end:yyyy-MM-dd}", CancellationToken.None);
-            result.IsSuccess.ShouldBeTrue();
-            var list = result.Data;
+            var list = result.ShouldBeSuccess();
             list.ShouldNotBeNull();
             list.Count.ShouldBe(1);
 
@@ -305,8 +300,7 @@ namespace EstateReportingAPI.IntegrationTests
             var merchant = await this.context.Merchants.FirstAsync();
 
             Result<List<FileImportLog>> result = await this.CreateAndSendHttpRequestMessage<List<FileImportLog>>($"{this.BaseRoute}?merchantId={merchant.MerchantId}&startDate={start:yyyy-MM-dd}&endDate={end:yyyy-MM-dd}", CancellationToken.None);
-            result.IsSuccess.ShouldBeTrue();
-            var list = result.Data;
+            var list = result.ShouldBeSuccess();
             list.ShouldNotBeNull();
             list.Count.ShouldBe(0);
         }

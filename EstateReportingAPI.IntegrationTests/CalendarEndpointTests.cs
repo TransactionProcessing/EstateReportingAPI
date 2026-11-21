@@ -30,9 +30,7 @@ namespace EstateReportingAPI.IntegrationTests {
 
             Result<List<ComparisonDate>> result = await this.CreateAndSendHttpRequestMessage<List<ComparisonDate>>($"{this.BaseRoute}/comparisondates", CancellationToken.None);
 
-            result.IsSuccess.ShouldBeTrue();
-
-            List<ComparisonDate> dates = result.Data;
+            List<ComparisonDate> dates = result.ShouldBeSuccess();
             List<DateTime> expectedDates = datesInYear.Where(d => d <= DateTime.Now.Date.AddDays(-1)).ToList();
             dates.ShouldNotBeNull();
             foreach (DateTime date in expectedDates) {

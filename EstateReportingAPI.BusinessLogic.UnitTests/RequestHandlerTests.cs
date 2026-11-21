@@ -20,7 +20,7 @@ public sealed class RequestHandlerTests
     public async Task SettlementRequestHandler_ForwardsRequestAndCancellationToken()
     {
         var manager = new ISettlementReportingServiceImposter();
-        var expected = Result.Success(new TodaysSettlement());
+        var expected = Results.Ok(new TodaysSettlement());
         var request = new SettlementQueries.TodaysSettlementQuery(Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today));
         var cancellationToken = new CancellationTokenSource().Token;
         manager.GetTodaysSettlement(Arg<SettlementQueries.TodaysSettlementQuery>.Any(), Arg<CancellationToken>.Any())
@@ -37,11 +37,11 @@ public sealed class RequestHandlerTests
         var manager = new IEstateReportingServiceImposter();
         var request = new CalendarQueries.GetYearsQuery(Guid.NewGuid());
         manager.GetCalendarYears(Arg<CalendarQueries.GetYearsQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<int>())));
+            .Returns(Task.FromResult(Results.Ok(new List<int>())));
 
         var actual = await new CalendarRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -50,11 +50,11 @@ public sealed class RequestHandlerTests
         var manager = new IEstateReportingServiceImposter();
         var request = new CalendarQueries.GetAllDatesQuery(Guid.NewGuid());
         manager.GetCalendarDates(Arg<CalendarQueries.GetAllDatesQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<Calendar>())));
+            .Returns(Task.FromResult(Results.Ok(new List<Calendar>())));
 
         var actual = await new CalendarRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -63,11 +63,11 @@ public sealed class RequestHandlerTests
         var manager = new IEstateReportingServiceImposter();
         var request = new CalendarQueries.GetComparisonDatesQuery(Guid.NewGuid());
         manager.GetCalendarComparisonDates(Arg<CalendarQueries.GetComparisonDatesQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<Calendar>())));
+            .Returns(Task.FromResult(Results.Ok(new List<Calendar>())));
 
         var actual = await new CalendarRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -76,11 +76,11 @@ public sealed class RequestHandlerTests
         var manager = new IEstateReportingServiceImposter();
         var request = new CalendarQueries.GetComparisonDatesQuery(Guid.NewGuid());
         manager.GetCalendarComparisonDates(Arg<CalendarQueries.GetComparisonDatesQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult<Result<List<Calendar>>>(Result.Failure("Calendar lookup failed.")));
+            .Returns(Task.FromResult<Result<List<Calendar>>>(new Error(ErrorType.Failure, "Calendar lookup failed.")));
 
         var actual = await new CalendarRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsFailed.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeFalse();
     }
 
     [Fact]
@@ -89,11 +89,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new ContractQueries.GetContractsQuery(Guid.NewGuid());
         manager.GetContracts(Arg<ContractQueries.GetContractsQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<Contract>())));
+            .Returns(Task.FromResult(Results.Ok(new List<Contract>())));
 
         var actual = await new ContractRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -102,11 +102,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new ContractQueries.GetRecentContractsQuery(Guid.NewGuid());
         manager.GetRecentContracts(Arg<ContractQueries.GetRecentContractsQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<Contract>())));
+            .Returns(Task.FromResult(Results.Ok(new List<Contract>())));
 
         var actual = await new ContractRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -115,11 +115,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new ContractQueries.GetContractQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetContract(Arg<ContractQueries.GetContractQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new Contract())));
+            .Returns(Task.FromResult(Results.Ok(new Contract())));
 
         var actual = await new ContractRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -128,11 +128,11 @@ public sealed class RequestHandlerTests
         var manager = new IEstateReportingServiceImposter();
         var request = new EstateQueries.GetEstateQuery(Guid.NewGuid());
         manager.GetEstate(Arg<EstateQueries.GetEstateQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new Estate())));
+            .Returns(Task.FromResult(Results.Ok(new Estate())));
 
         var actual = await new EstateRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -141,11 +141,11 @@ public sealed class RequestHandlerTests
         var manager = new IEstateReportingServiceImposter();
         var request = new EstateQueries.GetEstateOperatorsQuery(Guid.NewGuid());
         manager.GetEstateOperators(Arg<EstateQueries.GetEstateOperatorsQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<EstateOperator>())));
+            .Returns(Task.FromResult(Results.Ok(new List<EstateOperator>())));
 
         var actual = await new EstateRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -154,11 +154,11 @@ public sealed class RequestHandlerTests
         var manager = new IFileImportReportingServiceImposter();
         var request = new FileImportLogQueries.GetFileImportLogListQuery(Guid.NewGuid(), null, DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
         manager.GetFileImportLogList(Arg<FileImportLogQueries.GetFileImportLogListQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<FileImportLog>())));
+            .Returns(Task.FromResult(Results.Ok(new List<FileImportLog>())));
 
         var actual = await new FileImportLogRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -167,11 +167,11 @@ public sealed class RequestHandlerTests
         var manager = new IFileImportReportingServiceImposter();
         var request = new FileImportLogQueries.GetFileImportLogQuery(Guid.NewGuid(), null, Guid.NewGuid());
         manager.GetFileImportLog(Arg<FileImportLogQueries.GetFileImportLogQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new FileImportLog())));
+            .Returns(Task.FromResult(Results.Ok(new FileImportLog())));
 
         var actual = await new FileImportLogRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -180,11 +180,11 @@ public sealed class RequestHandlerTests
         var manager = new IFileImportReportingServiceImposter();
         var request = new FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery(Guid.NewGuid());
         manager.GetFileProfileConfigurationList(Arg<FileProfileConfigurationQueries.GetFileProfileConfigurationListQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<FileProfileConfiguration>())));
+            .Returns(Task.FromResult(Results.Ok(new List<FileProfileConfiguration>())));
 
         var actual = await new FileProfileConfigurationRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -193,11 +193,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetMerchant(Arg<MerchantQueries.GetMerchantQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new Merchant())));
+            .Returns(Task.FromResult(Results.Ok(new Merchant())));
 
         var actual = await new MerchantRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -206,11 +206,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetRecentMerchantsQuery(Guid.NewGuid());
         manager.GetRecentMerchants(Arg<MerchantQueries.GetRecentMerchantsQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<Merchant>())));
+            .Returns(Task.FromResult(Results.Ok(new List<Merchant>())));
 
         var actual = await new MerchantRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -219,11 +219,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetTransactionKpisQuery(Guid.NewGuid());
         manager.GetMerchantsTransactionKpis(Arg<MerchantQueries.GetTransactionKpisQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new MerchantKpi())));
+            .Returns(Task.FromResult(Results.Ok(new MerchantKpi())));
 
         var actual = await new MerchantRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -232,11 +232,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantsQuery(Guid.NewGuid(), new MerchantQueries.MerchantQueryOptions("", "", null, "", ""));
         manager.GetMerchants(Arg<MerchantQueries.GetMerchantsQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<Merchant>())));
+            .Returns(Task.FromResult(Results.Ok(new List<Merchant>())));
 
         var actual = await new MerchantRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -245,11 +245,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantOperatorsQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetMerchantOperators(Arg<MerchantQueries.GetMerchantOperatorsQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<MerchantOperator>())));
+            .Returns(Task.FromResult(Results.Ok(new List<MerchantOperator>())));
 
         var actual = await new MerchantRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -258,11 +258,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantContractsQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetMerchantContracts(Arg<MerchantQueries.GetMerchantContractsQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<MerchantContract>())));
+            .Returns(Task.FromResult(Results.Ok(new List<MerchantContract>())));
 
         var actual = await new MerchantRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -271,11 +271,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantDevicesQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetMerchantDevices(Arg<MerchantQueries.GetMerchantDevicesQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<MerchantDevice>())));
+            .Returns(Task.FromResult(Results.Ok(new List<MerchantDevice>())));
 
         var actual = await new MerchantRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -284,11 +284,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantOpeningHoursQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetMerchantOpeningHours(Arg<MerchantQueries.GetMerchantOpeningHoursQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<MerchantOpeningHour>())));
+            .Returns(Task.FromResult(Results.Ok(new List<MerchantOpeningHour>())));
 
         var actual = await new MerchantRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -297,11 +297,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new MerchantQueries.GetMerchantScheduleQuery(Guid.NewGuid(), Guid.NewGuid(), 2026);
         manager.GetMerchantSchedule(Arg<MerchantQueries.GetMerchantScheduleQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new MerchantScheduleResponse())));
+            .Returns(Task.FromResult(Results.Ok(new MerchantScheduleResponse())));
 
         var actual = await new MerchantRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -310,11 +310,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new OperatorQueries.GetOperatorsQuery(Guid.NewGuid());
         manager.GetOperators(Arg<OperatorQueries.GetOperatorsQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<Operator>())));
+            .Returns(Task.FromResult(Results.Ok(new List<Operator>())));
 
         var actual = await new OperatorRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -323,11 +323,11 @@ public sealed class RequestHandlerTests
         var manager = new IMerchantReportingServiceImposter();
         var request = new OperatorQueries.GetOperatorQuery(Guid.NewGuid(), Guid.NewGuid());
         manager.GetOperator(Arg<OperatorQueries.GetOperatorQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new Operator())));
+            .Returns(Task.FromResult(Results.Ok(new Operator())));
 
         var actual = await new OperatorRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -336,11 +336,11 @@ public sealed class RequestHandlerTests
         var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.ProductPerformanceQuery(Guid.NewGuid(), DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
         manager.GetProductPerformanceReport(Arg<TransactionQueries.ProductPerformanceQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new ProductPerformanceResponse())));
+            .Returns(Task.FromResult(Results.Ok(new ProductPerformanceResponse())));
 
         var actual = await new TransactionRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -349,11 +349,11 @@ public sealed class RequestHandlerTests
         var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TodaysFailedSales(Guid.NewGuid(), DateTime.Today, "1000");
         manager.GetTodaysFailedSales(Arg<TransactionQueries.TodaysFailedSales>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new TodaysSales())));
+            .Returns(Task.FromResult(Results.Ok(new TodaysSales())));
 
         var actual = await new TransactionRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -362,11 +362,11 @@ public sealed class RequestHandlerTests
         var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TodaysSalesQuery(Guid.NewGuid(), 1, 2, DateTime.Today);
         manager.GetTodaysSales(Arg<TransactionQueries.TodaysSalesQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new TodaysSales())));
+            .Returns(Task.FromResult(Results.Ok(new TodaysSales())));
 
         var actual = await new TransactionRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -375,11 +375,11 @@ public sealed class RequestHandlerTests
         var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TransactionDetailReportQuery(Guid.NewGuid(), new TransactionDetailReportRequest());
         manager.GetTransactionDetailReport(Arg<TransactionQueries.TransactionDetailReportQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new TransactionDetailReportResponse())));
+            .Returns(Task.FromResult(Results.Ok(new TransactionDetailReportResponse())));
 
         var actual = await new TransactionRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -388,11 +388,11 @@ public sealed class RequestHandlerTests
         var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TransactionSummaryByMerchantQuery(Guid.NewGuid(), new TransactionSummaryByMerchantRequest());
         manager.GetTransactionSummaryByMerchantReport(Arg<TransactionQueries.TransactionSummaryByMerchantQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new TransactionSummaryByMerchantResponse())));
+            .Returns(Task.FromResult(Results.Ok(new TransactionSummaryByMerchantResponse())));
 
         var actual = await new TransactionRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -401,11 +401,11 @@ public sealed class RequestHandlerTests
         var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TransactionSummaryByOperatorQuery(Guid.NewGuid(), new TransactionSummaryByOperatorRequest());
         manager.GetTransactionSummaryByOperatorReport(Arg<TransactionQueries.TransactionSummaryByOperatorQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new TransactionSummaryByOperatorResponse())));
+            .Returns(Task.FromResult(Results.Ok(new TransactionSummaryByOperatorResponse())));
 
         var actual = await new TransactionRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -414,11 +414,11 @@ public sealed class RequestHandlerTests
         var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TransactionMixSummaryQuery(Guid.NewGuid(), new TransactionMixSummaryRequest());
         manager.GetTransactionMixSummary(Arg<TransactionQueries.TransactionMixSummaryQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new TransactionMixSummaryResponse())));
+            .Returns(Task.FromResult(Results.Ok(new TransactionMixSummaryResponse())));
 
         var actual = await new TransactionRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -427,11 +427,11 @@ public sealed class RequestHandlerTests
         var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.GetRecentActivityReceiptReportQuery(Guid.NewGuid(), new GetRecentActivityReceiptReportRequest());
         manager.GetRecentActivityReceiptReport(Arg<TransactionQueries.GetRecentActivityReceiptReportQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new GetRecentActivityReceiptReportResponse())));
+            .Returns(Task.FromResult(Results.Ok(new GetRecentActivityReceiptReportResponse())));
 
         var actual = await new TransactionRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -440,11 +440,11 @@ public sealed class RequestHandlerTests
         var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.TodaysSalesByHour(Guid.NewGuid(), DateTime.Today);
         manager.GetTodaysSalesByHour(Arg<TransactionQueries.TodaysSalesByHour>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new List<TodaysSalesByHour>())));
+            .Returns(Task.FromResult(Results.Ok(new List<TodaysSalesByHour>())));
 
         var actual = await new TransactionRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 
     [Fact]
@@ -453,10 +453,10 @@ public sealed class RequestHandlerTests
         var manager = new ITransactionReportingServiceImposter();
         var request = new TransactionQueries.MerchantDailyPerformanceSummaryQuery(Guid.NewGuid(), new MerchantDailyPerformanceSummaryRequest());
         manager.GetMerchantDailyPerformanceSummary(Arg<TransactionQueries.MerchantDailyPerformanceSummaryQuery>.Any(), Arg<CancellationToken>.Any())
-            .Returns(Task.FromResult(Result.Success(new MerchantDailyPerformanceSummaryResponse())));
+            .Returns(Task.FromResult(Results.Ok(new MerchantDailyPerformanceSummaryResponse())));
 
         var actual = await new TransactionRequestHandler(manager.Instance()).Handle(request, CancellationToken.None);
 
-        actual.IsSuccess.ShouldBeTrue();
+        actual.IsSuccess().ShouldBeTrue();
     }
 }

@@ -40,13 +40,13 @@ public sealed class EstateReportingService : IEstateReportingService
 
         var result = await ReportingQueryExecutor.ToListAsync(context.Calendar.Where(c => c.Date >= startDate && c.Date <= endDate).OrderByDescending(c => c.Date), cancellationToken, "Error retrieving calendar comparison dates");
 
-        if (result.IsFailed)
-            return ResultHelpers.CreateFailure(result);
+        if (!result.TryGetSuccess(out var resultValue))
+            return new ErrorList(result.GetErrors());
 
-        var entities = result.Data;
+        var entities = resultValue;
 
         if (entities.Any() == false)
-            return Result.NotFound("No calendar dates found");
+            return new Error(ErrorType.NotFound, "No calendar dates found");
 
         List<Calendar> response = new();
         foreach (TransactionProcessor.Database.Entities.Calendar calendar in entities)
@@ -64,7 +64,7 @@ public sealed class EstateReportingService : IEstateReportingService
                 YearWeekNumber = calendar.YearWeekNumber
             });
 
-        return Result.Success(response);
+        return Results.Ok(response);
     }
 
     public async Task<Result<List<Calendar>>> GetCalendarDates(CalendarQueries.GetAllDatesQuery request,
@@ -75,10 +75,10 @@ public sealed class EstateReportingService : IEstateReportingService
 
         var result = await ReportingQueryExecutor.ToListAsync(context.Calendar.Where(c => c.Date <= DatePolicy.Today), cancellationToken, "Error retrieving calendar dates");
 
-        if (result.IsFailed)
-            return ResultHelpers.CreateFailure(result);
+        if (!result.TryGetSuccess(out var resultValue))
+            return new ErrorList(result.GetErrors());
 
-        var entities = result.Data;
+        var entities = resultValue;
 
         List<Calendar> response = new();
         foreach (TransactionProcessor.Database.Entities.Calendar calendar in entities)
@@ -96,7 +96,7 @@ public sealed class EstateReportingService : IEstateReportingService
                 YearWeekNumber = calendar.YearWeekNumber
             });
 
-        return Result.Success(response);
+        return Results.Ok(response);
     }
 
     public async Task<Result<List<Int32>>> GetCalendarYears(CalendarQueries.GetYearsQuery request,
@@ -106,8 +106,8 @@ public sealed class EstateReportingService : IEstateReportingService
 
         var result = await ReportingQueryExecutor.ToListAsync(context.Calendar.Where(c => c.Date <= DatePolicy.Today).GroupBy(c => c.Year).Select(y => y.Key), cancellationToken, "Error retrieving calendar years");
 
-        if (result.IsFailed)
-            return ResultHelpers.CreateFailure(result);
+        if (!result.TryGetSuccess(out var resultValue))
+            return new ErrorList(result.GetErrors());
 
         return result;
     }
@@ -123,17 +123,17 @@ public sealed class EstateReportingService : IEstateReportingService
                                                                                                                                                                  op) => new { EstateOperator = eo, Operator = op }).Where(e => e.EstateOperator.EstateId == request.EstateId && (e.EstateOperator.IsDeleted ?? false) == false);
 
         var operatorQueryResult = await ReportingQueryExecutor.ToListAsync(operatorQuery, cancellationToken, "Error retrieving estate operators");
-        if (operatorQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(operatorQueryResult);
+        if (!operatorQueryResult.TryGetSuccess(out var operatorQueryResultValue))
+            return new ErrorList(operatorQueryResult.GetErrors());
 
-        var operatorEntities = operatorQueryResult.Data;
+        var operatorEntities = operatorQueryResultValue;
         List<EstateOperator> operators = new();
 
         foreach (var operatorEntity in operatorEntities) {
             operators.Add(new EstateOperator() { Name = operatorEntity.Operator.Name, OperatorId = operatorEntity.EstateOperator.OperatorId });
         }
 
-        return Result.Success(operators);
+        return Results.Ok(operators);
     }
 
     public async Task<Result<Estate>> GetEstate(EstateQueries.GetEstateQuery request,
@@ -143,33 +143,33 @@ public sealed class EstateReportingService : IEstateReportingService
 
         var estateQueryResult = await ReportingQueryExecutor.SingleOrDefaultAsync(context.Estates.Where(e => e.EstateId == request.EstateId), cancellationToken, "Error retrieving estate");
 
-        if (estateQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(estateQueryResult);
-        var estate = estateQueryResult.Data;
+        if (!estateQueryResult.TryGetSuccess(out var estateQueryResultValue))
+            return new ErrorList(estateQueryResult.GetErrors());
+        var estate = estateQueryResultValue;
 
         // Operators
         var operatorsListQueryResult = await ReportingQueryExecutor.ToListAsync(context.Operators.Where(e => e.EstateId == request.EstateId), cancellationToken, "Error retrieving estate operators");
-        if (operatorsListQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(operatorsListQueryResult);
-        var operators = operatorsListQueryResult.Data;
+        if (!operatorsListQueryResult.TryGetSuccess(out var operatorsListQueryResultValue))
+            return new ErrorList(operatorsListQueryResult.GetErrors());
+        var operators = operatorsListQueryResultValue;
 
         // Users
         var usersListQueryResult = await ReportingQueryExecutor.ToListAsync(context.EstateSecurityUsers.Where(e => e.EstateId == request.EstateId), cancellationToken, "Error retrieving estate users");
-        if (usersListQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(usersListQueryResult);
-        var users = usersListQueryResult.Data;
+        if (!usersListQueryResult.TryGetSuccess(out var usersListQueryResultValue))
+            return new ErrorList(usersListQueryResult.GetErrors());
+        var users = usersListQueryResultValue;
 
         // Merchants
         var merchantsListQueryResult = await ReportingQueryExecutor.ToListAsync(context.Merchants.Where(e => e.EstateId == request.EstateId), cancellationToken, "Error retrieving merchants");
-        if (merchantsListQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(merchantsListQueryResult);
-        var merchants = merchantsListQueryResult.Data;
+        if (!merchantsListQueryResult.TryGetSuccess(out var merchantsListQueryResultValue))
+            return new ErrorList(merchantsListQueryResult.GetErrors());
+        var merchants = merchantsListQueryResultValue;
 
         // Contracts
         var contractsListQueryResult = await ReportingQueryExecutor.ToListAsync(context.Contracts.Where(e => e.EstateId == request.EstateId), cancellationToken, "Error retrieving contracts");
-        if (contractsListQueryResult.IsFailed)
-            return ResultHelpers.CreateFailure(contractsListQueryResult);
-        var contracts = contractsListQueryResult.Data;
+        if (!contractsListQueryResult.TryGetSuccess(out var contractsListQueryResultValue))
+            return new ErrorList(contractsListQueryResult.GetErrors());
+        var contracts = contractsListQueryResultValue;
 
         Estate result = new() {
             EstateId = estate.EstateId,
@@ -181,6 +181,6 @@ public sealed class EstateReportingService : IEstateReportingService
             Contracts = contracts.Select(c => new Models.EstateContract { ContractId = c.ContractId, Name = c.Description, }).ToList()
         };
 
-        return Result.Success(result);
+        return Results.Ok(result);
 }
 }
