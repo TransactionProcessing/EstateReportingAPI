@@ -2,7 +2,7 @@
 
 ## Development HTTPS
 
-The development profile listens on `https://localhost:5012` and keeps `http://localhost:5011` available during the HTTPS rollout. Kestrel loads its CA-issued server certificate from the `ServiceOptions:KestrelOptions` configuration section through `TransactionProcessing.CertificateDefaults`.
+The development profile listens on `https://localhost:5011`. HTTP is not enabled on this listener. Kestrel loads its CA-issued server certificate from the `ServiceOptions:KestrelOptions` configuration section through `TransactionProcessing.CertificateDefaults`.
 
 For a password-protected PFX, supply `ServiceOptions:KestrelOptions:Path` and `ServiceOptions:KestrelOptions:Password` through User Secrets locally or the deployment secret provider. For PEM, set `Path` to the full-chain PEM file and `KeyPath` to its separate private key. Mount certificate files read-only and restrict access to the service identity; do not commit certificate files, private keys, or passwords.
 
