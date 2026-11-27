@@ -15,6 +15,7 @@ using TransactionProcessing.Shared.Middleware;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using TransactionProcessing.ApiDefaults;
+using TransactionProcessing.CertificateDefaults;
 using TransactionProcessing.UnionResults.AspNetCore;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
@@ -60,6 +61,10 @@ public partial class Program
         builder.Logging.AddConsole();
         builder.Logging.AddNLog();
         builder.WebHost.UseKestrel();
+        if (!builder.Environment.IsEnvironment("IntegrationTest"))
+        {
+            builder.WebHost.ConfigureTransactionProcessingHttps();
+        }
 
         string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
         builder.Configuration.SetBasePath(basePath)

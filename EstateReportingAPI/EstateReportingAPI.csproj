@@ -26,6 +26,7 @@
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" />
 		<PackageReference Include="NLog.Extensions.Logging" />
 		<PackageReference Include="TransactionProcessing.Shared" />
+		<PackageReference Include="TransactionProcessing.CertificateDefaults" />
 		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
@@ -43,9 +44,4 @@
 	  <ProjectReference Include="..\EstateReportingAPI.DataTrasferObjects\EstateReportingAPI.DataTransferObjects.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <None Update="aspnetapp-root-cert.cer">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	</ItemGroup>
 </Project>
