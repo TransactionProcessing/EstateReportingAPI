@@ -12,11 +12,6 @@ COPY . .
 WORKDIR "/src/EstateReportingAPI"
 RUN dotnet build "EstateReportingAPI.csproj" -c Release -o /app/build
 
-# Sort out certificate stuff here
-RUN openssl x509 -inform DER -in /src/EstateReportingAPI/aspnetapp-root-cert.cer -out /src/EstateReportingAPI/aspnetapp-root-cert.crt
-RUN cp /src/EstateReportingAPI/aspnetapp-root-cert.crt /usr/local/share/ca-certificates/
-RUN update-ca-certificates
-
 FROM build AS publish
 RUN dotnet publish "EstateReportingAPI.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
